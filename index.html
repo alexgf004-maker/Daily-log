@@ -1168,7 +1168,14 @@ window.exportar=async()=>{
     const hrs=Math.floor(t.minHE/60), mins=t.minHE%60;
     return [t.nombre, t.cargo, t.viaticos, t.heDias, hrs>0?`${hrs}h ${mins}m`:(mins>0?`${mins}m`:'—')];
   });
-  const ws2=XLSX.utils.aoa_to_sheet([resHeaders,...resRows]);
+  // Fila de totales
+  const totalViat=Object.values(totMap).reduce((a,t)=>a+t.viaticos,0);
+  const totalHEDias=Object.values(totMap).reduce((a,t)=>a+t.heDias,0);
+  const totalMinAll=Object.values(totMap).reduce((a,t)=>a+t.minHE,0);
+  const thrs=Math.floor(totalMinAll/60), tmins=totalMinAll%60;
+  const totalsRow=['TOTAL GENERAL','',totalViat,totalHEDias,thrs>0?`${thrs}h ${tmins}m`:(tmins>0?`${tmins}m`:'0')];
+  const sepRow=['','','','',''];
+  const ws2=XLSX.utils.aoa_to_sheet([resHeaders,...resRows,sepRow,totalsRow]);
   ws2['!cols']=[{wch:32},{wch:32},{wch:10},{wch:22},{wch:18}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Resumen');
 
