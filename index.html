@@ -43,14 +43,15 @@
   --r:        10px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+html,body{height:100%;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;font-size:14px}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--gray100)}
 ::-webkit-scrollbar-thumb{background:var(--gray300);border-radius:3px}
 
-.screen{display:none;min-height:100vh;flex-direction:column}
+.screen{display:none;flex-direction:column;min-height:100vh;position:relative;z-index:1}
 .screen.active{display:flex}
+#loginScreen{z-index:50}
 
 /* ═══ LOGIN ═══ */
 #loginScreen{
@@ -653,19 +654,28 @@ async function getUsers(){
 async function loadDash(){
   $('dashDate').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const[regs,users]=await Promise.all([getAllRegs(),getUsers()]);
-  // Use local date to avoid UTC offset issues
   const now=new Date();
   const td=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const hoy=regs.filter(r=>r.fecha===td),pend=regs.filter(r=>r.estado==='pendiente');
-  const emps=users.filter(u=>u.role!=='admin'&&(u.activo===true||u.activo==='true')),conHoy=new Set(hoy.map(r=>r.userId));
+  const hoy=regs.filter(r=>r.fecha===td);
+  const pend=regs.filter(r=>r.he&&r.estadoHE==='pendiente');
+  const emps=users.filter(u=>u.role!=='admin'&&(u.activo===true||u.activo==='true'));
+  const conHoy=new Set(hoy.map(r=>r.userId));
   $('dashStats').innerHTML=`
     <div class="stat-card"><div class="stat-val">${emps.length}</div><div class="stat-lbl">Empleados activos</div></div>
     <div class="stat-card g"><div class="stat-val">${hoy.length}</div><div class="stat-lbl">Registros hoy</div></div>
-    <div class="stat-card w"><div class="stat-val">${pend.length}</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-card w"><div class="stat-val">${pend.length}</div><div class="stat-lbl">HE pendientes</div></div>
     <div class="stat-card d"><div class="stat-val">${emps.length-conHoy.size}</div><div class="stat-lbl">Sin registro hoy</div></div>`;
   $('dashHoy').innerHTML=hoy.length===0
     ?'<div class="empty" style="padding:20px"><div class="et">Nadie ha registrado hoy</div></div>'
-    :`<div class="tw"><table><thead><tr><th>Empleado</th><th>Viático</th><th>H.E.</th><th>Estado</th></tr></thead><tbody>${hoy.map(r=>`<tr><td style="font-weight:500">${r.userName||r.userId}</td><td>${r.viatico?'<span class="badge by">Sí</span>':'<span class="badge bn">No</span>'}</td><td>${r.he?`<span class="badge by">${r.heInicio}–${r.heFin}</span>`:'<span class="badge bn">No</span>'}</td><td><span class="badge ${r.estado==='pendiente'?'bp':r.estado==='aprobado'?'ba':'br'}">${r.estado}</span></td></tr>`).join('')}</tbody></table></div>`;
+    :`<div class="tw"><table><thead><tr><th>Empleado</th><th>Viático</th><th>H.E.</th></tr></thead><tbody>${hoy.map(r=>{
+      const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
+      const eh=r.estadoHE||(r.he?'pendiente':'na');
+      return `<tr>
+        <td style="font-weight:500">${r.userName||r.userId}</td>
+        <td>${r.viatico?(ev==='rechazado'?'<span class="badge br">Anulado</span>':'<span class="badge ba">✓</span>'):'<span class="badge bn">No</span>'}</td>
+        <td>${r.he?(eh==='aprobado'?'<span class="badge ba">✓ Aprobada</span>':eh==='rechazado'?'<span class="badge br">Rechazada</span>':'<span class="badge bp">Pendiente</span>'):'<span class="badge bn">No</span>'}</td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
   const sin=emps.filter(u=>!conHoy.has(u.id));
   $('dashSin').innerHTML=sin.length===0
     ?'<div class="empty" style="padding:20px"><div class="et">✓ Todos registraron hoy</div></div>'
