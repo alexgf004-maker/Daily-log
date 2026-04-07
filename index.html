@@ -517,7 +517,16 @@ window.adTab=(t,btn)=>{
 };
 
 async function getAllRegs(){const snap=await get(ref(db,'registros'));const a=[];if(!snap.exists())return a;snap.forEach(u=>u.forEach(r=>a.push({key:r.key,userId:u.key,...r.val()})));return a;}
-async function getUsers(){const snap=await get(ref(db,'users'));const a=[];if(!snap.exists())return a;snap.forEach(c=>a.push({id:c.key,...c.val()}));return a;}
+async function getUsers(){
+  const snap=await get(ref(db,'users'));
+  const a=[];
+  if(!snap.exists()) return a;
+  const raw=snap.val();
+  for(const [k,v] of Object.entries(raw)){
+    if(v && typeof v==='object') a.push({id:k,...v});
+  }
+  return a;
+}
 
 async function loadDash(){
   $('dashDate').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -619,14 +628,19 @@ window.openDet=async(uid,key,isAdmin)=>{
 
 async function loadUsrs(){
   const l=$('usrList');l.innerHTML='<div class="spin"></div>';
-  const users=await getUsers();const emps=users.filter(u=>u.role!=='admin');
+  const users=await getUsers();
+  const emps=users.filter(u=>u.role!=='admin');
   if(!emps.length){l.innerHTML='<div class="empty"><div class="et">Sin empleados registrados</div></div>';return;}
-  l.innerHTML=emps.map(u=>`<div class="ur">
-    <div><div class="un">${u.nombre} <span class="badge ${u.activo?'bac':'bin'}">${u.activo?'Activo':'Inactivo'}</span></div><div class="um">@${u.username}</div></div>
+  emps.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  l.innerHTML=emps.map(u=>{
+    const activo=u.activo===true||u.activo==='true';
+    return `<div class="ur">
+    <div><div class="un">${u.nombre} <span class="badge ${activo?'bac':'bin'}">${activo?'Activo':'Inactivo'}</span></div><div class="um">@${u.username}</div></div>
     <div class="ua">
       <button class="btn btn-gh btn-sm" onclick="openModalUser('${u.id}')">Editar</button>
-      <button class="btn btn-sm ${u.activo?'btn-d':'btn-g'}" onclick="togActivo('${u.id}',${u.activo})">${u.activo?'Desactivar':'Activar'}</button>
-    </div></div>`).join('');
+      <button class="btn btn-sm ${activo?'btn-d':'btn-g'}" onclick="togActivo('${u.id}',${activo})">${activo?'Desactivar':'Activar'}</button>
+    </div></div>`;
+  }).join('');
 }
 
 window.togActivo=async(uid,a)=>{await update(ref(db,`users/${uid}`),{activo:!a});loadUsrs();};
