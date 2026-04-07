@@ -49,14 +49,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 ::-webkit-scrollbar-track{background:var(--gray100)}
 ::-webkit-scrollbar-thumb{background:var(--gray300);border-radius:3px}
 
-.screen{display:none;flex-direction:column;min-height:100vh;position:relative;z-index:1}
+.screen{display:none;flex-direction:column;min-height:100vh}
 .screen.active{display:flex}
 #loginScreen{z-index:50}
 
 /* ═══ LOGIN ═══ */
 #loginScreen{
   background:linear-gradient(135deg,#0f1f3d 0%,#1e3a5f 45%,#1e4080 100%);
-  align-items:center;justify-content:center;position:fixed;inset:0;z-index:50;overflow-y:auto;
+  align-items:center;justify-content:center;overflow:hidden;
+  min-height:100vh;
 }
 #loginScreen::before{
   content:'';position:absolute;inset:0;
@@ -442,7 +443,12 @@ const fmtLong = d  => d ? new Date(d+'T12:00:00').toLocaleDateString('es-SV',{we
 const $       = id => document.getElementById(id);
 const show    = id => { const e=$(id); if(e) e.style.display=''; };
 const hide    = id => { const e=$(id); if(e) e.style.display='none'; };
-const screen  = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); };
+const screen  = id => {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo(0,0);
+  document.body.style.overflow = id==='loginScreen' ? 'hidden' : '';
+};
 
 // Init admin
 (async()=>{ try{ const s=await get(ref(db,'users/admin')); if(!s.exists()) await set(ref(db,'users/admin'),{nombre:'Administrador',username:'admin',pin:'1234',role:'admin',activo:true}); }catch(e){} })();
@@ -900,6 +906,10 @@ window.saveUser=async()=>{
 window.closeModal=id=>$(id).classList.remove('open');
 document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.mo.open').forEach(m=>m.classList.remove('open'));});
+
+// Lock scroll on login screen at startup
+document.body.style.overflow='hidden';
 </script>
 </body>
 </html>
+
