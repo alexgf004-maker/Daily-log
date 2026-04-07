@@ -749,8 +749,8 @@ async function loadHist(){
   const now=new Date();
   const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const delMes=items.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
-  const viaticos=delMes.filter(r=>r.viatico).length;
-  const totalMinHE=delMes.reduce((acc,r)=>acc+(r.minHE||0),0);
+  const viaticos=delMes.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
+  const totalMinHE=delMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((acc,r)=>acc+(r.minHE||0),0);
   const hrsHE=Math.floor(totalMinHE/60), minsHE=totalMinHE%60;
   const heCount=delMes.filter(r=>r.he).length;
 
@@ -984,8 +984,8 @@ async function loadFiltEmps(){
     const regsEmp=allRegs.filter(r=>r.userId===u.id);
     const delMes=regsEmp.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
     const pendHE=regsEmp.filter(r=>r.he&&r.estadoHE==='pendiente').length;
-    const viaticos=delMes.filter(r=>r.viatico).length;
-    const totalMin=delMes.reduce((a,r)=>a+(r.minHE||0),0);
+    const viaticos=delMes.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
+    const totalMin=delMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHE||0),0);
     const hrsStr=totalMin>0?(Math.floor(totalMin/60)>0?Math.floor(totalMin/60)+'h ':'')+totalMin%60+'m':'—';
     const border=i>0?'border-top:1px solid var(--gray100);':'';
     return `<div data-nombre="${u.nombre}" style="${border}padding:14px 16px;cursor:pointer;transition:background .12s"
@@ -1043,9 +1043,9 @@ window.cargarPerfilEmpleado=async()=>{
   items.sort((a,b)=>b.fecha.localeCompare(a.fecha));
   filtRegs=items.map(r=>({...r,userId:perfilEmpUID}));
 
-  // Resumen
+  // Resumen — solo HE aprobadas
   const viaticos=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
-  const totalMin=items.reduce((a,r)=>a+(r.minHE||0),0);
+  const totalMin=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHE||0),0);
   const hrsHE=Math.floor(totalMin/60), minsHE=totalMin%60;
   const pendHE=items.filter(r=>r.he&&r.estadoHE==='pendiente').length;
   $('adEmpResumen').innerHTML=`
@@ -1118,43 +1118,62 @@ window.aprobarHEyRefresh=async(uid,key)=>{
 
 window.buscarRegs=async()=>{}; // kept for exportar compatibility
 
-window.exportar=()=>{
-  if(!filtRegs.length){alert('Primero realiza una búsqueda.');return;}
+window.exportar=async()=>{
+  if(!filtRegs.length){alert('Primero selecciona un empleado y un mes.');return;}
 
-  const h=['Fecha','Empleado','Cargo','Actividades','Viático','Estado Viático','Horas Extras','HE Inicio','HE Fin','Justificación HE','Estado HE','Motivo Anulación Viático','Motivo Rechazo HE'];
+  // Load SheetJS dynamically
+  if(!window.XLSX){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload=res; s.onerror=rej; document.head.appendChild(s);
+    });
+  }
+
+  const wb=XLSX.utils.book_new();
+
+  // ── Hoja 1: Detalle ──
+  const headers=['Fecha','Empleado','Cargo','Entrada','Salida','Actividades',
+    'Viático','Estado Viático','Horas Extras','Mins HE','Justificación HE',
+    'Estado HE','Motivo Anulación Viático','Motivo Rechazo HE'];
+
   const rows=filtRegs.map(r=>[
-    r.fecha, r.userName||r.userId, r.cargo||'', r.actividades,
-    r.viatico?'Sí':'No', r.estadoViatico||'na',
-    r.he?'Sí':'No', r.heInicio||'', r.heFin||'', r.heJustif||'',
-    r.estadoHE||'na', r.motivoRechazoViatico||'', r.motivoRechazoHE||''
+    r.fecha, r.userName||r.userId, r.cargo||'',
+    r.horaEntrada||'', r.horaSalida||'', r.actividades,
+    r.viatico?'Sí':'No', r.estadoViatico||'—',
+    r.he?'Sí':'No', r.estadoHE==='aprobado'?(r.minHE||0):0,
+    r.heJustif||'', r.estadoHE||'—',
+    r.motivoRechazoViatico||'', r.motivoRechazoHE||''
   ]);
 
-  // Totales por empleado
+  const ws1=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  // Column widths
+  ws1['!cols']=[{wch:12},{wch:30},{wch:32},{wch:9},{wch:9},{wch:45},
+    {wch:9},{wch:16},{wch:9},{wch:10},{wch:35},{wch:16},{wch:30},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Detalle');
+
+  // ── Hoja 2: Resumen por empleado ──
   const totMap={};
   for(const r of filtRegs){
     const n=r.userName||r.userId;
-    if(!totMap[n]) totMap[n]={nombre:n,cargo:r.cargo||'',viaticos:0,he:0,minHE:0};
-    if(r.viatico) totMap[n].viaticos++;
-    if(r.he){
-      totMap[n].he++;
-      if(r.heInicio&&r.heFin){
-        const[h1,m1]=r.heInicio.split(':').map(Number);
-        const[h2,m2]=r.heFin.split(':').map(Number);
-        totMap[n].minHE+=((h2*60+m2)-(h1*60+m1));
-      }
+    if(!totMap[n]) totMap[n]={nombre:n,cargo:r.cargo||'',viaticos:0,heDias:0,minHE:0};
+    if(r.viatico&&r.estadoViatico!=='rechazado') totMap[n].viaticos++;
+    if(r.he&&r.estadoHE==='aprobado'){
+      totMap[n].heDias++;
+      totMap[n].minHE+=(r.minHE||0);
     }
   }
-  const totRows=Object.values(totMap).map(t=>{
-    const hrs=Math.floor(t.minHE/60),mins=t.minHE%60;
-    return ['','','','TOTAL — '+t.nombre, t.viaticos+' viáticos', t.he+' días HE', hrs+'h '+mins+'m total HE','','','',''];
+  const resHeaders=['Empleado','Cargo','Viáticos','Días con HE aprobada','Total horas extras'];
+  const resRows=Object.values(totMap).map(t=>{
+    const hrs=Math.floor(t.minHE/60), mins=t.minHE%60;
+    return [t.nombre, t.cargo, t.viaticos, t.heDias, hrs>0?`${hrs}h ${mins}m`:(mins>0?`${mins}m`:'—')];
   });
+  const ws2=XLSX.utils.aoa_to_sheet([resHeaders,...resRows]);
+  ws2['!cols']=[{wch:32},{wch:32},{wch:10},{wch:22},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumen');
 
-  const sepRow=Array(11).fill('---');
-  const allRows=[h,...rows,sepRow,['','','','RESUMEN POR EMPLEADO','VIÁTICOS','DÍAS HE','TOTAL HRS HE','','','',''],...totRows];
-  const csv=allRows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
-  a.download=`registro-planilla-${today()}.csv`;a.click();
+  const nombre=filtRegs[0]?.userName||'empleado';
+  XLSX.writeFile(wb, `registro-planilla-${nombre.split(' ')[0]}-${today()}.xlsx`);
 };
 
 window.openDet=async(uid,key,isAdmin)=>{
