@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0a3d6b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Registro Planilla">
-<title>Registro de Planilla \u2014 Delsur INNOVA</title>
+<title>Registro de Planilla — Delsur INNOVA</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -44,11 +44,11 @@
   ::-webkit-scrollbar-track { background: var(--gray100); }
   ::-webkit-scrollbar-thumb { background: var(--gray200); border-radius: 3px; }
 
-  /* \u2500\u2500 SCREENS \u2500\u2500 */
+  /* ── SCREENS ── */
   .screen { display: none; min-height: 100vh; flex-direction: column; }
   .screen.active { display: flex; }
 
-  /* \u2500\u2500 LOGIN \u2500\u2500 */
+  /* ── LOGIN ── */
   #loginScreen {
     background: linear-gradient(145deg, var(--navy) 0%, var(--navy2) 40%, var(--blue) 100%);
     align-items: center; justify-content: center;
@@ -97,7 +97,7 @@
   .login-subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; }
   .login-divider { height: 1px; background: var(--gray100); margin: 0 0 24px; }
 
-  /* \u2500\u2500 INPUTS \u2500\u2500 */
+  /* ── INPUTS ── */
   .field-group { margin-bottom: 16px; }
   .field-label {
     display: block; font-size: 11px; font-weight: 600;
@@ -127,7 +127,7 @@
   select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a7a96' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
   select option { background: white; }
 
-  /* \u2500\u2500 BUTTONS \u2500\u2500 */
+  /* ── BUTTONS ── */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     padding: 10px 20px; border-radius: var(--radius);
@@ -137,4 +137,957 @@
     text-decoration: none; white-space: nowrap;
   }
   .btn-primary { background: var(--navy); color: white; }
-  .btn-primary:hover { background: var(--navy
+  .btn-primary:hover { background: var(--navy2); box-shadow: 0 4px 12px rgba(10,61,107,0.3); }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover { background: var(--green2); box-shadow: 0 4px 12px rgba(0,135,90,0.3); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { background: #c0271d; }
+  .btn-warn { background: var(--warn); color: white; }
+  .btn-outline { background: white; color: var(--navy); border: 1.5px solid var(--gray200); }
+  .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1.5px solid var(--gray200); }
+  .btn-ghost:hover { border-color: var(--blue2); color: var(--blue); background: var(--sky); }
+  .btn-full { width: 100%; }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .btn-xs { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--navy);
+    height: 58px; padding: 0 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(10,61,107,0.2);
+  }
+  .topbar-brand { display: flex; align-items: center; gap: 10px; }
+  .topbar-icon {
+    width: 30px; height: 30px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .topbar-name { font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.3px; }
+  .topbar-name span { color: #5de8b0; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .topbar-user-info { text-align: right; }
+  .topbar-username { font-size: 13px; font-weight: 600; color: white; display: block; }
+  .topbar-role { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; }
+  .role-admin { color: #5de8b0; }
+  .role-emp { color: rgba(255,255,255,0.6); }
+  .btn-logout {
+    background: rgba(255,255,255,0.1); color: white;
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 7px;
+    padding: 6px 12px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; font-family: var(--sans);
+  }
+  .btn-logout:hover { background: rgba(255,255,255,0.2); }
+
+  /* ── TABS ── */
+  .tabs {
+    background: white;
+    border-bottom: 2px solid var(--gray100);
+    display: flex; padding: 0 20px; gap: 2px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 18px;
+    font-size: 13px; font-weight: 500;
+    color: var(--text2); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px; white-space: nowrap;
+    background: none; border-top: none;
+    border-left: none; border-right: none;
+    font-family: var(--sans); transition: all 0.15s;
+  }
+  .tab:hover { color: var(--navy); }
+  .tab.active { color: var(--navy); border-bottom-color: var(--green); font-weight: 600; }
+
+  /* ── CONTENT ── */
+  .content { padding: 24px 20px; flex: 1; max-width: 960px; width: 100%; margin: 0 auto; }
+
+  /* ── CARDS ── */
+  .card {
+    background: white;
+    border: 1px solid var(--gray200);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text2); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .card-title::before {
+    content: '';
+    display: inline-block; width: 3px; height: 14px;
+    background: var(--green); border-radius: 2px;
+  }
+
+  /* ── STAT GRID ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-card {
+    background: white; border: 1px solid var(--gray200);
+    border-radius: 12px; padding: 18px 20px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--blue2);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow2); }
+  .stat-card.green { border-left-color: var(--green); }
+  .stat-card.warn { border-left-color: var(--warn); }
+  .stat-card.danger { border-left-color: var(--danger); }
+  .stat-val { font-family: var(--mono); font-size: 30px; font-weight: 600; color: var(--navy); line-height: 1; }
+  .stat-card.green .stat-val { color: var(--green); }
+  .stat-card.warn .stat-val { color: var(--warn); }
+  .stat-card.danger .stat-val { color: var(--danger); }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 6px; font-weight: 500; }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: var(--gray50); }
+  th {
+    text-align: left; padding: 10px 14px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text2); border-bottom: 1px solid var(--gray200);
+  }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--gray100); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--sky); }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-pending { background: var(--warnlt); color: var(--warn); }
+  .badge-approved { background: var(--greenlt); color: var(--green); }
+  .badge-rejected { background: var(--dangerlt); color: var(--danger); }
+  .badge-yes { background: var(--sky); color: var(--blue); }
+  .badge-no { background: var(--gray100); color: var(--gray400); }
+  .badge-active { background: var(--greenlt); color: var(--green); }
+  .badge-inactive { background: var(--dangerlt); color: var(--danger); }
+
+  /* ── TOGGLE ── */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--gray100);
+  }
+  .toggle-row:last-of-type { border-bottom: none; }
+  .toggle-label { font-size: 14px; font-weight: 500; }
+  .toggle-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .toggle {
+    position: relative; width: 46px; height: 25px;
+    background: var(--gray200); border-radius: 13px;
+    cursor: pointer; transition: background 0.25s; flex-shrink: 0;
+  }
+  .toggle.on { background: var(--green); }
+  .toggle::after {
+    content: ''; position: absolute;
+    width: 19px; height: 19px; background: white;
+    border-radius: 50%; top: 3px; left: 3px;
+    transition: left 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { left: 24px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(10,30,60,0.55);
+    backdrop-filter: blur(3px);
+    z-index: 200; align-items: center;
+    justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 16px;
+    padding: 28px; width: 100%; max-width: 500px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+    animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-title { font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+
+  /* ── ALERTS ── */
+  .alert { padding: 11px 15px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; font-weight: 500; }
+  .alert-error { background: var(--dangerlt); color: var(--danger); border-left: 3px solid var(--danger); }
+  .alert-success { background: var(--greenlt); color: var(--green); border-left: 3px solid var(--green); }
+  .alert-info { background: var(--sky); color: var(--blue); border-left: 3px solid var(--blue2); }
+
+  /* ── EMPTY ── */
+  .empty { text-align: center; padding: 52px 20px; color: var(--text2); }
+  .empty-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-text { font-size: 14px; }
+
+  /* ── TIME ROW ── */
+  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── FILTER ROW ── */
+  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+  .filter-row .field-group { margin-bottom: 0; flex: 1; min-width: 130px; }
+
+  /* ── SECTION HEADER ── */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .section-title { font-size: 18px; font-weight: 700; color: var(--navy); }
+
+  /* ── RECORD CARD ── */
+  .rec-card {
+    background: white; border: 1px solid var(--gray200);
+    border-radius: 10px; padding: 14px 16px;
+    margin-bottom: 10px; cursor: pointer;
+    transition: all 0.15s; box-shadow: var(--shadow);
+  }
+  .rec-card:hover { border-color: var(--blue2); box-shadow: var(--shadow2); transform: translateY(-1px); }
+  .rec-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
+  .rec-date { font-family: var(--mono); font-size: 13px; color: var(--navy); font-weight: 600; }
+  .rec-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+  .rec-desc { font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── USER ROW ── */
+  .user-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 0; border-bottom: 1px solid var(--gray100); flex-wrap: wrap; gap: 10px;
+  }
+  .user-row:last-child { border-bottom: none; }
+  .user-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .user-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .user-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+
+  /* ── DETAIL ROWS ── */
+  .detail-row { padding: 11px 0; border-bottom: 1px solid var(--gray100); display: flex; flex-direction: column; gap: 3px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-key { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text2); }
+  .detail-val { font-size: 14px; color: var(--text); }
+
+  /* ── SPINNER ── */
+  .spinner {
+    width: 24px; height: 24px;
+    border: 2.5px solid var(--gray200);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.65s linear infinite;
+    margin: 24px auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── HE EXTRA ── */
+  .he-extra {
+    background: var(--sky); border-radius: 8px;
+    padding: 16px; margin-top: 14px;
+    border: 1px solid rgba(26,111,186,0.15);
+  }
+
+  /* ── PAGE HEADER (inside content) ── */
+  .page-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+    border-radius: 12px; padding: 20px 22px;
+    margin-bottom: 20px; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .page-header-title { font-size: 18px; font-weight: 700; }
+  .page-header-sub { font-size: 13px; opacity: 0.75; margin-top: 2px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 500px) {
+    .content { padding: 14px; }
+    .login-card { padding: 28px 20px; margin: 16px; }
+    .time-row { grid-template-columns: 1fr; }
+    .topbar-user-info { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════ LOGIN ════════ -->
+<div id="loginScreen" class="screen active">
+  <div class="login-glow"></div>
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">Delsur <span>INNOVA</span></div>
+      </div>
+      <div class="login-subtitle">Registro de Planilla — Control de actividades</div>
+    </div>
+    <div class="login-divider"></div>
+    <div id="loginAlert"></div>
+    <div class="field-group">
+      <label class="field-label">Usuario</label>
+      <input type="text" id="loginUser" placeholder="tu.usuario" autocomplete="off">
+    </div>
+    <div class="field-group">
+      <label class="field-label">PIN de acceso</label>
+      <input type="password" id="loginPin" placeholder="••••" maxlength="8" inputmode="numeric">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:4px; padding:12px; font-size:15px;">
+      Ingresar →
+    </button>
+  </div>
+</div>
+
+<!-- ════════ EMPLEADO ════════ -->
+<div id="employeeScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon">⚡</div>
+      <div class="topbar-name">Delsur <span>INNOVA</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-user-info">
+        <span class="topbar-username" id="empUsername"></span>
+        <span class="topbar-role role-emp">Empleado</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="empTab('registro',this)">📝 Nuevo Registro</button>
+    <button class="tab" onclick="empTab('historial',this)">📋 Mi Historial</button>
+  </div>
+  <div class="content">
+    <!-- REGISTRO -->
+    <div id="empRegistro">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">Registro de actividades</div>
+          <div class="page-header-sub" id="empFechaLabel">Hoy</div>
+        </div>
+      </div>
+      <div class="card">
+        <div id="empFormAlert"></div>
+        <div class="field-group">
+          <label class="field-label">Fecha</label>
+          <input type="date" id="empFecha">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Actividades realizadas</label>
+          <textarea id="empActividades" placeholder="Describe detalladamente las actividades que realizaste..."></textarea>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">💰 Viático</div>
+            <div class="toggle-sub">Activar si realizaste salida a campo</div>
+          </div>
+          <div class="toggle" id="toggleViatico" onclick="toggleField('viatico')"></div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">⏱ Horas Extras</div>
+            <div class="toggle-sub">Activar si trabajaste fuera del horario</div>
+          </div>
+          <div class="toggle" id="toggleHE" onclick="toggleField('he')"></div>
+        </div>
+        <div id="heExtra" class="he-extra" style="display:none">
+          <div class="field-group">
+            <label class="field-label">Justificación de horas extras</label>
+            <textarea id="empHEJustif" placeholder="Describe el motivo de las horas extras..."></textarea>
+          </div>
+          <div class="time-row">
+            <div class="field-group">
+              <label class="field-label">Hora inicio</label>
+              <input type="time" id="empHEInicio">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Hora fin</label>
+              <input type="time" id="empHEFin">
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:18px; padding:12px" onclick="guardarRegistro()">
+          Guardar registro
+        </button>
+      </div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div id="empHistorial" style="display:none">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">Mi historial</div>
+          <div class="page-header-sub">Últimos registros enviados</div>
+        </div>
+      </div>
+      <div id="empHistorialList"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ADMIN ════════ -->
+<div id="adminScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon">⚡</div>
+      <div class="topbar-name">Delsur <span>INNOVA</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-user-info">
+        <span class="topbar-username">Administrador</span>
+        <span class="topbar-role role-admin">Admin</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="adminTab('dashboard',this)">📊 Dashboard</button>
+    <button class="tab" onclick="adminTab('registros',this)">📁 Registros</button>
+    <button class="tab" onclick="adminTab('pendientes',this)">⏳ Pendientes</button>
+    <button class="tab" onclick="adminTab('usuarios',this)">👥 Usuarios</button>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="adminDashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">Registro de Planilla</div>
+          <div class="page-header-sub" id="dashFecha"></div>
+        </div>
+      </div>
+      <div class="stat-grid" id="dashStats"><div class="spinner"></div></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; flex-wrap:wrap;" id="dashGridCards">
+        <div class="card" style="grid-column:1">
+          <div class="card-title">Registros de hoy</div>
+          <div id="dashHoy"><div class="spinner"></div></div>
+        </div>
+        <div class="card" style="grid-column:2">
+          <div class="card-title">Sin registro hoy</div>
+          <div id="dashSinReg"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REGISTROS -->
+    <div id="adminRegistros" style="display:none">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">Registros del equipo</div>
+          <div class="page-header-sub">Busca y exporta registros</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Filtros de búsqueda</div>
+        <div class="filter-row">
+          <div class="field-group">
+            <label class="field-label">Empleado</label>
+            <select id="filtroEmpleado"><option value="">Todos</option></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Desde</label>
+            <input type="date" id="filtroDesde">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Hasta</label>
+            <input type="date" id="filtroHasta">
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="buscarRegistros()">🔍 Buscar</button>
+          <button class="btn btn-green" onclick="exportarExcel()">📥 Exportar Excel</button>
+        </div>
+      </div>
+      <div id="adminRegList">
+        <div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Aplica los filtros para buscar registros</div></div>
+      </div>
+    </div>
+
+    <!-- PENDIENTES -->
+    <div id="adminPendientes" style="display:none">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">Pendientes de aprobación</div>
+          <div class="page-header-sub">Viáticos y horas extras por revisar</div>
+        </div>
+      </div>
+      <div id="pendientesList"><div class="spinner"></div></div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div id="adminUsuarios" style="display:none">
+      <div class="page-header" style="justify-content:space-between">
+        <div>
+          <div class="page-header-title">Gestión de usuarios</div>
+          <div class="page-header-sub">Crear y administrar empleados</div>
+        </div>
+        <button class="btn btn-green btn-sm" onclick="abrirModalUsuario()">+ Nuevo empleado</button>
+      </div>
+      <div class="card" id="usuariosList"><div class="spinner"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════ MODAL DETALLE ════════ -->
+<div class="modal-overlay" id="modalDetalle">
+  <div class="modal">
+    <div class="modal-title">📄 Detalle del registro</div>
+    <div id="modalDetalleContent"></div>
+    <div id="modalDetalleActions" class="modal-actions"></div>
+    <div style="display:flex; justify-content:flex-end; margin-top:8px">
+      <button class="btn btn-ghost" onclick="cerrarModal('modalDetalle')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL USUARIO ════════ -->
+<div class="modal-overlay" id="modalUsuario">
+  <div class="modal">
+    <div class="modal-title" id="modalUsuarioTitle">Nuevo empleado</div>
+    <div id="modalUsuarioAlert"></div>
+    <div class="field-group">
+      <label class="field-label">Nombre completo</label>
+      <input type="text" id="uNombre" placeholder="Juan Pérez">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Usuario de acceso</label>
+      <input type="text" id="uUsername" placeholder="juan.perez" autocomplete="off">
+    </div>
+    <div class="field-group">
+      <label class="field-label">PIN (4–8 dígitos)</label>
+      <input type="password" id="uPin" placeholder="••••" maxlength="8" inputmode="numeric">
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">Al editar, dejar vacío para no cambiar el PIN</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cerrarModal('modalUsuario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarUsuario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL RECHAZAR ════════ -->
+<div class="modal-overlay" id="modalRechazar">
+  <div class="modal">
+    <div class="modal-title">✗ Rechazar registro</div>
+    <div class="field-group">
+      <label class="field-label">Motivo del rechazo</label>
+      <textarea id="rechazarMotivo" placeholder="Describe el motivo del rechazo..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cerrarModal('modalRechazar')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarRechazo()">Confirmar rechazo</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
+  authDomain: "daily-e4f86.firebaseapp.com",
+  databaseURL: "https://daily-e4f86-default-rtdb.firebaseio.com",
+  projectId: "daily-e4f86",
+  storageBucket: "daily-e4f86.firebasestorage.app",
+  messagingSenderId: "205856894888",
+  appId: "1:205856894888:web:998122bcf83d63da15379d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ── STATE ──────────────────────────────────────────────
+let currentUser = null;
+let editingUserId = null;
+let rechazarKey = null;
+let registrosFiltrados = [];
+
+// ── HELPERS ────────────────────────────────────────────
+const today = () => new Date().toISOString().split('T')[0];
+const daysAgo = n => { const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; };
+const fmtDate = d => { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
+const fmtDateLong = d => {
+  if(!d) return '';
+  const dt = new Date(d+'T12:00:00');
+  return dt.toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+};
+const show = id => { const el=document.getElementById(id); if(el) el.style.display=''; };
+const hide = id => { const el=document.getElementById(id); if(el) el.style.display='none'; };
+const showScreen = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); };
+
+// ── INIT ADMIN ─────────────────────────────────────────
+async function initAdmin() {
+  try {
+    const snap = await get(ref(db,'users/admin'));
+    if (!snap.exists()) {
+      await set(ref(db,'users/admin'),{ nombre:'Administrador', username:'admin', pin:'1234', role:'admin', activo:true });
+    }
+  } catch(e) { console.warn('initAdmin:', e); }
+}
+initAdmin();
+
+// ── LOGIN ──────────────────────────────────────────────
+window.doLogin = async function() {
+  const username = document.getElementById('loginUser').value.trim().toLowerCase();
+  const pin = document.getElementById('loginPin').value.trim();
+  const alertEl = document.getElementById('loginAlert');
+  alertEl.innerHTML = '';
+  if (!username || !pin) { alertEl.innerHTML='<div class="alert alert-error">Ingresa tu usuario y PIN.</div>'; return; }
+  const snap = await get(ref(db,'users'));
+  if (!snap.exists()) { alertEl.innerHTML='<div class="alert alert-error">Error de conexión.</div>'; return; }
+  let found = null;
+  snap.forEach(c => { const u=c.val(); if(u.username===username && String(u.pin)===String(pin)) found={id:c.key,...u}; });
+  if (!found) { alertEl.innerHTML='<div class="alert alert-error">Usuario o PIN incorrecto.</div>'; return; }
+  if (!found.activo) { alertEl.innerHTML='<div class="alert alert-error">Usuario inactivo. Contacta al administrador.</div>'; return; }
+  currentUser = found;
+  if (found.role==='admin') { showScreen('adminScreen'); loadDashboard(); }
+  else { document.getElementById('empUsername').textContent=found.nombre; showScreen('employeeScreen'); initEmpForm(); }
+};
+
+window.doLogout = function() {
+  currentUser=null;
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPin').value='';
+  document.getElementById('loginAlert').innerHTML='';
+  showScreen('loginScreen');
+};
+
+document.getElementById('loginPin').addEventListener('keydown', e => { if(e.key==='Enter') window.doLogin(); });
+
+// ── EMPLOYEE ───────────────────────────────────────────
+window.empTab = function(tab, btn) {
+  document.querySelectorAll('#employeeScreen .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  hide('empRegistro'); hide('empHistorial');
+  if(tab==='registro') show('empRegistro');
+  else { show('empHistorial'); loadHistorial(); }
+};
+
+function initEmpForm() {
+  document.getElementById('empFecha').value = today();
+  document.getElementById('empFecha').max = today();
+  document.getElementById('empFecha').min = daysAgo(7);
+  document.getElementById('empFechaLabel').textContent = fmtDateLong(today());
+  document.getElementById('empActividades').value='';
+  document.getElementById('empHEJustif').value='';
+  document.getElementById('empHEInicio').value='';
+  document.getElementById('empHEFin').value='';
+  document.getElementById('toggleViatico').classList.remove('on');
+  document.getElementById('toggleHE').classList.remove('on');
+  hide('heExtra');
+  document.getElementById('empFormAlert').innerHTML='';
+}
+
+const empFechaEl = document.getElementById('empFecha');
+if (empFechaEl) {
+  empFechaEl.addEventListener('change', function() {
+    const lbl = document.getElementById('empFechaLabel');
+    if (lbl) lbl.textContent = fmtDateLong(this.value);
+  });
+}
+
+window.toggleField = function(field) {
+  if(field==='viatico') { document.getElementById('toggleViatico').classList.toggle('on'); }
+  else {
+    const tog=document.getElementById('toggleHE'); tog.classList.toggle('on');
+    document.getElementById('heExtra').style.display = tog.classList.contains('on') ? 'block' : 'none';
+  }
+};
+
+window.guardarRegistro = async function() {
+  const alertEl = document.getElementById('empFormAlert');
+  alertEl.innerHTML='';
+  const fecha = document.getElementById('empFecha').value;
+  const actividades = document.getElementById('empActividades').value.trim();
+  const viatico = document.getElementById('toggleViatico').classList.contains('on');
+  const he = document.getElementById('toggleHE').classList.contains('on');
+  if (!fecha||!actividades) { alertEl.innerHTML='<div class="alert alert-error">Completa la fecha y las actividades realizadas.</div>'; return; }
+  if (he) {
+    const justif=document.getElementById('empHEJustif').value.trim();
+    const inicio=document.getElementById('empHEInicio').value;
+    const fin=document.getElementById('empHEFin').value;
+    if (!justif||!inicio||!fin) { alertEl.innerHTML='<div class="alert alert-error">Completa la justificación y horas de las horas extras.</div>'; return; }
+    if (inicio>=fin) { alertEl.innerHTML='<div class="alert alert-error">La hora de fin debe ser mayor a la de inicio.</div>'; return; }
+  }
+  // Duplicado
+  const snap = await get(ref(db,`registros/${currentUser.id}`));
+  if (snap.exists()) {
+    let dup=false; snap.forEach(c=>{ if(c.val().fecha===fecha) dup=true; });
+    if(dup) { alertEl.innerHTML='<div class="alert alert-error">Ya tienes un registro para esta fecha.</div>'; return; }
+  }
+  const data = {
+    fecha, actividades, viatico, he,
+    heJustif: he?document.getElementById('empHEJustif').value.trim():'',
+    heInicio: he?document.getElementById('empHEInicio').value:'',
+    heFin: he?document.getElementById('empHEFin').value:'',
+    estado:'pendiente', creadoEn:Date.now(),
+    userId:currentUser.id, userName:currentUser.nombre
+  };
+  await push(ref(db,`registros/${currentUser.id}`), data);
+  alertEl.innerHTML='<div class="alert alert-success">✓ Registro guardado correctamente.</div>';
+  initEmpForm();
+};
+
+async function loadHistorial() {
+  const listEl = document.getElementById('empHistorialList');
+  listEl.innerHTML='<div class="spinner"></div>';
+  const snap = await get(ref(db,`registros/${currentUser.id}`));
+  if(!snap.exists()) { listEl.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No tienes registros aún</div></div>'; return; }
+  const items=[];
+  snap.forEach(c=>items.push({key:c.key,...c.val()}));
+  items.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  listEl.innerHTML = items.map(r=>`
+    <div class="rec-card" onclick="verDetalle('${currentUser.id}','${r.key}',false)">
+      <div class="rec-card-header">
+        <div class="rec-date">${fmtDate(r.fecha)}</div>
+        <div class="rec-badges">
+          ${r.viatico?'<span class="badge badge-yes">💰 Viático</span>':''}
+          ${r.he?`<span class="badge badge-yes">⏱ HE</span>`:''}
+          <span class="badge badge-${r.estado}">${r.estado==='pendiente'?'⏳ Pendiente':r.estado==='aprobado'?'✓ Aprobado':'✗ Rechazado'}</span>
+        </div>
+      </div>
+      <div class="rec-desc">${r.actividades}</div>
+    </div>`).join('');
+}
+
+// ── ADMIN ──────────────────────────────────────────────
+window.adminTab = function(tab, btn) {
+  document.querySelectorAll('#adminScreen .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['adminDashboard','adminRegistros','adminPendientes','adminUsuarios'].forEach(hide);
+  if(tab==='dashboard') { show('adminDashboard'); loadDashboard(); }
+  if(tab==='registros') { show('adminRegistros'); loadFiltroEmpleados(); }
+  if(tab==='pendientes') { show('adminPendientes'); loadPendientes(); }
+  if(tab==='usuarios') { show('adminUsuarios'); loadUsuarios(); }
+};
+
+async function getAllRegistros() {
+  const snap=await get(ref(db,'registros'));
+  const all=[];
+  if(!snap.exists()) return all;
+  snap.forEach(u=>u.forEach(r=>all.push({key:r.key,userId:u.key,...r.val()})));
+  return all;
+}
+
+async function getUsers() {
+  const snap=await get(ref(db,'users'));
+  const users=[];
+  if(!snap.exists()) return users;
+  snap.forEach(c=>users.push({id:c.key,...c.val()}));
+  return users;
+}
+
+async function loadDashboard() {
+  const now = new Date();
+  document.getElementById('dashFecha').textContent = now.toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const [allRegs, allUsers] = await Promise.all([getAllRegistros(), getUsers()]);
+  const todayStr=today();
+  const regsHoy=allRegs.filter(r=>r.fecha===todayStr);
+  const pendientes=allRegs.filter(r=>r.estado==='pendiente');
+  const empleados=allUsers.filter(u=>u.role!=='admin'&&u.activo);
+  const conHoy=new Set(regsHoy.map(r=>r.userId));
+
+  document.getElementById('dashStats').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${empleados.length}</div><div class="stat-label">Empleados activos</div></div>
+    <div class="stat-card green"><div class="stat-val">${regsHoy.length}</div><div class="stat-label">Registros hoy</div></div>
+    <div class="stat-card warn"><div class="stat-val">${pendientes.length}</div><div class="stat-label">Pendientes</div></div>
+    <div class="stat-card danger"><div class="stat-val">${empleados.length-conHoy.size}</div><div class="stat-label">Sin registro hoy</div></div>`;
+
+  document.getElementById('dashHoy').innerHTML = regsHoy.length===0
+    ? '<div class="empty" style="padding:24px"><div class="empty-text">Nadie ha registrado hoy</div></div>'
+    : `<div class="table-wrap"><table><thead><tr><th>Empleado</th><th>Viático</th><th>H.E.</th><th>Estado</th></tr></thead><tbody>
+      ${regsHoy.map(r=>`<tr>
+        <td style="font-weight:500">${r.userName||r.userId}</td>
+        <td>${r.viatico?'<span class="badge badge-yes">Sí</span>':'<span class="badge badge-no">No</span>'}</td>
+        <td>${r.he?`<span class="badge badge-yes">${r.heInicio}–${r.heFin}</span>`:'<span class="badge badge-no">No</span>'}</td>
+        <td><span class="badge badge-${r.estado}">${r.estado}</span></td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+
+  const sinReg=empleados.filter(u=>!conHoy.has(u.id));
+  document.getElementById('dashSinReg').innerHTML = sinReg.length===0
+    ? '<div class="empty" style="padding:24px"><div class="empty-text">✓ Todos registraron hoy</div></div>'
+    : sinReg.map(u=>`<div style="padding:9px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:7px;height:7px;border-radius:50%;background:var(--danger);flex-shrink:0;display:inline-block"></span>${u.nombre}</div>`).join('');
+}
+
+async function loadPendientes() {
+  const listEl=document.getElementById('pendientesList');
+  listEl.innerHTML='<div class="spinner"></div>';
+  const all=await getAllRegistros();
+  const pend=all.filter(r=>r.estado==='pendiente').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(pend.length===0) { listEl.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Sin registros pendientes</div></div>'; return; }
+  listEl.innerHTML=pend.map(r=>`
+    <div class="card" style="border-left:4px solid var(--warn)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+        <div>
+          <div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${fmtDateLong(r.fecha)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${r.viatico?'<span class="badge badge-yes">💰 Viático</span>':''}
+          ${r.he?`<span class="badge badge-yes">⏱ ${r.heInicio}–${r.heFin}</span>`:''}
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">${r.actividades}</div>
+      ${r.he?`<div style="font-size:12px;background:var(--sky);padding:10px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justificación HE:</b> ${r.heJustif}</div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-green btn-sm" onclick="aprobar('${r.userId}','${r.key}')">✓ Aprobar</button>
+        <button class="btn btn-danger btn-sm" onclick="abrirRechazar('${r.userId}','${r.key}')">✗ Rechazar</button>
+        <button class="btn btn-ghost btn-sm" onclick="verDetalle('${r.userId}','${r.key}',true)">Ver detalle</button>
+      </div>
+    </div>`).join('');
+}
+
+window.aprobar = async function(userId,key) {
+  await update(ref(db,`registros/${userId}/${key}`),{estado:'aprobado',revisadoEn:Date.now()});
+  loadPendientes();
+};
+
+window.abrirRechazar = function(userId,key) {
+  rechazarKey={userId,key};
+  document.getElementById('rechazarMotivo').value='';
+  document.getElementById('modalRechazar').classList.add('open');
+};
+
+window.confirmarRechazo = async function() {
+  const motivo=document.getElementById('rechazarMotivo').value.trim();
+  if(!motivo) return;
+  await update(ref(db,`registros/${rechazarKey.userId}/${rechazarKey.key}`),{estado:'rechazado',motivoRechazo:motivo,revisadoEn:Date.now()});
+  cerrarModal('modalRechazar');
+  loadPendientes();
+};
+
+async function loadFiltroEmpleados() {
+  const users=await getUsers();
+  const sel=document.getElementById('filtroEmpleado');
+  sel.innerHTML='<option value="">Todos los empleados</option>';
+  users.filter(u=>u.role!=='admin').forEach(u=>{ sel.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`; });
+  document.getElementById('filtroDesde').value=daysAgo(30);
+  document.getElementById('filtroHasta').value=today();
+}
+
+window.buscarRegistros = async function() {
+  const listEl=document.getElementById('adminRegList');
+  listEl.innerHTML='<div class="spinner"></div>';
+  const empId=document.getElementById('filtroEmpleado').value;
+  const desde=document.getElementById('filtroDesde').value;
+  const hasta=document.getElementById('filtroHasta').value;
+  let all=await getAllRegistros();
+  if(empId) all=all.filter(r=>r.userId===empId);
+  if(desde) all=all.filter(r=>r.fecha>=desde);
+  if(hasta) all=all.filter(r=>r.fecha<=hasta);
+  all.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  registrosFiltrados=all;
+  if(all.length===0) { listEl.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Sin resultados para los filtros aplicados</div></div>'; return; }
+  listEl.innerHTML=`
+    <div class="card">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">${all.length} registro(s) encontrado(s)</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Fecha</th><th>Empleado</th><th>Viático</th><th>H. Extras</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        ${all.map(r=>`<tr>
+          <td style="font-family:var(--mono);font-size:12px;font-weight:600">${fmtDate(r.fecha)}</td>
+          <td style="font-weight:500">${r.userName||r.userId}</td>
+          <td>${r.viatico?'<span class="badge badge-yes">Sí</span>':'<span class="badge badge-no">No</span>'}</td>
+          <td>${r.he?`<span class="badge badge-yes">${r.heInicio}–${r.heFin}</span>`:'<span class="badge badge-no">No</span>'}</td>
+          <td><span class="badge badge-${r.estado}">${r.estado}</span></td>
+          <td><button class="btn btn-ghost btn-xs" onclick="verDetalle('${r.userId}','${r.key}',true)">Ver</button></td>
+        </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+};
+
+window.exportarExcel = function() {
+  if(!registrosFiltrados.length) { alert('Primero realiza una búsqueda.'); return; }
+  const headers=['Fecha','Empleado','Actividades','Viático','Horas Extras','HE Inicio','HE Fin','Justificación HE','Estado','Motivo Rechazo'];
+  const rows=registrosFiltrados.map(r=>[r.fecha,r.userName||r.userId,r.actividades,r.viatico?'Sí':'No',r.he?'Sí':'No',r.heInicio||'',r.heFin||'',r.heJustif||'',r.estado,r.motivoRechazo||'']);
+  const csv=[headers,...rows].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`registro-planilla-${today()}.csv`; a.click();
+};
+
+window.verDetalle = async function(userId,key,isAdmin) {
+  const snap=await get(ref(db,`registros/${userId}/${key}`));
+  if(!snap.exists()) return;
+  const r=snap.val();
+  document.getElementById('modalDetalleContent').innerHTML=`
+    <div class="detail-row"><div class="detail-key">Empleado</div><div class="detail-val">${r.userName||userId}</div></div>
+    <div class="detail-row"><div class="detail-key">Fecha</div><div class="detail-val">${fmtDateLong(r.fecha)}</div></div>
+    <div class="detail-row"><div class="detail-key">Actividades realizadas</div><div class="detail-val" style="white-space:pre-wrap;line-height:1.6">${r.actividades}</div></div>
+    <div class="detail-row"><div class="detail-key">Viático</div><div class="detail-val">${r.viatico?'<span class="badge badge-yes">Sí — Salida a campo</span>':'<span class="badge badge-no">No</span>'}</div></div>
+    <div class="detail-row"><div class="detail-key">Horas Extras</div><div class="detail-val">${r.he?`<span class="badge badge-yes">Sí — ${r.heInicio} a ${r.heFin}</span>`:'<span class="badge badge-no">No</span>'}</div></div>
+    ${r.he?`<div class="detail-row"><div class="detail-key">Justificación HE</div><div class="detail-val">${r.heJustif}</div></div>`:''}
+    <div class="detail-row"><div class="detail-key">Estado</div><div class="detail-val"><span class="badge badge-${r.estado}">${r.estado}</span></div></div>
+    ${r.motivoRechazo?`<div class="detail-row"><div class="detail-key">Motivo de rechazo</div><div class="detail-val" style="color:var(--danger)">${r.motivoRechazo}</div></div>`:''}`;
+  const actEl=document.getElementById('modalDetalleActions');
+  actEl.innerHTML = (isAdmin&&r.estado==='pendiente')
+    ? `<button class="btn btn-green btn-sm" onclick="aprobar('${userId}','${key}');cerrarModal('modalDetalle')">✓ Aprobar</button>
+       <button class="btn btn-danger btn-sm" onclick="cerrarModal('modalDetalle');abrirRechazar('${userId}','${key}')">✗ Rechazar</button>`
+    : '';
+  document.getElementById('modalDetalle').classList.add('open');
+};
+
+// USUARIOS
+async function loadUsuarios() {
+  const listEl=document.getElementById('usuariosList');
+  listEl.innerHTML='<div class="spinner"></div>';
+  const users=await getUsers();
+  const emps=users.filter(u=>u.role!=='admin');
+  if(!emps.length) { listEl.innerHTML='<div class="empty"><div class="empty-text">Sin empleados registrados</div></div>'; return; }
+  listEl.innerHTML=emps.map(u=>`
+    <div class="user-row">
+      <div>
+        <div class="user-name">${u.nombre} ${!u.activo?'<span class="badge badge-inactive">Inactivo</span>':'<span class="badge badge-active">Activo</span>'}</div>
+        <div class="user-meta">@${u.username}</div>
+      </div>
+      <div class="user-actions">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalUsuario('${u.id}')">✏ Editar</button>
+        <button class="btn btn-sm ${u.activo?'btn-danger':'btn-green'}" onclick="toggleActivo('${u.id}',${u.activo})">
+          ${u.activo?'Desactivar':'Activar'}
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+window.toggleActivo = async function(userId,activo) {
+  await update(ref(db,`users/${userId}`),{activo:!activo}); loadUsuarios();
+};
+
+window.abrirModalUsuario = function(userId) {
+  editingUserId=userId||null;
+  document.getElementById('modalUsuarioTitle').textContent=userId?'Editar empleado':'Nuevo empleado';
+  document.getElementById('modalUsuarioAlert').innerHTML='';
+  document.getElementById('uNombre').value='';
+  document.getElementById('uUsername').value='';
+  document.getElementById('uPin').value='';
+  if(userId) get(ref(db,`users/${userId}`)).then(snap=>{ if(snap.exists()){ const u=snap.val(); document.getElementById('uNombre').value=u.nombre; document.getElementById('uUsername').value=u.username; }});
+  document.getElementById('modalUsuario').classList.add('open');
+};
+
+window.guardarUsuario = async function() {
+  const alertEl=document.getElementById('modalUsuarioAlert');
+  const nombre=document.getElementById('uNombre').value.trim();
+  const username=document.getElementById('uUsername').value.trim().toLowerCase();
+  const pin=document.getElementById('uPin').value.trim();
+  if(!nombre||!username) { alertEl.innerHTML='<div class="alert alert-error">Nombre y usuario son obligatorios.</div>'; return; }
+  if(!editingUserId&&(!pin||pin.length<4)) { alertEl.innerHTML='<div class="alert alert-error">PIN mínimo de 4 dígitos.</div>'; return; }
+  const users=await getUsers();
+  if(users.find(u=>u.username===username&&u.id!==editingUserId)) { alertEl.innerHTML='<div class="alert alert-error">Ese usuario ya existe.</div>'; return; }
+  if(editingUserId) {
+    const data={nombre,username}; if(pin.length>=4) data.pin=pin;
+    await update(ref(db,`users/${editingUserId}`),data);
+  } else {
+    await set(push(ref(db,'users')),{nombre,username,pin,role:'empleado',activo:true});
+  }
+  cerrarModal('modalUsuario'); loadUsuarios();
+};
+
+window.cerrarModal = id => document.getElementById(id).classList.remove('open');
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); });
+</script>
+</body>
+</html>
