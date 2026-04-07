@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -498,11 +499,11 @@ window.empTab=(t,btn)=>{
 
 function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();f.min=ago(7);
-  $('empFechaLbl').textContent=fmtLong(today());
   ['empActs','heJust'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
-  ['empEntrada','empSalida'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
   const tv=$('togV'); if(tv) tv.classList.remove('on');
   hide('heBox'); hide('heResumen');
+  // Auto-fill horario del día de hoy
+  window.onFechaChange();
 }
 
 // Horario base según día de semana
@@ -557,7 +558,25 @@ function calcularHE(fecha, entrada, salida){
 
 window.onFechaChange = function(){
   const f=$('empFecha');
-  if(f){ $('empFechaLbl').textContent=fmtLong(f.value); }
+  if(!f) return;
+  $('empFechaLbl').textContent=fmtLong(f.value);
+
+  // Auto-fill horario según día
+  const base = horarioBase(f.value);
+  const d = new Date(f.value+'T12:00:00');
+  const dow = d.getDay();
+  const entrada=$('empEntrada');
+  const salida=$('empSalida');
+  if(entrada && salida){
+    if(dow===0||dow===6){
+      // Fin de semana: sugerencia 6:00-14:00
+      entrada.value='06:00';
+      salida.value='14:00';
+    } else {
+      entrada.value=base?.ini||'07:00';
+      salida.value=base?.fin||(dow===5?'16:00':'17:00');
+    }
+  }
   calcHE();
 };
 
