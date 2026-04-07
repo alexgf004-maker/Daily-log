@@ -983,31 +983,39 @@ window.cargarPerfilEmpleado=async()=>{
     return;
   }
 
-  l.innerHTML=items.map(r=>{
+  l.innerHTML=`<div class="card" style="padding:0;overflow:hidden">`+items.map((r,i)=>{
     const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
     const eh=r.estadoHE||(r.he?'pendiente':'na');
-    const horario=r.horaEntrada&&r.horaSalida?` · ${r.horaEntrada}–${r.horaSalida}`:'';
-    return `<div class="card" style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+    const horario=r.horaEntrada&&r.horaSalida?`${r.horaEntrada} – ${r.horaSalida}`:'—';
+    const heMin=r.minHE||0;
+    const heStr=heMin>0?(Math.floor(heMin/60)>0?Math.floor(heMin/60)+'h ':'')+heMin%60+'m extra':'';
+    const border=i>0?'border-top:1px solid var(--gray100);':'';
+    const pendiente=r.he&&eh==='pendiente';
+    return `<div style="${border}padding:16px;${pendiente?'border-left:3px solid var(--warn);':r.he&&eh==='aprobado'?'border-left:3px solid var(--green);':'border-left:3px solid transparent;'}">
+      <!-- Encabezado -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div>
-          <div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--blue)">${fmt(r.fecha)}<span style="font-weight:400;color:var(--text2)">${horario}</span></div>
-          ${r.minHE>0?`<div style="font-size:11px;color:var(--warn);margin-top:2px">⏱ ${Math.floor(r.minHE/60)>0?Math.floor(r.minHE/60)+'h ':''+(r.minHE%60)+'m'} extras</div>`:''}
+          <div style="font-weight:700;font-size:14px">${fmt(r.fecha)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:1px">${horario}${heStr?` · <span style="color:var(--warn)">${heStr}</span>`:''}</div>
         </div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          ${r.viatico?`<span class="badge ${ev==='rechazado'?'br':'ba'}">${ev==='rechazado'?'💰 Anulado':'💰 Viático'}</span>`:''}
-          ${r.he?`<span class="badge ${eh==='aprobado'?'ba':eh==='rechazado'?'br':'bp'}">${eh==='aprobado'?'⏱ HE ✓':eh==='rechazado'?'⏱ HE ✗':'⏱ HE pendiente'}</span>`:''}
+        <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+          ${r.viatico?`<span class="badge ${ev==='rechazado'?'br':'ba'}">${ev==='rechazado'?'Viático anulado':'Viático'}</span>`:''}
+          ${r.he?`<span class="badge ${eh==='aprobado'?'ba':eh==='rechazado'?'br':'bp'}">${eh==='aprobado'?'HE aprobada':eh==='rechazado'?'HE rechazada':'HE pendiente'}</span>`:''}
         </div>
       </div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.5">${r.actividades}</div>
-      ${r.he&&r.heJustif?`<div style="font-size:12px;background:var(--bluelt);padding:8px 12px;border-radius:6px;margin-bottom:10px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
-      ${r.motivoRechazoViatico?`<div style="font-size:12px;background:var(--dangerlt);padding:8px 12px;border-radius:6px;margin-bottom:10px;color:var(--danger)"><b>Motivo anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
-      ${r.motivoRechazoHE?`<div style="font-size:12px;background:var(--dangerlt);padding:8px 12px;border-radius:6px;margin-bottom:10px;color:var(--danger)"><b>Motivo rechazo HE:</b> ${r.motivoRechazoHE}</div>`:''}
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${r.he&&eh==='pendiente'?`<button class="btn btn-g btn-xs" onclick="aprobarHEyRefresh('${perfilEmpUID}','${r.key}')">✓ Aprobar HE</button><button class="btn btn-d btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','he');rejCallback=cargarPerfilEmpleado">✗ Rechazar HE</button>`:''}
-        ${r.viatico&&ev!=='rechazado'?`<button class="btn btn-d btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','viatico');rejCallback=cargarPerfilEmpleado">✗ Anular viático</button>`:''}
-      </div>
+      <!-- Actividades -->
+      <div style="font-size:13px;color:var(--text);line-height:1.55;margin-bottom:${r.heJustif||r.motivoRechazoViatico||r.motivoRechazoHE||pendiente?'10px':'0'}">${r.actividades}</div>
+      <!-- Notas -->
+      ${r.he&&r.heJustif?`<div style="font-size:12px;color:var(--text2);margin-bottom:8px"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
+      ${r.motivoRechazoViatico?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
+      ${r.motivoRechazoHE?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Rechazo HE:</b> ${r.motivoRechazoHE}</div>`:''}
+      <!-- Acciones -->
+      ${pendiente||( r.viatico&&ev!=='rechazado')?`<div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--gray100)">
+        ${pendiente?`<button class="btn btn-g btn-xs" onclick="aprobarHEyRefresh('${perfilEmpUID}','${r.key}')">✓ Aprobar HE</button><button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','he');rejCallback=cargarPerfilEmpleado">Rechazar HE</button>`:''}
+        ${r.viatico&&ev!=='rechazado'?`<button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','viatico');rejCallback=cargarPerfilEmpleado">Anular viático</button>`:''}
+      </div>`:''}
     </div>`;
-  }).join('');
+  }).join('')+`</div>`;
 };
 
 window.aprobarHEyRefresh=async(uid,key)=>{
