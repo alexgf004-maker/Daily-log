@@ -494,6 +494,7 @@ window.doLogin = async ()=>{
   if(!found){al.innerHTML='<div class="alert ae">Usuario o PIN incorrecto.</div>';return;}
   if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
   me=found;
+  sessionStorage.setItem('innova_session', JSON.stringify(me));
   if(me.role==='admin'){
     renderAdmin();
     screen('adminScreen');
@@ -508,6 +509,7 @@ window.doLogin = async ()=>{
 
 window.doLogout=()=>{
   me=null;
+  sessionStorage.removeItem('innova_session');
   stopDashRefresh();
   $('appContainer').innerHTML='';
   $('loginUser').value='';
@@ -516,6 +518,28 @@ window.doLogout=()=>{
   screen('loginScreen');
 };
 const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
+
+// ── RESTORE SESSION ON PAGE LOAD ──────────────────
+(async()=>{
+  const saved = sessionStorage.getItem('innova_session');
+  if(!saved) return;
+  try {
+    const user = JSON.parse(saved);
+    if(!user||!user.id||!user.username) return;
+    // Verify user still exists and is active in Firebase
+    const snap = await get(ref(db,`users/${user.id}`));
+    if(!snap.exists()) { sessionStorage.removeItem('innova_session'); return; }
+    const fresh = snap.val();
+    if(!fresh.activo) { sessionStorage.removeItem('innova_session'); return; }
+    me = {id:user.id, ...fresh};
+    sessionStorage.setItem('innova_session', JSON.stringify(me));
+    if(me.role==='admin'){
+      renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+    } else {
+      renderEmployee(me.nombre); screen('employeeScreen'); initForm();
+    }
+  } catch(e) { sessionStorage.removeItem('innova_session'); }
+})();
 
 // EMP TABS
 window.empTab=(t,btn)=>{
