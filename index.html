@@ -339,6 +339,7 @@ function renderEmployee(nombre){
 }
 
 function renderAdmin(){
+  const nombreAdmin = me?.nombre || 'Administradora';
   $('appContainer').innerHTML=`
   <div id="adminScreen" class="screen">
     <div class="topbar">
@@ -347,7 +348,7 @@ function renderAdmin(){
         <div class="tb-sub">Servicios técnicos y comerciales</div></div>
       </div>
       <div class="tb-right">
-        <div class="tb-user"><span class="tb-username">Administrador</span><span class="tb-role role-a">Admin</span></div>
+        <div class="tb-user"><span class="tb-username">${nombreAdmin}</span><span class="tb-role role-a">Admin</span></div>
         <button class="btn-out" onclick="doLogout()">Salir</button>
       </div>
     </div>
@@ -356,6 +357,7 @@ function renderAdmin(){
       <button class="tab" onclick="adTab('regs',this)">📁 Registros</button>
       <button class="tab" onclick="adTab('pend',this)">⏳ Pendientes</button>
       <button class="tab" onclick="adTab('usrs',this)">👥 Usuarios</button>
+      <button class="tab" onclick="adTab('perfil',this)">👤 Mi Perfil</button>
     </div>
     <div class="content">
       <div id="adDash">
@@ -413,6 +415,23 @@ function renderAdmin(){
           <button class="btn btn-g btn-sm" onclick="openModalUser()">+ Nuevo empleado</button>
         </div>
         <div class="card" id="usrList"><div class="spin"></div></div>
+      </div>
+      <div id="adPerfil" style="display:none">
+        <div class="page-header"><div><div class="ph-title">Mi perfil</div><div class="ph-sub">Coordinadora del equipo</div></div></div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">Mis datos</div>
+          <div class="dr"><div class="dk">Nombre</div><div class="dv" id="adPerfilNombre" style="font-size:16px;font-weight:600"></div></div>
+          <div class="dr"><div class="dk">Usuario</div><div class="dv" id="adPerfilUsername" style="font-family:var(--mono);font-size:13px"></div></div>
+          <div class="dr"><div class="dk">Rol</div><div class="dv"><span class="badge ba">Administradora</span></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Cambiar PIN</div>
+          <div id="adPerfilAlert"></div>
+          <div class="fg"><label class="fl">PIN actual</label><input type="password" id="adPinActual" placeholder="••••" maxlength="8" inputmode="numeric"></div>
+          <div class="fg"><label class="fl">PIN nuevo (4–8 dígitos)</label><input type="password" id="adPinNuevo" placeholder="••••" maxlength="8" inputmode="numeric"></div>
+          <div class="fg"><label class="fl">Confirmar PIN nuevo</label><input type="password" id="adPinConfirm" placeholder="••••" maxlength="8" inputmode="numeric"></div>
+          <button class="btn btn-p btn-full" style="padding:12px" onclick="cambiarPinAdmin()">Actualizar PIN</button>
+        </div>
       </div>
     </div>
   </div>
@@ -750,11 +769,18 @@ async function loadHist(){
 // ADMIN TABS
 window.adTab=(t,btn)=>{
   document.querySelectorAll('#adminScreen .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
-  ['adDash','adRegs','adPend','adUsrs'].forEach(hide);
+  ['adDash','adRegs','adPend','adUsrs','adPerfil'].forEach(hide);
   if(t==='dash'){show('adDash');loadDash();}
   if(t==='regs'){show('adRegs');loadFiltEmps();}
   if(t==='pend'){show('adPend');show('pendList');hide('viatList');loadPend();}
   if(t==='usrs'){show('adUsrs');loadUsrs();}
+  if(t==='perfil'){
+    show('adPerfil');
+    $('adPerfilNombre').textContent=me.nombre||'Administradora';
+    $('adPerfilUsername').textContent='@'+(me.username||'admin');
+    $('adPerfilAlert').innerHTML='';
+    ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  }
 };
 
 async function getAllRegs(){
@@ -1046,8 +1072,23 @@ window.cargarPerfilEmpleado=async()=>{
   }).join('')+`</div>`;
 };
 
+window.cambiarPinAdmin=async()=>{
+  const al=$('adPerfilAlert'); al.innerHTML='';
+  const actual=$('adPinActual').value.trim();
+  const nuevo=$('adPinNuevo').value.trim();
+  const conf=$('adPinConfirm').value.trim();
+  if(!actual||!nuevo||!conf){al.innerHTML='<div class="alert ae">Completa todos los campos.</div>';return;}
+  if(String(actual)!==String(me.pin)){al.innerHTML='<div class="alert ae">El PIN actual es incorrecto.</div>';return;}
+  if(nuevo.length<4){al.innerHTML='<div class="alert ae">PIN nuevo mínimo 4 dígitos.</div>';return;}
+  if(nuevo!==conf){al.innerHTML='<div class="alert ae">Los PINs nuevos no coinciden.</div>';return;}
+  if(nuevo===actual){al.innerHTML='<div class="alert ae">El PIN nuevo debe ser diferente al actual.</div>';return;}
+  await update(ref(db,`users/${me.id}`),{pin:nuevo});
+  me.pin=nuevo;
+  al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
+  ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
+};
+
 window.aprobarHEyRefresh=async(uid,key)=>{
-  await update(ref(db,`registros/${uid}/${key}`),{estadoHE:'aprobado',revisadoHEEn:Date.now()});
   await cargarPerfilEmpleado();
 };
 
