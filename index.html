@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#080f1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Registro Planilla">
@@ -473,11 +476,11 @@ window.doLogin = async ()=>{
   if(!found){al.innerHTML='<div class="alert ae">Usuario o PIN incorrecto.</div>';return;}
   if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
   me=found;
-  if(me.role==='admin'){screen('adminScreen');loadDash();}
+  if(me.role==='admin'){screen('adminScreen');loadDash();startDashRefresh();}
   else{$('empUsername').textContent=me.nombre;screen('employeeScreen');initForm();}
 };
 
-window.doLogout=()=>{me=null;$('loginUser').value='';$('loginPin').value='';$('loginAlert').innerHTML='';screen('loginScreen');};
+window.doLogout=()=>{me=null;stopDashRefresh();$('loginUser').value='';$('loginPin').value='';$('loginAlert').innerHTML='';screen('loginScreen');};
 const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
 
 // EMP TABS
@@ -495,7 +498,7 @@ function initForm(){
   ['empActs','heJust'].forEach(id=>$(id).value='');
   ['heIni','heFin'].forEach(id=>$(id).value='');
   $('togV').classList.remove('on');$('togHE').classList.remove('on');
-  hide('heBox');$('empAlert').innerHTML='';
+  hide('heBox');
 }
 const _ef=$('empFecha'); if(_ef) _ef.addEventListener('change',function(){const l=$('empFechaLbl');if(l)l.textContent=fmtLong(this.value);});
 
@@ -530,14 +533,27 @@ window.guardarReg=async()=>{
     if(!j||!i||!f){al.innerHTML='<div class="alert ae">Completa justificación y horas de HE.</div>';return;}
     if(i>=f){al.innerHTML='<div class="alert ae">Hora fin debe ser mayor a inicio.</div>';return;}
   }
-  const snap=await get(ref(db,`registros/${me.id}`));
-  if(snap.exists()){
-    const raw=snap.val();
-    const dup=Object.values(raw).some(r=>r.fecha===fecha);
-    if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return;}
+  try {
+    const snap=await get(ref(db,`registros/${me.id}`));
+    if(snap.exists()){
+      const raw=snap.val();
+      const vals=Object.values(raw);
+      const dup=vals.some(r=>r && r.fecha===fecha);
+      if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return;}
+    }
+    await push(ref(db,`registros/${me.id}`),{
+      fecha,actividades:acts,viatico:viat,he,
+      heJustif:he?$('heJust').value.trim():'',
+      heInicio:he?$('heIni').value:'',
+      heFin:he?$('heFin').value:'',
+      estado:'pendiente',creadoEn:Date.now(),
+      userId:me.id,userName:me.nombre
+    });
+    initForm();
+    al.innerHTML='<div class="alert as">✓ Registro guardado correctamente.</div>';
+  } catch(e) {
+    al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
   }
-  await push(ref(db,`registros/${me.id}`),{fecha,actividades:acts,viatico:viat,he,heJustif:he?$('heJust').value.trim():'',heInicio:he?$('heIni').value:'',heFin:he?$('heFin').value:'',estado:'pendiente',creadoEn:Date.now(),userId:me.id,userName:me.nombre});
-  al.innerHTML='<div class="alert as">✓ Registro guardado correctamente.</div>';initForm();
 };
 
 async function loadHist(){
@@ -592,8 +608,11 @@ async function getUsers(){
 async function loadDash(){
   $('dashDate').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const[regs,users]=await Promise.all([getAllRegs(),getUsers()]);
-  const td=today(),hoy=regs.filter(r=>r.fecha===td),pend=regs.filter(r=>r.estado==='pendiente');
-  const emps=users.filter(u=>u.role!=='admin'&&u.activo),conHoy=new Set(hoy.map(r=>r.userId));
+  // Use local date to avoid UTC offset issues
+  const now=new Date();
+  const td=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const hoy=regs.filter(r=>r.fecha===td),pend=regs.filter(r=>r.estado==='pendiente');
+  const emps=users.filter(u=>u.role!=='admin'&&(u.activo===true||u.activo==='true')),conHoy=new Set(hoy.map(r=>r.userId));
   $('dashStats').innerHTML=`
     <div class="stat-card"><div class="stat-val">${emps.length}</div><div class="stat-lbl">Empleados activos</div></div>
     <div class="stat-card g"><div class="stat-val">${hoy.length}</div><div class="stat-lbl">Registros hoy</div></div>
@@ -607,6 +626,11 @@ async function loadDash(){
     ?'<div class="empty" style="padding:20px"><div class="et">✓ Todos registraron hoy</div></div>'
     :sin.map(u=>`<div style="padding:8px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0"></span>${u.nombre}</div>`).join('');
 }
+
+// Auto-refresh dashboard every 60 seconds
+let dashTimer=null;
+function startDashRefresh(){ dashTimer=setInterval(()=>{ if($('adDash')&&$('adDash').style.display!=='none') loadDash(); },60000); }
+function stopDashRefresh(){ if(dashTimer){clearInterval(dashTimer);dashTimer=null;} }
 
 async function loadPend(){
   const l=$('pendList');l.innerHTML='<div class="spin"></div>';
