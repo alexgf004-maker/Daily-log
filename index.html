@@ -266,6 +266,7 @@ tbody tr:hover td{background:var(--sky)}
   <div class="tabs">
     <button class="tab active" onclick="empTab('r',this)">📝 Nuevo Registro</button>
     <button class="tab" onclick="empTab('h',this)">📋 Mi Historial</button>
+    <button class="tab" onclick="empTab('p',this)">👤 Mi Perfil</button>
   </div>
   <div class="content">
     <div id="empReg">
@@ -297,6 +298,27 @@ tbody tr:hover td{background:var(--sky)}
     <div id="empHist" style="display:none">
       <div class="page-header"><div><div class="ph-title">Mi historial</div><div class="ph-sub">Registros enviados</div></div></div>
       <div id="empHistList"><div class="spin"></div></div>
+    </div>
+
+    <div id="empPerfil" style="display:none">
+      <div class="page-header"><div><div class="ph-title">Mi perfil</div><div class="ph-sub">Actualiza tu PIN de acceso</div></div></div>
+      <div class="card">
+        <div class="card-title">Cambiar PIN</div>
+        <div id="perfilAlert"></div>
+        <div class="fg">
+          <label class="fl">PIN actual</label>
+          <input type="password" id="pinActual" placeholder="••••" maxlength="8" inputmode="numeric">
+        </div>
+        <div class="fg">
+          <label class="fl">PIN nuevo (4–8 dígitos)</label>
+          <input type="password" id="pinNuevo" placeholder="••••" maxlength="8" inputmode="numeric">
+        </div>
+        <div class="fg">
+          <label class="fl">Confirmar PIN nuevo</label>
+          <input type="password" id="pinConfirm" placeholder="••••" maxlength="8" inputmode="numeric">
+        </div>
+        <button class="btn btn-p btn-full" style="padding:12px" onclick="cambiarPin()">Actualizar PIN</button>
+      </div>
     </div>
   </div>
 </div>
@@ -444,7 +466,10 @@ window.doLogin = async ()=>{
   try{snap=await get(ref(db,'users'));}catch(e){al.innerHTML='<div class="alert ae">Error de conexión. Revisa las reglas de Firebase.</div>';return;}
   if(!snap.exists()){al.innerHTML='<div class="alert ae">Sin usuarios registrados.</div>';return;}
   let found=null;
-  snap.forEach(c=>{const v=c.val();if(v.username===u&&String(v.pin)===String(p))found={id:c.key,...v};});
+  const raw=snap.val();
+  for(const [k,v] of Object.entries(raw)){
+    if(v && v.username===u && String(v.pin)===String(p)) found={id:k,...v};
+  }
   if(!found){al.innerHTML='<div class="alert ae">Usuario o PIN incorrecto.</div>';return;}
   if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
   me=found;
@@ -453,13 +478,15 @@ window.doLogin = async ()=>{
 };
 
 window.doLogout=()=>{me=null;$('loginUser').value='';$('loginPin').value='';$('loginAlert').innerHTML='';screen('loginScreen');};
-$('loginPin').addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
+const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
 
 // EMP TABS
 window.empTab=(t,btn)=>{
   document.querySelectorAll('#employeeScreen .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
-  hide('empReg');hide('empHist');
-  if(t==='r')show('empReg'); else{show('empHist');loadHist();}
+  hide('empReg');hide('empHist');hide('empPerfil');
+  if(t==='r') show('empReg');
+  else if(t==='h'){show('empHist');loadHist();}
+  else if(t==='p'){show('empPerfil');$('perfilAlert').innerHTML='';['pinActual','pinNuevo','pinConfirm'].forEach(id=>$(id).value='');}
 };
 
 function initForm(){
@@ -470,11 +497,27 @@ function initForm(){
   $('togV').classList.remove('on');$('togHE').classList.remove('on');
   hide('heBox');$('empAlert').innerHTML='';
 }
-$('empFecha').addEventListener('change',function(){const l=$('empFechaLbl');if(l)l.textContent=fmtLong(this.value);});
+const _ef=$('empFecha'); if(_ef) _ef.addEventListener('change',function(){const l=$('empFechaLbl');if(l)l.textContent=fmtLong(this.value);});
 
 window.togF=f=>{
   if(f==='v'){$('togV').classList.toggle('on');}
   else{const t=$('togHE');t.classList.toggle('on');$('heBox').style.display=t.classList.contains('on')?'block':'none';}
+};
+
+window.cambiarPin=async()=>{
+  const al=$('perfilAlert'); al.innerHTML='';
+  const actual=$('pinActual').value.trim();
+  const nuevo=$('pinNuevo').value.trim();
+  const conf=$('pinConfirm').value.trim();
+  if(!actual||!nuevo||!conf){al.innerHTML='<div class="alert ae">Completa todos los campos.</div>';return;}
+  if(String(actual)!==String(me.pin)){al.innerHTML='<div class="alert ae">El PIN actual es incorrecto.</div>';return;}
+  if(nuevo.length<4){al.innerHTML='<div class="alert ae">El PIN nuevo debe tener mínimo 4 dígitos.</div>';return;}
+  if(nuevo!==conf){al.innerHTML='<div class="alert ae">Los PINs nuevos no coinciden.</div>';return;}
+  if(nuevo===actual){al.innerHTML='<div class="alert ae">El PIN nuevo debe ser diferente al actual.</div>';return;}
+  await update(ref(db,`users/${me.id}`),{pin:nuevo});
+  me.pin=nuevo;
+  al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
+  ['pinActual','pinNuevo','pinConfirm'].forEach(id=>$(id).value='');
 };
 
 window.guardarReg=async()=>{
@@ -488,7 +531,11 @@ window.guardarReg=async()=>{
     if(i>=f){al.innerHTML='<div class="alert ae">Hora fin debe ser mayor a inicio.</div>';return;}
   }
   const snap=await get(ref(db,`registros/${me.id}`));
-  if(snap.exists()){let dup=false;snap.forEach(c=>{if(c.val().fecha===fecha)dup=true;});if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return;}}
+  if(snap.exists()){
+    const raw=snap.val();
+    const dup=Object.values(raw).some(r=>r.fecha===fecha);
+    if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return;}
+  }
   await push(ref(db,`registros/${me.id}`),{fecha,actividades:acts,viatico:viat,he,heJustif:he?$('heJust').value.trim():'',heInicio:he?$('heIni').value:'',heFin:he?$('heFin').value:'',estado:'pendiente',creadoEn:Date.now(),userId:me.id,userName:me.nombre});
   al.innerHTML='<div class="alert as">✓ Registro guardado correctamente.</div>';initForm();
 };
@@ -497,7 +544,8 @@ async function loadHist(){
   const l=$('empHistList');l.innerHTML='<div class="spin"></div>';
   const snap=await get(ref(db,`registros/${me.id}`));
   if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">No tienes registros aún</div></div>';return;}
-  const items=[];snap.forEach(c=>items.push({key:c.key,...c.val()}));
+  const raw=snap.val();
+  const items=Object.entries(raw).map(([k,v])=>({key:k,...v}));
   items.sort((a,b)=>b.fecha.localeCompare(a.fecha));
   l.innerHTML=items.map(r=>`<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
     <div class="rc-hd"><div class="rc-date">${fmt(r.fecha)}</div>
@@ -516,7 +564,20 @@ window.adTab=(t,btn)=>{
   if(t==='usrs'){show('adUsrs');loadUsrs();}
 };
 
-async function getAllRegs(){const snap=await get(ref(db,'registros'));const a=[];if(!snap.exists())return a;snap.forEach(u=>u.forEach(r=>a.push({key:r.key,userId:u.key,...r.val()})));return a;}
+async function getAllRegs(){
+  const snap=await get(ref(db,'registros'));
+  const a=[];
+  if(!snap.exists()) return a;
+  const raw=snap.val();
+  for(const [uid,regs] of Object.entries(raw)){
+    if(regs && typeof regs==='object'){
+      for(const [k,v] of Object.entries(regs)){
+        if(v && typeof v==='object') a.push({key:k,userId:uid,...v});
+      }
+    }
+  }
+  return a;
+}
 async function getUsers(){
   const snap=await get(ref(db,'users'));
   const a=[];
