@@ -3,679 +3,404 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0a3d6b">
+<meta name="theme-color" content="#080f1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Registro Planilla">
-<title>Registro de Planilla — Delsur INNOVA</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>Registro de Planilla — INNOVA</title>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --navy:    #0a3d6b;
-    --navy2:   #0d4f8a;
-    --blue:    #1a6fba;
-    --blue2:   #2589d8;
-    --sky:     #e8f4fd;
-    --green:   #00875a;
-    --green2:  #00a36e;
-    --greenlt: #e6f7f1;
-    --white:   #ffffff;
-    --gray50:  #f7f9fc;
-    --gray100: #edf1f7;
-    --gray200: #d4dde8;
-    --gray400: #8fa3bb;
-    --gray600: #4a6278;
-    --gray800: #1e3048;
-    --danger:  #d93025;
-    --dangerlt:#fdecea;
-    --warn:    #e67e00;
-    --warnlt:  #fff4e5;
-    --text:    #1e3048;
-    --text2:   #5a7a96;
-    --sans:    'Outfit', sans-serif;
-    --mono:    'JetBrains Mono', monospace;
-    --shadow:  0 2px 12px rgba(10,61,107,0.10);
-    --shadow2: 0 4px 24px rgba(10,61,107,0.15);
-    --radius:  10px;
-  }
+:root {
+  --bg:       #080f1a;
+  --bg2:      #0c1624;
+  --navy:     #0a3d6b;
+  --navy2:    #0d4f8a;
+  --blue:     #1a6fba;
+  --blue2:    #2589d8;
+  --sky:      #e8f4fd;
+  --accent:   #00c9ff;
+  --green:    #00875a;
+  --green2:   #00a36e;
+  --greenlt:  #e6f7f1;
+  --white:    #ffffff;
+  --gray50:   #f7f9fc;
+  --gray100:  #edf1f7;
+  --gray200:  #d4dde8;
+  --gray400:  #8fa3bb;
+  --text:     #1e3048;
+  --text2:    #5a7a96;
+  --danger:   #d93025;
+  --dangerlt: #fdecea;
+  --warn:     #e67e00;
+  --warnlt:   #fff4e5;
+  --sans:     'Jost', sans-serif;
+  --mono:     'JetBrains Mono', monospace;
+  --sh:       0 2px 12px rgba(10,61,107,.10);
+  --sh2:      0 6px 28px rgba(10,61,107,.16);
+  --r:        10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--gray50);color:var(--text);font-family:var(--sans);min-height:100vh}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--gray100)}
+::-webkit-scrollbar-thumb{background:var(--gray200);border-radius:2px}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--gray50); color: var(--text); font-family: var(--sans); min-height: 100vh; }
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: var(--gray100); }
-  ::-webkit-scrollbar-thumb { background: var(--gray200); border-radius: 3px; }
+/* SCREENS */
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
 
-  /* ── SCREENS ── */
-  .screen { display: none; min-height: 100vh; flex-direction: column; }
-  .screen.active { display: flex; }
+/* ═══════════ LOGIN ═══════════ */
+#loginScreen{
+  background:var(--bg);
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+#loginScreen::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,201,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,201,255,.035) 1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;
+}
+.orb1{position:absolute;width:480px;height:480px;background:radial-gradient(circle,rgba(0,135,90,.11) 0%,transparent 65%);top:-150px;right:-100px;pointer-events:none}
+.orb2{position:absolute;width:380px;height:380px;background:radial-gradient(circle,rgba(0,201,255,.07) 0%,transparent 65%);bottom:-100px;left:-60px;pointer-events:none}
 
-  /* ── LOGIN ── */
-  #loginScreen {
-    background: linear-gradient(145deg, var(--navy) 0%, var(--navy2) 40%, var(--blue) 100%);
-    align-items: center; justify-content: center;
-    position: relative; overflow: hidden;
-  }
-  #loginScreen::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    pointer-events: none;
-  }
-  .login-glow {
-    position: absolute;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(0,135,90,0.18) 0%, transparent 65%);
-    bottom: -200px; right: -100px;
-    pointer-events: none;
-  }
-  .login-card {
-    background: var(--white);
-    border-radius: 16px;
-    padding: 40px 36px;
-    width: 100%; max-width: 400px;
-    position: relative; z-index: 1;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-    animation: slideUp 0.4s ease;
-  }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .login-header { margin-bottom: 32px; }
-  .login-brand {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 6px;
-  }
-  .brand-icon {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--navy), var(--blue));
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 18px;
-  }
-  .brand-text { font-size: 20px; font-weight: 700; color: var(--navy); letter-spacing: -0.5px; }
-  .brand-text span { color: var(--green); }
-  .login-subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; }
-  .login-divider { height: 1px; background: var(--gray100); margin: 0 0 24px; }
+.login-panel{position:relative;z-index:1;width:100%;max-width:420px;padding:24px;animation:fadeUp .5s cubic-bezier(.16,1,.3,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
 
-  /* ── INPUTS ── */
-  .field-group { margin-bottom: 16px; }
-  .field-label {
-    display: block; font-size: 11px; font-weight: 600;
-    letter-spacing: 0.8px; text-transform: uppercase;
-    color: var(--text2); margin-bottom: 6px;
-  }
-  input[type="text"], input[type="password"], input[type="date"],
-  input[type="time"], input[type="number"], textarea, select {
-    width: 100%;
-    background: var(--gray50);
-    border: 1.5px solid var(--gray200);
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  input:focus, textarea:focus, select:focus {
-    border-color: var(--blue);
-    box-shadow: 0 0 0 3px rgba(26,111,186,0.12);
-    background: var(--white);
-  }
-  input[type="password"] { font-family: var(--mono); letter-spacing: 5px; font-size: 16px; }
-  textarea { resize: vertical; min-height: 88px; line-height: 1.6; }
-  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a7a96' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
-  select option { background: white; }
+.login-brand{text-align:center;margin-bottom:32px}
+.login-brand-eyebrow{font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:rgba(0,201,255,.65);margin-bottom:10px}
+.login-brand-name{font-size:24px;font-weight:700;color:#fff;letter-spacing:.3px;line-height:1.25}
+.login-brand-name .inn{color:var(--accent);font-weight:800}
+.deco-line{display:flex;align-items:center;gap:10px;margin:13px auto 0;max-width:200px}
+.deco-line::before,.deco-line::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(0,201,255,.35),transparent)}
+.deco-dot{width:5px;height:5px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px var(--accent)}
+.login-brand-sub{font-size:12px;color:rgba(255,255,255,.3);margin-top:10px;font-weight:300;letter-spacing:.5px}
 
-  /* ── BUTTONS ── */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px 20px; border-radius: var(--radius);
-    border: none; font-family: var(--sans);
-    font-size: 14px; font-weight: 600;
-    cursor: pointer; transition: all 0.15s;
-    text-decoration: none; white-space: nowrap;
-  }
-  .btn-primary { background: var(--navy); color: white; }
-  .btn-primary:hover { background: var(--navy2); box-shadow: 0 4px 12px rgba(10,61,107,0.3); }
-  .btn-green { background: var(--green); color: white; }
-  .btn-green:hover { background: var(--green2); box-shadow: 0 4px 12px rgba(0,135,90,0.3); }
-  .btn-danger { background: var(--danger); color: white; }
-  .btn-danger:hover { background: #c0271d; }
-  .btn-warn { background: var(--warn); color: white; }
-  .btn-outline { background: white; color: var(--navy); border: 1.5px solid var(--gray200); }
-  .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
-  .btn-ghost { background: transparent; color: var(--text2); border: 1.5px solid var(--gray200); }
-  .btn-ghost:hover { border-color: var(--blue2); color: var(--blue); background: var(--sky); }
-  .btn-full { width: 100%; }
-  .btn-sm { padding: 6px 14px; font-size: 12px; }
-  .btn-xs { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+.login-form{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:30px 26px;backdrop-filter:blur(10px)}
+.login-form .field-label{color:rgba(255,255,255,.42)}
+.login-form input{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:8px}
+.login-form input::placeholder{color:rgba(255,255,255,.2)}
+.login-form input:focus{border-color:var(--accent);background:rgba(255,255,255,.1);box-shadow:0 0 0 3px rgba(0,201,255,.13)}
+.login-form input[type="password"]{letter-spacing:6px;font-size:18px}
+#loginAlert{margin-bottom:2px}
+.btn-login{width:100%;background:linear-gradient(135deg,#0a3d6b,#1971c2);color:#fff;border:none;border-radius:8px;padding:13px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.4px;transition:all .2s;margin-top:4px;position:relative;overflow:hidden}
+.btn-login::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.07),transparent)}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,201,255,.18)}
+.login-footer{text-align:center;margin-top:18px;font-size:11px;color:rgba(255,255,255,.15);letter-spacing:.5px}
 
-  /* ── TOPBAR ── */
-  .topbar {
-    background: var(--navy);
-    height: 58px; padding: 0 20px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 2px 8px rgba(10,61,107,0.2);
-  }
-  .topbar-brand { display: flex; align-items: center; gap: 10px; }
-  .topbar-icon {
-    width: 30px; height: 30px;
-    background: rgba(255,255,255,0.12);
-    border-radius: 7px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-  }
-  .topbar-name { font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.3px; }
-  .topbar-name span { color: #5de8b0; }
-  .topbar-right { display: flex; align-items: center; gap: 10px; }
-  .topbar-user-info { text-align: right; }
-  .topbar-username { font-size: 13px; font-weight: 600; color: white; display: block; }
-  .topbar-role { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; }
-  .role-admin { color: #5de8b0; }
-  .role-emp { color: rgba(255,255,255,0.6); }
-  .btn-logout {
-    background: rgba(255,255,255,0.1); color: white;
-    border: 1px solid rgba(255,255,255,0.2); border-radius: 7px;
-    padding: 6px 12px; font-size: 12px; font-weight: 600;
-    cursor: pointer; transition: all 0.15s; font-family: var(--sans);
-  }
-  .btn-logout:hover { background: rgba(255,255,255,0.2); }
+/* ═══════════ TOPBAR ═══════════ */
+.topbar{background:var(--bg);height:56px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.07)}
+.tb-brand{display:flex;align-items:center;gap:10px}
+.tb-bar{width:3px;height:22px;background:linear-gradient(180deg,var(--accent),var(--green));border-radius:2px;flex-shrink:0}
+.tb-name{font-size:13px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:.1px}
+.tb-name .inn{color:var(--accent)}
+.tb-sub{font-size:10px;color:rgba(255,255,255,.32);font-weight:400}
+.tb-right{display:flex;align-items:center;gap:12px}
+.tb-user{text-align:right}
+.tb-username{font-size:13px;font-weight:600;color:#fff;display:block}
+.tb-role{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.role-a{color:var(--accent)}.role-e{color:rgba(255,255,255,.38)}
+.btn-out{background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--sans)}
+.btn-out:hover{background:rgba(255,255,255,.13);color:#fff}
 
-  /* ── TABS ── */
-  .tabs {
-    background: white;
-    border-bottom: 2px solid var(--gray100);
-    display: flex; padding: 0 20px; gap: 2px;
-    overflow-x: auto;
-  }
-  .tab {
-    padding: 14px 18px;
-    font-size: 13px; font-weight: 500;
-    color: var(--text2); cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px; white-space: nowrap;
-    background: none; border-top: none;
-    border-left: none; border-right: none;
-    font-family: var(--sans); transition: all 0.15s;
-  }
-  .tab:hover { color: var(--navy); }
-  .tab.active { color: var(--navy); border-bottom-color: var(--green); font-weight: 600; }
+/* ═══════════ TABS ═══════════ */
+.tabs{background:#fff;border-bottom:1px solid var(--gray200);display:flex;padding:0 20px;gap:2px;overflow-x:auto}
+.tab{padding:13px 18px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--sans);transition:all .15s}
+.tab:hover{color:var(--navy)}
+.tab.active{color:var(--navy);border-bottom-color:var(--accent);font-weight:600}
 
-  /* ── CONTENT ── */
-  .content { padding: 24px 20px; flex: 1; max-width: 960px; width: 100%; margin: 0 auto; }
+/* ═══════════ CONTENT ═══════════ */
+.content{padding:22px 20px;flex:1;max-width:960px;width:100%;margin:0 auto}
 
-  /* ── CARDS ── */
-  .card {
-    background: white;
-    border: 1px solid var(--gray200);
-    border-radius: 12px;
-    padding: 20px 22px;
-    margin-bottom: 16px;
-    box-shadow: var(--shadow);
-  }
-  .card-title {
-    font-size: 11px; font-weight: 700;
-    letter-spacing: 1px; text-transform: uppercase;
-    color: var(--text2); margin-bottom: 16px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .card-title::before {
-    content: '';
-    display: inline-block; width: 3px; height: 14px;
-    background: var(--green); border-radius: 2px;
-  }
+.card{background:#fff;border:1px solid var(--gray200);border-radius:12px;padding:20px 22px;margin-bottom:16px;box-shadow:var(--sh)}
+.card-title{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';display:inline-block;width:3px;height:13px;background:linear-gradient(180deg,var(--accent),var(--green));border-radius:2px}
 
-  /* ── STAT GRID ── */
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin-bottom: 20px; }
-  .stat-card {
-    background: white; border: 1px solid var(--gray200);
-    border-radius: 12px; padding: 18px 20px;
-    box-shadow: var(--shadow);
-    border-left: 4px solid var(--blue2);
-    transition: transform 0.15s, box-shadow 0.15s;
-  }
-  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow2); }
-  .stat-card.green { border-left-color: var(--green); }
-  .stat-card.warn { border-left-color: var(--warn); }
-  .stat-card.danger { border-left-color: var(--danger); }
-  .stat-val { font-family: var(--mono); font-size: 30px; font-weight: 600; color: var(--navy); line-height: 1; }
-  .stat-card.green .stat-val { color: var(--green); }
-  .stat-card.warn .stat-val { color: var(--warn); }
-  .stat-card.danger .stat-val { color: var(--danger); }
-  .stat-label { font-size: 12px; color: var(--text2); margin-top: 6px; font-weight: 500; }
+.page-header{background:var(--bg);border-radius:12px;padding:18px 22px;margin-bottom:18px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border:1px solid rgba(255,255,255,.06);position:relative;overflow:hidden}
+.page-header::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--green),transparent)}
+.ph-title{font-size:17px;font-weight:700}
+.ph-sub{font-size:12px;color:rgba(255,255,255,.42);margin-top:3px}
 
-  /* ── TABLE ── */
-  .table-wrap { overflow-x: auto; border-radius: 8px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead { background: var(--gray50); }
-  th {
-    text-align: left; padding: 10px 14px;
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 1px; text-transform: uppercase;
-    color: var(--text2); border-bottom: 1px solid var(--gray200);
-  }
-  td { padding: 11px 14px; border-bottom: 1px solid var(--gray100); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tbody tr:hover td { background: var(--sky); }
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px}
+.stat-card{background:#fff;border:1px solid var(--gray200);border-radius:12px;padding:16px 18px;box-shadow:var(--sh);border-top:3px solid var(--blue2);transition:transform .15s,box-shadow .15s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
+.stat-card.g{border-top-color:var(--green)}.stat-card.w{border-top-color:var(--warn)}.stat-card.d{border-top-color:var(--danger)}
+.stat-val{font-family:var(--mono);font-size:28px;font-weight:600;color:var(--navy);line-height:1}
+.stat-card.g .stat-val{color:var(--green)}.stat-card.w .stat-val{color:var(--warn)}.stat-card.d .stat-val{color:var(--danger)}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:6px;font-weight:500}
 
-  /* ── BADGES ── */
-  .badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 9px; border-radius: 20px;
-    font-size: 11px; font-weight: 600;
-  }
-  .badge-pending { background: var(--warnlt); color: var(--warn); }
-  .badge-approved { background: var(--greenlt); color: var(--green); }
-  .badge-rejected { background: var(--dangerlt); color: var(--danger); }
-  .badge-yes { background: var(--sky); color: var(--blue); }
-  .badge-no { background: var(--gray100); color: var(--gray400); }
-  .badge-active { background: var(--greenlt); color: var(--green); }
-  .badge-inactive { background: var(--dangerlt); color: var(--danger); }
+/* INPUTS */
+.fg{margin-bottom:15px}
+.fl{display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+input[type="text"],input[type="password"],input[type="date"],input[type="time"],textarea,select{width:100%;background:var(--gray50);border:1.5px solid var(--gray200);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,111,186,.10);background:#fff}
+textarea{resize:vertical;min-height:86px;line-height:1.6}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%235a7a96' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
 
-  /* ── TOGGLE ── */
-  .toggle-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 0; border-bottom: 1px solid var(--gray100);
-  }
-  .toggle-row:last-of-type { border-bottom: none; }
-  .toggle-label { font-size: 14px; font-weight: 500; }
-  .toggle-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
-  .toggle {
-    position: relative; width: 46px; height: 25px;
-    background: var(--gray200); border-radius: 13px;
-    cursor: pointer; transition: background 0.25s; flex-shrink: 0;
-  }
-  .toggle.on { background: var(--green); }
-  .toggle::after {
-    content: ''; position: absolute;
-    width: 19px; height: 19px; background: white;
-    border-radius: 50%; top: 3px; left: 3px;
-    transition: left 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-  }
-  .toggle.on::after { left: 24px; }
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:var(--r);border:none;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-p{background:var(--bg);color:#fff}.btn-p:hover{background:var(--navy);box-shadow:0 4px 14px rgba(10,61,107,.3)}
+.btn-g{background:var(--green);color:#fff}.btn-g:hover{background:var(--green2)}
+.btn-d{background:var(--danger);color:#fff}.btn-d:hover{background:#b52620}
+.btn-gh{background:transparent;color:var(--text2);border:1.5px solid var(--gray200)}.btn-gh:hover{border-color:var(--blue2);color:var(--blue);background:var(--sky)}
+.btn-full{width:100%}.btn-sm{padding:6px 14px;font-size:12px}.btn-xs{padding:4px 10px;font-size:11px;border-radius:6px}
 
-  /* ── MODAL ── */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(10,30,60,0.55);
-    backdrop-filter: blur(3px);
-    z-index: 200; align-items: center;
-    justify-content: center; padding: 20px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: white; border-radius: 16px;
-    padding: 28px; width: 100%; max-width: 500px;
-    max-height: 90vh; overflow-y: auto;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.2);
-    animation: modalIn 0.2s ease;
-  }
-  @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.96) translateY(8px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
-  }
-  .modal-title { font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 20px; }
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+/* TABLE */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--gray50)}
+th{text-align:left;padding:9px 13px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);border-bottom:1px solid var(--gray200)}
+td{padding:10px 13px;border-bottom:1px solid var(--gray100);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--sky)}
 
-  /* ── ALERTS ── */
-  .alert { padding: 11px 15px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; font-weight: 500; }
-  .alert-error { background: var(--dangerlt); color: var(--danger); border-left: 3px solid var(--danger); }
-  .alert-success { background: var(--greenlt); color: var(--green); border-left: 3px solid var(--green); }
-  .alert-info { background: var(--sky); color: var(--blue); border-left: 3px solid var(--blue2); }
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.bp{background:var(--warnlt);color:var(--warn)}.ba{background:var(--greenlt);color:var(--green)}.br{background:var(--dangerlt);color:var(--danger)}
+.by{background:var(--sky);color:var(--blue)}.bn{background:var(--gray100);color:var(--gray400)}
+.bac{background:var(--greenlt);color:var(--green)}.bin{background:var(--dangerlt);color:var(--danger)}
 
-  /* ── EMPTY ── */
-  .empty { text-align: center; padding: 52px 20px; color: var(--text2); }
-  .empty-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.5; }
-  .empty-text { font-size: 14px; }
+/* TOGGLE */
+.tog-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--gray100)}
+.tog-row:last-of-type{border-bottom:none}
+.tog-lbl{font-size:14px;font-weight:500}.tog-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.toggle{position:relative;width:44px;height:24px;background:var(--gray200);border-radius:12px;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.toggle.on::after{left:23px}
 
-  /* ── TIME ROW ── */
-  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(5,10,20,.72);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:20px}
+.mo.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 70px rgba(0,0,0,.25);animation:mi .2s ease}
+@keyframes mi{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-title{font-size:17px;font-weight:700;color:var(--navy);margin-bottom:20px}
+.modal-acts{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
 
-  /* ── FILTER ROW ── */
-  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
-  .filter-row .field-group { margin-bottom: 0; flex: 1; min-width: 130px; }
+/* ALERTS */
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;font-weight:500}
+.ae{background:var(--dangerlt);color:var(--danger);border-left:3px solid var(--danger)}
+.as{background:var(--greenlt);color:var(--green);border-left:3px solid var(--green)}
 
-  /* ── SECTION HEADER ── */
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-  .section-title { font-size: 18px; font-weight: 700; color: var(--navy); }
+/* MISC */
+.empty{text-align:center;padding:48px 20px;color:var(--text2)}
+.ei{font-size:40px;margin-bottom:12px;opacity:.45}.et{font-size:14px}
+.tr2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fr{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.fr .fg{margin-bottom:0;flex:1;min-width:130px}
+.he-box{background:var(--sky);border-radius:8px;padding:16px;margin-top:14px;border:1px solid rgba(26,111,186,.12)}
+.spin{width:22px;height:22px;border:2.5px solid var(--gray200);border-top-color:var(--blue);border-radius:50%;animation:sp .65s linear infinite;margin:24px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.rc{background:#fff;border:1px solid var(--gray200);border-radius:10px;padding:13px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
+.rc:hover{border-color:var(--blue2);box-shadow:var(--sh2);transform:translateY(-1px)}
+.rc-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-wrap:wrap;gap:5px}
+.rc-date{font-family:var(--mono);font-size:13px;color:var(--navy);font-weight:600}
+.rc-badges{display:flex;gap:5px;flex-wrap:wrap}
+.rc-desc{font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ur{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray100);flex-wrap:wrap;gap:8px}
+.ur:last-child{border-bottom:none}
+.un{font-size:14px;font-weight:600}.um{font-size:12px;color:var(--text2);margin-top:1px}
+.ua{display:flex;gap:6px;flex-wrap:wrap}
+.dr{padding:10px 0;border-bottom:1px solid var(--gray100);display:flex;flex-direction:column;gap:3px}
+.dr:last-child{border-bottom:none}
+.dk{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2)}
+.dv{font-size:14px}
 
-  /* ── RECORD CARD ── */
-  .rec-card {
-    background: white; border: 1px solid var(--gray200);
-    border-radius: 10px; padding: 14px 16px;
-    margin-bottom: 10px; cursor: pointer;
-    transition: all 0.15s; box-shadow: var(--shadow);
-  }
-  .rec-card:hover { border-color: var(--blue2); box-shadow: var(--shadow2); transform: translateY(-1px); }
-  .rec-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
-  .rec-date { font-family: var(--mono); font-size: 13px; color: var(--navy); font-weight: 600; }
-  .rec-badges { display: flex; gap: 5px; flex-wrap: wrap; }
-  .rec-desc { font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  /* ── USER ROW ── */
-  .user-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 13px 0; border-bottom: 1px solid var(--gray100); flex-wrap: wrap; gap: 10px;
-  }
-  .user-row:last-child { border-bottom: none; }
-  .user-name { font-size: 14px; font-weight: 600; color: var(--text); }
-  .user-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
-  .user-actions { display: flex; gap: 7px; flex-wrap: wrap; }
-
-  /* ── DETAIL ROWS ── */
-  .detail-row { padding: 11px 0; border-bottom: 1px solid var(--gray100); display: flex; flex-direction: column; gap: 3px; }
-  .detail-row:last-child { border-bottom: none; }
-  .detail-key { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text2); }
-  .detail-val { font-size: 14px; color: var(--text); }
-
-  /* ── SPINNER ── */
-  .spinner {
-    width: 24px; height: 24px;
-    border: 2.5px solid var(--gray200);
-    border-top-color: var(--blue);
-    border-radius: 50%;
-    animation: spin 0.65s linear infinite;
-    margin: 24px auto;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── HE EXTRA ── */
-  .he-extra {
-    background: var(--sky); border-radius: 8px;
-    padding: 16px; margin-top: 14px;
-    border: 1px solid rgba(26,111,186,0.15);
-  }
-
-  /* ── PAGE HEADER (inside content) ── */
-  .page-header {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
-    border-radius: 12px; padding: 20px 22px;
-    margin-bottom: 20px; color: white;
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 10px;
-  }
-  .page-header-title { font-size: 18px; font-weight: 700; }
-  .page-header-sub { font-size: 13px; opacity: 0.75; margin-top: 2px; }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 500px) {
-    .content { padding: 14px; }
-    .login-card { padding: 28px 20px; margin: 16px; }
-    .time-row { grid-template-columns: 1fr; }
-    .topbar-user-info { display: none; }
-  }
+@media(max-width:500px){
+  .content{padding:14px}
+  .login-panel{padding:16px}
+  .login-form{padding:22px 16px}
+  .tr2{grid-template-columns:1fr}
+  .tb-user{display:none}
+}
 </style>
 </head>
 <body>
 
-<!-- ════════ LOGIN ════════ -->
+<!-- LOGIN -->
 <div id="loginScreen" class="screen active">
-  <div class="login-glow"></div>
-  <div class="login-card">
-    <div class="login-header">
-      <div class="login-brand">
-        <div class="brand-icon">⚡</div>
-        <div class="brand-text">Delsur <span>INNOVA</span></div>
+  <div class="orb1"></div>
+  <div class="orb2"></div>
+  <div class="login-panel">
+    <div class="login-brand">
+      <div class="login-brand-eyebrow">Delsur · Sistema interno</div>
+      <div class="login-brand-name">Servicios técnicos<br>y comerciales <span class="inn">INNOVA</span></div>
+      <div class="deco-line"><div class="deco-dot"></div></div>
+      <div class="login-brand-sub">Registro de Planilla</div>
+    </div>
+    <div class="login-form">
+      <div id="loginAlert"></div>
+      <div class="fg">
+        <label class="fl">Usuario</label>
+        <input type="text" id="loginUser" placeholder="tu.usuario" autocomplete="off">
       </div>
-      <div class="login-subtitle">Registro de Planilla — Control de actividades</div>
+      <div class="fg" style="margin-bottom:20px">
+        <label class="fl">PIN de acceso</label>
+        <input type="password" id="loginPin" placeholder="••••" maxlength="8" inputmode="numeric">
+      </div>
+      <button class="btn-login" onclick="doLogin()">Ingresar →</button>
     </div>
-    <div class="login-divider"></div>
-    <div id="loginAlert"></div>
-    <div class="field-group">
-      <label class="field-label">Usuario</label>
-      <input type="text" id="loginUser" placeholder="tu.usuario" autocomplete="off">
-    </div>
-    <div class="field-group">
-      <label class="field-label">PIN de acceso</label>
-      <input type="password" id="loginPin" placeholder="••••" maxlength="8" inputmode="numeric">
-    </div>
-    <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:4px; padding:12px; font-size:15px;">
-      Ingresar →
-    </button>
+    <div class="login-footer">© 2025 Delsur · Grupo EPM</div>
   </div>
 </div>
 
-<!-- ════════ EMPLEADO ════════ -->
+<!-- EMPLEADO -->
 <div id="employeeScreen" class="screen">
   <div class="topbar">
-    <div class="topbar-brand">
-      <div class="topbar-icon">⚡</div>
-      <div class="topbar-name">Delsur <span>INNOVA</span></div>
-    </div>
-    <div class="topbar-right">
-      <div class="topbar-user-info">
-        <span class="topbar-username" id="empUsername"></span>
-        <span class="topbar-role role-emp">Empleado</span>
+    <div class="tb-brand">
+      <div class="tb-bar"></div>
+      <div>
+        <div class="tb-name">Servicios técnicos y comerciales <span class="inn">INNOVA</span></div>
+        <div class="tb-sub">Registro de Planilla</div>
       </div>
-      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+    <div class="tb-right">
+      <div class="tb-user">
+        <span class="tb-username" id="empUsername"></span>
+        <span class="tb-role role-e">Empleado</span>
+      </div>
+      <button class="btn-out" onclick="doLogout()">Salir</button>
     </div>
   </div>
   <div class="tabs">
-    <button class="tab active" onclick="empTab('registro',this)">📝 Nuevo Registro</button>
-    <button class="tab" onclick="empTab('historial',this)">📋 Mi Historial</button>
+    <button class="tab active" onclick="empTab('r',this)">📝 Nuevo Registro</button>
+    <button class="tab" onclick="empTab('h',this)">📋 Mi Historial</button>
   </div>
   <div class="content">
-    <!-- REGISTRO -->
-    <div id="empRegistro">
+    <div id="empReg">
       <div class="page-header">
-        <div>
-          <div class="page-header-title">Registro de actividades</div>
-          <div class="page-header-sub" id="empFechaLabel">Hoy</div>
-        </div>
+        <div><div class="ph-title">Registro de actividades</div><div class="ph-sub" id="empFechaLbl"></div></div>
       </div>
       <div class="card">
-        <div id="empFormAlert"></div>
-        <div class="field-group">
-          <label class="field-label">Fecha</label>
-          <input type="date" id="empFecha">
+        <div id="empAlert"></div>
+        <div class="fg"><label class="fl">Fecha</label><input type="date" id="empFecha"></div>
+        <div class="fg"><label class="fl">Actividades realizadas</label><textarea id="empActs" placeholder="Describe las actividades del día..."></textarea></div>
+        <div class="tog-row">
+          <div><div class="tog-lbl">💰 Viático</div><div class="tog-sub">Activar si realizaste salida a campo</div></div>
+          <div class="toggle" id="togV" onclick="togF('v')"></div>
         </div>
-        <div class="field-group">
-          <label class="field-label">Actividades realizadas</label>
-          <textarea id="empActividades" placeholder="Describe detalladamente las actividades que realizaste..."></textarea>
+        <div class="tog-row">
+          <div><div class="tog-lbl">⏱ Horas Extras</div><div class="tog-sub">Activar si trabajaste fuera de horario</div></div>
+          <div class="toggle" id="togHE" onclick="togF('he')"></div>
         </div>
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">💰 Viático</div>
-            <div class="toggle-sub">Activar si realizaste salida a campo</div>
-          </div>
-          <div class="toggle" id="toggleViatico" onclick="toggleField('viatico')"></div>
-        </div>
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">⏱ Horas Extras</div>
-            <div class="toggle-sub">Activar si trabajaste fuera del horario</div>
-          </div>
-          <div class="toggle" id="toggleHE" onclick="toggleField('he')"></div>
-        </div>
-        <div id="heExtra" class="he-extra" style="display:none">
-          <div class="field-group">
-            <label class="field-label">Justificación de horas extras</label>
-            <textarea id="empHEJustif" placeholder="Describe el motivo de las horas extras..."></textarea>
-          </div>
-          <div class="time-row">
-            <div class="field-group">
-              <label class="field-label">Hora inicio</label>
-              <input type="time" id="empHEInicio">
-            </div>
-            <div class="field-group">
-              <label class="field-label">Hora fin</label>
-              <input type="time" id="empHEFin">
-            </div>
+        <div id="heBox" class="he-box" style="display:none">
+          <div class="fg"><label class="fl">Justificación de horas extras</label><textarea id="heJust" placeholder="Motivo de las horas extras..."></textarea></div>
+          <div class="tr2">
+            <div class="fg"><label class="fl">Hora inicio</label><input type="time" id="heIni"></div>
+            <div class="fg"><label class="fl">Hora fin</label><input type="time" id="heFin"></div>
           </div>
         </div>
-        <button class="btn btn-primary btn-full" style="margin-top:18px; padding:12px" onclick="guardarRegistro()">
-          Guardar registro
-        </button>
+        <button class="btn btn-p btn-full" style="margin-top:18px;padding:12px" onclick="guardarReg()">Guardar registro</button>
       </div>
     </div>
-
-    <!-- HISTORIAL -->
-    <div id="empHistorial" style="display:none">
-      <div class="page-header">
-        <div>
-          <div class="page-header-title">Mi historial</div>
-          <div class="page-header-sub">Últimos registros enviados</div>
-        </div>
-      </div>
-      <div id="empHistorialList"><div class="spinner"></div></div>
+    <div id="empHist" style="display:none">
+      <div class="page-header"><div><div class="ph-title">Mi historial</div><div class="ph-sub">Registros enviados</div></div></div>
+      <div id="empHistList"><div class="spin"></div></div>
     </div>
   </div>
 </div>
 
-<!-- ════════ ADMIN ════════ -->
+<!-- ADMIN -->
 <div id="adminScreen" class="screen">
   <div class="topbar">
-    <div class="topbar-brand">
-      <div class="topbar-icon">⚡</div>
-      <div class="topbar-name">Delsur <span>INNOVA</span></div>
-    </div>
-    <div class="topbar-right">
-      <div class="topbar-user-info">
-        <span class="topbar-username">Administrador</span>
-        <span class="topbar-role role-admin">Admin</span>
+    <div class="tb-brand">
+      <div class="tb-bar"></div>
+      <div>
+        <div class="tb-name">Servicios técnicos y comerciales <span class="inn">INNOVA</span></div>
+        <div class="tb-sub">Registro de Planilla</div>
       </div>
-      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+    <div class="tb-right">
+      <div class="tb-user">
+        <span class="tb-username">Administrador</span>
+        <span class="tb-role role-a">Admin</span>
+      </div>
+      <button class="btn-out" onclick="doLogout()">Salir</button>
     </div>
   </div>
   <div class="tabs">
-    <button class="tab active" onclick="adminTab('dashboard',this)">📊 Dashboard</button>
-    <button class="tab" onclick="adminTab('registros',this)">📁 Registros</button>
-    <button class="tab" onclick="adminTab('pendientes',this)">⏳ Pendientes</button>
-    <button class="tab" onclick="adminTab('usuarios',this)">👥 Usuarios</button>
+    <button class="tab active" onclick="adTab('dash',this)">📊 Dashboard</button>
+    <button class="tab" onclick="adTab('regs',this)">📁 Registros</button>
+    <button class="tab" onclick="adTab('pend',this)">⏳ Pendientes</button>
+    <button class="tab" onclick="adTab('usrs',this)">👥 Usuarios</button>
   </div>
   <div class="content">
-
-    <!-- DASHBOARD -->
-    <div id="adminDashboard">
-      <div class="page-header">
-        <div>
-          <div class="page-header-title">Registro de Planilla</div>
-          <div class="page-header-sub" id="dashFecha"></div>
-        </div>
-      </div>
-      <div class="stat-grid" id="dashStats"><div class="spinner"></div></div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; flex-wrap:wrap;" id="dashGridCards">
-        <div class="card" style="grid-column:1">
-          <div class="card-title">Registros de hoy</div>
-          <div id="dashHoy"><div class="spinner"></div></div>
-        </div>
-        <div class="card" style="grid-column:2">
-          <div class="card-title">Sin registro hoy</div>
-          <div id="dashSinReg"><div class="spinner"></div></div>
-        </div>
+    <div id="adDash">
+      <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
+      <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><div class="card-title">Registros de hoy</div><div id="dashHoy"><div class="spin"></div></div></div>
+        <div class="card"><div class="card-title">Sin registro hoy</div><div id="dashSin"><div class="spin"></div></div></div>
       </div>
     </div>
-
-    <!-- REGISTROS -->
-    <div id="adminRegistros" style="display:none">
-      <div class="page-header">
-        <div>
-          <div class="page-header-title">Registros del equipo</div>
-          <div class="page-header-sub">Busca y exporta registros</div>
-        </div>
-      </div>
+    <div id="adRegs" style="display:none">
+      <div class="page-header"><div><div class="ph-title">Registros del equipo</div><div class="ph-sub">Busca y exporta</div></div></div>
       <div class="card">
-        <div class="card-title">Filtros de búsqueda</div>
-        <div class="filter-row">
-          <div class="field-group">
-            <label class="field-label">Empleado</label>
-            <select id="filtroEmpleado"><option value="">Todos</option></select>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Desde</label>
-            <input type="date" id="filtroDesde">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Hasta</label>
-            <input type="date" id="filtroHasta">
-          </div>
+        <div class="card-title">Filtros</div>
+        <div class="fr">
+          <div class="fg"><label class="fl">Empleado</label><select id="filtEmp"><option value="">Todos</option></select></div>
+          <div class="fg"><label class="fl">Desde</label><input type="date" id="filtDes"></div>
+          <div class="fg"><label class="fl">Hasta</label><input type="date" id="filtHas"></div>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="buscarRegistros()">🔍 Buscar</button>
-          <button class="btn btn-green" onclick="exportarExcel()">📥 Exportar Excel</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-p" onclick="buscarRegs()">🔍 Buscar</button>
+          <button class="btn btn-g" onclick="exportar()">📥 Exportar Excel</button>
         </div>
       </div>
-      <div id="adminRegList">
-        <div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Aplica los filtros para buscar registros</div></div>
-      </div>
+      <div id="adRegList"><div class="empty"><div class="ei">🔍</div><div class="et">Aplica los filtros para buscar</div></div></div>
     </div>
-
-    <!-- PENDIENTES -->
-    <div id="adminPendientes" style="display:none">
-      <div class="page-header">
-        <div>
-          <div class="page-header-title">Pendientes de aprobación</div>
-          <div class="page-header-sub">Viáticos y horas extras por revisar</div>
-        </div>
-      </div>
-      <div id="pendientesList"><div class="spinner"></div></div>
+    <div id="adPend" style="display:none">
+      <div class="page-header"><div><div class="ph-title">Pendientes de aprobación</div><div class="ph-sub">Viáticos y horas extras por revisar</div></div></div>
+      <div id="pendList"><div class="spin"></div></div>
     </div>
-
-    <!-- USUARIOS -->
-    <div id="adminUsuarios" style="display:none">
+    <div id="adUsrs" style="display:none">
       <div class="page-header" style="justify-content:space-between">
-        <div>
-          <div class="page-header-title">Gestión de usuarios</div>
-          <div class="page-header-sub">Crear y administrar empleados</div>
-        </div>
-        <button class="btn btn-green btn-sm" onclick="abrirModalUsuario()">+ Nuevo empleado</button>
+        <div><div class="ph-title">Gestión de usuarios</div><div class="ph-sub">Administra el equipo</div></div>
+        <button class="btn btn-g btn-sm" onclick="openModalUser()">+ Nuevo empleado</button>
       </div>
-      <div class="card" id="usuariosList"><div class="spinner"></div></div>
-    </div>
-
-  </div>
-</div>
-
-<!-- ════════ MODAL DETALLE ════════ -->
-<div class="modal-overlay" id="modalDetalle">
-  <div class="modal">
-    <div class="modal-title">📄 Detalle del registro</div>
-    <div id="modalDetalleContent"></div>
-    <div id="modalDetalleActions" class="modal-actions"></div>
-    <div style="display:flex; justify-content:flex-end; margin-top:8px">
-      <button class="btn btn-ghost" onclick="cerrarModal('modalDetalle')">Cerrar</button>
+      <div class="card" id="usrList"><div class="spin"></div></div>
     </div>
   </div>
 </div>
 
-<!-- ════════ MODAL USUARIO ════════ -->
-<div class="modal-overlay" id="modalUsuario">
+<!-- MODAL DETALLE -->
+<div class="mo" id="moDet">
   <div class="modal">
-    <div class="modal-title" id="modalUsuarioTitle">Nuevo empleado</div>
-    <div id="modalUsuarioAlert"></div>
-    <div class="field-group">
-      <label class="field-label">Nombre completo</label>
-      <input type="text" id="uNombre" placeholder="Juan Pérez">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Usuario de acceso</label>
-      <input type="text" id="uUsername" placeholder="juan.perez" autocomplete="off">
-    </div>
-    <div class="field-group">
-      <label class="field-label">PIN (4–8 dígitos)</label>
+    <div class="modal-title">Detalle del registro</div>
+    <div id="moDetContent"></div>
+    <div id="moDetActs" class="modal-acts"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-gh" onclick="closeModal('moDet')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div class="mo" id="moUsr">
+  <div class="modal">
+    <div class="modal-title" id="moUsrTitle">Nuevo empleado</div>
+    <div id="moUsrAlert"></div>
+    <div class="fg"><label class="fl">Nombre completo</label><input type="text" id="uNom" placeholder="Juan Pérez"></div>
+    <div class="fg"><label class="fl">Usuario de acceso</label><input type="text" id="uUsr" placeholder="juan.perez" autocomplete="off"></div>
+    <div class="fg">
+      <label class="fl">PIN (4–8 dígitos)</label>
       <input type="password" id="uPin" placeholder="••••" maxlength="8" inputmode="numeric">
       <div style="font-size:11px;color:var(--text2);margin-top:4px">Al editar, dejar vacío para no cambiar el PIN</div>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="cerrarModal('modalUsuario')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarUsuario()">Guardar</button>
+    <div class="modal-acts">
+      <button class="btn btn-gh" onclick="closeModal('moUsr')">Cancelar</button>
+      <button class="btn btn-p" onclick="saveUser()">Guardar</button>
     </div>
   </div>
 </div>
 
-<!-- ════════ MODAL RECHAZAR ════════ -->
-<div class="modal-overlay" id="modalRechazar">
+<!-- MODAL RECHAZAR -->
+<div class="mo" id="moRej">
   <div class="modal">
-    <div class="modal-title">✗ Rechazar registro</div>
-    <div class="field-group">
-      <label class="field-label">Motivo del rechazo</label>
-      <textarea id="rechazarMotivo" placeholder="Describe el motivo del rechazo..."></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="cerrarModal('modalRechazar')">Cancelar</button>
-      <button class="btn btn-danger" onclick="confirmarRechazo()">Confirmar rechazo</button>
+    <div class="modal-title">Rechazar registro</div>
+    <div class="fg"><label class="fl">Motivo del rechazo</label><textarea id="rejMotivo" placeholder="Describe el motivo..."></textarea></div>
+    <div class="modal-acts">
+      <button class="btn btn-gh" onclick="closeModal('moRej')">Cancelar</button>
+      <button class="btn btn-d" onclick="confirmRej()">Confirmar rechazo</button>
     </div>
   </div>
 </div>
@@ -684,410 +409,251 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
-  authDomain: "daily-e4f86.firebaseapp.com",
-  databaseURL: "https://daily-e4f86-default-rtdb.firebaseio.com",
-  projectId: "daily-e4f86",
-  storageBucket: "daily-e4f86.firebasestorage.app",
-  messagingSenderId: "205856894888",
-  appId: "1:205856894888:web:998122bcf83d63da15379d"
+const cfg = {
+  apiKey:"AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
+  authDomain:"daily-e4f86.firebaseapp.com",
+  databaseURL:"https://daily-e4f86-default-rtdb.firebaseio.com",
+  projectId:"daily-e4f86",
+  storageBucket:"daily-e4f86.firebasestorage.app",
+  messagingSenderId:"205856894888",
+  appId:"1:205856894888:web:998122bcf83d63da15379d"
+};
+const db = getDatabase(initializeApp(cfg));
+
+let me=null, editUID=null, rejKey=null, filtRegs=[];
+
+const today   = () => new Date().toISOString().split('T')[0];
+const ago     = n  => { const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; };
+const fmt     = d  => { if(!d) return ''; const[y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
+const fmtLong = d  => d ? new Date(d+'T12:00:00').toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) : '';
+const $       = id => document.getElementById(id);
+const show    = id => { const e=$(id); if(e) e.style.display=''; };
+const hide    = id => { const e=$(id); if(e) e.style.display='none'; };
+const screen  = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); };
+
+// Init admin
+(async()=>{ try{ const s=await get(ref(db,'users/admin')); if(!s.exists()) await set(ref(db,'users/admin'),{nombre:'Administrador',username:'admin',pin:'1234',role:'admin',activo:true}); }catch(e){} })();
+
+// LOGIN
+window.doLogin = async ()=>{
+  const u=$('loginUser').value.trim().toLowerCase();
+  const p=$('loginPin').value.trim();
+  const al=$('loginAlert'); al.innerHTML='';
+  if(!u||!p){al.innerHTML='<div class="alert ae">Ingresa tu usuario y PIN.</div>';return;}
+  let snap;
+  try{snap=await get(ref(db,'users'));}catch(e){al.innerHTML='<div class="alert ae">Error de conexión. Revisa las reglas de Firebase.</div>';return;}
+  if(!snap.exists()){al.innerHTML='<div class="alert ae">Sin usuarios registrados.</div>';return;}
+  let found=null;
+  snap.forEach(c=>{const v=c.val();if(v.username===u&&String(v.pin)===String(p))found={id:c.key,...v};});
+  if(!found){al.innerHTML='<div class="alert ae">Usuario o PIN incorrecto.</div>';return;}
+  if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
+  me=found;
+  if(me.role==='admin'){screen('adminScreen');loadDash();}
+  else{$('empUsername').textContent=me.nombre;screen('employeeScreen');initForm();}
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+window.doLogout=()=>{me=null;$('loginUser').value='';$('loginPin').value='';$('loginAlert').innerHTML='';screen('loginScreen');};
+$('loginPin').addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
 
-// ── STATE ──────────────────────────────────────────────
-let currentUser = null;
-let editingUserId = null;
-let rechazarKey = null;
-let registrosFiltrados = [];
-
-// ── HELPERS ────────────────────────────────────────────
-const today = () => new Date().toISOString().split('T')[0];
-const daysAgo = n => { const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; };
-const fmtDate = d => { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
-const fmtDateLong = d => {
-  if(!d) return '';
-  const dt = new Date(d+'T12:00:00');
-  return dt.toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+// EMP TABS
+window.empTab=(t,btn)=>{
+  document.querySelectorAll('#employeeScreen .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
+  hide('empReg');hide('empHist');
+  if(t==='r')show('empReg'); else{show('empHist');loadHist();}
 };
-const show = id => { const el=document.getElementById(id); if(el) el.style.display=''; };
-const hide = id => { const el=document.getElementById(id); if(el) el.style.display='none'; };
-const showScreen = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); };
 
-// ── INIT ADMIN ─────────────────────────────────────────
-async function initAdmin() {
-  try {
-    const snap = await get(ref(db,'users/admin'));
-    if (!snap.exists()) {
-      await set(ref(db,'users/admin'),{ nombre:'Administrador', username:'admin', pin:'1234', role:'admin', activo:true });
-    }
-  } catch(e) { console.warn('initAdmin:', e); }
+function initForm(){
+  const f=$('empFecha'); f.value=today();f.max=today();f.min=ago(7);
+  $('empFechaLbl').textContent=fmtLong(today());
+  ['empActs','heJust'].forEach(id=>$(id).value='');
+  ['heIni','heFin'].forEach(id=>$(id).value='');
+  $('togV').classList.remove('on');$('togHE').classList.remove('on');
+  hide('heBox');$('empAlert').innerHTML='';
 }
-initAdmin();
+$('empFecha').addEventListener('change',function(){const l=$('empFechaLbl');if(l)l.textContent=fmtLong(this.value);});
 
-// ── LOGIN ──────────────────────────────────────────────
-window.doLogin = async function() {
-  const username = document.getElementById('loginUser').value.trim().toLowerCase();
-  const pin = document.getElementById('loginPin').value.trim();
-  const alertEl = document.getElementById('loginAlert');
-  alertEl.innerHTML = '';
-  if (!username || !pin) { alertEl.innerHTML='<div class="alert alert-error">Ingresa tu usuario y PIN.</div>'; return; }
-  const snap = await get(ref(db,'users'));
-  if (!snap.exists()) { alertEl.innerHTML='<div class="alert alert-error">Error de conexión.</div>'; return; }
-  let found = null;
-  snap.forEach(c => { const u=c.val(); if(u.username===username && String(u.pin)===String(pin)) found={id:c.key,...u}; });
-  if (!found) { alertEl.innerHTML='<div class="alert alert-error">Usuario o PIN incorrecto.</div>'; return; }
-  if (!found.activo) { alertEl.innerHTML='<div class="alert alert-error">Usuario inactivo. Contacta al administrador.</div>'; return; }
-  currentUser = found;
-  if (found.role==='admin') { showScreen('adminScreen'); loadDashboard(); }
-  else { document.getElementById('empUsername').textContent=found.nombre; showScreen('employeeScreen'); initEmpForm(); }
+window.togF=f=>{
+  if(f==='v'){$('togV').classList.toggle('on');}
+  else{const t=$('togHE');t.classList.toggle('on');$('heBox').style.display=t.classList.contains('on')?'block':'none';}
 };
 
-window.doLogout = function() {
-  currentUser=null;
-  document.getElementById('loginUser').value='';
-  document.getElementById('loginPin').value='';
-  document.getElementById('loginAlert').innerHTML='';
-  showScreen('loginScreen');
-};
-
-document.getElementById('loginPin').addEventListener('keydown', e => { if(e.key==='Enter') window.doLogin(); });
-
-// ── EMPLOYEE ───────────────────────────────────────────
-window.empTab = function(tab, btn) {
-  document.querySelectorAll('#employeeScreen .tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  hide('empRegistro'); hide('empHistorial');
-  if(tab==='registro') show('empRegistro');
-  else { show('empHistorial'); loadHistorial(); }
-};
-
-function initEmpForm() {
-  document.getElementById('empFecha').value = today();
-  document.getElementById('empFecha').max = today();
-  document.getElementById('empFecha').min = daysAgo(7);
-  document.getElementById('empFechaLabel').textContent = fmtDateLong(today());
-  document.getElementById('empActividades').value='';
-  document.getElementById('empHEJustif').value='';
-  document.getElementById('empHEInicio').value='';
-  document.getElementById('empHEFin').value='';
-  document.getElementById('toggleViatico').classList.remove('on');
-  document.getElementById('toggleHE').classList.remove('on');
-  hide('heExtra');
-  document.getElementById('empFormAlert').innerHTML='';
-}
-
-const empFechaEl = document.getElementById('empFecha');
-if (empFechaEl) {
-  empFechaEl.addEventListener('change', function() {
-    const lbl = document.getElementById('empFechaLabel');
-    if (lbl) lbl.textContent = fmtDateLong(this.value);
-  });
-}
-
-window.toggleField = function(field) {
-  if(field==='viatico') { document.getElementById('toggleViatico').classList.toggle('on'); }
-  else {
-    const tog=document.getElementById('toggleHE'); tog.classList.toggle('on');
-    document.getElementById('heExtra').style.display = tog.classList.contains('on') ? 'block' : 'none';
+window.guardarReg=async()=>{
+  const al=$('empAlert');al.innerHTML='';
+  const fecha=$('empFecha').value,acts=$('empActs').value.trim();
+  const viat=$('togV').classList.contains('on'),he=$('togHE').classList.contains('on');
+  if(!fecha||!acts){al.innerHTML='<div class="alert ae">Completa la fecha y actividades.</div>';return;}
+  if(he){
+    const j=$('heJust').value.trim(),i=$('heIni').value,f=$('heFin').value;
+    if(!j||!i||!f){al.innerHTML='<div class="alert ae">Completa justificación y horas de HE.</div>';return;}
+    if(i>=f){al.innerHTML='<div class="alert ae">Hora fin debe ser mayor a inicio.</div>';return;}
   }
+  const snap=await get(ref(db,`registros/${me.id}`));
+  if(snap.exists()){let dup=false;snap.forEach(c=>{if(c.val().fecha===fecha)dup=true;});if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return;}}
+  await push(ref(db,`registros/${me.id}`),{fecha,actividades:acts,viatico:viat,he,heJustif:he?$('heJust').value.trim():'',heInicio:he?$('heIni').value:'',heFin:he?$('heFin').value:'',estado:'pendiente',creadoEn:Date.now(),userId:me.id,userName:me.nombre});
+  al.innerHTML='<div class="alert as">✓ Registro guardado correctamente.</div>';initForm();
 };
 
-window.guardarRegistro = async function() {
-  const alertEl = document.getElementById('empFormAlert');
-  alertEl.innerHTML='';
-  const fecha = document.getElementById('empFecha').value;
-  const actividades = document.getElementById('empActividades').value.trim();
-  const viatico = document.getElementById('toggleViatico').classList.contains('on');
-  const he = document.getElementById('toggleHE').classList.contains('on');
-  if (!fecha||!actividades) { alertEl.innerHTML='<div class="alert alert-error">Completa la fecha y las actividades realizadas.</div>'; return; }
-  if (he) {
-    const justif=document.getElementById('empHEJustif').value.trim();
-    const inicio=document.getElementById('empHEInicio').value;
-    const fin=document.getElementById('empHEFin').value;
-    if (!justif||!inicio||!fin) { alertEl.innerHTML='<div class="alert alert-error">Completa la justificación y horas de las horas extras.</div>'; return; }
-    if (inicio>=fin) { alertEl.innerHTML='<div class="alert alert-error">La hora de fin debe ser mayor a la de inicio.</div>'; return; }
-  }
-  // Duplicado
-  const snap = await get(ref(db,`registros/${currentUser.id}`));
-  if (snap.exists()) {
-    let dup=false; snap.forEach(c=>{ if(c.val().fecha===fecha) dup=true; });
-    if(dup) { alertEl.innerHTML='<div class="alert alert-error">Ya tienes un registro para esta fecha.</div>'; return; }
-  }
-  const data = {
-    fecha, actividades, viatico, he,
-    heJustif: he?document.getElementById('empHEJustif').value.trim():'',
-    heInicio: he?document.getElementById('empHEInicio').value:'',
-    heFin: he?document.getElementById('empHEFin').value:'',
-    estado:'pendiente', creadoEn:Date.now(),
-    userId:currentUser.id, userName:currentUser.nombre
-  };
-  await push(ref(db,`registros/${currentUser.id}`), data);
-  alertEl.innerHTML='<div class="alert alert-success">✓ Registro guardado correctamente.</div>';
-  initEmpForm();
-};
-
-async function loadHistorial() {
-  const listEl = document.getElementById('empHistorialList');
-  listEl.innerHTML='<div class="spinner"></div>';
-  const snap = await get(ref(db,`registros/${currentUser.id}`));
-  if(!snap.exists()) { listEl.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No tienes registros aún</div></div>'; return; }
-  const items=[];
-  snap.forEach(c=>items.push({key:c.key,...c.val()}));
+async function loadHist(){
+  const l=$('empHistList');l.innerHTML='<div class="spin"></div>';
+  const snap=await get(ref(db,`registros/${me.id}`));
+  if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">No tienes registros aún</div></div>';return;}
+  const items=[];snap.forEach(c=>items.push({key:c.key,...c.val()}));
   items.sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  listEl.innerHTML = items.map(r=>`
-    <div class="rec-card" onclick="verDetalle('${currentUser.id}','${r.key}',false)">
-      <div class="rec-card-header">
-        <div class="rec-date">${fmtDate(r.fecha)}</div>
-        <div class="rec-badges">
-          ${r.viatico?'<span class="badge badge-yes">💰 Viático</span>':''}
-          ${r.he?`<span class="badge badge-yes">⏱ HE</span>`:''}
-          <span class="badge badge-${r.estado}">${r.estado==='pendiente'?'⏳ Pendiente':r.estado==='aprobado'?'✓ Aprobado':'✗ Rechazado'}</span>
-        </div>
-      </div>
-      <div class="rec-desc">${r.actividades}</div>
-    </div>`).join('');
+  l.innerHTML=items.map(r=>`<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
+    <div class="rc-hd"><div class="rc-date">${fmt(r.fecha)}</div>
+    <div class="rc-badges">${r.viatico?'<span class="badge by">💰 Viático</span>':''}${r.he?'<span class="badge by">⏱ HE</span>':''}
+    <span class="badge ${r.estado==='pendiente'?'bp':r.estado==='aprobado'?'ba':'br'}">${r.estado==='pendiente'?'⏳ Pendiente':r.estado==='aprobado'?'✓ Aprobado':'✗ Rechazado'}</span>
+    </div></div><div class="rc-desc">${r.actividades}</div></div>`).join('');
 }
 
-// ── ADMIN ──────────────────────────────────────────────
-window.adminTab = function(tab, btn) {
-  document.querySelectorAll('#adminScreen .tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  ['adminDashboard','adminRegistros','adminPendientes','adminUsuarios'].forEach(hide);
-  if(tab==='dashboard') { show('adminDashboard'); loadDashboard(); }
-  if(tab==='registros') { show('adminRegistros'); loadFiltroEmpleados(); }
-  if(tab==='pendientes') { show('adminPendientes'); loadPendientes(); }
-  if(tab==='usuarios') { show('adminUsuarios'); loadUsuarios(); }
+// ADMIN TABS
+window.adTab=(t,btn)=>{
+  document.querySelectorAll('#adminScreen .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
+  ['adDash','adRegs','adPend','adUsrs'].forEach(hide);
+  if(t==='dash'){show('adDash');loadDash();}
+  if(t==='regs'){show('adRegs');loadFiltEmps();}
+  if(t==='pend'){show('adPend');loadPend();}
+  if(t==='usrs'){show('adUsrs');loadUsrs();}
 };
 
-async function getAllRegistros() {
-  const snap=await get(ref(db,'registros'));
-  const all=[];
-  if(!snap.exists()) return all;
-  snap.forEach(u=>u.forEach(r=>all.push({key:r.key,userId:u.key,...r.val()})));
-  return all;
+async function getAllRegs(){const snap=await get(ref(db,'registros'));const a=[];if(!snap.exists())return a;snap.forEach(u=>u.forEach(r=>a.push({key:r.key,userId:u.key,...r.val()})));return a;}
+async function getUsers(){const snap=await get(ref(db,'users'));const a=[];if(!snap.exists())return a;snap.forEach(c=>a.push({id:c.key,...c.val()}));return a;}
+
+async function loadDash(){
+  $('dashDate').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const[regs,users]=await Promise.all([getAllRegs(),getUsers()]);
+  const td=today(),hoy=regs.filter(r=>r.fecha===td),pend=regs.filter(r=>r.estado==='pendiente');
+  const emps=users.filter(u=>u.role!=='admin'&&u.activo),conHoy=new Set(hoy.map(r=>r.userId));
+  $('dashStats').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${emps.length}</div><div class="stat-lbl">Empleados activos</div></div>
+    <div class="stat-card g"><div class="stat-val">${hoy.length}</div><div class="stat-lbl">Registros hoy</div></div>
+    <div class="stat-card w"><div class="stat-val">${pend.length}</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-card d"><div class="stat-val">${emps.length-conHoy.size}</div><div class="stat-lbl">Sin registro hoy</div></div>`;
+  $('dashHoy').innerHTML=hoy.length===0
+    ?'<div class="empty" style="padding:20px"><div class="et">Nadie ha registrado hoy</div></div>'
+    :`<div class="tw"><table><thead><tr><th>Empleado</th><th>Viático</th><th>H.E.</th><th>Estado</th></tr></thead><tbody>${hoy.map(r=>`<tr><td style="font-weight:500">${r.userName||r.userId}</td><td>${r.viatico?'<span class="badge by">Sí</span>':'<span class="badge bn">No</span>'}</td><td>${r.he?`<span class="badge by">${r.heInicio}–${r.heFin}</span>`:'<span class="badge bn">No</span>'}</td><td><span class="badge ${r.estado==='pendiente'?'bp':r.estado==='aprobado'?'ba':'br'}">${r.estado}</span></td></tr>`).join('')}</tbody></table></div>`;
+  const sin=emps.filter(u=>!conHoy.has(u.id));
+  $('dashSin').innerHTML=sin.length===0
+    ?'<div class="empty" style="padding:20px"><div class="et">✓ Todos registraron hoy</div></div>'
+    :sin.map(u=>`<div style="padding:8px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0"></span>${u.nombre}</div>`).join('');
 }
 
-async function getUsers() {
-  const snap=await get(ref(db,'users'));
-  const users=[];
-  if(!snap.exists()) return users;
-  snap.forEach(c=>users.push({id:c.key,...c.val()}));
-  return users;
+async function loadPend(){
+  const l=$('pendList');l.innerHTML='<div class="spin"></div>';
+  const all=await getAllRegs();const pend=all.filter(r=>r.estado==='pendiente').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(!pend.length){l.innerHTML='<div class="empty"><div class="ei">✅</div><div class="et">Sin pendientes</div></div>';return;}
+  l.innerHTML=pend.map(r=>`<div class="card" style="border-left:4px solid var(--warn)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+      <div><div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${fmtLong(r.fecha)}</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${r.viatico?'<span class="badge by">💰 Viático</span>':''}${r.he?`<span class="badge by">⏱ ${r.heInicio}–${r.heFin}</span>`:''}</div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">${r.actividades}</div>
+    ${r.he?`<div style="font-size:12px;background:var(--sky);padding:9px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-g btn-sm" onclick="aprobar('${r.userId}','${r.key}')">✓ Aprobar</button>
+      <button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}')">✗ Rechazar</button>
+      <button class="btn btn-gh btn-sm" onclick="openDet('${r.userId}','${r.key}',true)">Ver detalle</button>
+    </div></div>`).join('');
 }
 
-async function loadDashboard() {
-  const now = new Date();
-  document.getElementById('dashFecha').textContent = now.toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const [allRegs, allUsers] = await Promise.all([getAllRegistros(), getUsers()]);
-  const todayStr=today();
-  const regsHoy=allRegs.filter(r=>r.fecha===todayStr);
-  const pendientes=allRegs.filter(r=>r.estado==='pendiente');
-  const empleados=allUsers.filter(u=>u.role!=='admin'&&u.activo);
-  const conHoy=new Set(regsHoy.map(r=>r.userId));
-
-  document.getElementById('dashStats').innerHTML=`
-    <div class="stat-card"><div class="stat-val">${empleados.length}</div><div class="stat-label">Empleados activos</div></div>
-    <div class="stat-card green"><div class="stat-val">${regsHoy.length}</div><div class="stat-label">Registros hoy</div></div>
-    <div class="stat-card warn"><div class="stat-val">${pendientes.length}</div><div class="stat-label">Pendientes</div></div>
-    <div class="stat-card danger"><div class="stat-val">${empleados.length-conHoy.size}</div><div class="stat-label">Sin registro hoy</div></div>`;
-
-  document.getElementById('dashHoy').innerHTML = regsHoy.length===0
-    ? '<div class="empty" style="padding:24px"><div class="empty-text">Nadie ha registrado hoy</div></div>'
-    : `<div class="table-wrap"><table><thead><tr><th>Empleado</th><th>Viático</th><th>H.E.</th><th>Estado</th></tr></thead><tbody>
-      ${regsHoy.map(r=>`<tr>
-        <td style="font-weight:500">${r.userName||r.userId}</td>
-        <td>${r.viatico?'<span class="badge badge-yes">Sí</span>':'<span class="badge badge-no">No</span>'}</td>
-        <td>${r.he?`<span class="badge badge-yes">${r.heInicio}–${r.heFin}</span>`:'<span class="badge badge-no">No</span>'}</td>
-        <td><span class="badge badge-${r.estado}">${r.estado}</span></td>
-      </tr>`).join('')}
-      </tbody></table></div>`;
-
-  const sinReg=empleados.filter(u=>!conHoy.has(u.id));
-  document.getElementById('dashSinReg').innerHTML = sinReg.length===0
-    ? '<div class="empty" style="padding:24px"><div class="empty-text">✓ Todos registraron hoy</div></div>'
-    : sinReg.map(u=>`<div style="padding:9px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:7px;height:7px;border-radius:50%;background:var(--danger);flex-shrink:0;display:inline-block"></span>${u.nombre}</div>`).join('');
-}
-
-async function loadPendientes() {
-  const listEl=document.getElementById('pendientesList');
-  listEl.innerHTML='<div class="spinner"></div>';
-  const all=await getAllRegistros();
-  const pend=all.filter(r=>r.estado==='pendiente').sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  if(pend.length===0) { listEl.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Sin registros pendientes</div></div>'; return; }
-  listEl.innerHTML=pend.map(r=>`
-    <div class="card" style="border-left:4px solid var(--warn)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-        <div>
-          <div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">${fmtDateLong(r.fecha)}</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${r.viatico?'<span class="badge badge-yes">💰 Viático</span>':''}
-          ${r.he?`<span class="badge badge-yes">⏱ ${r.heInicio}–${r.heFin}</span>`:''}
-        </div>
-      </div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">${r.actividades}</div>
-      ${r.he?`<div style="font-size:12px;background:var(--sky);padding:10px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justificación HE:</b> ${r.heJustif}</div>`:''}
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-green btn-sm" onclick="aprobar('${r.userId}','${r.key}')">✓ Aprobar</button>
-        <button class="btn btn-danger btn-sm" onclick="abrirRechazar('${r.userId}','${r.key}')">✗ Rechazar</button>
-        <button class="btn btn-ghost btn-sm" onclick="verDetalle('${r.userId}','${r.key}',true)">Ver detalle</button>
-      </div>
-    </div>`).join('');
-}
-
-window.aprobar = async function(userId,key) {
-  await update(ref(db,`registros/${userId}/${key}`),{estado:'aprobado',revisadoEn:Date.now()});
-  loadPendientes();
+window.aprobar=async(uid,key)=>{await update(ref(db,`registros/${uid}/${key}`),{estado:'aprobado',revisadoEn:Date.now()});loadPend();};
+window.openRej=(uid,key)=>{rejKey={uid,key};$('rejMotivo').value='';$('moRej').classList.add('open');};
+window.confirmRej=async()=>{
+  const m=$('rejMotivo').value.trim();if(!m)return;
+  await update(ref(db,`registros/${rejKey.uid}/${rejKey.key}`),{estado:'rechazado',motivoRechazo:m,revisadoEn:Date.now()});
+  closeModal('moRej');loadPend();
 };
 
-window.abrirRechazar = function(userId,key) {
-  rechazarKey={userId,key};
-  document.getElementById('rechazarMotivo').value='';
-  document.getElementById('modalRechazar').classList.add('open');
-};
-
-window.confirmarRechazo = async function() {
-  const motivo=document.getElementById('rechazarMotivo').value.trim();
-  if(!motivo) return;
-  await update(ref(db,`registros/${rechazarKey.userId}/${rechazarKey.key}`),{estado:'rechazado',motivoRechazo:motivo,revisadoEn:Date.now()});
-  cerrarModal('modalRechazar');
-  loadPendientes();
-};
-
-async function loadFiltroEmpleados() {
-  const users=await getUsers();
-  const sel=document.getElementById('filtroEmpleado');
+async function loadFiltEmps(){
+  const users=await getUsers();const sel=$('filtEmp');
   sel.innerHTML='<option value="">Todos los empleados</option>';
-  users.filter(u=>u.role!=='admin').forEach(u=>{ sel.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`; });
-  document.getElementById('filtroDesde').value=daysAgo(30);
-  document.getElementById('filtroHasta').value=today();
+  users.filter(u=>u.role!=='admin').forEach(u=>{sel.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`;});
+  $('filtDes').value=ago(30);$('filtHas').value=today();
 }
 
-window.buscarRegistros = async function() {
-  const listEl=document.getElementById('adminRegList');
-  listEl.innerHTML='<div class="spinner"></div>';
-  const empId=document.getElementById('filtroEmpleado').value;
-  const desde=document.getElementById('filtroDesde').value;
-  const hasta=document.getElementById('filtroHasta').value;
-  let all=await getAllRegistros();
-  if(empId) all=all.filter(r=>r.userId===empId);
-  if(desde) all=all.filter(r=>r.fecha>=desde);
-  if(hasta) all=all.filter(r=>r.fecha<=hasta);
-  all.sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  registrosFiltrados=all;
-  if(all.length===0) { listEl.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Sin resultados para los filtros aplicados</div></div>'; return; }
-  listEl.innerHTML=`
-    <div class="card">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">${all.length} registro(s) encontrado(s)</div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Fecha</th><th>Empleado</th><th>Viático</th><th>H. Extras</th><th>Estado</th><th></th></tr></thead>
-        <tbody>
-        ${all.map(r=>`<tr>
-          <td style="font-family:var(--mono);font-size:12px;font-weight:600">${fmtDate(r.fecha)}</td>
-          <td style="font-weight:500">${r.userName||r.userId}</td>
-          <td>${r.viatico?'<span class="badge badge-yes">Sí</span>':'<span class="badge badge-no">No</span>'}</td>
-          <td>${r.he?`<span class="badge badge-yes">${r.heInicio}–${r.heFin}</span>`:'<span class="badge badge-no">No</span>'}</td>
-          <td><span class="badge badge-${r.estado}">${r.estado}</span></td>
-          <td><button class="btn btn-ghost btn-xs" onclick="verDetalle('${r.userId}','${r.key}',true)">Ver</button></td>
-        </tr>`).join('')}
-        </tbody>
-      </table></div>
-    </div>`;
+window.buscarRegs=async()=>{
+  const l=$('adRegList');l.innerHTML='<div class="spin"></div>';
+  const eid=$('filtEmp').value,des=$('filtDes').value,has=$('filtHas').value;
+  let all=await getAllRegs();
+  if(eid)all=all.filter(r=>r.userId===eid);
+  if(des)all=all.filter(r=>r.fecha>=des);
+  if(has)all=all.filter(r=>r.fecha<=has);
+  all.sort((a,b)=>b.fecha.localeCompare(a.fecha));filtRegs=all;
+  if(!all.length){l.innerHTML='<div class="empty"><div class="ei">🔍</div><div class="et">Sin resultados</div></div>';return;}
+  l.innerHTML=`<div class="card"><div style="font-size:12px;color:var(--text2);margin-bottom:12px">${all.length} registro(s)</div>
+    <div class="tw"><table><thead><tr><th>Fecha</th><th>Empleado</th><th>Viático</th><th>H.E.</th><th>Estado</th><th></th></tr></thead><tbody>
+    ${all.map(r=>`<tr><td style="font-family:var(--mono);font-size:12px;font-weight:600">${fmt(r.fecha)}</td><td style="font-weight:500">${r.userName||r.userId}</td>
+    <td>${r.viatico?'<span class="badge by">Sí</span>':'<span class="badge bn">No</span>'}</td>
+    <td>${r.he?`<span class="badge by">${r.heInicio}–${r.heFin}</span>`:'<span class="badge bn">No</span>'}</td>
+    <td><span class="badge ${r.estado==='pendiente'?'bp':r.estado==='aprobado'?'ba':'br'}">${r.estado}</span></td>
+    <td><button class="btn btn-gh btn-xs" onclick="openDet('${r.userId}','${r.key}',true)">Ver</button></td></tr>`).join('')}
+    </tbody></table></div></div>`;
 };
 
-window.exportarExcel = function() {
-  if(!registrosFiltrados.length) { alert('Primero realiza una búsqueda.'); return; }
-  const headers=['Fecha','Empleado','Actividades','Viático','Horas Extras','HE Inicio','HE Fin','Justificación HE','Estado','Motivo Rechazo'];
-  const rows=registrosFiltrados.map(r=>[r.fecha,r.userName||r.userId,r.actividades,r.viatico?'Sí':'No',r.he?'Sí':'No',r.heInicio||'',r.heFin||'',r.heJustif||'',r.estado,r.motivoRechazo||'']);
-  const csv=[headers,...rows].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=`registro-planilla-${today()}.csv`; a.click();
+window.exportar=()=>{
+  if(!filtRegs.length){alert('Primero realiza una búsqueda.');return;}
+  const h=['Fecha','Empleado','Actividades','Viático','Horas Extras','HE Inicio','HE Fin','Justificación HE','Estado','Motivo Rechazo'];
+  const rows=filtRegs.map(r=>[r.fecha,r.userName||r.userId,r.actividades,r.viatico?'Sí':'No',r.he?'Sí':'No',r.heInicio||'',r.heFin||'',r.heJustif||'',r.estado,r.motivoRechazo||'']);
+  const csv=[h,...rows].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`registro-planilla-${today()}.csv`;a.click();
 };
 
-window.verDetalle = async function(userId,key,isAdmin) {
-  const snap=await get(ref(db,`registros/${userId}/${key}`));
-  if(!snap.exists()) return;
+window.openDet=async(uid,key,isAdmin)=>{
+  const snap=await get(ref(db,`registros/${uid}/${key}`));if(!snap.exists())return;
   const r=snap.val();
-  document.getElementById('modalDetalleContent').innerHTML=`
-    <div class="detail-row"><div class="detail-key">Empleado</div><div class="detail-val">${r.userName||userId}</div></div>
-    <div class="detail-row"><div class="detail-key">Fecha</div><div class="detail-val">${fmtDateLong(r.fecha)}</div></div>
-    <div class="detail-row"><div class="detail-key">Actividades realizadas</div><div class="detail-val" style="white-space:pre-wrap;line-height:1.6">${r.actividades}</div></div>
-    <div class="detail-row"><div class="detail-key">Viático</div><div class="detail-val">${r.viatico?'<span class="badge badge-yes">Sí — Salida a campo</span>':'<span class="badge badge-no">No</span>'}</div></div>
-    <div class="detail-row"><div class="detail-key">Horas Extras</div><div class="detail-val">${r.he?`<span class="badge badge-yes">Sí — ${r.heInicio} a ${r.heFin}</span>`:'<span class="badge badge-no">No</span>'}</div></div>
-    ${r.he?`<div class="detail-row"><div class="detail-key">Justificación HE</div><div class="detail-val">${r.heJustif}</div></div>`:''}
-    <div class="detail-row"><div class="detail-key">Estado</div><div class="detail-val"><span class="badge badge-${r.estado}">${r.estado}</span></div></div>
-    ${r.motivoRechazo?`<div class="detail-row"><div class="detail-key">Motivo de rechazo</div><div class="detail-val" style="color:var(--danger)">${r.motivoRechazo}</div></div>`:''}`;
-  const actEl=document.getElementById('modalDetalleActions');
-  actEl.innerHTML = (isAdmin&&r.estado==='pendiente')
-    ? `<button class="btn btn-green btn-sm" onclick="aprobar('${userId}','${key}');cerrarModal('modalDetalle')">✓ Aprobar</button>
-       <button class="btn btn-danger btn-sm" onclick="cerrarModal('modalDetalle');abrirRechazar('${userId}','${key}')">✗ Rechazar</button>`
-    : '';
-  document.getElementById('modalDetalle').classList.add('open');
+  $('moDetContent').innerHTML=`
+    <div class="dr"><div class="dk">Empleado</div><div class="dv">${r.userName||uid}</div></div>
+    <div class="dr"><div class="dk">Fecha</div><div class="dv">${fmtLong(r.fecha)}</div></div>
+    <div class="dr"><div class="dk">Actividades</div><div class="dv" style="white-space:pre-wrap;line-height:1.6">${r.actividades}</div></div>
+    <div class="dr"><div class="dk">Viático</div><div class="dv">${r.viatico?'<span class="badge by">Sí — salida a campo</span>':'<span class="badge bn">No</span>'}</div></div>
+    <div class="dr"><div class="dk">Horas Extras</div><div class="dv">${r.he?`<span class="badge by">Sí — ${r.heInicio} a ${r.heFin}</span>`:'<span class="badge bn">No</span>'}</div></div>
+    ${r.he?`<div class="dr"><div class="dk">Justificación HE</div><div class="dv">${r.heJustif}</div></div>`:''}
+    <div class="dr"><div class="dk">Estado</div><div class="dv"><span class="badge ${r.estado==='pendiente'?'bp':r.estado==='aprobado'?'ba':'br'}">${r.estado}</span></div></div>
+    ${r.motivoRechazo?`<div class="dr"><div class="dk">Motivo rechazo</div><div class="dv" style="color:var(--danger)">${r.motivoRechazo}</div></div>`:''}`;
+  $('moDetActs').innerHTML=(isAdmin&&r.estado==='pendiente')
+    ?`<button class="btn btn-g btn-sm" onclick="aprobar('${uid}','${key}');closeModal('moDet')">✓ Aprobar</button>
+       <button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}')">✗ Rechazar</button>`:'';
+  $('moDet').classList.add('open');
 };
 
-// USUARIOS
-async function loadUsuarios() {
-  const listEl=document.getElementById('usuariosList');
-  listEl.innerHTML='<div class="spinner"></div>';
-  const users=await getUsers();
-  const emps=users.filter(u=>u.role!=='admin');
-  if(!emps.length) { listEl.innerHTML='<div class="empty"><div class="empty-text">Sin empleados registrados</div></div>'; return; }
-  listEl.innerHTML=emps.map(u=>`
-    <div class="user-row">
-      <div>
-        <div class="user-name">${u.nombre} ${!u.activo?'<span class="badge badge-inactive">Inactivo</span>':'<span class="badge badge-active">Activo</span>'}</div>
-        <div class="user-meta">@${u.username}</div>
-      </div>
-      <div class="user-actions">
-        <button class="btn btn-ghost btn-sm" onclick="abrirModalUsuario('${u.id}')">✏ Editar</button>
-        <button class="btn btn-sm ${u.activo?'btn-danger':'btn-green'}" onclick="toggleActivo('${u.id}',${u.activo})">
-          ${u.activo?'Desactivar':'Activar'}
-        </button>
-      </div>
-    </div>`).join('');
+async function loadUsrs(){
+  const l=$('usrList');l.innerHTML='<div class="spin"></div>';
+  const users=await getUsers();const emps=users.filter(u=>u.role!=='admin');
+  if(!emps.length){l.innerHTML='<div class="empty"><div class="et">Sin empleados registrados</div></div>';return;}
+  l.innerHTML=emps.map(u=>`<div class="ur">
+    <div><div class="un">${u.nombre} <span class="badge ${u.activo?'bac':'bin'}">${u.activo?'Activo':'Inactivo'}</span></div><div class="um">@${u.username}</div></div>
+    <div class="ua">
+      <button class="btn btn-gh btn-sm" onclick="openModalUser('${u.id}')">Editar</button>
+      <button class="btn btn-sm ${u.activo?'btn-d':'btn-g'}" onclick="togActivo('${u.id}',${u.activo})">${u.activo?'Desactivar':'Activar'}</button>
+    </div></div>`).join('');
 }
 
-window.toggleActivo = async function(userId,activo) {
-  await update(ref(db,`users/${userId}`),{activo:!activo}); loadUsuarios();
+window.togActivo=async(uid,a)=>{await update(ref(db,`users/${uid}`),{activo:!a});loadUsrs();};
+window.openModalUser=uid=>{
+  editUID=uid||null;
+  $('moUsrTitle').textContent=uid?'Editar empleado':'Nuevo empleado';
+  $('moUsrAlert').innerHTML='';
+  ['uNom','uUsr','uPin'].forEach(id=>$(id).value='');
+  if(uid)get(ref(db,`users/${uid}`)).then(s=>{if(s.exists()){const u=s.val();$('uNom').value=u.nombre;$('uUsr').value=u.username;}});
+  $('moUsr').classList.add('open');
 };
 
-window.abrirModalUsuario = function(userId) {
-  editingUserId=userId||null;
-  document.getElementById('modalUsuarioTitle').textContent=userId?'Editar empleado':'Nuevo empleado';
-  document.getElementById('modalUsuarioAlert').innerHTML='';
-  document.getElementById('uNombre').value='';
-  document.getElementById('uUsername').value='';
-  document.getElementById('uPin').value='';
-  if(userId) get(ref(db,`users/${userId}`)).then(snap=>{ if(snap.exists()){ const u=snap.val(); document.getElementById('uNombre').value=u.nombre; document.getElementById('uUsername').value=u.username; }});
-  document.getElementById('modalUsuario').classList.add('open');
-};
-
-window.guardarUsuario = async function() {
-  const alertEl=document.getElementById('modalUsuarioAlert');
-  const nombre=document.getElementById('uNombre').value.trim();
-  const username=document.getElementById('uUsername').value.trim().toLowerCase();
-  const pin=document.getElementById('uPin').value.trim();
-  if(!nombre||!username) { alertEl.innerHTML='<div class="alert alert-error">Nombre y usuario son obligatorios.</div>'; return; }
-  if(!editingUserId&&(!pin||pin.length<4)) { alertEl.innerHTML='<div class="alert alert-error">PIN mínimo de 4 dígitos.</div>'; return; }
+window.saveUser=async()=>{
+  const al=$('moUsrAlert');
+  const nom=$('uNom').value.trim(),usr=$('uUsr').value.trim().toLowerCase(),pin=$('uPin').value.trim();
+  if(!nom||!usr){al.innerHTML='<div class="alert ae">Nombre y usuario son obligatorios.</div>';return;}
+  if(!editUID&&(!pin||pin.length<4)){al.innerHTML='<div class="alert ae">PIN mínimo de 4 dígitos.</div>';return;}
   const users=await getUsers();
-  if(users.find(u=>u.username===username&&u.id!==editingUserId)) { alertEl.innerHTML='<div class="alert alert-error">Ese usuario ya existe.</div>'; return; }
-  if(editingUserId) {
-    const data={nombre,username}; if(pin.length>=4) data.pin=pin;
-    await update(ref(db,`users/${editingUserId}`),data);
-  } else {
-    await set(push(ref(db,'users')),{nombre,username,pin,role:'empleado',activo:true});
-  }
-  cerrarModal('modalUsuario'); loadUsuarios();
+  if(users.find(u=>u.username===usr&&u.id!==editUID)){al.innerHTML='<div class="alert ae">Ese usuario ya existe.</div>';return;}
+  if(editUID){const d={nombre:nom,username:usr};if(pin.length>=4)d.pin=pin;await update(ref(db,`users/${editUID}`),d);}
+  else await set(push(ref(db,'users')),{nombre:nom,username:usr,pin,role:'empleado',activo:true});
+  closeModal('moUsr');loadUsrs();
 };
 
-window.cerrarModal = id => document.getElementById(id).classList.remove('open');
-document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); });
+window.closeModal=id=>$(id).classList.remove('open');
+document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.mo.open').forEach(m=>m.classList.remove('open'));});
 </script>
 </body>
 </html>
