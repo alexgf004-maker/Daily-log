@@ -294,22 +294,19 @@ function renderEmployee(nombre){
         <div class="page-header"><div><div class="ph-title">Registro de actividades</div><div class="ph-sub" id="empFechaLbl"></div></div></div>
         <div class="card">
           <div id="empAlert"></div>
-          <div class="fg"><label class="fl">Fecha</label><input type="date" id="empFecha"></div>
+          <div class="fg"><label class="fl">Fecha</label><input type="date" id="empFecha" onchange="onFechaChange()"></div>
+          <div class="tr2">
+            <div class="fg"><label class="fl">Hora entrada</label><input type="time" id="empEntrada" onchange="calcHE()"></div>
+            <div class="fg"><label class="fl">Hora salida</label><input type="time" id="empSalida" onchange="calcHE()"></div>
+          </div>
+          <div id="heResumen" style="display:none;margin-bottom:14px"></div>
           <div class="fg"><label class="fl">Actividades realizadas</label><textarea id="empActs" placeholder="Describe las actividades del día..."></textarea></div>
           <div class="tog-row">
             <div><div class="tog-lbl">💰 Viático</div><div class="tog-sub">Activar si realizaste salida a campo</div></div>
             <div class="toggle" id="togV" onclick="togF('v')"></div>
           </div>
-          <div class="tog-row">
-            <div><div class="tog-lbl">⏱ Horas Extras</div><div class="tog-sub">Activar si trabajaste fuera de horario</div></div>
-            <div class="toggle" id="togHE" onclick="togF('he')"></div>
-          </div>
-          <div id="heBox" class="he-box" style="display:none">
-            <div class="fg"><label class="fl">Justificación</label><textarea id="heJust" placeholder="Motivo de las horas extras..."></textarea></div>
-            <div class="tr2">
-              <div class="fg"><label class="fl">Hora inicio</label><input type="time" id="heIni"></div>
-              <div class="fg"><label class="fl">Hora fin</label><input type="time" id="heFin"></div>
-            </div>
+          <div id="heBox" style="display:none;background:var(--bluelt);border-radius:var(--r);padding:14px;margin-top:12px;border:1px solid var(--bluemid)">
+            <div class="fg"><label class="fl">Justificación de horas extras</label><textarea id="heJust" placeholder="Motivo de las horas extras..."></textarea></div>
           </div>
           <button class="btn btn-p btn-full" style="margin-top:18px;padding:12px" onclick="guardarReg()">Guardar registro</button>
         </div>
@@ -502,16 +499,146 @@ window.empTab=(t,btn)=>{
 function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();f.min=ago(7);
   $('empFechaLbl').textContent=fmtLong(today());
-  ['empActs','heJust'].forEach(id=>$(id).value='');
-  ['heIni','heFin'].forEach(id=>$(id).value='');
-  $('togV').classList.remove('on');$('togHE').classList.remove('on');
-  hide('heBox');
+  ['empActs','heJust'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
+  ['empEntrada','empSalida'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
+  const tv=$('togV'); if(tv) tv.classList.remove('on');
+  hide('heBox'); hide('heResumen');
 }
-const _ef=$('empFecha'); if(_ef) _ef.addEventListener('change',function(){const l=$('empFechaLbl');if(l)l.textContent=fmtLong(this.value);});
+
+// Horario base según día de semana
+function horarioBase(fecha){
+  const d = new Date(fecha+'T12:00:00');
+  const dow = d.getDay(); // 0=Dom,1=Lun,...,5=Vie,6=Sab
+  if(dow===0 || dow===6) return null; // Sábado y Domingo: todo HE
+  if(dow===5) return {ini:'07:00',fin:'16:00'}; // Viernes
+  return {ini:'07:00',fin:'17:00'}; // Lun-Jue
+}
+
+function toMins(t){ const[h,m]=t.split(':').map(Number); return h*60+m; }
+function fromMins(m){ return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
+
+// Calcula HE dado fecha, entrada, salida
+function calcularHE(fecha, entrada, salida){
+  if(!fecha||!entrada||!salida) return {he:false, minHE:0, heIni:'', heFin:'', esFinde:false};
+  const base = horarioBase(fecha);
+  const d = new Date(fecha+'T12:00:00');
+  const dow = d.getDay();
+  const esFinde = (dow===0||dow===6);
+
+  const entMin = toMins(entrada);
+  const salMin = toMins(salida);
+  if(salMin<=entMin) return {he:false, minHE:0, heIni:'', heFin:'', esFinde};
+
+  let minHE = 0;
+  let heIni = '', heFin = '';
+
+  if(!base || dow===0){
+    // Domingo o sin base: todo es HE
+    minHE = salMin - entMin;
+    heIni = entrada; heFin = salida;
+  } else {
+    const baseIni = toMins(base.ini);
+    const baseFin = toMins(base.fin);
+    // HE antes de entrada base
+    if(entMin < baseIni){
+      minHE += baseIni - entMin;
+      if(!heIni) heIni = entrada;
+    }
+    // HE después de salida base
+    if(salMin > baseFin){
+      minHE += salMin - baseFin;
+      heFin = salida;
+      if(!heIni) heIni = fromMins(baseFin);
+    }
+  }
+
+  return { he: minHE>0, minHE, heIni, heFin, esFinde };
+}
+
+window.onFechaChange = function(){
+  const f=$('empFecha');
+  if(f){ $('empFechaLbl').textContent=fmtLong(f.value); }
+  calcHE();
+};
+
+window.calcHE = function(){
+  const fecha=$('empFecha')?.value;
+  const entrada=$('empEntrada')?.value;
+  const salida=$('empSalida')?.value;
+  const resEl=$('heResumen');
+  const heBox=$('heBox');
+  if(!fecha||!entrada||!salida){ hide('heResumen'); hide('heBox'); return; }
+
+  const r = calcularHE(fecha, entrada, salida);
+  const d = new Date(fecha+'T12:00:00');
+  const dow = d.getDay();
+  const diasNombre = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+  if(r.he){
+    const hrs=Math.floor(r.minHE/60), mins=r.minHE%60;
+    const tiempoStr=(hrs>0?hrs+'h ':'')+mins+'m';
+    resEl.innerHTML=`<div style="background:var(--warnlt);border:1px solid #fcd34d;border-radius:var(--r);padding:12px 14px;font-size:13px">
+      <div style="font-weight:600;color:var(--warn);margin-bottom:4px">⏱ Se detectaron ${tiempoStr} de horas extras</div>
+      <div style="color:var(--text2)">${r.esFinde?`${diasNombre[dow]} — jornada completa cuenta como horas extras`:`Fuera del horario base (${horarioBase(fecha)?.ini}–${horarioBase(fecha)?.fin})`}</div>
+    </div>`;
+    show('heResumen');
+    show('heBox');
+  } else {
+    resEl.innerHTML=`<div style="background:var(--greenlt);border:1px solid #6ee7b7;border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--green)">
+      ✓ Dentro del horario laboral — sin horas extras
+    </div>`;
+    show('heResumen');
+    hide('heBox');
+  }
+};
 
 window.togF=f=>{
-  if(f==='v'){$('togV').classList.toggle('on');}
-  else{const t=$('togHE');t.classList.toggle('on');$('heBox').style.display=t.classList.contains('on')?'block':'none';}
+  if(f==='v') $('togV').classList.toggle('on');
+};
+
+window.guardarReg=async()=>{
+  const al=$('empAlert');al.innerHTML='';
+  const fecha=$('empFecha').value;
+  const entrada=$('empEntrada').value;
+  const salida=$('empSalida').value;
+  const acts=$('empActs').value.trim();
+  const viat=$('togV').classList.contains('on');
+
+  if(!fecha||!entrada||!salida||!acts){
+    al.innerHTML='<div class="alert ae">Completa todos los campos — fecha, horario y actividades.</div>';return;
+  }
+  if(toMins(salida)<=toMins(entrada)){
+    al.innerHTML='<div class="alert ae">La hora de salida debe ser mayor a la de entrada.</div>';return;
+  }
+
+  const r = calcularHE(fecha, entrada, salida);
+
+  if(r.he){
+    const justif=$('heJust')?.value.trim();
+    if(!justif){ al.innerHTML='<div class="alert ae">Escribe la justificación para las horas extras.</div>';return; }
+  }
+
+  try {
+    const snap=await get(ref(db,`registros/${me.id}`));
+    if(snap.exists()){
+      const dup=Object.values(snap.val()).some(x=>x&&x.fecha===fecha);
+      if(dup){ al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return; }
+    }
+    await push(ref(db,`registros/${me.id}`),{
+      fecha, actividades:acts, viatico:viat,
+      horaEntrada:entrada, horaSalida:salida,
+      he:r.he, minHE:r.minHE,
+      heInicio:r.heIni, heFin:r.heFin,
+      heJustif:r.he?($('heJust')?.value.trim()||''):'',
+      estadoViatico: viat?'aprobado':'na',
+      estadoHE: r.he?'pendiente':'na',
+      creadoEn:Date.now(), userId:me.id, userName:me.nombre, cargo:me.cargo||''
+    });
+    initForm();
+    al.innerHTML='<div class="alert as">✓ Registro guardado correctamente.</div>';
+  } catch(e){
+    al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
+  }
 };
 
 window.cambiarPin=async()=>{
@@ -521,48 +648,13 @@ window.cambiarPin=async()=>{
   const conf=$('pinConfirm').value.trim();
   if(!actual||!nuevo||!conf){al.innerHTML='<div class="alert ae">Completa todos los campos.</div>';return;}
   if(String(actual)!==String(me.pin)){al.innerHTML='<div class="alert ae">El PIN actual es incorrecto.</div>';return;}
-  if(nuevo.length<4){al.innerHTML='<div class="alert ae">El PIN nuevo debe tener mínimo 4 dígitos.</div>';return;}
+  if(nuevo.length<4){al.innerHTML='<div class="alert ae">PIN nuevo mínimo 4 dígitos.</div>';return;}
   if(nuevo!==conf){al.innerHTML='<div class="alert ae">Los PINs nuevos no coinciden.</div>';return;}
   if(nuevo===actual){al.innerHTML='<div class="alert ae">El PIN nuevo debe ser diferente al actual.</div>';return;}
   await update(ref(db,`users/${me.id}`),{pin:nuevo});
   me.pin=nuevo;
   al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
   ['pinActual','pinNuevo','pinConfirm'].forEach(id=>$(id).value='');
-};
-
-window.guardarReg=async()=>{
-  const al=$('empAlert');al.innerHTML='';
-  const fecha=$('empFecha').value,acts=$('empActs').value.trim();
-  const viat=$('togV').classList.contains('on'),he=$('togHE').classList.contains('on');
-  if(!fecha||!acts){al.innerHTML='<div class="alert ae">Completa la fecha y actividades.</div>';return;}
-  if(he){
-    const j=$('heJust').value.trim(),i=$('heIni').value,f=$('heFin').value;
-    if(!j||!i||!f){al.innerHTML='<div class="alert ae">Completa justificación y horas de HE.</div>';return;}
-    if(i>=f){al.innerHTML='<div class="alert ae">Hora fin debe ser mayor a inicio.</div>';return;}
-  }
-  try {
-    const snap=await get(ref(db,`registros/${me.id}`));
-    if(snap.exists()){
-      const raw=snap.val();
-      const vals=Object.values(raw);
-      const dup=vals.some(r=>r && r.fecha===fecha);
-      if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return;}
-    }
-    await push(ref(db,`registros/${me.id}`),{
-      fecha,actividades:acts,viatico:viat,he,
-      heJustif:he?$('heJust').value.trim():'',
-      heInicio:he?$('heIni').value:'',
-      heFin:he?$('heFin').value:'',
-      estadoViatico: viat ? 'aprobado' : 'na',
-      estadoHE: he ? 'pendiente' : 'na',
-      creadoEn:Date.now(),
-      userId:me.id,userName:me.nombre,cargo:me.cargo||''
-    });
-    initForm();
-    al.innerHTML='<div class="alert as">✓ Registro guardado correctamente.</div>';
-  } catch(e) {
-    al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
-  }
 };
 
 async function loadHist(){
@@ -579,52 +671,43 @@ async function loadHist(){
   const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const delMes=items.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
   const viaticos=delMes.filter(r=>r.viatico).length;
-  const he=delMes.filter(r=>r.he);
-  const minHE=he.reduce((acc,r)=>{
-    if(!r.heInicio||!r.heFin) return acc;
-    const [h1,m1]=r.heInicio.split(':').map(Number);
-    const [h2,m2]=r.heFin.split(':').map(Number);
-    return acc+((h2*60+m2)-(h1*60+m1));
-  },0);
-  const hrsHE=Math.floor(minHE/60), minsHE=minHE%60;
+  const totalMinHE=delMes.reduce((acc,r)=>acc+(r.minHE||0),0);
+  const hrsHE=Math.floor(totalMinHE/60), minsHE=totalMinHE%60;
+  const heCount=delMes.filter(r=>r.he).length;
 
   const nomMes=now.toLocaleDateString('es-SV',{month:'long',year:'numeric'});
   res.innerHTML=`
-    <div class="card" style="margin-bottom:16px;border-top:3px solid var(--accent)">
+    <div class="card" style="margin-bottom:14px;border-top:3px solid var(--blue)">
       <div class="card-title">Resumen — ${nomMes}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">
-        <div style="background:var(--sky);border-radius:8px;padding:14px">
-          <div style="font-family:var(--mono);font-size:26px;font-weight:600;color:var(--navy)">${delMes.length}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px">Registros</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+        <div style="background:var(--bluelt);border-radius:8px;padding:12px">
+          <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--blue)">${delMes.length}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">Registros</div>
         </div>
-        <div style="background:var(--greenlt);border-radius:8px;padding:14px">
-          <div style="font-family:var(--mono);font-size:26px;font-weight:600;color:var(--green)">${viaticos}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px">Viáticos</div>
+        <div style="background:var(--greenlt);border-radius:8px;padding:12px">
+          <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--green)">${viaticos}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">Viáticos</div>
         </div>
-        <div style="background:var(--warnlt);border-radius:8px;padding:14px">
-          <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--warn)">${he.length>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px">Horas extras</div>
+        <div style="background:var(--warnlt);border-radius:8px;padding:12px">
+          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--warn)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">Hrs extras</div>
         </div>
       </div>
     </div>`;
 
   l.innerHTML=items.map(r=>{
-    const eviat=r.estadoViatico||( r.viatico ? 'aprobado' : 'na');
-    const ehe=r.estadoHE||(r.he ? 'pendiente' : 'na');
-    const viatBadge=r.viatico
-      ? (eviat==='aprobado'?'<span class="badge ba">💰 Viático ✓</span>'
-        :eviat==='rechazado'?'<span class="badge br">💰 Viático ✗</span>'
-        :'<span class="badge by">💰 Viático</span>')
-      :'';
-    const heBadge=r.he
-      ? (ehe==='aprobado'?'<span class="badge ba">⏱ HE ✓</span>'
-        :ehe==='rechazado'?'<span class="badge br">⏱ HE ✗</span>'
-        :'<span class="badge bp">⏱ HE pendiente</span>')
-      :'';
+    const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
+    const eh=r.estadoHE||(r.he?'pendiente':'na');
+    const viatBadge=r.viatico?(ev==='rechazado'?'<span class="badge br">💰 Anulado</span>':'<span class="badge ba">💰 Viático</span>'):'';
+    const heBadge=r.he?(eh==='aprobado'?'<span class="badge ba">⏱ HE ✓</span>':eh==='rechazado'?'<span class="badge br">⏱ HE ✗</span>':'<span class="badge bp">⏱ HE pendiente</span>'):'';
+    const horario=r.horaEntrada&&r.horaSalida?`<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.horaEntrada}–${r.horaSalida}</span>`:'';
     return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
-    <div class="rc-hd"><div class="rc-date">${fmt(r.fecha)}</div>
-    <div class="rc-badges">${viatBadge}${heBadge}</div>
-    </div><div class="rc-desc">${r.actividades}</div></div>`;
+      <div class="rc-hd">
+        <div style="display:flex;align-items:center;gap:8px"><div class="rc-date">${fmt(r.fecha)}</div>${horario}</div>
+        <div class="rc-badges">${viatBadge}${heBadge}</div>
+      </div>
+      <div class="rc-desc">${r.actividades}</div>
+    </div>`;
   }).join('');
 }
 
