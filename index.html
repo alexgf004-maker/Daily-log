@@ -300,11 +300,18 @@ tbody tr:hover td{background:var(--sky)}
     </div>
     <div id="empHist" style="display:none">
       <div class="page-header"><div><div class="ph-title">Mi historial</div><div class="ph-sub">Registros enviados</div></div></div>
+      <div id="empResumenMes"></div>
       <div id="empHistList"><div class="spin"></div></div>
     </div>
 
     <div id="empPerfil" style="display:none">
-      <div class="page-header"><div><div class="ph-title">Mi perfil</div><div class="ph-sub">Actualiza tu PIN de acceso</div></div></div>
+      <div class="page-header"><div><div class="ph-title">Mi perfil</div><div class="ph-sub">Información y acceso</div></div></div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Mis datos</div>
+        <div class="dr"><div class="dk">Nombre</div><div class="dv" id="perfilNombre" style="font-size:16px;font-weight:600"></div></div>
+        <div class="dr"><div class="dk">Cargo</div><div class="dv" id="perfilCargo"></div></div>
+        <div class="dr"><div class="dk">Usuario</div><div class="dv" id="perfilUsername" style="font-family:var(--mono);font-size:13px"></div></div>
+      </div>
       <div class="card">
         <div class="card-title">Cambiar PIN</div>
         <div id="perfilAlert"></div>
@@ -489,7 +496,14 @@ window.empTab=(t,btn)=>{
   hide('empReg');hide('empHist');hide('empPerfil');
   if(t==='r') show('empReg');
   else if(t==='h'){show('empHist');loadHist();}
-  else if(t==='p'){show('empPerfil');$('perfilAlert').innerHTML='';['pinActual','pinNuevo','pinConfirm'].forEach(id=>$(id).value='');}
+  else if(t==='p'){
+    show('empPerfil');
+    $('perfilNombre').textContent=me.nombre||'';
+    $('perfilCargo').textContent=me.cargo||'Sin cargo asignado';
+    $('perfilUsername').textContent='@'+me.username;
+    $('perfilAlert').innerHTML='';
+    ['pinActual','pinNuevo','pinConfirm'].forEach(id=>$(id).value='');
+  }
 };
 
 function initForm(){
@@ -558,14 +572,50 @@ window.guardarReg=async()=>{
 
 async function loadHist(){
   const l=$('empHistList');l.innerHTML='<div class="spin"></div>';
+  const res=$('empResumenMes');res.innerHTML='';
   const snap=await get(ref(db,`registros/${me.id}`));
   if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">No tienes registros aún</div></div>';return;}
   const raw=snap.val();
   const items=Object.entries(raw).map(([k,v])=>({key:k,...v}));
   items.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+  // Resumen del mes actual
+  const now=new Date();
+  const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const delMes=items.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
+  const viaticos=delMes.filter(r=>r.viatico).length;
+  const he=delMes.filter(r=>r.he);
+  const minHE=he.reduce((acc,r)=>{
+    if(!r.heInicio||!r.heFin) return acc;
+    const [h1,m1]=r.heInicio.split(':').map(Number);
+    const [h2,m2]=r.heFin.split(':').map(Number);
+    return acc+((h2*60+m2)-(h1*60+m1));
+  },0);
+  const hrsHE=Math.floor(minHE/60), minsHE=minHE%60;
+
+  const nomMes=now.toLocaleDateString('es-SV',{month:'long',year:'numeric'});
+  res.innerHTML=`
+    <div class="card" style="margin-bottom:16px;border-top:3px solid var(--accent)">
+      <div class="card-title">Resumen — ${nomMes}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">
+        <div style="background:var(--sky);border-radius:8px;padding:14px">
+          <div style="font-family:var(--mono);font-size:26px;font-weight:600;color:var(--navy)">${delMes.length}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Registros</div>
+        </div>
+        <div style="background:var(--greenlt);border-radius:8px;padding:14px">
+          <div style="font-family:var(--mono);font-size:26px;font-weight:600;color:var(--green)">${viaticos}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Viáticos</div>
+        </div>
+        <div style="background:var(--warnlt);border-radius:8px;padding:14px">
+          <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--warn)">${he.length>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Horas extras</div>
+        </div>
+      </div>
+    </div>`;
+
   l.innerHTML=items.map(r=>`<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
     <div class="rc-hd"><div class="rc-date">${fmt(r.fecha)}</div>
-    <div class="rc-badges">${r.viatico?'<span class="badge by">💰 Viático</span>':''}${r.he?'<span class="badge by">⏱ HE</span>':''}
+    <div class="rc-badges">${r.viatico?'<span class="badge by">💰 Viático</span>':''}${r.he?`<span class="badge by">⏱ ${r.heInicio}–${r.heFin}</span>`:''}
     <span class="badge ${r.estado==='pendiente'?'bp':r.estado==='aprobado'?'ba':'br'}">${r.estado==='pendiente'?'⏳ Pendiente':r.estado==='aprobado'?'✓ Aprobado':'✗ Rechazado'}</span>
     </div></div><div class="rc-desc">${r.actividades}</div></div>`).join('');
 }
@@ -686,10 +736,40 @@ window.buscarRegs=async()=>{
 
 window.exportar=()=>{
   if(!filtRegs.length){alert('Primero realiza una búsqueda.');return;}
-  const h=['Fecha','Empleado','Actividades','Viático','Horas Extras','HE Inicio','HE Fin','Justificación HE','Estado','Motivo Rechazo'];
-  const rows=filtRegs.map(r=>[r.fecha,r.userName||r.userId,r.actividades,r.viatico?'Sí':'No',r.he?'Sí':'No',r.heInicio||'',r.heFin||'',r.heJustif||'',r.estado,r.motivoRechazo||'']);
-  const csv=[h,...rows].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+
+  const h=['Fecha','Empleado','Cargo','Actividades','Viático','Horas Extras','HE Inicio','HE Fin','Justificación HE','Estado','Motivo Rechazo'];
+  const rows=filtRegs.map(r=>[
+    r.fecha, r.userName||r.userId, r.cargo||'',
+    r.actividades, r.viatico?'Sí':'No', r.he?'Sí':'No',
+    r.heInicio||'', r.heFin||'', r.heJustif||'',
+    r.estado, r.motivoRechazo||''
+  ]);
+
+  // Totales por empleado
+  const totMap={};
+  for(const r of filtRegs){
+    const n=r.userName||r.userId;
+    if(!totMap[n]) totMap[n]={nombre:n,cargo:r.cargo||'',viaticos:0,he:0,minHE:0};
+    if(r.viatico) totMap[n].viaticos++;
+    if(r.he){
+      totMap[n].he++;
+      if(r.heInicio&&r.heFin){
+        const[h1,m1]=r.heInicio.split(':').map(Number);
+        const[h2,m2]=r.heFin.split(':').map(Number);
+        totMap[n].minHE+=((h2*60+m2)-(h1*60+m1));
+      }
+    }
+  }
+  const totRows=Object.values(totMap).map(t=>{
+    const hrs=Math.floor(t.minHE/60),mins=t.minHE%60;
+    return ['','','','TOTAL — '+t.nombre, t.viaticos+' viáticos', t.he+' días HE', hrs+'h '+mins+'m total HE','','','',''];
+  });
+
+  const sepRow=Array(11).fill('---');
+  const allRows=[h,...rows,sepRow,['','','','RESUMEN POR EMPLEADO','VIÁTICOS','DÍAS HE','TOTAL HRS HE','','','',''],...totRows];
+  const csv=allRows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
   a.download=`registro-planilla-${today()}.csv`;a.click();
 };
 
