@@ -369,6 +369,12 @@ function renderAdmin(){
           <div><div class="ph-title">Registros por empleado</div><div class="ph-sub">Selecciona un empleado para ver su historial</div></div>
           <button class="btn btn-g btn-sm" onclick="exportar()">📥 Exportar</button>
         </div>
+        <!-- Búsqueda -->
+        <div style="position:relative;margin-bottom:12px">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray400);font-size:15px">🔍</span>
+          <input type="text" id="empSearch" placeholder="Buscar empleado..." oninput="filtrarEmps()"
+            style="padding-left:36px;background:#fff;border:1.5px solid var(--gray200)">
+        </div>
         <!-- Lista de empleados -->
         <div id="adEmpList"><div class="spin"></div></div>
         <!-- Vista de perfil del empleado seleccionado -->
@@ -892,6 +898,26 @@ window.confirmRej=async()=>{
 
 let perfilEmpUID = null;
 
+let empListHTML = '';
+
+window.filtrarEmps=()=>{
+  const q=$('empSearch')?.value.toLowerCase().trim()||'';
+  const l=$('adEmpList'); if(!l||!empListHTML) return;
+  if(!q){ l.innerHTML=empListHTML; return; }
+  // Filter rows inside the card
+  const tmp=document.createElement('div');
+  tmp.innerHTML=empListHTML;
+  const rows=tmp.querySelectorAll('[data-nombre]');
+  let visible=0;
+  rows.forEach(r=>{
+    const match=r.dataset.nombre.toLowerCase().includes(q);
+    r.style.display=match?'':'none';
+    if(match) visible++;
+  });
+  if(visible===0) l.innerHTML='<div class="empty"><div class="et">Sin resultados para "'+q+'"</div></div>';
+  else l.innerHTML=tmp.innerHTML;
+};
+
 async function loadFiltEmps(){
   // Ahora carga lista de empleados como perfiles
   const l=$('adEmpList'); if(!l) return;
@@ -904,7 +930,7 @@ async function loadFiltEmps(){
   const now=new Date();
   const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-  l.innerHTML=`<div class="card" style="padding:0;overflow:hidden">`+emps.map((u,i)=>{
+  empListHTML=`<div class="card" style="padding:0;overflow:hidden">`+emps.map((u,i)=>{
     const regsEmp=allRegs.filter(r=>r.userId===u.id);
     const delMes=regsEmp.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
     const pendHE=regsEmp.filter(r=>r.he&&r.estadoHE==='pendiente').length;
@@ -912,7 +938,7 @@ async function loadFiltEmps(){
     const totalMin=delMes.reduce((a,r)=>a+(r.minHE||0),0);
     const hrsStr=totalMin>0?(Math.floor(totalMin/60)>0?Math.floor(totalMin/60)+'h ':'')+totalMin%60+'m':'—';
     const border=i>0?'border-top:1px solid var(--gray100);':'';
-    return `<div style="${border}padding:14px 16px;cursor:pointer;transition:background .12s"
+    return `<div data-nombre="${u.nombre}" style="${border}padding:14px 16px;cursor:pointer;transition:background .12s"
       onclick="abrirPerfilEmp('${u.id}','${u.nombre}')"
       onmouseover="this.style.background='var(--bluelt)'" onmouseout="this.style.background=''">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -932,6 +958,8 @@ async function loadFiltEmps(){
       </div>
     </div>`;
   }).join('')+`</div>`;
+  l.innerHTML=empListHTML;
+  const s=$('empSearch'); if(s) s.value='';
 }
 
 window.abrirPerfilEmp=async(uid, nombre)=>{
