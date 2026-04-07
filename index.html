@@ -904,31 +904,34 @@ async function loadFiltEmps(){
   const now=new Date();
   const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-  l.innerHTML=emps.map(u=>{
+  l.innerHTML=`<div class="card" style="padding:0;overflow:hidden">`+emps.map((u,i)=>{
     const regsEmp=allRegs.filter(r=>r.userId===u.id);
     const delMes=regsEmp.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
     const pendHE=regsEmp.filter(r=>r.he&&r.estadoHE==='pendiente').length;
     const viaticos=delMes.filter(r=>r.viatico).length;
     const totalMin=delMes.reduce((a,r)=>a+(r.minHE||0),0);
     const hrsStr=totalMin>0?(Math.floor(totalMin/60)>0?Math.floor(totalMin/60)+'h ':'')+totalMin%60+'m':'—';
-    return `<div class="card" style="cursor:pointer;transition:all .15s" onclick="abrirPerfilEmp('${u.id}','${u.nombre}')"
-      onmouseover="this.style.borderColor='var(--blue2)'" onmouseout="this.style.borderColor='var(--gray200)'">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-weight:700;font-size:14px">${u.nombre}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">${u.cargo||''}</div>
+    const border=i>0?'border-top:1px solid var(--gray100);':'';
+    return `<div style="${border}padding:14px 16px;cursor:pointer;transition:background .12s"
+      onclick="abrirPerfilEmp('${u.id}','${u.nombre}')"
+      onmouseover="this.style.background='var(--bluelt)'" onmouseout="this.style.background=''">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div style="min-width:0;flex:1">
+          <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.nombre}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.cargo||'—'}</div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          ${pendHE>0?`<span class="badge bp">⏱ ${pendHE} HE pendiente${pendHE>1?'s':''}</span>`:''}
-          <div style="text-align:right">
-            <div style="font-size:11px;color:var(--text2)">Este mes</div>
-            <div style="font-size:12px;font-weight:600">${delMes.length} reg · ${viaticos} viát · ${hrsStr} HE</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+          ${pendHE>0?`<span class="badge bp">⏱${pendHE}</span>`:''}
+          <div style="text-align:right;font-size:12px;color:var(--text2);line-height:1.5">
+            <span style="color:var(--text);font-weight:600">${delMes.length}</span> reg &nbsp;
+            <span style="color:var(--green);font-weight:600">${viaticos}</span> viát &nbsp;
+            <span style="color:var(--warn);font-weight:600">${hrsStr}</span>
           </div>
-          <span style="color:var(--blue2);font-size:18px">›</span>
+          <span style="color:var(--gray300);font-size:16px">›</span>
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('')+`</div>`;
 }
 
 window.abrirPerfilEmp=async(uid, nombre)=>{
