@@ -383,8 +383,13 @@ tbody tr:hover td{background:var(--sky)}
       <div id="adRegList"><div class="empty"><div class="ei">🔍</div><div class="et">Aplica los filtros para buscar</div></div></div>
     </div>
     <div id="adPend" style="display:none">
-      <div class="page-header"><div><div class="ph-title">Pendientes de aprobación</div><div class="ph-sub">Viáticos y horas extras por revisar</div></div></div>
+      <div class="page-header"><div><div class="ph-title">Pendientes</div><div class="ph-sub">Horas extras por aprobar · Viáticos para revisar</div></div></div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-p btn-sm" onclick="verPendHE(this)">⏱ HE pendientes</button>
+        <button class="btn btn-gh btn-sm" onclick="verPendViat(this)">💰 Viáticos aprobados</button>
+      </div>
       <div id="pendList"><div class="spin"></div></div>
+      <div id="viatList" style="display:none"></div>
     </div>
     <div id="adUsrs" style="display:none">
       <div class="page-header" style="justify-content:space-between">
@@ -560,8 +565,10 @@ window.guardarReg=async()=>{
       heJustif:he?$('heJust').value.trim():'',
       heInicio:he?$('heIni').value:'',
       heFin:he?$('heFin').value:'',
-      estado:'pendiente',creadoEn:Date.now(),
-      userId:me.id,userName:me.nombre
+      estadoViatico: viat ? 'aprobado' : 'na',
+      estadoHE: he ? 'pendiente' : 'na',
+      creadoEn:Date.now(),
+      userId:me.id,userName:me.nombre,cargo:me.cargo||''
     });
     initForm();
     al.innerHTML='<div class="alert as">✓ Registro guardado correctamente.</div>';
@@ -613,11 +620,24 @@ async function loadHist(){
       </div>
     </div>`;
 
-  l.innerHTML=items.map(r=>`<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
+  l.innerHTML=items.map(r=>{
+    const eviat=r.estadoViatico||( r.viatico ? 'aprobado' : 'na');
+    const ehe=r.estadoHE||(r.he ? 'pendiente' : 'na');
+    const viatBadge=r.viatico
+      ? (eviat==='aprobado'?'<span class="badge ba">💰 Viático ✓</span>'
+        :eviat==='rechazado'?'<span class="badge br">💰 Viático ✗</span>'
+        :'<span class="badge by">💰 Viático</span>')
+      :'';
+    const heBadge=r.he
+      ? (ehe==='aprobado'?'<span class="badge ba">⏱ HE ✓</span>'
+        :ehe==='rechazado'?'<span class="badge br">⏱ HE ✗</span>'
+        :'<span class="badge bp">⏱ HE pendiente</span>')
+      :'';
+    return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
     <div class="rc-hd"><div class="rc-date">${fmt(r.fecha)}</div>
-    <div class="rc-badges">${r.viatico?'<span class="badge by">💰 Viático</span>':''}${r.he?`<span class="badge by">⏱ ${r.heInicio}–${r.heFin}</span>`:''}
-    <span class="badge ${r.estado==='pendiente'?'bp':r.estado==='aprobado'?'ba':'br'}">${r.estado==='pendiente'?'⏳ Pendiente':r.estado==='aprobado'?'✓ Aprobado':'✗ Rechazado'}</span>
-    </div></div><div class="rc-desc">${r.actividades}</div></div>`).join('');
+    <div class="rc-badges">${viatBadge}${heBadge}</div>
+    </div><div class="rc-desc">${r.actividades}</div></div>`;
+  }).join('');
 }
 
 // ADMIN TABS
@@ -626,7 +646,7 @@ window.adTab=(t,btn)=>{
   ['adDash','adRegs','adPend','adUsrs'].forEach(hide);
   if(t==='dash'){show('adDash');loadDash();}
   if(t==='regs'){show('adRegs');loadFiltEmps();}
-  if(t==='pend'){show('adPend');loadPend();}
+  if(t==='pend'){show('adPend');show('pendList');hide('viatList');loadPend();}
   if(t==='usrs'){show('adUsrs');loadUsrs();}
 };
 
@@ -684,28 +704,77 @@ function stopDashRefresh(){ if(dashTimer){clearInterval(dashTimer);dashTimer=nul
 
 async function loadPend(){
   const l=$('pendList');l.innerHTML='<div class="spin"></div>';
-  const all=await getAllRegs();const pend=all.filter(r=>r.estado==='pendiente').sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  if(!pend.length){l.innerHTML='<div class="empty"><div class="ei">✅</div><div class="et">Sin pendientes</div></div>';return;}
+  const all=await getAllRegs();
+  // Solo registros con HE pendiente
+  const pend=all.filter(r=>r.he&&r.estadoHE==='pendiente').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(!pend.length){l.innerHTML='<div class="empty"><div class="ei">✅</div><div class="et">Sin HE pendientes</div></div>';return;}
   l.innerHTML=pend.map(r=>`<div class="card" style="border-left:4px solid var(--warn)">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:10px">
-      <div><div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${fmtLong(r.fecha)}</div></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${r.viatico?'<span class="badge by">💰 Viático</span>':''}${r.he?`<span class="badge by">⏱ ${r.heInicio}–${r.heFin}</span>`:''}</div>
+      <div>
+        <div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">${fmtLong(r.fecha)}</div>
+      </div>
+      <span class="badge bp">⏱ HE pendiente — ${r.heInicio}–${r.heFin}</span>
     </div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">${r.actividades}</div>
-    ${r.he?`<div style="font-size:12px;background:var(--sky);padding:9px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
+    <div style="font-size:12px;background:var(--sky);padding:9px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">${r.actividades}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-g btn-sm" onclick="aprobar('${r.userId}','${r.key}')">✓ Aprobar</button>
-      <button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}')">✗ Rechazar</button>
+      <button class="btn btn-g btn-sm" onclick="aprobarHE('${r.userId}','${r.key}')">✓ Aprobar HE</button>
+      <button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}','he')">✗ Rechazar HE</button>
       <button class="btn btn-gh btn-sm" onclick="openDet('${r.userId}','${r.key}',true)">Ver detalle</button>
     </div></div>`).join('');
 }
 
-window.aprobar=async(uid,key)=>{await update(ref(db,`registros/${uid}/${key}`),{estado:'aprobado',revisadoEn:Date.now()});loadPend();};
-window.openRej=(uid,key)=>{rejKey={uid,key};$('rejMotivo').value='';$('moRej').classList.add('open');};
+// También cargar viáticos aprobados para que admin pueda anularlos
+async function loadViaticos(){
+  const all=await getAllRegs();
+  return all.filter(r=>r.viatico&&r.estadoViatico==='aprobado');
+}
+
+window.verPendHE=btn=>{
+  show('pendList');hide('viatList');
+  loadPend();
+};
+window.verPendViat=async btn=>{
+  hide('pendList');show('viatList');
+  const l=$('viatList');l.innerHTML='<div class="spin"></div>';
+  const all=await getAllRegs();
+  const viats=all.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(!viats.length){l.innerHTML='<div class="empty"><div class="ei">💰</div><div class="et">Sin viáticos registrados</div></div>';return;}
+  l.innerHTML=viats.map(r=>{
+    const rechazado=r.estadoViatico==='rechazado';
+    return `<div class="card" style="border-left:4px solid ${rechazado?'var(--danger)':'var(--green)'}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+      <div>
+        <div style="font-weight:700;font-size:14px">${r.userName||r.userId}</div>
+        <div style="font-size:12px;color:var(--text2)">${fmtLong(r.fecha)}</div>
+      </div>
+      <span class="badge ${rechazado?'br':'ba'}">${rechazado?'✗ Anulado':'✓ Aprobado'}</span>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.5">${r.actividades}</div>
+    ${r.motivoRechazoViatico?`<div style="font-size:12px;background:var(--dangerlt);padding:8px 12px;border-radius:7px;margin-bottom:10px;color:var(--danger)"><b>Motivo anulación:</b> ${r.motivoRechazoViatico}</div>`:''}
+    ${!rechazado?`<button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}','viatico')">✗ Anular viático</button>`:''}
+  </div>`;
+  }).join('');
+};
+
+window.aprobarHE=async(uid,key)=>{
+  await update(ref(db,`registros/${uid}/${key}`),{estadoHE:'aprobado',revisadoHEEn:Date.now()});
+  loadPend();
+};
+window.openRej=(uid,key,tipo)=>{
+  rejKey={uid,key,tipo};
+  $('rejMotivo').value='';
+  $('moRej').classList.add('open');
+};
 window.confirmRej=async()=>{
   const m=$('rejMotivo').value.trim();if(!m)return;
-  await update(ref(db,`registros/${rejKey.uid}/${rejKey.key}`),{estado:'rechazado',motivoRechazo:m,revisadoEn:Date.now()});
-  closeModal('moRej');loadPend();
+  const updates=rejKey.tipo==='he'
+    ?{estadoHE:'rechazado',motivoRechazoHE:m,revisadoHEEn:Date.now()}
+    :{estadoViatico:'rechazado',motivoRechazoViatico:m,revisadoViaticEn:Date.now()};
+  await update(ref(db,`registros/${rejKey.uid}/${rejKey.key}`),updates);
+  closeModal('moRej');
+  loadPend();
 };
 
 async function loadFiltEmps(){
@@ -725,24 +794,28 @@ window.buscarRegs=async()=>{
   all.sort((a,b)=>b.fecha.localeCompare(a.fecha));filtRegs=all;
   if(!all.length){l.innerHTML='<div class="empty"><div class="ei">🔍</div><div class="et">Sin resultados</div></div>';return;}
   l.innerHTML=`<div class="card"><div style="font-size:12px;color:var(--text2);margin-bottom:12px">${all.length} registro(s)</div>
-    <div class="tw"><table><thead><tr><th>Fecha</th><th>Empleado</th><th>Viático</th><th>H.E.</th><th>Estado</th><th></th></tr></thead><tbody>
-    ${all.map(r=>`<tr><td style="font-family:var(--mono);font-size:12px;font-weight:600">${fmt(r.fecha)}</td><td style="font-weight:500">${r.userName||r.userId}</td>
-    <td>${r.viatico?'<span class="badge by">Sí</span>':'<span class="badge bn">No</span>'}</td>
-    <td>${r.he?`<span class="badge by">${r.heInicio}–${r.heFin}</span>`:'<span class="badge bn">No</span>'}</td>
-    <td><span class="badge ${r.estado==='pendiente'?'bp':r.estado==='aprobado'?'ba':'br'}">${r.estado}</span></td>
-    <td><button class="btn btn-gh btn-xs" onclick="openDet('${r.userId}','${r.key}',true)">Ver</button></td></tr>`).join('')}
+    <div class="tw"><table><thead><tr><th>Fecha</th><th>Empleado</th><th>Viático</th><th>H.E.</th><th></th></tr></thead><tbody>
+    ${all.map(r=>{
+      const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
+      const eh=r.estadoHE||(r.he?'pendiente':'na');
+      return `<tr><td style="font-family:var(--mono);font-size:12px;font-weight:600">${fmt(r.fecha)}</td>
+      <td style="font-weight:500">${r.userName||r.userId}</td>
+      <td>${r.viatico?(ev==='rechazado'?'<span class="badge br">Anulado</span>':'<span class="badge ba">✓</span>'):'<span class="badge bn">No</span>'}</td>
+      <td>${r.he?(eh==='aprobado'?'<span class="badge ba">✓ Aprobada</span>':eh==='rechazado'?'<span class="badge br">Rechazada</span>':'<span class="badge bp">Pendiente</span>'):'<span class="badge bn">No</span>'}</td>
+      <td><button class="btn btn-gh btn-xs" onclick="openDet('${r.userId}','${r.key}',true)">Ver</button></td></tr>`;
+    }).join('')}
     </tbody></table></div></div>`;
 };
 
 window.exportar=()=>{
   if(!filtRegs.length){alert('Primero realiza una búsqueda.');return;}
 
-  const h=['Fecha','Empleado','Cargo','Actividades','Viático','Horas Extras','HE Inicio','HE Fin','Justificación HE','Estado','Motivo Rechazo'];
+  const h=['Fecha','Empleado','Cargo','Actividades','Viático','Estado Viático','Horas Extras','HE Inicio','HE Fin','Justificación HE','Estado HE','Motivo Anulación Viático','Motivo Rechazo HE'];
   const rows=filtRegs.map(r=>[
-    r.fecha, r.userName||r.userId, r.cargo||'',
-    r.actividades, r.viatico?'Sí':'No', r.he?'Sí':'No',
-    r.heInicio||'', r.heFin||'', r.heJustif||'',
-    r.estado, r.motivoRechazo||''
+    r.fecha, r.userName||r.userId, r.cargo||'', r.actividades,
+    r.viatico?'Sí':'No', r.estadoViatico||'na',
+    r.he?'Sí':'No', r.heInicio||'', r.heFin||'', r.heJustif||'',
+    r.estadoHE||'na', r.motivoRechazoViatico||'', r.motivoRechazoHE||''
   ]);
 
   // Totales por empleado
@@ -776,18 +849,27 @@ window.exportar=()=>{
 window.openDet=async(uid,key,isAdmin)=>{
   const snap=await get(ref(db,`registros/${uid}/${key}`));if(!snap.exists())return;
   const r=snap.val();
+  const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
+  const eh=r.estadoHE||(r.he?'pendiente':'na');
   $('moDetContent').innerHTML=`
     <div class="dr"><div class="dk">Empleado</div><div class="dv">${r.userName||uid}</div></div>
     <div class="dr"><div class="dk">Fecha</div><div class="dv">${fmtLong(r.fecha)}</div></div>
     <div class="dr"><div class="dk">Actividades</div><div class="dv" style="white-space:pre-wrap;line-height:1.6">${r.actividades}</div></div>
-    <div class="dr"><div class="dk">Viático</div><div class="dv">${r.viatico?'<span class="badge by">Sí — salida a campo</span>':'<span class="badge bn">No</span>'}</div></div>
-    <div class="dr"><div class="dk">Horas Extras</div><div class="dv">${r.he?`<span class="badge by">Sí — ${r.heInicio} a ${r.heFin}</span>`:'<span class="badge bn">No</span>'}</div></div>
+    <div class="dr"><div class="dk">Viático</div><div class="dv">${r.viatico
+      ?`<span class="badge ${ev==='rechazado'?'br':'ba'}">${ev==='rechazado'?'✗ Anulado':'✓ Aprobado'}</span>`
+      :'<span class="badge bn">No</span>'}</div></div>
+    ${r.viatico&&r.motivoRechazoViatico?`<div class="dr"><div class="dk">Motivo anulación viático</div><div class="dv" style="color:var(--danger)">${r.motivoRechazoViatico}</div></div>`:''}
+    <div class="dr"><div class="dk">Horas Extras</div><div class="dv">${r.he
+      ?`${r.heInicio} a ${r.heFin} — <span class="badge ${eh==='aprobado'?'ba':eh==='rechazado'?'br':'bp'}">${eh==='aprobado'?'✓ Aprobada':eh==='rechazado'?'✗ Rechazada':'⏳ Pendiente'}</span>`
+      :'<span class="badge bn">No</span>'}</div></div>
     ${r.he?`<div class="dr"><div class="dk">Justificación HE</div><div class="dv">${r.heJustif}</div></div>`:''}
-    <div class="dr"><div class="dk">Estado</div><div class="dv"><span class="badge ${r.estado==='pendiente'?'bp':r.estado==='aprobado'?'ba':'br'}">${r.estado}</span></div></div>
-    ${r.motivoRechazo?`<div class="dr"><div class="dk">Motivo rechazo</div><div class="dv" style="color:var(--danger)">${r.motivoRechazo}</div></div>`:''}`;
-  $('moDetActs').innerHTML=(isAdmin&&r.estado==='pendiente')
-    ?`<button class="btn btn-g btn-sm" onclick="aprobar('${uid}','${key}');closeModal('moDet')">✓ Aprobar</button>
-       <button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}')">✗ Rechazar</button>`:'';
+    ${r.he&&r.motivoRechazoHE?`<div class="dr"><div class="dk">Motivo rechazo HE</div><div class="dv" style="color:var(--danger)">${r.motivoRechazoHE}</div></div>`:''}`;
+  $('moDetActs').innerHTML=(isAdmin&&r.he&&eh==='pendiente')
+    ?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${uid}','${key}');closeModal('moDet')">✓ Aprobar HE</button>
+       <button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','he')">✗ Rechazar HE</button>`
+    :(isAdmin&&r.viatico&&ev!=='rechazado')
+    ?`<button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','viatico')">✗ Anular viático</button>`
+    :'';
   $('moDet').classList.add('open');
 };
 
