@@ -55,7 +55,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 /* ═══ LOGIN ═══ */
 #loginScreen{
   background:linear-gradient(135deg,#0f1f3d 0%,#1e3a5f 45%,#1e4080 100%);
-  align-items:center;justify-content:center;position:relative;overflow:hidden;
+  align-items:center;justify-content:center;position:fixed;inset:0;z-index:50;overflow-y:auto;
 }
 #loginScreen::before{
   content:'';position:absolute;inset:0;
@@ -68,13 +68,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 
 .login-brand{text-align:center;margin-bottom:28px}
-.login-brand-eyebrow{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(147,197,253,.7);margin-bottom:8px}
-.login-brand-name{font-size:42px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px}
-.login-brand-name .inn{color:#60a5fa}
-.deco-line{display:flex;align-items:center;gap:10px;margin:14px auto 0;max-width:180px}
-.deco-line::before,.deco-line::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.15)}
-.deco-dot{width:5px;height:5px;background:#60a5fa;border-radius:50%;box-shadow:0 0 8px rgba(96,165,250,.6)}
-.login-brand-sub{font-size:13px;color:rgba(255,255,255,.5);margin-top:10px;font-weight:400;letter-spacing:.2px}
+.login-brand-eyebrow{font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:10px}
+.login-brand-name{font-size:44px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1.5px}
+.login-brand-name .inn{color:#93c5fd}
+.deco-line{display:flex;align-items:center;gap:10px;margin:14px auto 0;max-width:160px}
+.deco-line::before,.deco-line::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.18)}
+.deco-dot{width:5px;height:5px;background:#4ade80;border-radius:50%}
+.login-brand-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:10px;font-weight:400;letter-spacing:.1px}
 
 .login-form{background:#fff;border-radius:14px;padding:28px 26px;box-shadow:0 24px 48px rgba(0,0,0,.3)}
 .login-form .fl{color:var(--gray600)}
@@ -82,14 +82,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .login-form input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1);background:#fff}
 .login-form input[type="password"]{letter-spacing:5px;font-size:17px}
 #loginAlert{margin-bottom:4px}
-.btn-login{width:100%;background:linear-gradient(135deg,var(--bluedk),var(--blue2));color:#fff;border:none;border-radius:var(--r);padding:12px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;letter-spacing:.2px}
-.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(37,99,235,.4)}
-.login-footer{text-align:center;margin-top:18px;font-size:11px;color:rgba(255,255,255,.2)}
+.btn-login{width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:12px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;letter-spacing:.2px}
+.btn-login:hover{background:var(--bluedk);box-shadow:0 6px 20px rgba(37,99,235,.4)}
+.login-footer{text-align:center;margin-top:18px;font-size:11px;color:rgba(255,255,255,.25)}
 
 /* ═══ TOPBAR ═══ */
 .topbar{background:var(--top);height:54px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 0 rgba(255,255,255,.06),0 2px 8px rgba(0,0,0,.15)}
 .tb-brand{display:flex;align-items:center;gap:10px}
-.tb-bar{width:3px;height:20px;background:linear-gradient(180deg,#60a5fa,#34d399);border-radius:2px;flex-shrink:0}
+.tb-bar{width:3px;height:20px;background:#4ade80;border-radius:2px;flex-shrink:0}
 .tb-name{font-size:13px;font-weight:700;color:#fff;line-height:1.25}
 .tb-name .inn{color:#60a5fa}
 .tb-sub{font-size:10px;color:rgba(255,255,255,.38);font-weight:400;margin-top:1px}
