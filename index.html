@@ -68,13 +68,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 
 .login-brand{text-align:center;margin-bottom:28px}
-.login-brand-eyebrow{font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:rgba(147,197,253,.7);margin-bottom:12px}
-.login-brand-name{font-size:23px;font-weight:800;color:#fff;line-height:1.3;letter-spacing:-.3px}
+.login-brand-eyebrow{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(147,197,253,.7);margin-bottom:8px}
+.login-brand-name{font-size:42px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px}
 .login-brand-name .inn{color:#60a5fa}
 .deco-line{display:flex;align-items:center;gap:10px;margin:14px auto 0;max-width:180px}
 .deco-line::before,.deco-line::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.15)}
 .deco-dot{width:5px;height:5px;background:#60a5fa;border-radius:50%;box-shadow:0 0 8px rgba(96,165,250,.6)}
-.login-brand-sub{font-size:12px;color:rgba(255,255,255,.38);margin-top:10px;font-weight:400}
+.login-brand-sub{font-size:13px;color:rgba(255,255,255,.5);margin-top:10px;font-weight:400;letter-spacing:.2px}
 
 .login-form{background:#fff;border-radius:14px;padding:28px 26px;box-shadow:0 24px 48px rgba(0,0,0,.3)}
 .login-form .fl{color:var(--gray600)}
@@ -211,10 +211,10 @@ tbody tr:hover td{background:var(--bluelt)}
   <div class="orb2"></div>
   <div class="login-panel">
     <div class="login-brand">
-      <div class="login-brand-eyebrow">Delsur · Sistema interno</div>
-      <div class="login-brand-name">Servicios técnicos<br>y comerciales <span class="inn">INNOVA</span></div>
+      <div class="login-brand-eyebrow">Registro de Planilla</div>
+      <div class="login-brand-name"><span class="inn">INNOVA</span></div>
       <div class="deco-line"><div class="deco-dot"></div></div>
-      <div class="login-brand-sub">Registro de Planilla</div>
+      <div class="login-brand-sub">Servicios técnicos y comerciales</div>
     </div>
     <div class="login-form">
       <div id="loginAlert"></div>
@@ -228,7 +228,7 @@ tbody tr:hover td{background:var(--bluelt)}
       </div>
       <button class="btn-login" onclick="doLogin()">Ingresar →</button>
     </div>
-    <div class="login-footer">© 2025 Delsur · Grupo EPM</div>
+    <div class="login-footer">Registro de Planilla © 2025</div>
   </div>
 </div>
 
@@ -238,13 +238,8 @@ tbody tr:hover td{background:var(--bluelt)}
     <div class="tb-brand">
       <div class="tb-bar"></div>
       <div>
-        <div class="tb-name">Servicios técnicos y comerciales <span class="inn">INNOVA</span></div>
-        <div class="tb-sub">Registro de Planilla</div>
-      </div>
-    </div>
-    <div class="tb-right">
-      <div class="tb-user">
-        <span class="tb-username" id="empUsername"></span>
+        <div class="tb-name"><span class="inn">INNOVA</span> · Registro de Planilla</div>
+        <div class="tb-sub">Servicios técnicos y comerciales</div>
         <span class="tb-role role-e">Empleado</span>
       </div>
       <button class="btn-out" onclick="doLogout()">Salir</button>
@@ -323,13 +318,9 @@ tbody tr:hover td{background:var(--bluelt)}
     <div class="tb-brand">
       <div class="tb-bar"></div>
       <div>
-        <div class="tb-name">Servicios técnicos y comerciales <span class="inn">INNOVA</span></div>
-        <div class="tb-sub">Registro de Planilla</div>
+        <div class="tb-name"><span class="inn">INNOVA</span> · Registro de Planilla</div>
+        <div class="tb-sub">Servicios técnicos y comerciales</div>
       </div>
-    </div>
-    <div class="tb-right">
-      <div class="tb-user">
-        <span class="tb-username">Administrador</span>
         <span class="tb-role role-a">Admin</span>
       </div>
       <button class="btn-out" onclick="doLogout()">Salir</button>
