@@ -234,190 +234,7 @@ tbody tr:hover td{background:var(--bluelt)}
   </div>
 </div>
 
-<!-- EMPLEADO -->
-<div id="employeeScreen" class="screen">
-  <div class="topbar">
-    <div class="tb-brand">
-      <div class="tb-bar"></div>
-      <div>
-        <div class="tb-name"><span class="inn">INNOVA</span> · Registro de Planilla</div>
-        <div class="tb-sub">Servicios técnicos y comerciales</div>
-        <span class="tb-role role-e">Empleado</span>
-      </div>
-      <button class="btn-out" onclick="doLogout()">Salir</button>
-    </div>
-  </div>
-  <div class="tabs">
-    <button class="tab active" onclick="empTab('r',this)">📝 Nuevo Registro</button>
-    <button class="tab" onclick="empTab('h',this)">📋 Mi Historial</button>
-    <button class="tab" onclick="empTab('p',this)">👤 Mi Perfil</button>
-  </div>
-  <div class="content">
-    <div id="empReg">
-      <div class="page-header">
-        <div><div class="ph-title">Registro de actividades</div><div class="ph-sub" id="empFechaLbl"></div></div>
-      </div>
-      <div class="card">
-        <div id="empAlert"></div>
-        <div class="fg"><label class="fl">Fecha</label><input type="date" id="empFecha"></div>
-        <div class="fg"><label class="fl">Actividades realizadas</label><textarea id="empActs" placeholder="Describe las actividades del día..."></textarea></div>
-        <div class="tog-row">
-          <div><div class="tog-lbl">💰 Viático</div><div class="tog-sub">Activar si realizaste salida a campo</div></div>
-          <div class="toggle" id="togV" onclick="togF('v')"></div>
-        </div>
-        <div class="tog-row">
-          <div><div class="tog-lbl">⏱ Horas Extras</div><div class="tog-sub">Activar si trabajaste fuera de horario</div></div>
-          <div class="toggle" id="togHE" onclick="togF('he')"></div>
-        </div>
-        <div id="heBox" class="he-box" style="display:none">
-          <div class="fg"><label class="fl">Justificación de horas extras</label><textarea id="heJust" placeholder="Motivo de las horas extras..."></textarea></div>
-          <div class="tr2">
-            <div class="fg"><label class="fl">Hora inicio</label><input type="time" id="heIni"></div>
-            <div class="fg"><label class="fl">Hora fin</label><input type="time" id="heFin"></div>
-          </div>
-        </div>
-        <button class="btn btn-p btn-full" style="margin-top:18px;padding:12px" onclick="guardarReg()">Guardar registro</button>
-      </div>
-    </div>
-    <div id="empHist" style="display:none">
-      <div class="page-header"><div><div class="ph-title">Mi historial</div><div class="ph-sub">Registros enviados</div></div></div>
-      <div id="empResumenMes"></div>
-      <div id="empHistList"><div class="spin"></div></div>
-    </div>
-
-    <div id="empPerfil" style="display:none">
-      <div class="page-header"><div><div class="ph-title">Mi perfil</div><div class="ph-sub">Información y acceso</div></div></div>
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-title">Mis datos</div>
-        <div class="dr"><div class="dk">Nombre</div><div class="dv" id="perfilNombre" style="font-size:16px;font-weight:600"></div></div>
-        <div class="dr"><div class="dk">Cargo</div><div class="dv" id="perfilCargo"></div></div>
-        <div class="dr"><div class="dk">Usuario</div><div class="dv" id="perfilUsername" style="font-family:var(--mono);font-size:13px"></div></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Cambiar PIN</div>
-        <div id="perfilAlert"></div>
-        <div class="fg">
-          <label class="fl">PIN actual</label>
-          <input type="password" id="pinActual" placeholder="••••" maxlength="8" inputmode="numeric">
-        </div>
-        <div class="fg">
-          <label class="fl">PIN nuevo (4–8 dígitos)</label>
-          <input type="password" id="pinNuevo" placeholder="••••" maxlength="8" inputmode="numeric">
-        </div>
-        <div class="fg">
-          <label class="fl">Confirmar PIN nuevo</label>
-          <input type="password" id="pinConfirm" placeholder="••••" maxlength="8" inputmode="numeric">
-        </div>
-        <button class="btn btn-p btn-full" style="padding:12px" onclick="cambiarPin()">Actualizar PIN</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ADMIN -->
-<div id="adminScreen" class="screen">
-  <div class="topbar">
-    <div class="tb-brand">
-      <div class="tb-bar"></div>
-      <div>
-        <div class="tb-name"><span class="inn">INNOVA</span> · Registro de Planilla</div>
-        <div class="tb-sub">Servicios técnicos y comerciales</div>
-      </div>
-        <span class="tb-role role-a">Admin</span>
-      </div>
-      <button class="btn-out" onclick="doLogout()">Salir</button>
-    </div>
-  </div>
-  <div class="tabs">
-    <button class="tab active" onclick="adTab('dash',this)">📊 Dashboard</button>
-    <button class="tab" onclick="adTab('regs',this)">📁 Registros</button>
-    <button class="tab" onclick="adTab('pend',this)">⏳ Pendientes</button>
-    <button class="tab" onclick="adTab('usrs',this)">👥 Usuarios</button>
-  </div>
-  <div class="content">
-    <div id="adDash">
-      <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
-      <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div class="card"><div class="card-title">Registros de hoy</div><div id="dashHoy"><div class="spin"></div></div></div>
-        <div class="card"><div class="card-title">Sin registro hoy</div><div id="dashSin"><div class="spin"></div></div></div>
-      </div>
-    </div>
-    <div id="adRegs" style="display:none">
-      <div class="page-header"><div><div class="ph-title">Registros del equipo</div><div class="ph-sub">Busca y exporta</div></div></div>
-      <div class="card">
-        <div class="card-title">Filtros</div>
-        <div class="fr">
-          <div class="fg"><label class="fl">Empleado</label><select id="filtEmp"><option value="">Todos</option></select></div>
-          <div class="fg"><label class="fl">Desde</label><input type="date" id="filtDes"></div>
-          <div class="fg"><label class="fl">Hasta</label><input type="date" id="filtHas"></div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-p" onclick="buscarRegs()">🔍 Buscar</button>
-          <button class="btn btn-g" onclick="exportar()">📥 Exportar Excel</button>
-        </div>
-      </div>
-      <div id="adRegList"><div class="empty"><div class="ei">🔍</div><div class="et">Aplica los filtros para buscar</div></div></div>
-    </div>
-    <div id="adPend" style="display:none">
-      <div class="page-header"><div><div class="ph-title">Pendientes</div><div class="ph-sub">Horas extras por aprobar · Viáticos para revisar</div></div></div>
-      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-        <button class="btn btn-p btn-sm" onclick="verPendHE(this)">⏱ HE pendientes</button>
-        <button class="btn btn-gh btn-sm" onclick="verPendViat(this)">💰 Viáticos aprobados</button>
-      </div>
-      <div id="pendList"><div class="spin"></div></div>
-      <div id="viatList" style="display:none"></div>
-    </div>
-    <div id="adUsrs" style="display:none">
-      <div class="page-header" style="justify-content:space-between">
-        <div><div class="ph-title">Gestión de usuarios</div><div class="ph-sub">Administra el equipo</div></div>
-        <button class="btn btn-g btn-sm" onclick="openModalUser()">+ Nuevo empleado</button>
-      </div>
-      <div class="card" id="usrList"><div class="spin"></div></div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL DETALLE -->
-<div class="mo" id="moDet">
-  <div class="modal">
-    <div class="modal-title">Detalle del registro</div>
-    <div id="moDetContent"></div>
-    <div id="moDetActs" class="modal-acts"></div>
-    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-gh" onclick="closeModal('moDet')">Cerrar</button></div>
-  </div>
-</div>
-
-<!-- MODAL USUARIO -->
-<div class="mo" id="moUsr">
-  <div class="modal">
-    <div class="modal-title" id="moUsrTitle">Nuevo empleado</div>
-    <div id="moUsrAlert"></div>
-    <div class="fg"><label class="fl">Nombre completo</label><input type="text" id="uNom" placeholder="Juan Pérez"></div>
-    <div class="fg"><label class="fl">Usuario de acceso</label><input type="text" id="uUsr" placeholder="juan.perez" autocomplete="off"></div>
-    <div class="fg">
-      <label class="fl">PIN (4–8 dígitos)</label>
-      <input type="password" id="uPin" placeholder="••••" maxlength="8" inputmode="numeric">
-      <div style="font-size:11px;color:var(--text2);margin-top:4px">Al editar, dejar vacío para no cambiar el PIN</div>
-    </div>
-    <div class="modal-acts">
-      <button class="btn btn-gh" onclick="closeModal('moUsr')">Cancelar</button>
-      <button class="btn btn-p" onclick="saveUser()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL RECHAZAR -->
-<div class="mo" id="moRej">
-  <div class="modal">
-    <div class="modal-title">Rechazar registro</div>
-    <div class="fg"><label class="fl">Motivo del rechazo</label><textarea id="rejMotivo" placeholder="Describe el motivo..."></textarea></div>
-    <div class="modal-acts">
-      <button class="btn btn-gh" onclick="closeModal('moRej')">Cancelar</button>
-      <button class="btn btn-d" onclick="confirmRej()">Confirmar rechazo</button>
-    </div>
-  </div>
-</div>
+<div id="appContainer"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -453,7 +270,182 @@ const screen  = id => {
 // Init admin
 (async()=>{ try{ const s=await get(ref(db,'users/admin')); if(!s.exists()) await set(ref(db,'users/admin'),{nombre:'Administrador',username:'admin',pin:'1234',role:'admin',activo:true}); }catch(e){} })();
 
-// LOGIN
+// ── RENDER FUNCTIONS (inject HTML only after auth) ──────
+function renderEmployee(nombre){
+  $('appContainer').innerHTML=`
+  <div id="employeeScreen" class="screen">
+    <div class="topbar">
+      <div class="tb-brand"><div class="tb-bar"></div>
+        <div><div class="tb-name"><span class="inn">INNOVA</span> · Registro de Planilla</div>
+        <div class="tb-sub">Servicios técnicos y comerciales</div></div>
+      </div>
+      <div class="tb-right">
+        <div class="tb-user"><span class="tb-username" id="empUsername">${nombre}</span><span class="tb-role role-e">Empleado</span></div>
+        <button class="btn-out" onclick="doLogout()">Salir</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="empTab('r',this)">📝 Nuevo Registro</button>
+      <button class="tab" onclick="empTab('h',this)">📋 Mi Historial</button>
+      <button class="tab" onclick="empTab('p',this)">👤 Mi Perfil</button>
+    </div>
+    <div class="content">
+      <div id="empReg">
+        <div class="page-header"><div><div class="ph-title">Registro de actividades</div><div class="ph-sub" id="empFechaLbl"></div></div></div>
+        <div class="card">
+          <div id="empAlert"></div>
+          <div class="fg"><label class="fl">Fecha</label><input type="date" id="empFecha"></div>
+          <div class="fg"><label class="fl">Actividades realizadas</label><textarea id="empActs" placeholder="Describe las actividades del día..."></textarea></div>
+          <div class="tog-row">
+            <div><div class="tog-lbl">💰 Viático</div><div class="tog-sub">Activar si realizaste salida a campo</div></div>
+            <div class="toggle" id="togV" onclick="togF('v')"></div>
+          </div>
+          <div class="tog-row">
+            <div><div class="tog-lbl">⏱ Horas Extras</div><div class="tog-sub">Activar si trabajaste fuera de horario</div></div>
+            <div class="toggle" id="togHE" onclick="togF('he')"></div>
+          </div>
+          <div id="heBox" class="he-box" style="display:none">
+            <div class="fg"><label class="fl">Justificación</label><textarea id="heJust" placeholder="Motivo de las horas extras..."></textarea></div>
+            <div class="tr2">
+              <div class="fg"><label class="fl">Hora inicio</label><input type="time" id="heIni"></div>
+              <div class="fg"><label class="fl">Hora fin</label><input type="time" id="heFin"></div>
+            </div>
+          </div>
+          <button class="btn btn-p btn-full" style="margin-top:18px;padding:12px" onclick="guardarReg()">Guardar registro</button>
+        </div>
+      </div>
+      <div id="empHist" style="display:none">
+        <div class="page-header"><div><div class="ph-title">Mi historial</div><div class="ph-sub">Registros enviados</div></div></div>
+        <div id="empResumenMes"></div>
+        <div id="empHistList"><div class="spin"></div></div>
+      </div>
+      <div id="empPerfil" style="display:none">
+        <div class="page-header"><div><div class="ph-title">Mi perfil</div><div class="ph-sub">Información y acceso</div></div></div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Mis datos</div>
+          <div class="dr"><div class="dk">Nombre</div><div class="dv" id="perfilNombre" style="font-size:16px;font-weight:600"></div></div>
+          <div class="dr"><div class="dk">Cargo</div><div class="dv" id="perfilCargo"></div></div>
+          <div class="dr"><div class="dk">Usuario</div><div class="dv" id="perfilUsername" style="font-family:var(--mono);font-size:13px"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Cambiar PIN</div>
+          <div id="perfilAlert"></div>
+          <div class="fg"><label class="fl">PIN actual</label><input type="password" id="pinActual" placeholder="••••" maxlength="8" inputmode="numeric"></div>
+          <div class="fg"><label class="fl">PIN nuevo (4–8 dígitos)</label><input type="password" id="pinNuevo" placeholder="••••" maxlength="8" inputmode="numeric"></div>
+          <div class="fg"><label class="fl">Confirmar PIN nuevo</label><input type="password" id="pinConfirm" placeholder="••••" maxlength="8" inputmode="numeric"></div>
+          <button class="btn btn-p btn-full" style="padding:12px" onclick="cambiarPin()">Actualizar PIN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  ${modalsHTML()}`;
+}
+
+function renderAdmin(){
+  $('appContainer').innerHTML=`
+  <div id="adminScreen" class="screen">
+    <div class="topbar">
+      <div class="tb-brand"><div class="tb-bar"></div>
+        <div><div class="tb-name"><span class="inn">INNOVA</span> · Registro de Planilla</div>
+        <div class="tb-sub">Servicios técnicos y comerciales</div></div>
+      </div>
+      <div class="tb-right">
+        <div class="tb-user"><span class="tb-username">Administrador</span><span class="tb-role role-a">Admin</span></div>
+        <button class="btn-out" onclick="doLogout()">Salir</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="adTab('dash',this)">📊 Dashboard</button>
+      <button class="tab" onclick="adTab('regs',this)">📁 Registros</button>
+      <button class="tab" onclick="adTab('pend',this)">⏳ Pendientes</button>
+      <button class="tab" onclick="adTab('usrs',this)">👥 Usuarios</button>
+    </div>
+    <div class="content">
+      <div id="adDash">
+        <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
+        <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card"><div class="card-title">Registros de hoy</div><div id="dashHoy"><div class="spin"></div></div></div>
+          <div class="card"><div class="card-title">Sin registro hoy</div><div id="dashSin"><div class="spin"></div></div></div>
+        </div>
+      </div>
+      <div id="adRegs" style="display:none">
+        <div class="page-header"><div><div class="ph-title">Registros del equipo</div><div class="ph-sub">Busca y exporta</div></div></div>
+        <div class="card">
+          <div class="card-title">Filtros</div>
+          <div class="fr">
+            <div class="fg"><label class="fl">Empleado</label><select id="filtEmp"><option value="">Todos</option></select></div>
+            <div class="fg"><label class="fl">Desde</label><input type="date" id="filtDes"></div>
+            <div class="fg"><label class="fl">Hasta</label><input type="date" id="filtHas"></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-p" onclick="buscarRegs()">🔍 Buscar</button>
+            <button class="btn btn-g" onclick="exportar()">📥 Exportar Excel</button>
+          </div>
+        </div>
+        <div id="adRegList"><div class="empty"><div class="ei">🔍</div><div class="et">Aplica los filtros para buscar</div></div></div>
+      </div>
+      <div id="adPend" style="display:none">
+        <div class="page-header"><div><div class="ph-title">Pendientes</div><div class="ph-sub">Horas extras por aprobar · Viáticos para revisar</div></div></div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn btn-p btn-sm" onclick="verPendHE(this)">⏱ HE pendientes</button>
+          <button class="btn btn-gh btn-sm" onclick="verPendViat(this)">💰 Viáticos aprobados</button>
+        </div>
+        <div id="pendList"><div class="spin"></div></div>
+        <div id="viatList" style="display:none"></div>
+      </div>
+      <div id="adUsrs" style="display:none">
+        <div class="page-header" style="justify-content:space-between">
+          <div><div class="ph-title">Gestión de usuarios</div><div class="ph-sub">Administra el equipo</div></div>
+          <button class="btn btn-g btn-sm" onclick="openModalUser()">+ Nuevo empleado</button>
+        </div>
+        <div class="card" id="usrList"><div class="spin"></div></div>
+      </div>
+    </div>
+  </div>
+  ${modalsHTML()}`;
+}
+
+function modalsHTML(){
+  return `
+  <div class="mo" id="moDet">
+    <div class="modal">
+      <div class="modal-title">Detalle del registro</div>
+      <div id="moDetContent"></div>
+      <div id="moDetActs" class="modal-acts"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-gh" onclick="closeModal('moDet')">Cerrar</button></div>
+    </div>
+  </div>
+  <div class="mo" id="moUsr">
+    <div class="modal">
+      <div class="modal-title" id="moUsrTitle">Nuevo empleado</div>
+      <div id="moUsrAlert"></div>
+      <div class="fg"><label class="fl">Nombre completo</label><input type="text" id="uNom" placeholder="Juan Pérez"></div>
+      <div class="fg"><label class="fl">Usuario de acceso</label><input type="text" id="uUsr" placeholder="juan.perez" autocomplete="off"></div>
+      <div class="fg">
+        <label class="fl">PIN (4–8 dígitos)</label>
+        <input type="password" id="uPin" placeholder="••••" maxlength="8" inputmode="numeric">
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Al editar, dejar vacío para no cambiar el PIN</div>
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moUsr')">Cancelar</button>
+        <button class="btn btn-p" onclick="saveUser()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="moRej">
+    <div class="modal">
+      <div class="modal-title">Rechazar registro</div>
+      <div class="fg"><label class="fl">Motivo del rechazo</label><textarea id="rejMotivo" placeholder="Describe el motivo..."></textarea></div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moRej')">Cancelar</button>
+        <button class="btn btn-d" onclick="confirmRej()">Confirmar rechazo</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── LOGIN ──────────────────────────────
 window.doLogin = async ()=>{
   const u=$('loginUser').value.trim().toLowerCase();
   const p=$('loginPin').value.trim();
@@ -470,11 +462,27 @@ window.doLogin = async ()=>{
   if(!found){al.innerHTML='<div class="alert ae">Usuario o PIN incorrecto.</div>';return;}
   if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
   me=found;
-  if(me.role==='admin'){screen('adminScreen');loadDash();startDashRefresh();}
-  else{$('empUsername').textContent=me.nombre;screen('employeeScreen');initForm();}
+  if(me.role==='admin'){
+    renderAdmin();
+    screen('adminScreen');
+    loadDash();
+    startDashRefresh();
+  } else {
+    renderEmployee(me.nombre);
+    screen('employeeScreen');
+    initForm();
+  }
 };
 
-window.doLogout=()=>{me=null;stopDashRefresh();$('loginUser').value='';$('loginPin').value='';$('loginAlert').innerHTML='';screen('loginScreen');};
+window.doLogout=()=>{
+  me=null;
+  stopDashRefresh();
+  $('appContainer').innerHTML='';
+  $('loginUser').value='';
+  $('loginPin').value='';
+  $('loginAlert').innerHTML='';
+  screen('loginScreen');
+};
 const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
 
 // EMP TABS
@@ -912,4 +920,3 @@ document.body.style.overflow='hidden';
 </script>
 </body>
 </html>
-
