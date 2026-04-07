@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -366,20 +365,32 @@ function renderAdmin(){
         <div class="card"><div class="card-title">Sin registro hoy</div><div id="dashSin"><div class="spin"></div></div></div>
       </div>
       <div id="adRegs" style="display:none">
-        <div class="page-header"><div><div class="ph-title">Registros del equipo</div><div class="ph-sub">Busca y exporta</div></div></div>
-        <div class="card">
-          <div class="card-title">Filtros</div>
-          <div class="fr">
-            <div class="fg"><label class="fl">Empleado</label><select id="filtEmp"><option value="">Todos</option></select></div>
-            <div class="fg"><label class="fl">Desde</label><input type="date" id="filtDes"></div>
-            <div class="fg"><label class="fl">Hasta</label><input type="date" id="filtHas"></div>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn btn-p" onclick="buscarRegs()">🔍 Buscar</button>
-            <button class="btn btn-g" onclick="exportar()">📥 Exportar Excel</button>
-          </div>
+        <div class="page-header" style="justify-content:space-between">
+          <div><div class="ph-title">Registros por empleado</div><div class="ph-sub">Selecciona un empleado para ver su historial</div></div>
+          <button class="btn btn-g btn-sm" onclick="exportar()">📥 Exportar</button>
         </div>
-        <div id="adRegList"><div class="empty"><div class="ei">🔍</div><div class="et">Aplica los filtros para buscar</div></div></div>
+        <!-- Lista de empleados -->
+        <div id="adEmpList"><div class="spin"></div></div>
+        <!-- Vista de perfil del empleado seleccionado -->
+        <div id="adEmpPerfil" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+            <button class="btn btn-gh btn-sm" onclick="volverListaEmps()">← Volver</button>
+            <div id="adEmpNombre" style="font-size:16px;font-weight:700;color:var(--text)"></div>
+          </div>
+          <!-- Resumen del empleado -->
+          <div id="adEmpResumen" style="margin-bottom:14px"></div>
+          <!-- Filtro mes -->
+          <div class="card" style="margin-bottom:14px">
+            <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+              <div class="fg" style="margin-bottom:0;flex:1;min-width:130px">
+                <label class="fl">Mes</label>
+                <input type="month" id="adEmpMes">
+              </div>
+              <button class="btn btn-p btn-sm" onclick="cargarPerfilEmpleado()">Ver</button>
+            </div>
+          </div>
+          <div id="adEmpRegs"><div class="spin"></div></div>
+        </div>
       </div>
       <div id="adPend" style="display:none">
         <div class="page-header"><div><div class="ph-title">Pendientes</div><div class="ph-sub">Horas extras por aprobar · Viáticos para revisar</div></div></div>
@@ -861,8 +872,10 @@ window.aprobarHE=async(uid,key)=>{
   await update(ref(db,`registros/${uid}/${key}`),{estadoHE:'aprobado',revisadoHEEn:Date.now()});
   loadPend();
 };
+let rejCallback = null;
 window.openRej=(uid,key,tipo)=>{
   rejKey={uid,key,tipo};
+  rejCallback=null;
   $('rejMotivo').value='';
   $('moRej').classList.add('open');
 };
@@ -873,38 +886,133 @@ window.confirmRej=async()=>{
     :{estadoViatico:'rechazado',motivoRechazoViatico:m,revisadoViaticEn:Date.now()};
   await update(ref(db,`registros/${rejKey.uid}/${rejKey.key}`),updates);
   closeModal('moRej');
-  loadPend();
+  if(rejCallback) await rejCallback();
+  else loadPend();
 };
+
+let perfilEmpUID = null;
 
 async function loadFiltEmps(){
-  const users=await getUsers();const sel=$('filtEmp');
-  sel.innerHTML='<option value="">Todos los empleados</option>';
-  users.filter(u=>u.role!=='admin').forEach(u=>{sel.innerHTML+=`<option value="${u.id}">${u.nombre}</option>`;});
-  $('filtDes').value=ago(30);$('filtHas').value=today();
+  // Ahora carga lista de empleados como perfiles
+  const l=$('adEmpList'); if(!l) return;
+  l.innerHTML='<div class="spin"></div>';
+  hide('adEmpPerfil'); show('adEmpList');
+  const [users, allRegs] = await Promise.all([getUsers(), getAllRegs()]);
+  const emps = users.filter(u=>u.role!=='admin'&&(u.activo===true||u.activo==='true'));
+  emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+
+  const now=new Date();
+  const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+  l.innerHTML=emps.map(u=>{
+    const regsEmp=allRegs.filter(r=>r.userId===u.id);
+    const delMes=regsEmp.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
+    const pendHE=regsEmp.filter(r=>r.he&&r.estadoHE==='pendiente').length;
+    const viaticos=delMes.filter(r=>r.viatico).length;
+    const totalMin=delMes.reduce((a,r)=>a+(r.minHE||0),0);
+    const hrsStr=totalMin>0?(Math.floor(totalMin/60)>0?Math.floor(totalMin/60)+'h ':'')+totalMin%60+'m':'—';
+    return `<div class="card" style="cursor:pointer;transition:all .15s" onclick="abrirPerfilEmp('${u.id}','${u.nombre}')"
+      onmouseover="this.style.borderColor='var(--blue2)'" onmouseout="this.style.borderColor='var(--gray200)'">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:700;font-size:14px">${u.nombre}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${u.cargo||''}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          ${pendHE>0?`<span class="badge bp">⏱ ${pendHE} HE pendiente${pendHE>1?'s':''}</span>`:''}
+          <div style="text-align:right">
+            <div style="font-size:11px;color:var(--text2)">Este mes</div>
+            <div style="font-size:12px;font-weight:600">${delMes.length} reg · ${viaticos} viát · ${hrsStr} HE</div>
+          </div>
+          <span style="color:var(--blue2);font-size:18px">›</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-window.buscarRegs=async()=>{
-  const l=$('adRegList');l.innerHTML='<div class="spin"></div>';
-  const eid=$('filtEmp').value,des=$('filtDes').value,has=$('filtHas').value;
-  let all=await getAllRegs();
-  if(eid)all=all.filter(r=>r.userId===eid);
-  if(des)all=all.filter(r=>r.fecha>=des);
-  if(has)all=all.filter(r=>r.fecha<=has);
-  all.sort((a,b)=>b.fecha.localeCompare(a.fecha));filtRegs=all;
-  if(!all.length){l.innerHTML='<div class="empty"><div class="ei">🔍</div><div class="et">Sin resultados</div></div>';return;}
-  l.innerHTML=`<div class="card"><div style="font-size:12px;color:var(--text2);margin-bottom:12px">${all.length} registro(s)</div>
-    <div class="tw"><table><thead><tr><th>Fecha</th><th>Empleado</th><th>Viático</th><th>H.E.</th><th></th></tr></thead><tbody>
-    ${all.map(r=>{
-      const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
-      const eh=r.estadoHE||(r.he?'pendiente':'na');
-      return `<tr><td style="font-family:var(--mono);font-size:12px;font-weight:600">${fmt(r.fecha)}</td>
-      <td style="font-weight:500">${r.userName||r.userId}</td>
-      <td>${r.viatico?(ev==='rechazado'?'<span class="badge br">Anulado</span>':'<span class="badge ba">✓</span>'):'<span class="badge bn">No</span>'}</td>
-      <td>${r.he?(eh==='aprobado'?'<span class="badge ba">✓ Aprobada</span>':eh==='rechazado'?'<span class="badge br">Rechazada</span>':'<span class="badge bp">Pendiente</span>'):'<span class="badge bn">No</span>'}</td>
-      <td><button class="btn btn-gh btn-xs" onclick="openDet('${r.userId}','${r.key}',true)">Ver</button></td></tr>`;
-    }).join('')}
-    </tbody></table></div></div>`;
+window.abrirPerfilEmp=async(uid, nombre)=>{
+  perfilEmpUID=uid;
+  hide('adEmpList'); show('adEmpPerfil');
+  $('adEmpNombre').textContent=nombre;
+  // Set mes actual por defecto
+  const now=new Date();
+  const mesInput=$('adEmpMes');
+  if(mesInput) mesInput.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  await cargarPerfilEmpleado();
 };
+
+window.volverListaEmps=()=>{
+  perfilEmpUID=null;
+  hide('adEmpPerfil'); show('adEmpList');
+};
+
+window.cargarPerfilEmpleado=async()=>{
+  const l=$('adEmpRegs'); l.innerHTML='<div class="spin"></div>';
+  const mes=$('adEmpMes')?.value;
+  const snap=await get(ref(db,`registros/${perfilEmpUID}`));
+
+  if(!snap.exists()){
+    l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">Sin registros</div></div>';
+    $('adEmpResumen').innerHTML=''; return;
+  }
+
+  let items=Object.entries(snap.val()).map(([k,v])=>({key:k,...v}));
+  if(mes) items=items.filter(r=>r.fecha&&r.fecha.startsWith(mes));
+  items.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  filtRegs=items.map(r=>({...r,userId:perfilEmpUID}));
+
+  // Resumen
+  const viaticos=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
+  const totalMin=items.reduce((a,r)=>a+(r.minHE||0),0);
+  const hrsHE=Math.floor(totalMin/60), minsHE=totalMin%60;
+  const pendHE=items.filter(r=>r.he&&r.estadoHE==='pendiente').length;
+  $('adEmpResumen').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:4px">
+      <div class="stat-card g"><div class="stat-val">${items.length}</div><div class="stat-lbl">Registros</div></div>
+      <div class="stat-card"><div class="stat-val">${viaticos}</div><div class="stat-lbl">Viáticos</div></div>
+      <div class="stat-card w"><div class="stat-val" style="font-size:20px">${totalMin>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</div><div class="stat-lbl">Hrs extras</div></div>
+    </div>
+    ${pendHE>0?`<div class="alert ae" style="margin-bottom:0">⏱ ${pendHE} hora${pendHE>1?'s extra pendientes':' extra pendiente'} de aprobación</div>`:''}`;
+
+  if(!items.length){
+    l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">Sin registros en este período</div></div>';
+    return;
+  }
+
+  l.innerHTML=items.map(r=>{
+    const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
+    const eh=r.estadoHE||(r.he?'pendiente':'na');
+    const horario=r.horaEntrada&&r.horaSalida?` · ${r.horaEntrada}–${r.horaSalida}`:'';
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <div>
+          <div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--blue)">${fmt(r.fecha)}<span style="font-weight:400;color:var(--text2)">${horario}</span></div>
+          ${r.minHE>0?`<div style="font-size:11px;color:var(--warn);margin-top:2px">⏱ ${Math.floor(r.minHE/60)>0?Math.floor(r.minHE/60)+'h ':''+(r.minHE%60)+'m'} extras</div>`:''}
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${r.viatico?`<span class="badge ${ev==='rechazado'?'br':'ba'}">${ev==='rechazado'?'💰 Anulado':'💰 Viático'}</span>`:''}
+          ${r.he?`<span class="badge ${eh==='aprobado'?'ba':eh==='rechazado'?'br':'bp'}">${eh==='aprobado'?'⏱ HE ✓':eh==='rechazado'?'⏱ HE ✗':'⏱ HE pendiente'}</span>`:''}
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.5">${r.actividades}</div>
+      ${r.he&&r.heJustif?`<div style="font-size:12px;background:var(--bluelt);padding:8px 12px;border-radius:6px;margin-bottom:10px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
+      ${r.motivoRechazoViatico?`<div style="font-size:12px;background:var(--dangerlt);padding:8px 12px;border-radius:6px;margin-bottom:10px;color:var(--danger)"><b>Motivo anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
+      ${r.motivoRechazoHE?`<div style="font-size:12px;background:var(--dangerlt);padding:8px 12px;border-radius:6px;margin-bottom:10px;color:var(--danger)"><b>Motivo rechazo HE:</b> ${r.motivoRechazoHE}</div>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${r.he&&eh==='pendiente'?`<button class="btn btn-g btn-xs" onclick="aprobarHEyRefresh('${perfilEmpUID}','${r.key}')">✓ Aprobar HE</button><button class="btn btn-d btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','he');rejCallback=cargarPerfilEmpleado">✗ Rechazar HE</button>`:''}
+        ${r.viatico&&ev!=='rechazado'?`<button class="btn btn-d btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','viatico');rejCallback=cargarPerfilEmpleado">✗ Anular viático</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+};
+
+window.aprobarHEyRefresh=async(uid,key)=>{
+  await update(ref(db,`registros/${uid}/${key}`),{estadoHE:'aprobado',revisadoHEEn:Date.now()});
+  await cargarPerfilEmpleado();
+};
+
+window.buscarRegs=async()=>{}; // kept for exportar compatibility
 
 window.exportar=()=>{
   if(!filtRegs.length){alert('Primero realiza una búsqueda.');return;}
