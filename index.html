@@ -203,6 +203,9 @@ tbody tr:hover td{background:var(--bluelt)}
   .tr2{grid-template-columns:1fr}
   .tb-user{display:none}
 }
+.tipo-btn{padding:9px 8px;border-radius:var(--r);border:1.5px solid var(--gray200);background:#fff;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text2);text-align:center}
+.tipo-btn:hover{border-color:var(--blue);color:var(--blue)}
+.tipo-btn.active{border-color:var(--blue);background:var(--bluelt);color:var(--blue);font-weight:600}
 </style>
 </head>
 <body>
@@ -251,7 +254,7 @@ const cfg = {
 };
 const db = getDatabase(initializeApp(cfg));
 
-let me=null, editUID=null, rejKey=null, filtRegs=[];
+let me=null, editUID=null, rejKey=null, filtRegs=[], tipoDia='normal';
 
 const today   = () => new Date().toISOString().split('T')[0];
 const ago     = n  => { const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; };
@@ -295,18 +298,35 @@ function renderEmployee(nombre){
         <div class="card">
           <div id="empAlert"></div>
           <div class="fg"><label class="fl">Fecha</label><input type="date" id="empFecha" onchange="onFechaChange()"></div>
-          <div class="tr2">
-            <div class="fg"><label class="fl">Hora entrada</label><input type="time" id="empEntrada" onchange="calcHE()"></div>
-            <div class="fg"><label class="fl">Hora salida</label><input type="time" id="empSalida" onchange="calcHE()"></div>
+          <!-- Tipo de día -->
+          <div class="fg">
+            <label class="fl">Tipo de día</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="tipoDiaGrid">
+              <button type="button" class="tipo-btn active" onclick="setTipoDia('normal',this)">📋 Día normal</button>
+              <button type="button" class="tipo-btn" onclick="setTipoDia('asueto',this)">🎉 Asueto</button>
+              <button type="button" class="tipo-btn" onclick="setTipoDia('vacaciones',this)">🏖 Vacaciones</button>
+              <button type="button" class="tipo-btn" onclick="setTipoDia('incapacidad',this)">🏥 Incapacidad</button>
+            </div>
           </div>
-          <div id="heResumen" style="display:none;margin-bottom:14px"></div>
-          <div class="fg"><label class="fl">Actividades realizadas</label><textarea id="empActs" placeholder="Describe las actividades del día..."></textarea></div>
-          <div class="tog-row">
-            <div><div class="tog-lbl">💰 Viático</div><div class="tog-sub">Activar si realizaste salida a campo</div></div>
-            <div class="toggle" id="togV" onclick="togF('v')"></div>
+          <!-- Campos día normal -->
+          <div id="camposNormal">
+            <div class="tr2">
+              <div class="fg"><label class="fl">Hora entrada</label><input type="time" id="empEntrada" onchange="calcHE()"></div>
+              <div class="fg"><label class="fl">Hora salida</label><input type="time" id="empSalida" onchange="calcHE()"></div>
+            </div>
+            <div id="heResumen" style="display:none;margin-bottom:14px"></div>
+            <div class="fg"><label class="fl">Actividades realizadas</label><textarea id="empActs" placeholder="Describe las actividades del día..."></textarea></div>
+            <div class="tog-row">
+              <div><div class="tog-lbl">💰 Viático</div><div class="tog-sub">Activar si realizaste salida a campo</div></div>
+              <div class="toggle" id="togV" onclick="togF('v')"></div>
+            </div>
+            <div id="heBox" style="display:none;background:var(--bluelt);border-radius:var(--r);padding:14px;margin-top:12px;border:1px solid var(--bluemid)">
+              <div class="fg"><label class="fl">Justificación de horas extras</label><textarea id="heJust" placeholder="Motivo de las horas extras..."></textarea></div>
+            </div>
           </div>
-          <div id="heBox" style="display:none;background:var(--bluelt);border-radius:var(--r);padding:14px;margin-top:12px;border:1px solid var(--bluemid)">
-            <div class="fg"><label class="fl">Justificación de horas extras</label><textarea id="heJust" placeholder="Motivo de las horas extras..."></textarea></div>
+          <!-- Campos día especial -->
+          <div id="camposEspecial" style="display:none">
+            <div class="fg"><label class="fl">Nota (opcional)</label><textarea id="empNota" placeholder="Agrega una nota si lo deseas..."></textarea></div>
           </div>
           <button class="btn btn-p btn-full" style="margin-top:18px;padding:12px" onclick="guardarReg()">Guardar registro</button>
         </div>
@@ -557,12 +577,28 @@ window.empTab=(t,btn)=>{
   }
 };
 
+window.setTipoDia=function(tipo,btn){
+  tipoDia=tipo;
+  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(tipo==='normal'){
+    show('camposNormal');hide('camposEspecial');
+    window.onFechaChange();
+  } else {
+    hide('camposNormal');hide('heResumen');hide('heBox');
+    show('camposEspecial');
+  }
+};
+
 function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();f.min=ago(7);
-  ['empActs','heJust'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
+  tipoDia='normal';
+  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
+  const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
+  show('camposNormal');hide('camposEspecial');
+  ['empActs','heJust','empNota'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
   const tv=$('togV'); if(tv) tv.classList.remove('on');
-  hide('heBox'); hide('heResumen');
-  // Auto-fill horario del día de hoy
+  hide('heBox');hide('heResumen');
   window.onFechaChange();
 }
 
@@ -678,41 +714,44 @@ window.togF=f=>{
 window.guardarReg=async()=>{
   const al=$('empAlert');al.innerHTML='';
   const fecha=$('empFecha').value;
-  const entrada=$('empEntrada').value;
-  const salida=$('empSalida').value;
-  const acts=$('empActs').value.trim();
-  const viat=$('togV').classList.contains('on');
+  if(!fecha){al.innerHTML='<div class="alert ae">Selecciona una fecha.</div>';return;}
 
-  if(!fecha||!entrada||!salida||!acts){
-    al.innerHTML='<div class="alert ae">Completa todos los campos — fecha, horario y actividades.</div>';return;
-  }
-  if(toMins(salida)<=toMins(entrada)){
-    al.innerHTML='<div class="alert ae">La hora de salida debe ser mayor a la de entrada.</div>';return;
-  }
-
-  const r = calcularHE(fecha, entrada, salida);
-
-  if(r.he){
-    const justif=$('heJust')?.value.trim();
-    if(!justif){ al.innerHTML='<div class="alert ae">Escribe la justificación para las horas extras.</div>';return; }
-  }
-
+  // Check duplicado
   try {
     const snap=await get(ref(db,`registros/${me.id}`));
     if(snap.exists()){
       const dup=Object.values(snap.val()).some(x=>x&&x.fecha===fecha);
-      if(dup){ al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return; }
+      if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return;}
     }
-    await push(ref(db,`registros/${me.id}`),{
-      fecha, actividades:acts, viatico:viat,
-      horaEntrada:entrada, horaSalida:salida,
-      he:r.he, minHE:r.minHE,
-      heInicio:r.heIni, heFin:r.heFin,
+  } catch(e){al.innerHTML=`<div class="alert ae">Error: ${e.message}</div>`;return;}
+
+  let datos = { fecha, creadoEn:Date.now(), userId:me.id, userName:me.nombre, cargo:me.cargo||'', tipoDia };
+
+  if(tipoDia==='normal'){
+    const entrada=$('empEntrada').value;
+    const salida=$('empSalida').value;
+    const acts=$('empActs').value.trim();
+    const viat=$('togV').classList.contains('on');
+    if(!entrada||!salida||!acts){al.innerHTML='<div class="alert ae">Completa horario y actividades.</div>';return;}
+    if(toMins(salida)<=toMins(entrada)){al.innerHTML='<div class="alert ae">Hora de salida debe ser mayor a la entrada.</div>';return;}
+    const r=calcularHE(fecha,entrada,salida);
+    if(r.he&&!$('heJust')?.value.trim()){al.innerHTML='<div class="alert ae">Escribe la justificación para las horas extras.</div>';return;}
+    datos={...datos, actividades:acts, viatico:viat, horaEntrada:entrada, horaSalida:salida,
+      he:r.he, minHE:r.minHE, heInicio:r.heIni, heFin:r.heFin,
       heJustif:r.he?($('heJust')?.value.trim()||''):'',
-      estadoViatico: viat?'aprobado':'na',
-      estadoHE: r.he?'pendiente':'na',
-      creadoEn:Date.now(), userId:me.id, userName:me.nombre, cargo:me.cargo||''
-    });
+      estadoViatico:viat?'aprobado':'na',
+      estadoHE:r.he?'pendiente':'na'};
+  } else {
+    // Día especial
+    const nota=$('empNota')?.value.trim()||'';
+    const necesitaAprobacion = tipoDia==='incapacidad'||tipoDia==='vacaciones';
+    datos={...datos, actividades:'', viatico:false, he:false,
+      nota, estadoEspecial: necesitaAprobacion?'pendiente':'aprobado',
+      estadoViatico:'na', estadoHE:'na'};
+  }
+
+  try {
+    await push(ref(db,`registros/${me.id}`), datos);
     initForm();
     al.innerHTML='<div class="alert as">✓ Registro guardado correctamente.</div>';
   } catch(e){
@@ -775,6 +814,22 @@ async function loadHist(){
     </div>`;
 
   l.innerHTML=items.map(r=>{
+    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad'};
+    const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
+
+    if(esEspecial){
+      const label=tipoLabels[r.tipoDia]||r.tipoDia;
+      const est=r.estadoEspecial||'aprobado';
+      const estBadge=est==='pendiente'?'<span class="badge bp">Pendiente</span>':est==='rechazado'?'<span class="badge br">Rechazado</span>':'<span class="badge ba">Aprobado</span>';
+      return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
+        <div class="rc-hd">
+          <div class="rc-date">${fmt(r.fecha)}</div>
+          <div class="rc-badges"><span class="badge by">${label}</span>${estBadge}</div>
+        </div>
+        <div class="rc-desc">${r.nota||'Sin nota'}</div>
+      </div>`;
+    }
+
     const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
     const eh=r.estadoHE||(r.he?'pendiente':'na');
     const viatBadge=r.viatico?(ev==='rechazado'?'<span class="badge br">💰 Anulado</span>':'<span class="badge ba">💰 Viático</span>'):'';
@@ -871,25 +926,47 @@ function stopDashRefresh(){ if(dashTimer){clearInterval(dashTimer);dashTimer=nul
 async function loadPend(){
   const l=$('pendList');l.innerHTML='<div class="spin"></div>';
   const all=await getAllRegs();
-  // Solo registros con HE pendiente
-  const pend=all.filter(r=>r.he&&r.estadoHE==='pendiente').sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  if(!pend.length){l.innerHTML='<div class="empty"><div class="ei">✅</div><div class="et">Sin HE pendientes</div></div>';return;}
-  l.innerHTML=pend.map(r=>`<div class="card" style="border-left:4px solid var(--warn)">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:10px">
-      <div>
-        <div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:2px">${fmtLong(r.fecha)}</div>
+  const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad'};
+  // HE pendientes + días especiales pendientes (solo incapacidad y vacaciones)
+  const pendHE=all.filter(r=>r.he&&r.estadoHE==='pendiente');
+  const pendEsp=all.filter(r=>r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente');
+  const pend=[...pendHE,...pendEsp].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(!pend.length){l.innerHTML='<div class="empty"><div class="ei">✅</div><div class="et">Sin pendientes</div></div>';return;}
+  l.innerHTML=pend.map(r=>{
+    const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
+    if(esEspecial){
+      const label=tipoLabels[r.tipoDia]||r.tipoDia;
+      return `<div class="card" style="border-left:4px solid var(--warn)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+          <div><div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div><div style="font-size:12px;color:var(--text2)">${fmtLong(r.fecha)}</div></div>
+          <span class="badge by">${label}</span>
+        </div>
+        ${r.nota?`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">${r.nota}</div>`:''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-g btn-sm" onclick="aprobarEspecialPend('${r.userId}','${r.key}')">✓ Aprobar</button>
+          <button class="btn btn-gh btn-sm" onclick="openRejEspecial('${r.userId}','${r.key}');rejCallback=loadPend">Rechazar</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="card" style="border-left:4px solid var(--warn)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+        <div><div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${fmtLong(r.fecha)}</div></div>
+        <span class="badge bp">⏱ HE — ${r.heInicio||''}–${r.heFin||''}</span>
       </div>
-      <span class="badge bp">⏱ HE pendiente — ${r.heInicio}–${r.heFin}</span>
-    </div>
-    <div style="font-size:12px;background:var(--sky);padding:9px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">${r.actividades}</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-g btn-sm" onclick="aprobarHE('${r.userId}','${r.key}')">✓ Aprobar HE</button>
-      <button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}','he')">✗ Rechazar HE</button>
-      <button class="btn btn-gh btn-sm" onclick="openDet('${r.userId}','${r.key}',true)">Ver detalle</button>
-    </div></div>`).join('');
+      <div style="font-size:12px;background:var(--bluelt);padding:9px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">${r.actividades}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-g btn-sm" onclick="aprobarHE('${r.userId}','${r.key}')">✓ Aprobar HE</button>
+        <button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}','he')">✗ Rechazar HE</button>
+        <button class="btn btn-gh btn-sm" onclick="openDet('${r.userId}','${r.key}',true)">Ver detalle</button>
+      </div></div>`;
+  }).join('');
 }
+
+window.aprobarEspecialPend=async(uid,key)=>{
+  await update(ref(db,`registros/${uid}/${key}`),{estadoEspecial:'aprobado',revisadoEspEn:Date.now()});
+  loadPend();
+};
 
 // También cargar viáticos aprobados para que admin pueda anularlos
 async function loadViaticos(){
@@ -937,9 +1014,10 @@ window.openRej=(uid,key,tipo)=>{
 };
 window.confirmRej=async()=>{
   const m=$('rejMotivo').value.trim();if(!m)return;
-  const updates=rejKey.tipo==='he'
-    ?{estadoHE:'rechazado',motivoRechazoHE:m,revisadoHEEn:Date.now()}
-    :{estadoViatico:'rechazado',motivoRechazoViatico:m,revisadoViaticEn:Date.now()};
+  let updates;
+  if(rejKey.tipo==='he') updates={estadoHE:'rechazado',motivoRechazoHE:m,revisadoHEEn:Date.now()};
+  else if(rejKey.tipo==='especial') updates={estadoEspecial:'rechazado',motivoRechazoEspecial:m,revisadoEspEn:Date.now()};
+  else updates={estadoViatico:'rechazado',motivoRechazoViatico:m,revisadoViaticEn:Date.now()};
   await update(ref(db,`registros/${rejKey.uid}/${rejKey.key}`),updates);
   closeModal('moRej');
   if(rejCallback) await rejCallback();
@@ -1069,6 +1147,29 @@ window.cargarPerfilEmpleado=async()=>{
     const heStr=heMin>0?(Math.floor(heMin/60)>0?Math.floor(heMin/60)+'h ':'')+heMin%60+'m extra':'';
     const border=i>0?'border-top:1px solid var(--gray100);':'';
     const pendiente=r.he&&eh==='pendiente';
+    const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
+    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad'};
+    const pendEspecial=esEspecial&&r.estadoEspecial==='pendiente';
+
+    if(esEspecial){
+      const label=tipoLabels[r.tipoDia]||r.tipoDia;
+      const est=r.estadoEspecial||'aprobado';
+      return `<div style="${border}padding:16px;border-left:3px solid ${pendEspecial?'var(--warn)':est==='aprobado'?'var(--green)':'var(--danger)'}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${r.nota||pendEspecial?'8px':'0'}">
+          <div><div style="font-weight:700;font-size:14px">${fmt(r.fecha)}</div></div>
+          <div style="display:flex;gap:5px">
+            <span class="badge by">${label}</span>
+            <span class="badge ${est==='pendiente'?'bp':est==='aprobado'?'ba':'br'}">${est==='pendiente'?'Pendiente':est==='aprobado'?'Aprobado':'Rechazado'}</span>
+          </div>
+        </div>
+        ${r.nota?`<div style="font-size:13px;color:var(--text2);margin-bottom:${pendEspecial?'10px':'0'}">${r.nota}</div>`:''}
+        ${r.motivoRechazoEspecial?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Motivo rechazo:</b> ${r.motivoRechazoEspecial}</div>`:''}
+        ${pendEspecial?`<div style="display:flex;gap:6px;padding-top:8px;border-top:1px solid var(--gray100)">
+          <button class="btn btn-g btn-xs" onclick="aprobarEspecial('${perfilEmpUID}','${r.key}')">✓ Aprobar</button>
+          <button class="btn btn-gh btn-xs" onclick="openRejEspecial('${perfilEmpUID}','${r.key}')">Rechazar</button>
+        </div>`:''}
+      </div>`;
+    }
     return `<div style="${border}padding:16px;${pendiente?'border-left:3px solid var(--warn);':r.he&&eh==='aprobado'?'border-left:3px solid var(--green);':'border-left:3px solid transparent;'}">
       <!-- Encabezado -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -1110,6 +1211,16 @@ window.cambiarPinAdmin=async()=>{
   me.pin=nuevo;
   al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
   ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
+};
+
+window.aprobarEspecial=async(uid,key)=>{
+  await update(ref(db,`registros/${uid}/${key}`),{estadoEspecial:'aprobado',revisadoEspEn:Date.now()});
+  await cargarPerfilEmpleado();
+};
+window.openRejEspecial=(uid,key)=>{
+  rejKey={uid,key,tipo:'especial'};
+  $('rejMotivo').value='';
+  $('moRej').classList.add('open');
 };
 
 window.aprobarHEyRefresh=async(uid,key)=>{
@@ -1258,3 +1369,5 @@ document.body.style.overflow='hidden';
 </script>
 </body>
 </html>
+
+
