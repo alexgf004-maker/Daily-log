@@ -421,6 +421,7 @@ function renderEmployee(nombre){
               <button type="button" class="tipo-btn active" onclick="setTipoDia('normal',this)">📋 Día normal</button>
               <button type="button" class="tipo-btn" onclick="setTipoDia('vacaciones',this)">🏖 Vacaciones</button>
               <button type="button" class="tipo-btn" onclick="setTipoDia('incapacidad',this)">🏥 Incapacidad</button>
+              <button type="button" class="tipo-btn" onclick="setTipoDia('permiso',this)">🙋 Permiso</button>
             </div>
           </div>
           <!-- Campos día normal -->
@@ -651,6 +652,23 @@ function modalsHTML(){
       <div class="modal-acts">
         <button class="btn btn-gh" onclick="closeModal('moObs')">Cancelar</button>
         <button class="btn btn-p" onclick="enviarObservacion()">Enviar observación</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="moAprobarPermiso">
+    <div class="modal">
+      <div class="modal-title">Aprobar permiso</div>
+      <div id="moPermisoInfo" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
+      <div class="fg">
+        <label class="fl">¿El permiso es remunerado?</label>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button type="button" id="btnRemSi" class="tipo-btn active" onclick="selRemun(true)">✓ Sí, se paga</button>
+          <button type="button" id="btnRemNo" class="tipo-btn" onclick="selRemun(false)">✗ No se paga</button>
+        </div>
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moAprobarPermiso')">Cancelar</button>
+        <button class="btn btn-g" onclick="confirmarAprobarPermiso()">✓ Aprobar</button>
       </div>
     </div>
   </div>
@@ -1133,7 +1151,7 @@ window.guardarReg=async()=>{
   } else {
     // Día especial
     const nota=$('empNota')?.value.trim()||'';
-    const necesitaAprobacion = tipoDia==='incapacidad'||tipoDia==='vacaciones';
+    const necesitaAprobacion = tipoDia==='incapacidad'||tipoDia==='vacaciones'||tipoDia==='permiso';
     datos={...datos, actividades:'', viatico:false, he:false,
       nota, estadoEspecial: necesitaAprobacion?'pendiente':'aprobado',
       estadoViatico:'na', estadoHE:'na'};
@@ -1203,17 +1221,20 @@ async function loadHist(){
     </div>`;
 
   l.innerHTML=items.map(r=>{
-    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad'};
+    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad',permiso:'🙋 Permiso'};
     const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
 
     if(esEspecial){
       const label=tipoLabels[r.tipoDia]||r.tipoDia;
       const est=r.estadoEspecial||'aprobado';
       const estBadge=est==='pendiente'?'<span class="badge bp">Pendiente</span>':est==='rechazado'?'<span class="badge br">Rechazado</span>':'<span class="badge ba">Aprobado</span>';
+      const remBadge=(r.tipoDia==='permiso'&&est==='aprobado')
+        ?(r.remunerado===false?'<span class="badge br" style="font-size:10px">No remunerado</span>':'<span class="badge ba" style="font-size:10px">Remunerado</span>')
+        :'';
       return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
         <div class="rc-hd">
           <div class="rc-date">${fmt(r.fecha)}</div>
-          <div class="rc-badges"><span class="badge by">${label}</span>${estBadge}</div>
+          <div class="rc-badges"><span class="badge by">${label}</span>${estBadge}${remBadge}</div>
         </div>
         <div class="rc-desc">${r.nota||'Sin nota'}</div>
       </div>`;
@@ -1367,11 +1388,10 @@ function stopDashRefresh(){ if(dashTimer){clearInterval(dashTimer);dashTimer=nul
 async function loadPend(){
   const l=$('pendList');l.innerHTML='<div class="spin"></div>';
   const all=await getAllRegs();
-  const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad'};
+  const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad',permiso:'🙋 Permiso'};
   // HE pendientes + días especiales pendientes (solo incapacidad y vacaciones)
   const pendHE=all.filter(r=>r.he&&r.estadoHE==='pendiente');
-  const pendEsp=all.filter(r=>r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente');
-  const pend=[...pendHE,...pendEsp].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const pendEsp=all.filter(r=>r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente');  const pend=[...pendHE,...pendEsp].sort((a,b)=>b.fecha.localeCompare(a.fecha));
   if(!pend.length){l.innerHTML='<div class="empty"><div class="ei">✅</div><div class="et">Sin pendientes</div></div>';return;}
   l.innerHTML=pend.map(r=>{
     const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
@@ -1384,7 +1404,7 @@ async function loadPend(){
         </div>
         ${r.nota?`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">${r.nota}</div>`:''}
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${isAdmin()?`<button class="btn btn-g btn-sm" onclick="aprobarEspecialPend('${r.userId}','${r.key}')">✓ Aprobar</button>
+          ${isAdmin()?`<button class="btn btn-g btn-sm" onclick="${r.tipoDia==='permiso'?`abrirAprobarPermiso('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')`:`aprobarEspecialPend('${r.userId}','${r.key}')`}">✓ Aprobar</button>
           <button class="btn btn-gh btn-sm" onclick="openRejEspecial('${r.userId}','${r.key}');rejCallback=loadPend">Rechazar</button>`:''}
           <button class="btn btn-gh btn-sm" onclick="openObs('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button>
         </div>
@@ -1409,6 +1429,27 @@ async function loadPend(){
 window.aprobarEspecialPend=async(uid,key)=>{
   await update(ref(db,`registros/${uid}/${key}`),{estadoEspecial:'aprobado',revisadoEspEn:Date.now()});
   loadPend();
+};
+
+let permisoKey=null, permisoRemunerado=true, permisoCallback=null;
+window.abrirAprobarPermiso=(uid,key,nombre,fecha,cb)=>{
+  permisoKey={uid,key}; permisoRemunerado=true; permisoCallback=cb||loadPend;
+  $('moPermisoInfo').textContent=`${nombre} · ${fmtLong(fecha)}`;
+  selRemun(true);
+  $('moAprobarPermiso').classList.add('open');
+};
+window.selRemun=(val)=>{
+  permisoRemunerado=val;
+  ['btnRemSi','btnRemNo'].forEach(id=>{const e=$(id);if(e)e.classList.remove('active');});
+  $(val?'btnRemSi':'btnRemNo')?.classList.add('active');
+};
+window.confirmarAprobarPermiso=async()=>{
+  if(!permisoKey) return;
+  await update(ref(db,`registros/${permisoKey.uid}/${permisoKey.key}`),{
+    estadoEspecial:'aprobado', remunerado:permisoRemunerado, revisadoEspEn:Date.now()
+  });
+  closeModal('moAprobarPermiso');
+  if(permisoCallback) await permisoCallback();
 };
 
 // También cargar viáticos aprobados para que admin pueda anularlos
@@ -1591,7 +1632,7 @@ window.cargarPerfilEmpleado=async()=>{
     const border=i>0?'border-top:1px solid var(--gray100);':'';
     const pendiente=r.he&&eh==='pendiente';
     const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
-    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad'};
+    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad',permiso:'🙋 Permiso'};
     const pendEspecial=esEspecial&&r.estadoEspecial==='pendiente';
 
     if(esEspecial){
@@ -1607,8 +1648,10 @@ window.cargarPerfilEmpleado=async()=>{
         </div>
         ${r.nota?`<div style="font-size:13px;color:var(--text2);margin-bottom:${pendEspecial?'10px':'0'}">${r.nota}</div>`:''}
         ${r.motivoRechazoEspecial?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Motivo rechazo:</b> ${r.motivoRechazoEspecial}</div>`:''}
-        ${pendEspecial?`<div style="display:flex;gap:6px;padding-top:8px;border-top:1px solid var(--gray100)">
-          <button class="btn btn-g btn-xs" onclick="aprobarEspecial('${perfilEmpUID}','${r.key}')">✓ Aprobar</button>
+        ${isAdmin()&&pendEspecial?`<div style="display:flex;gap:6px;padding-top:8px;border-top:1px solid var(--gray100)">
+          ${r.tipoDia==='permiso'
+            ?`<button class="btn btn-g btn-xs" onclick="abrirAprobarPermiso('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}',cargarPerfilEmpleado)">✓ Aprobar</button>`
+            :`<button class="btn btn-g btn-xs" onclick="aprobarEspecial('${perfilEmpUID}','${r.key}')">✓ Aprobar</button>`}
           <button class="btn btn-gh btn-xs" onclick="openRejEspecial('${perfilEmpUID}','${r.key}')">Rechazar</button>
         </div>`:''}
       </div>`;
