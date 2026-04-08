@@ -378,6 +378,7 @@ function renderAdmin(){
       <button class="tab" onclick="adTab('pend',this)">⏳ Pendientes</button>
       <button class="tab" onclick="adTab('usrs',this)">👥 Usuarios</button>
       <button class="tab" onclick="adTab('perfil',this)">👤 Mi Perfil</button>
+      <button class="tab" onclick="adTab('asuetos',this)">🎉 Asuetos</button>
     </div>
     <div class="content">
       <div id="adDash">
@@ -451,6 +452,32 @@ function renderAdmin(){
           <div class="fg"><label class="fl">PIN nuevo (4–8 dígitos)</label><input type="password" id="adPinNuevo" placeholder="••••" maxlength="8" inputmode="numeric"></div>
           <div class="fg"><label class="fl">Confirmar PIN nuevo</label><input type="password" id="adPinConfirm" placeholder="••••" maxlength="8" inputmode="numeric"></div>
           <button class="btn btn-p btn-full" style="padding:12px" onclick="cambiarPinAdmin()">Actualizar PIN</button>
+        </div>
+      </div>
+      <div id="adAsuetos" style="display:none">
+        <div class="page-header" style="justify-content:space-between">
+          <div><div class="ph-title">Gestión de asuetos</div><div class="ph-sub">Oficiales El Salvador + días personalizados</div></div>
+        </div>
+        <!-- Agregar asueto personalizado -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">Agregar asueto personalizado</div>
+          <div id="asuetoAlert"></div>
+          <div class="tr2">
+            <div class="fg"><label class="fl">Fecha</label><input type="date" id="asuetoFecha"></div>
+            <div class="fg"><label class="fl">Nombre</label><input type="text" id="asuetoNombre" placeholder="Ej: Día de la empresa"></div>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="agregarAsueto()">+ Agregar</button>
+        </div>
+        <!-- Lista de asuetos del año -->
+        <div class="card">
+          <div class="card-title" style="justify-content:space-between;display:flex;align-items:center">
+            <span>Asuetos <span id="asuetoAnio"></span></span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-gh btn-xs" onclick="cambiarAnioAsueto(-1)">‹</button>
+              <button class="btn btn-gh btn-xs" onclick="cambiarAnioAsueto(1)">›</button>
+            </div>
+          </div>
+          <div id="asuetosList"></div>
         </div>
       </div>
     </div>
@@ -583,6 +610,16 @@ window.setTipoDia=function(tipo,btn){
   btn.classList.add('active');
   if(tipo==='normal'){
     show('camposNormal');hide('camposEspecial');
+    // Si el día es asueto y cambian a normal, avisar que todo será HE
+    const fecha=$('empFecha')?.value;
+    esAsueto(fecha).then(a=>{
+      if(a){
+        const al=$('empAlert');
+        if(al) al.innerHTML=`<div class="alert" style="background:var(--warnlt);color:var(--warn);border-left:3px solid var(--warn);margin-bottom:12px">
+          ⚠️ Día de asueto (<b>${a.nombre}</b>) — todas las horas que registres contarán como horas extras.
+        </div>`;
+      }
+    });
     window.onFechaChange();
   } else {
     hide('camposNormal');hide('heResumen');hide('heBox');
@@ -652,28 +689,41 @@ function calcularHE(fecha, entrada, salida){
   return { he: minHE>0, minHE, heIni, heFin, esFinde };
 }
 
-window.onFechaChange = function(){
+window.onFechaChange = async function(){
   const f=$('empFecha');
-  if(!f) return;
+  if(!f||!f.value) return;
   $('empFechaLbl').textContent=fmtLong(f.value);
 
-  // Auto-fill horario según día
-  const base = horarioBase(f.value);
-  const d = new Date(f.value+'T12:00:00');
-  const dow = d.getDay();
-  const entrada=$('empEntrada');
-  const salida=$('empSalida');
-  if(entrada && salida){
-    if(dow===0||dow===6){
-      // Fin de semana: sugerencia 6:00-14:00
-      entrada.value='06:00';
-      salida.value='14:00';
-    } else {
-      entrada.value=base?.ini||'07:00';
-      salida.value=base?.fin||(dow===5?'16:00':'17:00');
+  // Verificar si es asueto
+  const asueto=await esAsueto(f.value);
+  const empAlert=$('empAlert');
+
+  if(asueto){
+    // Pre-seleccionar tipo asueto
+    tipoDia='asueto';
+    document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
+    // Activar botón de asueto
+    const btns=document.querySelectorAll('.tipo-btn');
+    btns.forEach(b=>{ if(b.getAttribute('onclick')?.includes('asueto')) b.classList.add('active'); });
+    hide('camposNormal'); hide('heResumen'); hide('heBox');
+    show('camposEspecial');
+    if(empAlert) empAlert.innerHTML=`<div class="alert" style="background:var(--warnlt);color:var(--warn);border-left:3px solid var(--warn);margin-bottom:12px">
+      🎉 <b>${asueto.nombre}</b> — Este día es asueto. Si trabajaste, todas las horas serán extras. Puedes cambiar el tipo de día si es necesario.
+    </div>`;
+  } else {
+    // Día normal — limpiar alerta de asueto si la había
+    if(empAlert&&empAlert.innerHTML.includes('asueto')) empAlert.innerHTML='';
+    // Auto-fill horario según día
+    const base=horarioBase(f.value);
+    const d=new Date(f.value+'T12:00:00');
+    const dow=d.getDay();
+    const entrada=$('empEntrada'), salida=$('empSalida');
+    if(entrada&&salida){
+      if(dow===0||dow===6){ entrada.value='06:00'; salida.value='14:00'; }
+      else { entrada.value=base?.ini||'07:00'; salida.value=base?.fin||(dow===5?'16:00':'17:00'); }
     }
+    calcHE();
   }
-  calcHE();
 };
 
 window.calcHE = function(){
@@ -848,11 +898,12 @@ async function loadHist(){
 // ADMIN TABS
 window.adTab=(t,btn)=>{
   document.querySelectorAll('#adminScreen .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
-  ['adDash','adRegs','adPend','adUsrs','adPerfil'].forEach(hide);
+  ['adDash','adRegs','adPend','adUsrs','adPerfil','adAsuetos'].forEach(hide);
   if(t==='dash'){show('adDash');loadDash();}
   if(t==='regs'){show('adRegs');loadFiltEmps();}
   if(t==='pend'){show('adPend');show('pendList');hide('viatList');loadPend();}
   if(t==='usrs'){show('adUsrs');loadUsrs();}
+  if(t==='asuetos'){show('adAsuetos');loadAsuetos();}
   if(t==='perfil'){
     show('adPerfil');
     $('adPerfilNombre').textContent=me.nombre||'Administradora';
@@ -1229,6 +1280,100 @@ window.aprobarHEyRefresh=async(uid,key)=>{
 
 window.buscarRegs=async()=>{}; // kept for exportar compatibility
 
+// ── ASUETOS ────────────────────────────────────────────
+function calcSemSanta(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100;
+  const d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3);
+  const h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4;
+  const l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451);
+  const mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;
+  const pascua=new Date(y,mes-1,dia);
+  return [-3,-2,-1].map(n=>{const d=new Date(pascua);d.setDate(pascua.getDate()+n);return d.toISOString().split('T')[0];});
+}
+
+function primerLunesAgosto(y){
+  const d=new Date(y,7,1);
+  while(d.getDay()!==1) d.setDate(d.getDate()+1);
+  return d.toISOString().split('T')[0];
+}
+
+function asuetosFijos(y){
+  const ss=calcSemSanta(y), lunes=primerLunesAgosto(y);
+  return [
+    {fecha:`${y}-01-01`,nombre:'Año Nuevo',oficial:true},
+    {fecha:ss[0],nombre:'Jueves Santo',oficial:true},
+    {fecha:ss[1],nombre:'Viernes Santo',oficial:true},
+    {fecha:ss[2],nombre:'Sábado Santo',oficial:true},
+    {fecha:`${y}-05-01`,nombre:'Día del Trabajo',oficial:true},
+    {fecha:`${y}-05-10`,nombre:'Día de la Madre',oficial:true},
+    {fecha:`${y}-06-17`,nombre:'Día del Padre',oficial:true},
+    {fecha:lunes,nombre:'Fiestas Agostinas',oficial:true},
+    {fecha:`${y}-08-03`,nombre:'Fiestas Agostinas',oficial:true},
+    {fecha:`${y}-08-04`,nombre:'Fiestas Agostinas',oficial:true},
+    {fecha:`${y}-08-05`,nombre:'Fiestas Agostinas',oficial:true},
+    {fecha:`${y}-09-15`,nombre:'Independencia de El Salvador',oficial:true},
+    {fecha:`${y}-11-02`,nombre:'Día de los Difuntos',oficial:true},
+    {fecha:`${y}-12-25`,nombre:'Navidad',oficial:true},
+  ];
+}
+
+async function getAsuetosBD(){
+  try{ const snap=await get(ref(db,'asuetos')); if(!snap.exists()) return [];
+    return Object.entries(snap.val()).map(([k,v])=>({key:k,...v,oficial:false}));
+  }catch(e){return [];}
+}
+
+async function getAllAsuetos(y){
+  const fijos=asuetosFijos(y);
+  const custom=await getAsuetosBD();
+  return [...fijos,...custom.filter(a=>a.fecha&&a.fecha.startsWith(String(y)))].sort((a,b)=>a.fecha.localeCompare(b.fecha));
+}
+
+let asuetosCacheAnio=-1, asuetosCacheData=[];
+async function getAsuetosCache(){
+  const y=new Date().getFullYear();
+  if(asuetosCacheAnio!==y){ asuetosCacheData=await getAllAsuetos(y); asuetosCacheAnio=y; }
+  return asuetosCacheData;
+}
+async function esAsueto(fecha){ const a=await getAsuetosCache(); return a.find(x=>x.fecha===fecha)||null; }
+
+let anioAsuetosView=new Date().getFullYear();
+window.cambiarAnioAsueto=dir=>{ anioAsuetosView+=dir; loadAsuetos(); };
+
+async function loadAsuetos(){
+  const l=$('asuetosList'); if(!l) return;
+  $('asuetoAnio').textContent=anioAsuetosView;
+  l.innerHTML='<div class="spin"></div>';
+  const todos=await getAllAsuetos(anioAsuetosView);
+  l.innerHTML=todos.map((a,i)=>`<div style="${i>0?'border-top:1px solid var(--gray100);':''}padding:11px 0;display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <div>
+      <div style="font-size:13px;font-weight:600">${fmtLong(a.fecha)}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:1px">${a.nombre}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      ${a.oficial?'<span class="badge bn" style="font-size:10px">Oficial</span>':`<span class="badge by" style="font-size:10px">Personalizado</span><button class="btn btn-gh btn-xs" onclick="eliminarAsueto('${a.key}')">✕</button>`}
+    </div>
+  </div>`).join('');
+}
+
+window.agregarAsueto=async()=>{
+  const al=$('asuetoAlert');al.innerHTML='';
+  const fecha=$('asuetoFecha')?.value, nombre=$('asuetoNombre')?.value.trim();
+  if(!fecha||!nombre){al.innerHTML='<div class="alert ae">Completa fecha y nombre.</div>';return;}
+  await push(ref(db,'asuetos'),{fecha,nombre});
+  $('asuetoFecha').value=''; $('asuetoNombre').value='';
+  asuetosCacheAnio=-1;
+  al.innerHTML='<div class="alert as">✓ Asueto agregado.</div>';
+  loadAsuetos();
+};
+
+window.eliminarAsueto=async(key)=>{
+  if(!confirm('¿Eliminar este asueto personalizado?')) return;
+  const updates={}; updates[`asuetos/${key}`]=null;
+  await update(ref(db),updates);
+  asuetosCacheAnio=-1; loadAsuetos();
+};
+
 window.exportar=async()=>{
   if(!filtRegs.length){alert('Primero selecciona un empleado y un mes.');return;}
 
@@ -1369,5 +1514,3 @@ document.body.style.overflow='hidden';
 </script>
 </body>
 </html>
-
-
