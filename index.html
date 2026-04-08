@@ -1611,8 +1611,10 @@ function updateObsBadge(items){
 }
 
 window.marcarLeida=async(key)=>{
-  await update(ref(db,`observaciones/${key}`),{leida:true});
-  loadObservaciones();
+  try{
+    await set(ref(db,`observaciones/${key}/leida`), true);
+    loadObservaciones();
+  }catch(e){ alert('Error al marcar: '+e.message); }
 };
 window.verRegObs=async(uid,key)=>{
   await openDet(uid,key,true);
