@@ -379,10 +379,12 @@ function renderAdmin(){
       <button class="tab active" onclick="adTab('dash',this)">📊 Dashboard</button>
       <button class="tab" onclick="adTab('regs',this)">📁 Registros</button>
       <button class="tab" onclick="adTab('pend',this)">⏳ Pendientes</button>
+      ${me?.role==='admin'?`
       <button class="tab" onclick="adTab('usrs',this)">👥 Usuarios</button>
-      <button class="tab" onclick="adTab('perfil',this)">👤 Mi Perfil</button>
       <button class="tab" onclick="adTab('asuetos',this)">🎉 Asuetos</button>
-      ${me?.role==='admin'?`<button class="tab" id="tabObs" onclick="adTab('obs',this)">💬 Observaciones <span id="obsBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>`:''}
+      <button class="tab" id="tabObs" onclick="adTab('obs',this)">💬 Observaciones <span id="obsBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
+      `:''}
+      <button class="tab" onclick="adTab('perfil',this)">👤 Mi Perfil</button>
     </div>
     <div class="content">
       <div id="adDash">
