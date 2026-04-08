@@ -521,6 +521,26 @@ function modalsHTML(){
       </div>
     </div>
   </div>
+  <div class="mo" id="moExt">
+    <div class="modal">
+      <div class="modal-title" id="moExtTitle">Permiso de extensión</div>
+      <div id="moExtInfo" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
+      <div class="fg">
+        <label class="fl">Días atrás permitidos</label>
+        <input type="number" id="extDias" min="4" max="60" placeholder="Ej: 15">
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Mínimo 4 — el empleado podrá registrar desde esa cantidad de días atrás</div>
+      </div>
+      <div class="fg">
+        <label class="fl">Válido hasta</label>
+        <input type="date" id="extHasta">
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moExt')">Cancelar</button>
+        <button class="btn btn-d btn-sm" id="extBtnQuitar" onclick="quitarExtension()" style="display:none">Quitar extensión</button>
+        <button class="btn btn-p" onclick="guardarExtension()">Guardar</button>
+      </div>
+    </div>
+  </div>
   <div class="mo" id="moAprobarHE">
     <div class="modal">
       <div class="modal-title">Aprobar horas extras</div>
@@ -673,7 +693,7 @@ window.setTipoDia=function(tipo,btn){
 };
 
 function initForm(){
-  const f=$('empFecha'); f.value=today();f.max=today();f.min=ago(7);
+  const f=$('empFecha'); f.value=today();f.max=today();
   tipoDia='normal';
   document.querySelectorAll('.tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
   const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
@@ -682,7 +702,19 @@ function initForm(){
   const al=$('empAlert'); if(al) al.innerHTML='';
   const tv=$('togV'); if(tv) tv.classList.remove('on');
   hide('heBox'); hide('heResumen');
-  window.onFechaChange();
+  // Verificar extensión del usuario
+  get(ref(db,`users/${me.id}`)).then(snap=>{
+    let diasAtras=3;
+    if(snap.exists()){
+      const u=snap.val();
+      const ext=u.extension;
+      if(ext&&ext.hasta&&ext.hasta>=today()&&ext.dias>3){
+        diasAtras=ext.dias;
+      }
+    }
+    f.min=ago(diasAtras);
+    window.onFechaChange();
+  }).catch(()=>{ f.min=ago(3); window.onFechaChange(); });
 }
 
 // Horario base según día de semana
@@ -1609,16 +1641,53 @@ async function loadUsrs(){
   emps.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
   l.innerHTML=emps.map(u=>{
     const activo=u.activo===true||u.activo==='true';
+    const ext=u.extension; // {dias, hasta}
+    const extActiva=ext&&ext.hasta&&ext.hasta>=today();
     return `<div class="ur">
-    <div><div class="un">${u.nombre} <span class="badge ${activo?'bac':'bin'}">${activo?'Activo':'Inactivo'}</span></div><div class="um">@${u.username}</div></div>
+    <div>
+      <div class="un">${u.nombre} <span class="badge ${activo?'bac':'bin'}">${activo?'Activo':'Inactivo'}</span>
+        ${extActiva?`<span class="badge by" style="font-size:10px">+${ext.dias}d hasta ${fmt(ext.hasta)}</span>`:''}
+      </div>
+      <div class="um">@${u.username}</div>
+    </div>
     <div class="ua">
       <button class="btn btn-gh btn-sm" onclick="openModalUser('${u.id}')">Editar</button>
+      <button class="btn btn-gh btn-sm" onclick="openExtension('${u.id}','${u.nombre}')">${extActiva?'Ver extensión':'+ Extensión'}</button>
       <button class="btn btn-sm ${activo?'btn-d':'btn-g'}" onclick="togActivo('${u.id}',${activo})">${activo?'Desactivar':'Activar'}</button>
     </div></div>`;
   }).join('');
 }
 
 window.togActivo=async(uid,a)=>{await update(ref(db,`users/${uid}`),{activo:!a});loadUsrs();};
+
+let extUID=null;
+window.openExtension=async(uid,nombre)=>{
+  extUID=uid;
+  $('moExtTitle').textContent=`Extensión — ${nombre}`;
+  const snap=await get(ref(db,`users/${uid}`));
+  const u=snap.exists()?snap.val():{};
+  const ext=u.extension;
+  const extActiva=ext&&ext.hasta&&ext.hasta>=today();
+  $('moExtInfo').textContent=extActiva
+    ?`Extensión activa: ${ext.dias} días atrás, válida hasta ${fmt(ext.hasta)}.`
+    :'Sin extensión activa.';
+  $('extDias').value=ext?.dias||'';
+  $('extHasta').value=ext?.hasta||'';
+  $('extBtnQuitar').style.display=extActiva?'':'none';
+  $('moExt').classList.add('open');
+};
+window.guardarExtension=async()=>{
+  const dias=parseInt($('extDias').value);
+  const hasta=$('extHasta').value;
+  if(!dias||dias<4||!hasta){alert('Completa los campos. Mínimo 4 días.');return;}
+  if(hasta<today()){alert('La fecha de vencimiento debe ser hoy o en el futuro.');return;}
+  await update(ref(db,`users/${extUID}`),{extension:{dias,hasta}});
+  closeModal('moExt');loadUsrs();
+};
+window.quitarExtension=async()=>{
+  await update(ref(db,`users/${extUID}`),{extension:null});
+  closeModal('moExt');loadUsrs();
+};
 window.openModalUser=uid=>{
   editUID=uid||null;
   $('moUsrTitle').textContent=uid?'Editar empleado':'Nuevo empleado';
