@@ -307,6 +307,25 @@ tbody tr:hover td{background:var(--bluelt)}
 </head>
 <body>
 
+<!-- MANTENIMIENTO -->
+<div id="maintenanceScreen" class="screen" style="background:linear-gradient(135deg,#0f1f3d 0%,#1e3a5f 100%);align-items:center;justify-content:center;min-height:100vh">
+  <div style="text-align:center;padding:32px 24px;max-width:360px">
+    <div style="font-size:56px;margin-bottom:20px">🔧</div>
+    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px">En mantenimiento</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:28px">La aplicación está temporalmente en mantenimiento. Por favor intenta más tarde.</div>
+    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px">Acceso administración</div>
+      <div id="maintAlert"></div>
+      <input type="text" id="maintUser" placeholder="Usuario" autocomplete="off"
+        style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;margin-bottom:8px;placeholder-color:rgba(255,255,255,.3)">
+      <input type="password" id="maintPin" placeholder="••••" maxlength="8" inputmode="numeric"
+        style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;margin-bottom:12px;letter-spacing:4px">
+      <button onclick="maintLogin()" style="width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:10px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer">Ingresar</button>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:20px">INNOVA · Servicios técnicos y comerciales</div>
+  </div>
+</div>
+
 <!-- LOGIN -->
 <div id="loginScreen" class="screen active">
   <div class="orb1"></div>
@@ -549,6 +568,18 @@ function renderAdmin(){
           <div class="dr"><div class="dk">Usuario</div><div class="dv" id="adPerfilUsername" style="font-family:var(--mono);font-size:13px"></div></div>
           <div class="dr"><div class="dk">Rol</div><div class="dv"><span class="badge ba">Administradora</span></div></div>
         </div>
+        ${me?.role==='admin'?`
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">Modo mantenimiento</div>
+          <div class="tog-row">
+            <div>
+              <div class="tog-lbl">🔧 Activar mantenimiento</div>
+              <div class="tog-sub">Solo tú podrás acceder mientras esté activo</div>
+            </div>
+            <div class="toggle" id="togMant" onclick="toggleMantenimiento()"></div>
+          </div>
+          <div id="mantStatus" style="font-size:12px;color:var(--text2);margin-top:8px"></div>
+        </div>`:''}
         <div class="card">
           <div class="card-title">Cambiar PIN</div>
           <div id="adPerfilAlert"></div>
@@ -723,6 +754,34 @@ function modalsHTML(){
 }
 
 // ── LOGIN ──────────────────────────────
+// ── MANTENIMIENTO ──────────────────────────────────────
+async function checkMaintenance(){
+  try{
+    const snap=await get(ref(db,'config/mantenimiento'));
+    return snap.exists()&&snap.val()===true;
+  }catch(e){return false;}
+}
+
+window.maintLogin=async()=>{
+  const u=$('maintUser').value.trim().toLowerCase();
+  const p=$('maintPin').value.trim();
+  const al=$('maintAlert'); al.innerHTML='';
+  if(!u||!p){al.innerHTML='<div class="alert ae">Ingresa usuario y PIN.</div>';return;}
+  let snap;
+  try{snap=await get(ref(db,'users'));}catch(e){al.innerHTML='<div class="alert ae">Error de conexión.</div>';return;}
+  if(!snap.exists()) return;
+  let found=null;
+  for(const [k,v] of Object.entries(snap.val())){
+    if(v&&v.username===u&&String(v.pin)===String(p)) found={id:k,...v};
+  }
+  if(!found||found.role!=='admin'){al.innerHTML='<div class="alert ae">Solo el administrador puede acceder en mantenimiento.</div>';return;}
+  if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
+  me=found;
+  sessionStorage.setItem('innova_session',JSON.stringify(me));
+  renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+};
+const _mp=$('maintPin'); if(_mp) _mp.addEventListener('keydown',e=>{if(e.key==='Enter')window.maintLogin();});
+
 window.doLogin = async ()=>{
   const u=$('loginUser').value.trim().toLowerCase();
   const p=$('loginPin').value.trim();
@@ -738,17 +797,16 @@ window.doLogin = async ()=>{
   }
   if(!found){al.innerHTML='<div class="alert ae">Usuario o PIN incorrecto.</div>';return;}
   if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
-  me=found;
+  // Verificar mantenimiento — solo admin puede entrar
+  const enMant=await checkMaintenance();
+  if(enMant&&found.role!=='admin'){
+    al.innerHTML='<div class="alert ae">La aplicación está en mantenimiento. Solo el administrador puede acceder.</div>';return;
+  }
   sessionStorage.setItem('innova_session', JSON.stringify(me));
   if(me.role==='admin'||me.role==='asistente'){
-    renderAdmin();
-    screen('adminScreen');
-    loadDash();
-    startDashRefresh();
+    renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
   } else {
-    renderEmployee(me.nombre);
-    screen('employeeScreen');
-    initForm();
+    renderEmployee(me.nombre); screen('employeeScreen'); initForm();
   }
 };
 
@@ -766,12 +824,37 @@ const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='
 
 // ── RESTORE SESSION ON PAGE LOAD ──────────────────
 (async()=>{
+  // Verificar mantenimiento primero
+  const enMant=await checkMaintenance();
+  if(enMant){
+    // Solo admin puede pasar — si hay sesión guardada de admin, dejarla pasar
+    const saved=sessionStorage.getItem('innova_session');
+    if(saved){
+      try{
+        const user=JSON.parse(saved);
+        const snap=await get(ref(db,`users/${user.id}`));
+        if(snap.exists()){
+          const fresh=snap.val();
+          if(fresh.activo&&fresh.role==='admin'){
+            me={id:user.id,...fresh};
+            sessionStorage.setItem('innova_session',JSON.stringify(me));
+            renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+            return;
+          }
+        }
+      }catch(e){}
+    }
+    screen('maintenanceScreen');
+    document.body.style.overflow='hidden';
+    return;
+  }
+
+  // Sin mantenimiento — restaurar sesión normal
   const saved = sessionStorage.getItem('innova_session');
   if(!saved) return;
   try {
     const user = JSON.parse(saved);
     if(!user||!user.id||!user.username) return;
-    // Verify user still exists and is active in Firebase
     const snap = await get(ref(db,`users/${user.id}`));
     if(!snap.exists()) { sessionStorage.removeItem('innova_session'); return; }
     const fresh = snap.val();
@@ -1172,6 +1255,12 @@ window.adTab=(t,btn)=>{
     $('adPerfilUsername').textContent='@'+(me.username||'');
     $('adPerfilAlert').innerHTML='';
     ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
+    // Cargar estado de mantenimiento
+    if(isAdmin()) checkMaintenance().then(on=>{
+      const tog=$('togMant'); if(!tog) return;
+      if(on) tog.classList.add('on'); else tog.classList.remove('on');
+      $('mantStatus').textContent=on?'🔴 Activo — solo tú puedes acceder':'🟢 Inactivo — todos pueden entrar';
+    });
   }
 };
 
@@ -1550,6 +1639,15 @@ window.cargarPerfilEmpleado=async()=>{
       </div>`:(!isAdmin()?`<div style="padding-top:8px;border-top:1px solid var(--gray100)"><button class="btn btn-gh btn-xs" onclick="openObs('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button></div>`:'')}
     </div>`;
   }).join('')+`</div>`;
+};
+
+window.toggleMantenimiento=async()=>{
+  const tog=$('togMant'); if(!tog) return;
+  const actual=await checkMaintenance();
+  const nuevo=!actual;
+  await set(ref(db,'config/mantenimiento'), nuevo);
+  if(nuevo) tog.classList.add('on'); else tog.classList.remove('on');
+  $('mantStatus').textContent=nuevo?'🔴 Activo — solo tú puedes acceder':'🟢 Inactivo — todos pueden entrar';
 };
 
 window.cambiarPinAdmin=async()=>{
