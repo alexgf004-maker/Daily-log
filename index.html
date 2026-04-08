@@ -783,7 +783,7 @@ window.onFechaChange = async function(){
   }
 };
 
-window.calcHE = function(){
+window.calcHE = async function(){
   const fecha=$('empFecha')?.value;
   const entrada=$('empEntrada')?.value;
   const salida=$('empSalida')?.value;
@@ -791,26 +791,34 @@ window.calcHE = function(){
   const heBox=$('heBox');
   if(!fecha||!entrada||!salida){ hide('heResumen'); hide('heBox'); return; }
 
-  const r = calcularHE(fecha, entrada, salida);
+  // Si es asueto, todo es HE — ignorar horario base
+  const asueto=await esAsueto(fecha);
+  const r = asueto
+    ? { he:true, minHE: toMins(salida)-toMins(entrada), heIni:entrada, heFin:salida, esFinde:true }
+    : calcularHE(fecha, entrada, salida);
+
   const d = new Date(fecha+'T12:00:00');
   const dow = d.getDay();
   const diasNombre = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
-  if(r.he){
+  if(r.he && r.minHE > 0){
     const hrs=Math.floor(r.minHE/60), mins=r.minHE%60;
     const tiempoStr=(hrs>0?hrs+'h ':'')+mins+'m';
+    const motivo = asueto
+      ? `Día de asueto (${asueto.nombre}) — toda la jornada cuenta como HE`
+      : r.esFinde
+        ? `${diasNombre[dow]} — jornada completa cuenta como horas extras`
+        : `Fuera del horario base (${horarioBase(fecha)?.ini}–${horarioBase(fecha)?.fin})`;
     resEl.innerHTML=`<div style="background:var(--warnlt);border:1px solid #fcd34d;border-radius:var(--r);padding:12px 14px;font-size:13px">
       <div style="font-weight:600;color:var(--warn);margin-bottom:4px">⏱ Se detectaron ${tiempoStr} de horas extras</div>
-      <div style="color:var(--text2)">${r.esFinde?`${diasNombre[dow]} — jornada completa cuenta como horas extras`:`Fuera del horario base (${horarioBase(fecha)?.ini}–${horarioBase(fecha)?.fin})`}</div>
+      <div style="color:var(--text2)">${motivo}</div>
     </div>`;
-    show('heResumen');
-    show('heBox');
+    show('heResumen'); show('heBox');
   } else {
     resEl.innerHTML=`<div style="background:var(--greenlt);border:1px solid #6ee7b7;border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--green)">
       ✓ Dentro del horario laboral — sin horas extras
     </div>`;
-    show('heResumen');
-    hide('heBox');
+    show('heResumen'); hide('heBox');
   }
 };
 
@@ -841,7 +849,10 @@ window.guardarReg=async()=>{
     const viat=$('togV').classList.contains('on');
     if(!entrada||!salida||!acts){al.innerHTML='<div class="alert ae">Completa horario y actividades.</div>';return;}
     if(toMins(salida)<=toMins(entrada)){al.innerHTML='<div class="alert ae">Hora de salida debe ser mayor a la entrada.</div>';return;}
-    const r=calcularHE(fecha,entrada,salida);
+    const asuetoDia=await esAsueto(fecha);
+    const r = asuetoDia
+      ? { he:true, minHE:toMins(salida)-toMins(entrada), heIni:entrada, heFin:salida }
+      : calcularHE(fecha,entrada,salida);
     if(r.he&&!$('heJust')?.value.trim()){al.innerHTML='<div class="alert ae">Escribe la justificación para las horas extras.</div>';return;}
     datos={...datos, actividades:acts, viatico:viat, horaEntrada:entrada, horaSalida:salida,
       he:r.he, minHE:r.minHE, heInicio:r.heIni, heFin:r.heFin,
@@ -1634,4 +1645,3 @@ document.body.style.overflow='hidden';
 </script>
 </body>
 </html>
-
