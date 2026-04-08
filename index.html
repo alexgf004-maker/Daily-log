@@ -948,6 +948,9 @@ window.setTipoDia=function(tipo,btn){
   btn.classList.add('active');
   if(tipo==='normal'){
     show('camposNormal');hide('camposEspecial');
+    // Restaurar restricción de fecha
+    const f=$('empFecha');
+    if(f){ f.max=today(); }
     const fecha=$('empFecha')?.value;
     esAsueto(fecha).then(a=>{
       if(a){
@@ -963,6 +966,10 @@ window.setTipoDia=function(tipo,btn){
     show('camposEspecial');
     if(tipo==='vacaciones'){
       show('camposVacaciones');hide('camposOtroEspecial');
+      // Sin restricción de fecha máxima para vacaciones futuras
+      const vacI=$('vacIni'), vacF=$('vacFin');
+      if(vacI) vacI.removeAttribute('max');
+      if(vacF) vacF.removeAttribute('max');
       const f=$('empFecha')?.value;
       if(f){$('vacIni').value=f;$('vacFin').value=f;actualizarResumenVac();}
     } else {
@@ -986,17 +993,17 @@ function initForm(){
   hide('heBox'); hide('heResumen');
   // Verificar extensión del usuario
   get(ref(db,`users/${me.id}`)).then(snap=>{
-    let diasAtras=3;
+    let diasAtras=2;
     if(snap.exists()){
       const u=snap.val();
       const ext=u.extension;
       if(ext&&ext.hasta&&ext.hasta>=today()&&ext.dias>3){
-        diasAtras=ext.dias;
+        diasAtras=ext.dias-1; // ext.dias incluye hoy
       }
     }
     f.min=ago(diasAtras);
     window.onFechaChange();
-  }).catch(()=>{ f.min=ago(3); window.onFechaChange(); });
+  }).catch(()=>{ f.min=ago(2); window.onFechaChange(); });
 }
 
 // Horario base según día de semana
