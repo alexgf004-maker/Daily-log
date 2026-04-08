@@ -604,6 +604,26 @@ window.empTab=(t,btn)=>{
   }
 };
 
+window.trabajeEnAsueto=function(nombreAsueto){
+  // Mostrar formulario normal con aviso de todo HE
+  tipoDia='normal';
+  show('tipoDiaGrid');
+  show('camposNormal'); hide('camposEspecial');
+  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
+  const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
+  const empAlert=$('empAlert');
+  if(empAlert) empAlert.innerHTML=`<div class="alert" style="background:var(--warnlt);color:var(--warn);border-left:3px solid var(--warn);margin-bottom:12px">
+    ⚠️ Asueto (<b>${nombreAsueto}</b>) — todas las horas que registres contarán como horas extras.
+  </div>`;
+  // Pre-llenar horario y forzar todo como HE
+  const f=$('empFecha');
+  if(f&&f.value){
+    const entrada=$('empEntrada'), salida=$('empSalida');
+    if(entrada&&salida){ entrada.value='06:00'; salida.value='14:00'; }
+    calcHE();
+  }
+};
+
 window.setTipoDia=function(tipo,btn){
   tipoDia=tipo;
   document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
@@ -632,10 +652,11 @@ function initForm(){
   tipoDia='normal';
   document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
   const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
-  show('camposNormal');hide('camposEspecial');
+  show('tipoDiaGrid'); show('camposNormal'); hide('camposEspecial');
   ['empActs','heJust','empNota'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
+  const al=$('empAlert'); if(al) al.innerHTML='';
   const tv=$('togV'); if(tv) tv.classList.remove('on');
-  hide('heBox');hide('heResumen');
+  hide('heBox'); hide('heResumen');
   window.onFechaChange();
 }
 
@@ -694,29 +715,36 @@ window.onFechaChange = async function(){
   if(!f||!f.value) return;
   $('empFechaLbl').textContent=fmtLong(f.value);
 
-  // Verificar si es asueto
   const asueto=await esAsueto(f.value);
   const empAlert=$('empAlert');
 
   if(asueto){
-    // Pre-seleccionar tipo asueto
+    // Ocultar todo el formulario, mostrar aviso
     tipoDia='asueto';
     document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
-    // Activar botón de asueto
-    const btns=document.querySelectorAll('.tipo-btn');
-    btns.forEach(b=>{ if(b.getAttribute('onclick')?.includes('asueto')) b.classList.add('active'); });
-    hide('camposNormal'); hide('heResumen'); hide('heBox');
-    show('camposEspecial');
-    if(empAlert) empAlert.innerHTML=`<div class="alert" style="background:var(--warnlt);color:var(--warn);border-left:3px solid var(--warn);margin-bottom:12px">
-      🎉 <b>${asueto.nombre}</b> — Este día es asueto. Si trabajaste, todas las horas serán extras. Puedes cambiar el tipo de día si es necesario.
-    </div>`;
+    document.querySelectorAll('.tipo-btn').forEach(b=>{ if(b.getAttribute('onclick')?.includes("'asueto'")) b.classList.add('active'); });
+    hide('camposNormal'); hide('heResumen'); hide('heBox'); hide('camposEspecial');
+    hide('tipoDiaGrid');
+    if(empAlert) empAlert.innerHTML=`
+      <div style="background:var(--bluelt);border:1px solid var(--bluemid);border-radius:var(--r);padding:16px;margin-bottom:4px;text-align:center">
+        <div style="font-size:22px;margin-bottom:6px">🎉</div>
+        <div style="font-weight:700;font-size:15px;margin-bottom:4px">${asueto.nombre}</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Este día es asueto. Si no trabajaste, no necesitas registrar nada.</div>
+        <button class="btn btn-gh" onclick="trabajeEnAsueto('${asueto.nombre}')">Trabajé este día →</button>
+      </div>`;
   } else {
-    // Día normal — limpiar alerta de asueto si la había
-    if(empAlert&&empAlert.innerHTML.includes('asueto')) empAlert.innerHTML='';
-    // Auto-fill horario según día
+    // Día normal
+    if(empAlert) empAlert.innerHTML='';
+    show('tipoDiaGrid');
+    // Resetear a tipo normal si no es asueto
+    if(tipoDia==='asueto'){
+      tipoDia='normal';
+      document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
+      const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
+      show('camposNormal'); hide('camposEspecial');
+    }
     const base=horarioBase(f.value);
-    const d=new Date(f.value+'T12:00:00');
-    const dow=d.getDay();
+    const d=new Date(f.value+'T12:00:00'), dow=d.getDay();
     const entrada=$('empEntrada'), salida=$('empSalida');
     if(entrada&&salida){
       if(dow===0||dow===6){ entrada.value='06:00'; salida.value='14:00'; }
