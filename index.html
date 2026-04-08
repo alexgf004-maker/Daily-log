@@ -1549,14 +1549,19 @@ window.openObs=(uid,key,empleado,fecha)=>{
   $('moObs').classList.add('open');
 };
 window.enviarObservacion=async()=>{
-  const tipo=$('obsTipo').value;
-  const detalle=$('obsDetalle').value.trim();
+  const tipo=$('obsTipo')?.value||'general';
+  const detalle=($('obsDetalle')?.value||'').trim();
   if(!detalle){alert('Escribe el detalle de la observación.');return;}
+  if(!obsRegKey?.uid||!obsRegKey?.key){alert('Error: registro no identificado.');return;}
   await push(ref(db,'observaciones'),{
-    uid:obsRegKey.uid, key:obsRegKey.key,
-    tipo, detalle,
-    asistente:me.nombre, asistenteId:me.id,
-    creadoEn:Date.now(), leida:false
+    uid:obsRegKey.uid,
+    key:obsRegKey.key,
+    tipo,
+    detalle,
+    asistente:me.nombre||'',
+    asistenteId:me.id||'',
+    creadoEn:Date.now(),
+    leida:false
   });
   closeModal('moObs');
 };
@@ -1569,21 +1574,24 @@ async function loadObservaciones(){
   const items=Object.entries(snap.val()).map(([k,v])=>({key:k,...v}))
     .sort((a,b)=>b.creadoEn-a.creadoEn);
   const tipoLabels={viatico:'💰 Viático no corresponde',he:'⏱ HE no corresponden',general:'📋 General'};
-  l.innerHTML=`<div class="card" style="padding:0;overflow:hidden">`+items.map((o,i)=>`
+  l.innerHTML=`<div class="card" style="padding:0;overflow:hidden">`+items.map((o,i)=>{
+    if(!o.detalle&&!o.tipo) return ''; // skip corrupt entries
+    return `
     <div style="${i>0?'border-top:1px solid var(--gray100);':''}padding:14px 16px;${o.leida?'':'background:var(--bluelt)'}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
         <div>
-          <span class="badge by" style="font-size:11px">${tipoLabels[o.tipo]||o.tipo}</span>
+          <span class="badge by" style="font-size:11px">${tipoLabels[o.tipo]||'📋 General'}</span>
           ${!o.leida?'<span class="badge bp" style="font-size:10px;margin-left:4px">Nueva</span>':''}
         </div>
-        <div style="font-size:11px;color:var(--text2);white-space:nowrap">${o.asistente||''}</div>
+        <div style="font-size:11px;color:var(--text2);white-space:nowrap">${o.asistente||'—'}</div>
       </div>
-      <div style="font-size:13px;color:var(--text);margin-bottom:8px">${o.detalle}</div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:8px">${o.detalle||'—'}</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-gh btn-xs" onclick="verRegObs('${o.uid}','${o.key}')">Ver registro</button>
+        ${o.uid&&o.key?`<button class="btn btn-gh btn-xs" onclick="verRegObs('${o.uid}','${o.key}')">Ver registro</button>`:''}
         ${!o.leida?`<button class="btn btn-gh btn-xs" onclick="marcarLeida('${o.key}')">Marcar leída</button>`:'<span style="font-size:11px;color:var(--gray400)">✓ Leída</span>'}
       </div>
-    </div>`).join('')+`</div>`;
+    </div>`;
+  }).filter(Boolean).join('')+`</div>`;
   // Actualizar badge
   updateObsBadge(items);
 }
