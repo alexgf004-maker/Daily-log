@@ -357,8 +357,12 @@ function renderEmployee(nombre){
   ${modalsHTML()}`;
 }
 
+const isAdmin=()=>me?.role==='admin';
+
 function renderAdmin(){
   const nombreAdmin = me?.nombre || 'Administradora';
+  const rolLabel = me?.role==='asistente' ? 'Asistente' : 'Admin';
+  const rolClass = me?.role==='asistente' ? 'role-e' : 'role-a';
   $('appContainer').innerHTML=`
   <div id="adminScreen" class="screen">
     <div class="topbar">
@@ -367,7 +371,7 @@ function renderAdmin(){
         <div class="tb-sub">Servicios técnicos y comerciales</div></div>
       </div>
       <div class="tb-right">
-        <div class="tb-user"><span class="tb-username">${nombreAdmin}</span><span class="tb-role role-a">Admin</span></div>
+        <div class="tb-user"><span class="tb-username">${nombreAdmin}</span><span class="tb-role ${rolClass}">${rolLabel}</span></div>
         <button class="btn-out" onclick="doLogout()">Salir</button>
       </div>
     </div>
@@ -378,11 +382,13 @@ function renderAdmin(){
       <button class="tab" onclick="adTab('usrs',this)">👥 Usuarios</button>
       <button class="tab" onclick="adTab('perfil',this)">👤 Mi Perfil</button>
       <button class="tab" onclick="adTab('asuetos',this)">🎉 Asuetos</button>
+      ${me?.role==='admin'?`<button class="tab" id="tabObs" onclick="adTab('obs',this)">💬 Observaciones <span id="obsBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>`:''}
     </div>
     <div class="content">
       <div id="adDash">
         <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
         <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
+        ${me?.role==='admin'?`<div class="card" id="dashObsCard" style="display:none;border-left:3px solid var(--blue)"><div class="card-title">💬 Observaciones de asistentes</div><div id="dashObsList"></div></div>`:''}
         <div class="card"><div class="card-title">Registros de hoy</div><div id="dashHoy"><div class="spin"></div></div></div>
         <div class="card"><div class="card-title">Sin registro hoy</div><div id="dashSin"><div class="spin"></div></div></div>
       </div>
@@ -432,7 +438,7 @@ function renderAdmin(){
       <div id="adUsrs" style="display:none">
         <div class="page-header" style="justify-content:space-between">
           <div><div class="ph-title">Gestión de usuarios</div><div class="ph-sub">Administra el equipo</div></div>
-          <button class="btn btn-g btn-sm" onclick="openModalUser()">+ Nuevo empleado</button>
+          ${me?.role==='admin'?`<button class="btn btn-g btn-sm" onclick="openModalUser()">+ Nuevo</button>`:''}
         </div>
         <div class="card" id="usrList"><div class="spin"></div></div>
       </div>
@@ -479,6 +485,11 @@ function renderAdmin(){
           <div id="asuetosList"></div>
         </div>
       </div>
+      ${me?.role==='admin'?`
+      <div id="adObs" style="display:none">
+        <div class="page-header"><div><div class="ph-title">Observaciones</div><div class="ph-sub">Enviadas por los asistentes</div></div></div>
+        <div id="adObsList"><div class="spin"></div></div>
+      </div>`:''}
     </div>
   </div>
   ${modalsHTML()}`;
@@ -492,6 +503,25 @@ function modalsHTML(){
       <div id="moDetContent"></div>
       <div id="moDetActs" class="modal-acts"></div>
       <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-gh" onclick="closeModal('moDet')">Cerrar</button></div>
+    </div>
+  </div>
+  <div class="mo" id="moObs">
+    <div class="modal">
+      <div class="modal-title">Enviar observación a coordinación</div>
+      <div id="moObsInfo" style="font-size:13px;color:var(--text2);margin-bottom:14px"></div>
+      <div class="fg">
+        <label class="fl">Tipo de observación</label>
+        <select id="obsTipo">
+          <option value="viatico">💰 Viático no corresponde</option>
+          <option value="he">⏱ Horas extras no corresponden</option>
+          <option value="general">📋 Observación general</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Detalle</label><textarea id="obsDetalle" placeholder="Describe tu observación..."></textarea></div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moObs')">Cancelar</button>
+        <button class="btn btn-p" onclick="enviarObservacion()">Enviar observación</button>
+      </div>
     </div>
   </div>
   <div class="mo" id="moSusp">
@@ -517,6 +547,13 @@ function modalsHTML(){
         <label class="fl">PIN (4–8 dígitos)</label>
         <input type="password" id="uPin" placeholder="••••" maxlength="8" inputmode="numeric">
         <div style="font-size:11px;color:var(--text2);margin-top:4px">Al editar, dejar vacío para no cambiar el PIN</div>
+      </div>
+      <div class="fg">
+        <label class="fl">Rol</label>
+        <select id="uRol">
+          <option value="empleado">Empleado</option>
+          <option value="asistente">Asistente</option>
+        </select>
       </div>
       <div class="modal-acts">
         <button class="btn btn-gh" onclick="closeModal('moUsr')">Cancelar</button>
@@ -604,7 +641,7 @@ window.doLogin = async ()=>{
   if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
   me=found;
   sessionStorage.setItem('innova_session', JSON.stringify(me));
-  if(me.role==='admin'){
+  if(me.role==='admin'||me.role==='asistente'){
     renderAdmin();
     screen('adminScreen');
     loadDash();
@@ -642,7 +679,7 @@ const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='
     if(!fresh.activo) { sessionStorage.removeItem('innova_session'); return; }
     me = {id:user.id, ...fresh};
     sessionStorage.setItem('innova_session', JSON.stringify(me));
-    if(me.role==='admin'){
+    if(me.role==='admin'||me.role==='asistente'){
       renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
     } else {
       renderEmployee(me.nombre); screen('employeeScreen'); initForm();
@@ -1023,16 +1060,17 @@ async function loadHist(){
 // ADMIN TABS
 window.adTab=(t,btn)=>{
   document.querySelectorAll('#adminScreen .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
-  ['adDash','adRegs','adPend','adUsrs','adPerfil','adAsuetos'].forEach(hide);
+  ['adDash','adRegs','adPend','adUsrs','adPerfil','adAsuetos','adObs'].forEach(id=>{const e=$(id);if(e)hide(id);});
   if(t==='dash'){show('adDash');loadDash();}
   if(t==='regs'){show('adRegs');loadFiltEmps();}
   if(t==='pend'){show('adPend');show('pendList');hide('viatList');loadPend();}
-  if(t==='usrs'){show('adUsrs');loadUsrs();}
-  if(t==='asuetos'){show('adAsuetos');loadAsuetos();}
+  if(t==='usrs'&&isAdmin()){show('adUsrs');loadUsrs();}
+  if(t==='asuetos'&&isAdmin()){show('adAsuetos');loadAsuetos();}
+  if(t==='obs'&&isAdmin()){show('adObs');loadObservaciones();}
   if(t==='perfil'){
     show('adPerfil');
-    $('adPerfilNombre').textContent=me.nombre||'Administradora';
-    $('adPerfilUsername').textContent='@'+(me.username||'admin');
+    $('adPerfilNombre').textContent=me.nombre||'';
+    $('adPerfilUsername').textContent='@'+(me.username||'');
     $('adPerfilAlert').innerHTML='';
     ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
   }
@@ -1092,6 +1130,34 @@ async function loadDash(){
   $('dashSin').innerHTML=sin.length===0
     ?'<div class="empty" style="padding:20px"><div class="et">✓ Todos registraron hoy</div></div>'
     :sin.map(u=>`<div style="padding:8px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0"></span>${u.nombre}</div>`).join('');
+
+  // Observaciones no leídas — solo para admin
+  if(isAdmin()){
+    try{
+      const obsSnap=await get(ref(db,'observaciones'));
+      if(obsSnap.exists()){
+        const obsItems=Object.entries(obsSnap.val()).map(([k,v])=>({key:k,...v}));
+        const noLeidas=obsItems.filter(o=>!o.leida);
+        const badge=$('obsBadge'); if(badge){ if(noLeidas.length){badge.textContent=noLeidas.length;badge.style.display='inline';}else badge.style.display='none'; }
+        const card=$('dashObsCard');
+        if(card){
+          if(noLeidas.length){
+            card.style.display='';
+            const tipoLabels={viatico:'💰 Viático',he:'⏱ HE',general:'📋 General'};
+            $('dashObsList').innerHTML=noLeidas.slice(0,3).map(o=>`
+              <div style="padding:10px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <div>
+                  <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||o.tipo}</span>
+                  <div style="font-size:12px;color:var(--text2);margin-top:3px">${o.asistente}: ${o.detalle}</div>
+                </div>
+                <button class="btn btn-gh btn-xs" onclick="adTab('obs',document.getElementById('tabObs'))">Ver</button>
+              </div>`).join('')+
+              (noLeidas.length>3?`<div style="font-size:12px;color:var(--text2);padding-top:8px">${noLeidas.length-3} más...</div>`:'');
+          } else card.style.display='none';
+        }
+      }
+    }catch(e){}
+  }
 }
 
 // Auto-refresh dashboard every 60 seconds
@@ -1119,8 +1185,9 @@ async function loadPend(){
         </div>
         ${r.nota?`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">${r.nota}</div>`:''}
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-g btn-sm" onclick="aprobarEspecialPend('${r.userId}','${r.key}')">✓ Aprobar</button>
-          <button class="btn btn-gh btn-sm" onclick="openRejEspecial('${r.userId}','${r.key}');rejCallback=loadPend">Rechazar</button>
+          ${isAdmin()?`<button class="btn btn-g btn-sm" onclick="aprobarEspecialPend('${r.userId}','${r.key}')">✓ Aprobar</button>
+          <button class="btn btn-gh btn-sm" onclick="openRejEspecial('${r.userId}','${r.key}');rejCallback=loadPend">Rechazar</button>`:''}
+          <button class="btn btn-gh btn-sm" onclick="openObs('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button>
         </div>
       </div>`;
     }
@@ -1132,9 +1199,10 @@ async function loadPend(){
       <div style="font-size:12px;background:var(--bluelt);padding:9px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">${r.actividades}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-g btn-sm" onclick="aprobarHE('${r.userId}','${r.key}')">✓ Aprobar HE</button>
-        <button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}','he')">✗ Rechazar HE</button>
+        ${isAdmin()?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${r.userId}','${r.key}')">✓ Aprobar HE</button>
+        <button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}','he')">✗ Rechazar HE</button>`:''}
         <button class="btn btn-gh btn-sm" onclick="openDet('${r.userId}','${r.key}',true)">Ver detalle</button>
+        ${!isAdmin()?`<button class="btn btn-gh btn-sm" onclick="openObs('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button>`:''}
       </div></div>`;
   }).join('');
 }
@@ -1366,10 +1434,11 @@ window.cargarPerfilEmpleado=async()=>{
       ${r.motivoRechazoViatico?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
       ${r.motivoRechazoHE?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Rechazo HE:</b> ${r.motivoRechazoHE}</div>`:''}
       <!-- Acciones -->
-      ${pendiente||( r.viatico&&ev!=='rechazado')?`<div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--gray100)">
-        ${pendiente?`<button class="btn btn-g btn-xs" onclick="aprobarHEyRefresh('${perfilEmpUID}','${r.key}')">✓ Aprobar HE</button><button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','he');rejCallback=cargarPerfilEmpleado">Rechazar HE</button>`:''}
-        ${r.viatico&&ev!=='rechazado'?`<button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','viatico');rejCallback=cargarPerfilEmpleado">Anular viático</button>`:''}
-      </div>`:''}
+      ${pendiente||(r.viatico&&ev!=='rechazado')?`<div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--gray100)">
+        ${isAdmin()&&pendiente?`<button class="btn btn-g btn-xs" onclick="aprobarHEyRefresh('${perfilEmpUID}','${r.key}')">✓ Aprobar HE</button><button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','he');rejCallback=cargarPerfilEmpleado">Rechazar HE</button>`:''}
+        ${isAdmin()&&r.viatico&&ev!=='rechazado'?`<button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','viatico');rejCallback=cargarPerfilEmpleado">Anular viático</button>`:''}
+        ${!isAdmin()?`<button class="btn btn-gh btn-xs" onclick="openObs('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button>`:''}
+      </div>`:(!isAdmin()?`<div style="padding-top:8px;border-top:1px solid var(--gray100)"><button class="btn btn-gh btn-xs" onclick="openObs('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button></div>`:'')}
     </div>`;
   }).join('')+`</div>`;
 };
@@ -1467,6 +1536,71 @@ window.aprobarHEyRefresh=async(uid,key)=>{
 };
 
 window.buscarRegs=async()=>{}; // kept for exportar compatibility
+
+// ── OBSERVACIONES ──────────────────────────────────────
+let obsRegKey=null;
+window.openObs=(uid,key,empleado,fecha)=>{
+  obsRegKey={uid,key};
+  $('moObsInfo').textContent=`${empleado} · ${fmtLong(fecha)}`;
+  $('obsDetalle').value='';
+  $('obsTipo').value='viatico';
+  $('moObs').classList.add('open');
+};
+window.enviarObservacion=async()=>{
+  const tipo=$('obsTipo').value;
+  const detalle=$('obsDetalle').value.trim();
+  if(!detalle){alert('Escribe el detalle de la observación.');return;}
+  await push(ref(db,'observaciones'),{
+    uid:obsRegKey.uid, key:obsRegKey.key,
+    tipo, detalle,
+    asistente:me.nombre, asistenteId:me.id,
+    creadoEn:Date.now(), leida:false
+  });
+  closeModal('moObs');
+};
+
+async function loadObservaciones(){
+  const l=$('adObsList'); if(!l) return;
+  l.innerHTML='<div class="spin"></div>';
+  const snap=await get(ref(db,'observaciones'));
+  if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei">💬</div><div class="et">Sin observaciones</div></div>';return;}
+  const items=Object.entries(snap.val()).map(([k,v])=>({key:k,...v}))
+    .sort((a,b)=>b.creadoEn-a.creadoEn);
+  const tipoLabels={viatico:'💰 Viático no corresponde',he:'⏱ HE no corresponden',general:'📋 General'};
+  l.innerHTML=`<div class="card" style="padding:0;overflow:hidden">`+items.map((o,i)=>`
+    <div style="${i>0?'border-top:1px solid var(--gray100);':''}padding:14px 16px;${o.leida?'':'background:var(--bluelt)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+        <div>
+          <span class="badge by" style="font-size:11px">${tipoLabels[o.tipo]||o.tipo}</span>
+          ${!o.leida?'<span class="badge bp" style="font-size:10px;margin-left:4px">Nueva</span>':''}
+        </div>
+        <div style="font-size:11px;color:var(--text2);white-space:nowrap">${o.asistente||''}</div>
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:8px">${o.detalle}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-gh btn-xs" onclick="verRegObs('${o.uid}','${o.key}')">Ver registro</button>
+        ${!o.leida?`<button class="btn btn-gh btn-xs" onclick="marcarLeida('${o.key}')">Marcar leída</button>`:'<span style="font-size:11px;color:var(--gray400)">✓ Leída</span>'}
+      </div>
+    </div>`).join('')+`</div>`;
+  // Actualizar badge
+  updateObsBadge(items);
+}
+
+function updateObsBadge(items){
+  const badge=$('obsBadge');
+  if(!badge) return;
+  const noLeidas=items.filter(o=>!o.leida).length;
+  if(noLeidas>0){ badge.textContent=noLeidas; badge.style.display='inline'; }
+  else badge.style.display='none';
+}
+
+window.marcarLeida=async(key)=>{
+  await update(ref(db,`observaciones/${key}`),{leida:true});
+  loadObservaciones();
+};
+window.verRegObs=async(uid,key)=>{
+  await openDet(uid,key,true);
+};
 
 // ── ASUETOS ────────────────────────────────────────────
 function calcSemSanta(y){
@@ -1676,10 +1810,12 @@ async function loadUsrs(){
       <div class="um">@${u.username}</div>
     </div>
     <div class="ua">
+      ${isAdmin()?`
       <button class="btn btn-gh btn-sm" onclick="openModalUser('${u.id}')">Editar</button>
       <button class="btn btn-gh btn-sm" onclick="openExtension('${u.id}','${u.nombre}')">${extActiva?'Ver extensión':'+ Extensión'}</button>
       <button class="btn btn-d btn-sm" onclick="openSuspension('${u.id}','${u.nombre}')">Suspender</button>
       <button class="btn btn-sm ${activo?'btn-d':'btn-g'}" onclick="togActivo('${u.id}',${activo})">${activo?'Desactivar':'Activar'}</button>
+      `:`<span style="font-size:12px;color:var(--text2)">Solo lectura</span>`}
     </div></div>`;
   }).join('');
 }
@@ -1749,19 +1885,21 @@ window.openModalUser=uid=>{
   $('moUsrTitle').textContent=uid?'Editar empleado':'Nuevo empleado';
   $('moUsrAlert').innerHTML='';
   ['uNom','uUsr','uPin'].forEach(id=>$(id).value='');
-  if(uid)get(ref(db,`users/${uid}`)).then(s=>{if(s.exists()){const u=s.val();$('uNom').value=u.nombre;$('uUsr').value=u.username;}});
+  $('uRol').value='empleado';
+  if(uid)get(ref(db,`users/${uid}`)).then(s=>{if(s.exists()){const u=s.val();$('uNom').value=u.nombre;$('uUsr').value=u.username;$('uRol').value=u.role==='asistente'?'asistente':'empleado';}});
   $('moUsr').classList.add('open');
 };
 
 window.saveUser=async()=>{
   const al=$('moUsrAlert');
   const nom=$('uNom').value.trim(),usr=$('uUsr').value.trim().toLowerCase(),pin=$('uPin').value.trim();
+  const rol=$('uRol').value||'empleado';
   if(!nom||!usr){al.innerHTML='<div class="alert ae">Nombre y usuario son obligatorios.</div>';return;}
   if(!editUID&&(!pin||pin.length<4)){al.innerHTML='<div class="alert ae">PIN mínimo de 4 dígitos.</div>';return;}
   const users=await getUsers();
   if(users.find(u=>u.username===usr&&u.id!==editUID)){al.innerHTML='<div class="alert ae">Ese usuario ya existe.</div>';return;}
-  if(editUID){const d={nombre:nom,username:usr};if(pin.length>=4)d.pin=pin;await update(ref(db,`users/${editUID}`),d);}
-  else await set(push(ref(db,'users')),{nombre:nom,username:usr,pin,role:'empleado',activo:true});
+  if(editUID){const d={nombre:nom,username:usr,role:rol};if(pin.length>=4)d.pin=pin;await update(ref(db,`users/${editUID}`),d);}
+  else await set(push(ref(db,'users')),{nombre:nom,username:usr,pin,role:rol,activo:true});
   closeModal('moUsr');loadUsrs();
 };
 
