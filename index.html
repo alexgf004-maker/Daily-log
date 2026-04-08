@@ -1228,13 +1228,15 @@ window.guardarReg=async()=>{
   try {
     await push(ref(db,`registros/${me.id}`), datos);
     initForm();
-    // Mostrar mensaje de éxito visible por 3 segundos
-    const al=$('empAlert');
-    if(al){
-      al.innerHTML='<div class="alert as" style="text-align:center;padding:16px;font-size:15px">✓ Registro guardado correctamente</div>';
-      window.scrollTo({top:0,behavior:'smooth'});
-      setTimeout(()=>{ if(al) al.innerHTML=''; }, 3000);
-    }
+    // Esperar a que initForm termine su async y luego poner el mensaje
+    setTimeout(()=>{
+      const al=$('empAlert');
+      if(al){
+        al.innerHTML='<div class="alert as" style="text-align:center;padding:16px;font-size:15px">✓ Registro guardado correctamente</div>';
+        window.scrollTo({top:0,behavior:'smooth'});
+        setTimeout(()=>{ if(al) al.innerHTML=''; }, 4000);
+      }
+    }, 600);
   } catch(e){
     al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
   }
