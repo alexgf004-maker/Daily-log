@@ -1814,7 +1814,19 @@ window.marcarLeida=async(key)=>{
   try{
     await set(ref(db,`observaciones/${key}/leida`), true);
     await loadObservaciones();
-    await loadDash(); // refrescar dashboard para quitar del globito y tarjeta
+    // Actualizar badge inmediatamente
+    const obsSnap=await get(ref(db,'observaciones'));
+    const badge=$('obsBadge');
+    if(badge){
+      const noLeidas=obsSnap.exists()
+        ? Object.values(obsSnap.val()).filter(o=>!o.leida&&o.detalle).length
+        : 0;
+      if(noLeidas>0){badge.textContent=noLeidas;badge.style.display='inline';}
+      else badge.style.display='none';
+    }
+    // Actualizar tarjeta del dashboard si está visible
+    const dashCard=$('dashObsCard');
+    if(dashCard&&dashCard.style.display!=='none') await loadDash();
   }catch(e){ alert('Error al marcar: '+e.message); }
 };
 window.verRegObs=async(uid,key)=>{
