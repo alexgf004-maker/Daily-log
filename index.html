@@ -802,6 +802,7 @@ window.doLogin = async ()=>{
   if(enMant&&found.role!=='admin'){
     al.innerHTML='<div class="alert ae">La aplicación está en mantenimiento. Solo el administrador puede acceder.</div>';return;
   }
+  me=found;
   sessionStorage.setItem('innova_session', JSON.stringify(me));
   if(me.role==='admin'||me.role==='asistente'){
     renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
