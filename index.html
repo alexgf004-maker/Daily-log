@@ -378,8 +378,8 @@ function renderAdmin(){
     <div class="tabs">
       <button class="tab active" onclick="adTab('dash',this)">📊 Dashboard</button>
       <button class="tab" onclick="adTab('regs',this)">📁 Registros</button>
-      <button class="tab" onclick="adTab('pend',this)">⏳ Pendientes</button>
       ${me?.role==='admin'?`
+      <button class="tab" id="tabPend" onclick="adTab('pend',this)">⏳ Pendientes <span id="pendBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
       <button class="tab" onclick="adTab('usrs',this)">👥 Usuarios</button>
       <button class="tab" onclick="adTab('asuetos',this)">🎉 Asuetos</button>
       <button class="tab" id="tabObs" onclick="adTab('obs',this)">💬 Observaciones <span id="obsBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
@@ -1109,9 +1109,15 @@ async function loadDash(){
   const now=new Date();
   const td=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const hoy=regs.filter(r=>r.fecha===td);
-  const pend=regs.filter(r=>r.he&&r.estadoHE==='pendiente');
-  const emps=users.filter(u=>u.role!=='admin'&&(u.activo===true||u.activo==='true'));
+  const pend=regs.filter(r=>(r.he&&r.estadoHE==='pendiente')||(r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente'));
+  const emps=users.filter(u=>u.role!=='admin'&&u.role!=='asistente'&&(u.activo===true||u.activo==='true'));
   const conHoy=new Set(hoy.map(r=>r.userId));
+
+  // Badge pendientes
+  if(isAdmin()){
+    const badge=$('pendBadge');
+    if(badge){ if(pend.length){badge.textContent=pend.length;badge.style.display='inline';}else badge.style.display='none'; }
+  }
   $('dashStats').innerHTML=`
     <div class="stat-card"><div class="stat-val">${emps.length}</div><div class="stat-lbl">Empleados activos</div></div>
     <div class="stat-card g"><div class="stat-val">${hoy.length}</div><div class="stat-lbl">Registros hoy</div></div>
