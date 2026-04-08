@@ -8,9 +8,106 @@
 <meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#1e3a5f">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Registro Planilla">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="INNOVA">
+<meta name="description" content="Registro de Planilla — INNOVA Servicios técnicos y comerciales">
 <title>Registro de Planilla — INNOVA</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+// ── PWA SETUP ──────────────────────────────────────────
+(function(){
+  // SVG icon — documento con barra verde y letra I
+  const iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="96" fill="#1e3a5f"/>
+    <rect x="48" y="80" width="8" height="352" rx="4" fill="#4ade80"/>
+    <rect x="96" y="140" width="320" height="44" rx="12" fill="#ffffff" opacity="0.95"/>
+    <rect x="96" y="220" width="240" height="32" rx="10" fill="#60a5fa" opacity="0.8"/>
+    <rect x="96" y="280" width="280" height="32" rx="10" fill="#60a5fa" opacity="0.6"/>
+    <rect x="96" y="340" width="200" height="32" rx="10" fill="#60a5fa" opacity="0.4"/>
+    <text x="256" y="175" font-family="Arial,sans-serif" font-size="26" font-weight="800" fill="#1e3a5f" text-anchor="middle" dominant-baseline="middle">INNOVA</text>
+  </svg>`;
+
+  const svgBlob = new Blob([iconSVG], {type:'image/svg+xml'});
+  const iconURL = URL.createObjectURL(svgBlob);
+
+  // Generate PNG icon via canvas for better compatibility
+  function makePNG(size, cb){
+    const img = new Image();
+    img.onload = function(){
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      c.getContext('2d').drawImage(img, 0, 0, size, size);
+      cb(c.toDataURL('image/png'));
+    };
+    img.src = iconURL;
+  }
+
+  // Apple touch icon
+  makePNG(180, function(png){
+    const link = document.createElement('link');
+    link.rel = 'apple-touch-icon';
+    link.href = png;
+    document.head.appendChild(link);
+  });
+
+  // Favicon
+  makePNG(32, function(png){
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/png';
+    link.href = png;
+    document.head.appendChild(link);
+
+    // PWA Manifest
+    makePNG(192, function(png192){
+      makePNG(512, function(png512){
+        const manifest = {
+          name: 'INNOVA · Registro de Planilla',
+          short_name: 'INNOVA',
+          description: 'Registro de actividades — Servicios técnicos y comerciales',
+          start_url: './',
+          display: 'standalone',
+          background_color: '#1e3a5f',
+          theme_color: '#1e3a5f',
+          orientation: 'portrait',
+          icons: [
+            { src: png192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+            { src: png512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          ]
+        };
+        const mBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+        const mURL = URL.createObjectURL(mBlob);
+        const ml = document.createElement('link');
+        ml.rel = 'manifest'; ml.href = mURL;
+        document.head.appendChild(ml);
+      });
+    });
+  });
+
+  // Service Worker (inline via blob) — cache básico para offline
+  if('serviceWorker' in navigator){
+    const swCode = `
+const CACHE = 'innova-v1';
+const OFFLINE_URLS = [self.location.href];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)).catch(()=>{}));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(clients.claim());
+});
+self.addEventListener('fetch', e => {
+  if(e.request.method !== 'GET') return;
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
+});`;
+    const swBlob = new Blob([swCode], {type:'application/javascript'});
+    const swURL = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swURL, {scope:'./'}).catch(()=>{});
+  }
+})();
+</script>
 <style>
 :root {
   --top:      #1e3a5f;
@@ -1145,24 +1242,28 @@ async function loadDash(){
       const obsSnap=await get(ref(db,'observaciones'));
       if(obsSnap.exists()){
         const obsItems=Object.entries(obsSnap.val()).map(([k,v])=>({key:k,...v}));
-        const noLeidas=obsItems.filter(o=>!o.leida);
+        const noLeidas=obsItems.filter(o=>!o.leida&&o.detalle);
         const badge=$('obsBadge'); if(badge){ if(noLeidas.length){badge.textContent=noLeidas.length;badge.style.display='inline';}else badge.style.display='none'; }
         const card=$('dashObsCard');
         if(card){
           if(noLeidas.length){
             card.style.display='';
             const tipoLabels={viatico:'💰 Viático',he:'⏱ HE',general:'📋 General'};
-            $('dashObsList').innerHTML=noLeidas.slice(0,3).map(o=>`
+            $('dashObsList').innerHTML=noLeidas.slice(0,5).map(o=>`
               <div style="padding:10px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-                <div>
-                  <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||o.tipo}</span>
-                  <div style="font-size:12px;color:var(--text2);margin-top:3px">${o.asistente}: ${o.detalle}</div>
+                <div style="flex:1;min-width:0">
+                  <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||'📋'}</span>
+                  <span style="font-size:11px;color:var(--text2);margin-left:4px">${o.asistente||''}</span>
+                  <div style="font-size:13px;color:var(--text);margin-top:3px">${o.detalle}</div>
                 </div>
-                <button class="btn btn-gh btn-xs" onclick="adTab('obs',document.getElementById('tabObs'))">Ver</button>
+                <button class="btn btn-gh btn-xs" style="flex-shrink:0" onclick="marcarLeida('${o.key}')">✓ Leída</button>
               </div>`).join('')+
-              (noLeidas.length>3?`<div style="font-size:12px;color:var(--text2);padding-top:8px">${noLeidas.length-3} más...</div>`:'');
+              (noLeidas.length>5?`<div style="font-size:12px;color:var(--text2);padding-top:8px">+${noLeidas.length-5} más en la pestaña Observaciones</div>`:'');
           } else card.style.display='none';
         }
+      } else {
+        const badge=$('obsBadge'); if(badge) badge.style.display='none';
+        const card=$('dashObsCard'); if(card) card.style.display='none';
       }
     }catch(e){}
   }
@@ -1613,7 +1714,8 @@ function updateObsBadge(items){
 window.marcarLeida=async(key)=>{
   try{
     await set(ref(db,`observaciones/${key}/leida`), true);
-    loadObservaciones();
+    await loadObservaciones();
+    await loadDash(); // refrescar dashboard para quitar del globito y tarjeta
   }catch(e){ alert('Error al marcar: '+e.message); }
 };
 window.verRegObs=async(uid,key)=>{
