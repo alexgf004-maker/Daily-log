@@ -301,7 +301,7 @@ function renderEmployee(nombre){
           <!-- Tipo de día -->
           <div class="fg">
             <label class="fl">Tipo de día</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="tipoDiaGrid">
+            <div style="display:flex;gap:8px;flex-wrap:wrap" id="tipoDiaGrid">
               <button type="button" class="tipo-btn active" onclick="setTipoDia('normal',this)">📋 Día normal</button>
               <button type="button" class="tipo-btn" onclick="setTipoDia('vacaciones',this)">🏖 Vacaciones</button>
               <button type="button" class="tipo-btn" onclick="setTipoDia('incapacidad',this)">🏥 Incapacidad</button>
@@ -518,6 +518,36 @@ function modalsHTML(){
       <div class="modal-acts">
         <button class="btn btn-gh" onclick="closeModal('moRej')">Cancelar</button>
         <button class="btn btn-d" onclick="confirmRej()">Confirmar rechazo</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="moAprobarHE">
+    <div class="modal">
+      <div class="modal-title">Aprobar horas extras</div>
+      <div style="background:var(--gray50);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:13px">
+        <div id="moHEInfo" style="color:var(--text2)"></div>
+      </div>
+      <div class="fg">
+        <label class="fl">Horas extras a aprobar</label>
+        <div class="tr2">
+          <div>
+            <label class="fl" style="font-size:10px">Horas</label>
+            <input type="number" id="heAprobHoras" min="0" max="23" placeholder="0">
+          </div>
+          <div>
+            <label class="fl" style="font-size:10px">Minutos</label>
+            <input type="number" id="heAprobMins" min="0" max="59" placeholder="0">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Modifica si las horas no son correctas</div>
+      </div>
+      <div class="fg">
+        <label class="fl">Nota (opcional si no modificas)</label>
+        <textarea id="heAprobNota" placeholder="Motivo del ajuste si modificaste las horas..."></textarea>
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moAprobarHE')">Cancelar</button>
+        <button class="btn btn-g" onclick="confirmarAprobarHE()">✓ Aprobar</button>
       </div>
     </div>
   </div>`;
@@ -866,7 +896,7 @@ async function loadHist(){
   const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const delMes=items.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
   const viaticos=delMes.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
-  const totalMinHE=delMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((acc,r)=>acc+(r.minHE||0),0);
+  const totalMinHE=delMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((acc,r)=>acc+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
   const hrsHE=Math.floor(totalMinHE/60), minsHE=totalMinHE%60;
   const heCount=delMes.filter(r=>r.he).length;
 
@@ -1141,7 +1171,7 @@ async function loadFiltEmps(){
     const delMes=regsEmp.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
     const pendHE=regsEmp.filter(r=>r.he&&r.estadoHE==='pendiente').length;
     const viaticos=delMes.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
-    const totalMin=delMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHE||0),0);
+    const totalMin=delMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
     const hrsStr=totalMin>0?(Math.floor(totalMin/60)>0?Math.floor(totalMin/60)+'h ':'')+totalMin%60+'m':'—';
     const border=i>0?'border-top:1px solid var(--gray100);':'';
     return `<div data-nombre="${u.nombre}" style="${border}padding:14px 16px;cursor:pointer;transition:background .12s"
@@ -1201,7 +1231,7 @@ window.cargarPerfilEmpleado=async()=>{
 
   // Resumen — solo HE aprobadas
   const viaticos=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
-  const totalMin=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHE||0),0);
+  const totalMin=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
   const hrsHE=Math.floor(totalMin/60), minsHE=totalMin%60;
   const pendHE=items.filter(r=>r.he&&r.estadoHE==='pendiente').length;
   $('adEmpResumen').innerHTML=`
@@ -1221,7 +1251,7 @@ window.cargarPerfilEmpleado=async()=>{
     const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
     const eh=r.estadoHE||(r.he?'pendiente':'na');
     const horario=r.horaEntrada&&r.horaSalida?`${r.horaEntrada} – ${r.horaSalida}`:'—';
-    const heMin=r.minHE||0;
+    const heMin=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
     const heStr=heMin>0?(Math.floor(heMin/60)>0?Math.floor(heMin/60)+'h ':'')+heMin%60+'m extra':'';
     const border=i>0?'border-top:1px solid var(--gray100);':'';
     const pendiente=r.he&&eh==='pendiente';
@@ -1264,6 +1294,7 @@ window.cargarPerfilEmpleado=async()=>{
       <div style="font-size:13px;color:var(--text);line-height:1.55;margin-bottom:${r.heJustif||r.motivoRechazoViatico||r.motivoRechazoHE||pendiente?'10px':'0'}">${r.actividades}</div>
       <!-- Notas -->
       ${r.he&&r.heJustif?`<div style="font-size:12px;color:var(--text2);margin-bottom:8px"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
+      ${r.notaAjusteHE?`<div style="font-size:12px;color:var(--warn);margin-bottom:8px"><b>Ajuste HE:</b> ${r.notaAjusteHE} (${Math.floor((r.minHEAprobado||0)/60)>0?Math.floor((r.minHEAprobado||0)/60)+'h ':''+(r.minHEAprobado||0)%60+'m aprobados'})</div>`:''}
       ${r.motivoRechazoViatico?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
       ${r.motivoRechazoHE?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Rechazo HE:</b> ${r.motivoRechazoHE}</div>`:''}
       <!-- Acciones -->
@@ -1289,6 +1320,68 @@ window.cambiarPinAdmin=async()=>{
   me.pin=nuevo;
   al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
   ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
+};
+
+let heAprobKey=null, heAprobCallback=null;
+
+window.aprobarHE=async(uid,key)=>{
+  // Cargar datos del registro
+  const snap=await get(ref(db,`registros/${uid}/${key}`));
+  if(!snap.exists()) return;
+  const r=snap.val();
+  heAprobKey={uid,key}; heAprobCallback=loadPend;
+  const minHE=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
+  const hrs=Math.floor(minHE/60), mins=minHE%60;
+  $('heAprobHoras').value=hrs;
+  $('heAprobMins').value=mins;
+  $('heAprobNota').value='';
+  $('moHEInfo').innerHTML=`<b>${r.userName||uid}</b> · ${fmtLong(r.fecha)}<br>
+    Registró: ${r.horaEntrada||''}–${r.horaSalida||''} · <b>${hrs>0?hrs+'h ':''+(mins)+'m'} extras</b><br>
+    <span style="color:var(--text2)">${r.heJustif||''}</span>`;
+  $('moAprobarHE').classList.add('open');
+};
+
+window.aprobarHEyRefresh=async(uid,key)=>{
+  const snap=await get(ref(db,`registros/${uid}/${key}`));
+  if(!snap.exists()) return;
+  const r=snap.val();
+  heAprobKey={uid,key}; heAprobCallback=cargarPerfilEmpleado;
+  const minHE=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
+  const hrs=Math.floor(minHE/60), mins=minHE%60;
+  $('heAprobHoras').value=hrs;
+  $('heAprobMins').value=mins;
+  $('heAprobNota').value='';
+  $('moHEInfo').innerHTML=`<b>${r.userName||uid}</b> · ${fmtLong(r.fecha)}<br>
+    Registró: ${r.horaEntrada||''}–${r.horaSalida||''} · <b>${hrs>0?hrs+'h ':''+(mins)+'m'} extras</b><br>
+    <span style="color:var(--text2)">${r.heJustif||''}</span>`;
+  $('moAprobarHE').classList.add('open');
+};
+
+window.confirmarAprobarHE=async()=>{
+  if(!heAprobKey) return;
+  const horas=parseInt($('heAprobHoras').value)||0;
+  const mins=parseInt($('heAprobMins').value)||0;
+  const nota=$('heAprobNota').value.trim();
+  const minAprobados=(horas*60)+mins;
+
+  // Cargar minHE original para comparar
+  const snap=await get(ref(db,`registros/${heAprobKey.uid}/${heAprobKey.key}`));
+  const original=snap.exists()?(snap.val().minHE||0):0;
+  const modificado=minAprobados!==original;
+
+  if(modificado&&!nota){
+    alert('Agrega una nota explicando por qué modificaste las horas.');
+    return;
+  }
+
+  await update(ref(db,`registros/${heAprobKey.uid}/${heAprobKey.key}`),{
+    estadoHE:'aprobado',
+    revisadoHEEn:Date.now(),
+    minHEAprobado:minAprobados,
+    ...(modificado?{notaAjusteHE:nota,heAjustada:true}:{})
+  });
+  closeModal('moAprobarHE');
+  if(heAprobCallback) await heAprobCallback();
 };
 
 window.aprobarEspecial=async(uid,key)=>{
@@ -1424,7 +1517,7 @@ window.exportar=async()=>{
     r.fecha, r.userName||r.userId, r.cargo||'',
     r.horaEntrada||'', r.horaSalida||'', r.actividades,
     r.viatico?'Sí':'No', r.estadoViatico||'—',
-    r.he?'Sí':'No', r.estadoHE==='aprobado'?(r.minHE||0):0,
+    r.he?'Sí':'No', r.estadoHE==='aprobado'?(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)):0,
     r.heJustif||'', r.estadoHE||'—',
     r.motivoRechazoViatico||'', r.motivoRechazoHE||''
   ]);
@@ -1443,7 +1536,7 @@ window.exportar=async()=>{
     if(r.viatico&&r.estadoViatico!=='rechazado') totMap[n].viaticos++;
     if(r.he&&r.estadoHE==='aprobado'){
       totMap[n].heDias++;
-      totMap[n].minHE+=(r.minHE||0);
+      totMap[n].minHE+=(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0));
     }
   }
   const resHeaders=['Empleado','Cargo','Viáticos','Días con HE aprobada','Total horas extras'];
@@ -1541,3 +1634,4 @@ document.body.style.overflow='hidden';
 </script>
 </body>
 </html>
+
