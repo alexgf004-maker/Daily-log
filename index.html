@@ -494,6 +494,19 @@ function modalsHTML(){
       <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-gh" onclick="closeModal('moDet')">Cerrar</button></div>
     </div>
   </div>
+  <div class="mo" id="moSusp">
+    <div class="modal">
+      <div class="modal-title">Registrar suspensión</div>
+      <div id="moSuspAlert"></div>
+      <div id="moSuspNombre" style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px"></div>
+      <div class="fg"><label class="fl">Fecha de suspensión</label><input type="date" id="suspFecha"></div>
+      <div class="fg"><label class="fl">Motivo</label><textarea id="suspMotivo" placeholder="Describe el motivo de la suspensión..."></textarea></div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moSusp')">Cancelar</button>
+        <button class="btn btn-d" onclick="guardarSuspension()">Registrar suspensión</button>
+      </div>
+    </div>
+  </div>
   <div class="mo" id="moUsr">
     <div class="modal">
       <div class="modal-title" id="moUsrTitle">Nuevo empleado</div>
@@ -771,42 +784,54 @@ window.onFechaChange = async function(){
   const f=$('empFecha');
   if(!f||!f.value) return;
   $('empFechaLbl').textContent=fmtLong(f.value);
-
-  const asueto=await esAsueto(f.value);
   const empAlert=$('empAlert');
 
-  if(asueto){
-    // Ocultar todo el formulario, mostrar aviso
-    tipoDia='asueto';
-    hide('camposNormal'); hide('heResumen'); hide('heBox'); hide('camposEspecial');
-    hide('tipoDiaGrid');
+  // 1. Suspensión — bloqueo total
+  const susp=await esSuspension(me.id, f.value);
+  if(susp){
+    hide('camposNormal');hide('camposEspecial');hide('heResumen');hide('heBox');hide('tipoDiaGrid');
     if(empAlert) empAlert.innerHTML=`
-      <div style="background:var(--bluelt);border:1px solid var(--bluemid);border-radius:var(--r);padding:16px;margin-bottom:4px;text-align:center">
+      <div style="background:var(--dangerlt);border:1px solid #fca5a5;border-radius:var(--r);padding:16px;text-align:center">
+        <div style="font-size:22px;margin-bottom:6px">🚫</div>
+        <div style="font-weight:700;font-size:15px;color:var(--danger);margin-bottom:6px">Día suspendido</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Este día no será remunerado por suspensión.</div>
+        <div style="font-size:13px;color:var(--text);background:#fff;border-radius:6px;padding:8px 12px"><b>Motivo:</b> ${susp.motivo}</div>
+      </div>`;
+    return;
+  }
+
+  // 2. Asueto
+  const asueto=await esAsueto(f.value);
+  if(asueto){
+    tipoDia='asueto';
+    hide('camposNormal');hide('heResumen');hide('heBox');hide('camposEspecial');hide('tipoDiaGrid');
+    if(empAlert) empAlert.innerHTML=`
+      <div style="background:var(--bluelt);border:1px solid var(--bluemid);border-radius:var(--r);padding:16px;text-align:center">
         <div style="font-size:22px;margin-bottom:6px">🎉</div>
         <div style="font-weight:700;font-size:15px;margin-bottom:4px">${asueto.nombre}</div>
         <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Este día es asueto. Si no trabajaste, no necesitas registrar nada.</div>
         <button class="btn btn-gh" onclick="trabajeEnAsueto('${asueto.nombre}')">Trabajé este día →</button>
       </div>`;
-  } else {
-    // Día normal
-    if(empAlert) empAlert.innerHTML='';
-    show('tipoDiaGrid');
-    // Resetear a tipo normal si no es asueto
-    if(tipoDia==='asueto'){
-      tipoDia='normal';
-      document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
-      const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
-      show('camposNormal'); hide('camposEspecial');
-    }
-    const base=horarioBase(f.value);
-    const d=new Date(f.value+'T12:00:00'), dow=d.getDay();
-    const entrada=$('empEntrada'), salida=$('empSalida');
-    if(entrada&&salida){
-      if(dow===0||dow===6){ entrada.value='06:00'; salida.value='14:00'; }
-      else { entrada.value=base?.ini||'07:00'; salida.value=base?.fin||(dow===5?'16:00':'17:00'); }
-    }
-    calcHE();
+    return;
   }
+
+  // 3. Día normal
+  if(empAlert) empAlert.innerHTML='';
+  show('tipoDiaGrid');
+  if(tipoDia==='asueto'){
+    tipoDia='normal';
+    document.querySelectorAll('.tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
+    const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
+    show('camposNormal');hide('camposEspecial');
+  }
+  const base=horarioBase(f.value);
+  const d=new Date(f.value+'T12:00:00'), dow=d.getDay();
+  const entrada=$('empEntrada'), salida=$('empSalida');
+  if(entrada&&salida){
+    if(dow===0||dow===6){ entrada.value='06:00'; salida.value='14:00'; }
+    else{ entrada.value=base?.ini||'07:00'; salida.value=base?.fin||(dow===5?'16:00':'17:00'); }
+  }
+  calcHE();
 };
 
 window.calcHE = async function(){
@@ -1653,12 +1678,43 @@ async function loadUsrs(){
     <div class="ua">
       <button class="btn btn-gh btn-sm" onclick="openModalUser('${u.id}')">Editar</button>
       <button class="btn btn-gh btn-sm" onclick="openExtension('${u.id}','${u.nombre}')">${extActiva?'Ver extensión':'+ Extensión'}</button>
+      <button class="btn btn-d btn-sm" onclick="openSuspension('${u.id}','${u.nombre}')">Suspender</button>
       <button class="btn btn-sm ${activo?'btn-d':'btn-g'}" onclick="togActivo('${u.id}',${activo})">${activo?'Desactivar':'Activar'}</button>
     </div></div>`;
   }).join('');
 }
 
 window.togActivo=async(uid,a)=>{await update(ref(db,`users/${uid}`),{activo:!a});loadUsrs();};
+
+let suspUID=null;
+window.openSuspension=(uid,nombre)=>{
+  suspUID=uid;
+  $('moSuspNombre').textContent=nombre;
+  $('moSuspAlert').innerHTML='';
+  $('suspFecha').value=today();
+  $('suspMotivo').value='';
+  $('moSusp').classList.add('open');
+};
+window.guardarSuspension=async()=>{
+  const al=$('moSuspAlert');
+  const fecha=$('suspFecha').value;
+  const motivo=$('suspMotivo').value.trim();
+  if(!fecha||!motivo){al.innerHTML='<div class="alert ae">Completa fecha y motivo.</div>';return;}
+  await push(ref(db,`suspensiones/${suspUID}`),{fecha,motivo,creadoEn:Date.now()});
+  closeModal('moSusp');
+  al.innerHTML='';
+  loadUsrs();
+};
+
+// Verificar si un empleado tiene suspensión en una fecha
+async function esSuspension(uid,fecha){
+  try{
+    const snap=await get(ref(db,`suspensiones/${uid}`));
+    if(!snap.exists()) return null;
+    const susps=Object.values(snap.val());
+    return susps.find(s=>s.fecha===fecha)||null;
+  }catch(e){return null;}
+}
 
 let extUID=null;
 window.openExtension=async(uid,nombre)=>{
