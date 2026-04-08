@@ -634,17 +634,13 @@ window.empTab=(t,btn)=>{
 };
 
 window.trabajeEnAsueto=function(nombreAsueto){
-  // Mostrar formulario normal con aviso de todo HE
   tipoDia='normal';
-  show('tipoDiaGrid');
+  hide('tipoDiaGrid'); // no mostrar opciones de tipo — es día normal forzado
   show('camposNormal'); hide('camposEspecial');
-  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
-  const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
   const empAlert=$('empAlert');
   if(empAlert) empAlert.innerHTML=`<div class="alert" style="background:var(--warnlt);color:var(--warn);border-left:3px solid var(--warn);margin-bottom:12px">
     ⚠️ Asueto (<b>${nombreAsueto}</b>) — todas las horas que registres contarán como horas extras.
   </div>`;
-  // Pre-llenar horario y forzar todo como HE
   const f=$('empFecha');
   if(f&&f.value){
     const entrada=$('empEntrada'), salida=$('empSalida');
@@ -679,7 +675,7 @@ window.setTipoDia=function(tipo,btn){
 function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();f.min=ago(7);
   tipoDia='normal';
-  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
   const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
   show('tipoDiaGrid'); show('camposNormal'); hide('camposEspecial');
   ['empActs','heJust','empNota'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
@@ -750,8 +746,6 @@ window.onFechaChange = async function(){
   if(asueto){
     // Ocultar todo el formulario, mostrar aviso
     tipoDia='asueto';
-    document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tipo-btn').forEach(b=>{ if(b.getAttribute('onclick')?.includes("'asueto'")) b.classList.add('active'); });
     hide('camposNormal'); hide('heResumen'); hide('heBox'); hide('camposEspecial');
     hide('tipoDiaGrid');
     if(empAlert) empAlert.innerHTML=`
