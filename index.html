@@ -953,12 +953,18 @@ async function loadHist(){
     const viatBadge=r.viatico?(ev==='rechazado'?'<span class="badge br">💰 Anulado</span>':'<span class="badge ba">💰 Viático</span>'):'';
     const heBadge=r.he?(eh==='aprobado'?'<span class="badge ba">⏱ HE ✓</span>':eh==='rechazado'?'<span class="badge br">⏱ HE ✗</span>':'<span class="badge bp">⏱ HE pendiente</span>'):'';
     const horario=r.horaEntrada&&r.horaSalida?`<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.horaEntrada}–${r.horaSalida}</span>`:'';
+    // Mostrar ajuste de HE si fue modificado por admin
+    const minAprobados = r.minHEAprobado!==undefined ? r.minHEAprobado : (r.minHE||0);
+    const ajusteInfo = r.heAjustada && r.notaAjusteHE
+      ? `<div style="font-size:11px;color:var(--warn);margin-top:3px">⚠ HE ajustada a ${Math.floor(minAprobados/60)>0?Math.floor(minAprobados/60)+'h ':''+(minAprobados%60)+'m'} — ${r.notaAjusteHE}</div>`
+      : '';
     return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
       <div class="rc-hd">
         <div style="display:flex;align-items:center;gap:8px"><div class="rc-date">${fmt(r.fecha)}</div>${horario}</div>
         <div class="rc-badges">${viatBadge}${heBadge}</div>
       </div>
       <div class="rc-desc">${r.actividades}</div>
+      ${ajusteInfo}
     </div>`;
   }).join('');
 }
@@ -1587,6 +1593,10 @@ window.openDet=async(uid,key,isAdmin)=>{
       ?`${r.heInicio} a ${r.heFin} — <span class="badge ${eh==='aprobado'?'ba':eh==='rechazado'?'br':'bp'}">${eh==='aprobado'?'✓ Aprobada':eh==='rechazado'?'✗ Rechazada':'⏳ Pendiente'}</span>`
       :'<span class="badge bn">No</span>'}</div></div>
     ${r.he?`<div class="dr"><div class="dk">Justificación HE</div><div class="dv">${r.heJustif}</div></div>`:''}
+    ${r.he&&r.heAjustada?`<div class="dr"><div class="dk" style="color:var(--warn)">HE ajustada</div><div class="dv">
+      <div>Aprobadas: <b>${Math.floor((r.minHEAprobado||0)/60)>0?Math.floor((r.minHEAprobado||0)/60)+'h ':''+(r.minHEAprobado||0)%60+'m'}</b> · Registradas: ${Math.floor((r.minHE||0)/60)>0?Math.floor((r.minHE||0)/60)+'h ':''+(r.minHE||0)%60+'m'}</div>
+      <div style="color:var(--text2);margin-top:3px">Motivo: ${r.notaAjusteHE}</div>
+    </div></div>`:''}
     ${r.he&&r.motivoRechazoHE?`<div class="dr"><div class="dk">Motivo rechazo HE</div><div class="dv" style="color:var(--danger)">${r.motivoRechazoHE}</div></div>`:''}`;
   $('moDetActs').innerHTML=(isAdmin&&r.he&&eh==='pendiente')
     ?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${uid}','${key}');closeModal('moDet')">✓ Aprobar HE</button>
