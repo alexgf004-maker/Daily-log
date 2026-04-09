@@ -1435,13 +1435,20 @@ async function autoRegistrarDiasEspeciales(regs, users){
     const hoy=today();
     const emps=users.filter(u=>u.role!=='admin'&&u.role!=='asistente'&&(u.activo===true||u.activo==='true'));
 
-    // 1. Asuetos pasados y de hoy
+    // 1. Solo asuetos del año actual que ya pasaron o son hoy
     const anioActual=new Date().getFullYear();
-    const anioAnterior=anioActual-1;
-    const asuetos=[
-      ...await getAllAsuetos(anioAnterior),
-      ...await getAllAsuetos(anioActual)
-    ].filter(a=>a.fecha<=hoy);
+    const asuetos=(await getAllAsuetos(anioActual)).filter(a=>a.fecha<=hoy);
+
+    // Limpiar asuetos auto-generados de años anteriores
+    const anioStr=String(anioActual);
+    const borrar=[];
+    for(const emp of emps){
+      const empRegs=regs.filter(r=>r.userId===emp.id&&r.autoGenerado&&r.tipoDia==='asueto'&&r.fecha&&!r.fecha.startsWith(anioStr));
+      for(const r of empRegs) borrar.push(r);
+    }
+    if(borrar.length>0){
+      await Promise.all(borrar.map(r=>set(ref(db,`registros/${r.userId}/${r.key}`),null)));
+    }
 
     // 2. Vacaciones aprobadas
     const vacAprobadas=regs.filter(r=>
