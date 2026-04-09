@@ -1290,81 +1290,93 @@ async function loadHist(){
   const snap=await get(ref(db,`registros/${me.id}`));
   if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">No tienes registros aún</div></div>';return;}
   const raw=snap.val();
-  const items=Object.entries(raw).map(([k,v])=>({key:k,...v}));
-  items.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const allItems=Object.entries(raw).map(([k,v])=>({key:k,...v}));
+  allItems.sort((a,b)=>b.fecha.localeCompare(a.fecha));
 
-  // Resumen del mes actual
+  // Mes seleccionado — por defecto el actual
   const now=new Date();
   const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const delMes=items.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
-  const viaticos=delMes.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
-  const totalMinHE=delMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((acc,r)=>acc+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
-  const hrsHE=Math.floor(totalMinHE/60), minsHE=totalMinHE%60;
-  const heCount=delMes.filter(r=>r.he).length;
 
-  const nomMes=now.toLocaleDateString('es-SV',{month:'long',year:'numeric'});
-  res.innerHTML=`
-    <div class="card" style="margin-bottom:14px;border-top:3px solid var(--blue)">
-      <div class="card-title">Resumen — ${nomMes}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
-        <div style="background:var(--bluelt);border-radius:8px;padding:12px">
-          <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--blue)">${delMes.length}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:3px">Registros</div>
-        </div>
-        <div style="background:var(--greenlt);border-radius:8px;padding:12px">
-          <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--green)">${viaticos}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:3px">Viáticos</div>
-        </div>
-        <div style="background:var(--warnlt);border-radius:8px;padding:12px">
-          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--warn)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:3px">Hrs extras</div>
-        </div>
-      </div>
-    </div>`;
+  // Selector de mes
+  const mesesDisp=[...new Set(allItems.map(r=>r.fecha?.substring(0,7)).filter(Boolean))].sort().reverse();
+  let mesSelec=mesActual;
+  if(!mesesDisp.includes(mesSelec)&&mesesDisp.length>0) mesSelec=mesesDisp[0];
 
-  l.innerHTML=items.map(r=>{
-    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad',permiso:'🙋 Permiso'};
-    const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
+  function renderHist(mes){
+    const items=allItems.filter(r=>r.fecha&&r.fecha.startsWith(mes));
+    const viaticos=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
+    const totalMinHE=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((acc,r)=>acc+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
+    const hrsHE=Math.floor(totalMinHE/60), minsHE=totalMinHE%60;
+    const [anio,mesN]=mes.split('-');
+    const nomMes=new Date(parseInt(anio),parseInt(mesN)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
 
-    if(esEspecial){
-      const label=tipoLabels[r.tipoDia]||r.tipoDia;
-      const est=r.estadoEspecial||'aprobado';
-      const estBadge=est==='pendiente'?'<span class="badge bp">Pendiente</span>':est==='rechazado'?'<span class="badge br">Rechazado</span>':'<span class="badge ba">Aprobado</span>';
-      const remBadge=(r.tipoDia==='permiso'&&est==='aprobado')
-        ?(r.remunerado===false?'<span class="badge br" style="font-size:10px">No remunerado</span>':'<span class="badge ba" style="font-size:10px">Remunerado</span>')
-        :'';
-      const rangoVac=(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin)
-        ?`<div style="font-size:12px;color:var(--blue);margin-top:2px">📅 Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)} · ${Math.round((new Date(r.vacFin+'T12:00:00')-new Date(r.vacIni+'T12:00:00'))/(1000*60*60*24))+1} días</div>`
-        :'';
-      return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
-        <div class="rc-hd">
-          <div class="rc-date">${fmt(r.fecha)}</div>
-          <div class="rc-badges"><span class="badge by">${label}</span>${estBadge}${remBadge}</div>
+    res.innerHTML=`
+      <div class="card" style="margin-bottom:14px;border-top:3px solid var(--blue)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">Resumen — ${nomMes}</div>
+          <select onchange="renderHistMes(this.value)" style="width:auto;padding:5px 10px;font-size:12px;border:1px solid var(--gray200);border-radius:6px;background:#fff">
+            ${mesesDisp.map(m=>{
+              const [y,mo]=m.split('-');
+              const nm=new Date(parseInt(y),parseInt(mo)-1,1).toLocaleDateString('es-SV',{month:'short',year:'numeric'});
+              return `<option value="${m}" ${m===mes?'selected':''}>${nm}</option>`;
+            }).join('')}
+          </select>
         </div>
-        ${rangoVac}
-        <div class="rc-desc">${r.nota||'Sin nota'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+          <div style="background:var(--bluelt);border-radius:8px;padding:12px">
+            <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--blue)">${items.length}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">Registros</div>
+          </div>
+          <div style="background:var(--greenlt);border-radius:8px;padding:12px">
+            <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--green)">${viaticos}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">Viáticos</div>
+          </div>
+          <div style="background:var(--warnlt);border-radius:8px;padding:12px">
+            <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--warn)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">Hrs extras</div>
+          </div>
+        </div>
       </div>`;
+
+    if(!items.length){
+      l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">Sin registros en este mes</div></div>';
+      return;
     }
 
-    const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
-    const eh=r.estadoHE||(r.he?'pendiente':'na');
-    const viatBadge=r.viatico?(ev==='rechazado'?'<span class="badge br">💰 Anulado</span>':'<span class="badge ba">💰 Viático</span>'):'';
-    const heBadge=r.he?(eh==='aprobado'?'<span class="badge ba">⏱ HE ✓</span>':eh==='rechazado'?'<span class="badge br">⏱ HE ✗</span>':'<span class="badge bp">⏱ HE pendiente</span>'):'';
-    const horario=r.horaEntrada&&r.horaSalida?`<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.horaEntrada}–${r.horaSalida}</span>`:'';
-    // Mostrar ajuste de HE si fue modificado por admin
-    const minAprobados = r.minHEAprobado!==undefined ? r.minHEAprobado : (r.minHE||0);
-    const ajusteInfo = r.heAjustada && r.notaAjusteHE
-      ? `<div style="font-size:11px;color:var(--warn);margin-top:3px">⚠ HE ajustada a ${Math.floor(minAprobados/60)>0?Math.floor(minAprobados/60)+'h ':''+(minAprobados%60)+'m'} — ${r.notaAjusteHE}</div>`
-      : '';
-    return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
-      <div class="rc-hd">
-        <div style="display:flex;align-items:center;gap:8px"><div class="rc-date">${fmt(r.fecha)}</div>${horario}</div>
-        <div class="rc-badges">${viatBadge}${heBadge}</div>
-      </div>
-      <div class="rc-desc">${r.actividades}</div>
-      ${ajusteInfo}
-    </div>`;
-  }).join('');
+    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad',permiso:'🙋 Permiso'};
+    l.innerHTML=items.map(r=>{
+      const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
+      if(esEspecial){
+        const label=tipoLabels[r.tipoDia]||r.tipoDia;
+        const est=r.estadoEspecial||'aprobado';
+        const estBadge=est==='pendiente'?'<span class="badge bp">Pendiente</span>':est==='rechazado'?'<span class="badge br">Rechazado</span>':'<span class="badge ba">Aprobado</span>';
+        const remBadge=(r.tipoDia==='permiso'&&est==='aprobado')?(r.remunerado===false?'<span class="badge br" style="font-size:10px">No remunerado</span>':'<span class="badge ba" style="font-size:10px">Remunerado</span>'):'';
+        return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
+          <div class="rc-hd"><div class="rc-date">${fmt(r.fecha)}</div>
+          <div class="rc-badges"><span class="badge by">${label}</span>${estBadge}${remBadge}</div></div>
+          <div class="rc-desc">${r.nota||'Sin nota'}</div>
+        </div>`;
+      }
+      const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
+      const eh=r.estadoHE||(r.he?'pendiente':'na');
+      const viatBadge=r.viatico?(ev==='rechazado'?'<span class="badge br">💰 Anulado</span>':'<span class="badge ba">💰 Viático</span>'):'';
+      const heBadge=r.he?(eh==='aprobado'?'<span class="badge ba">⏱ HE ✓</span>':eh==='rechazado'?'<span class="badge br">⏱ HE ✗</span>':'<span class="badge bp">⏱ HE pendiente</span>'):'';
+      const horario=r.horaEntrada&&r.horaSalida?`<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.horaEntrada}–${r.horaSalida}</span>`:'';
+      const minAprobados=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
+      const ajusteInfo=r.heAjustada&&r.notaAjusteHE?`<div style="font-size:11px;color:var(--warn);margin-top:3px">⚠ HE ajustada a ${Math.floor(minAprobados/60)>0?Math.floor(minAprobados/60)+'h ':''+(minAprobados%60)+'m'} — ${r.notaAjusteHE}</div>`:'';
+      return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
+        <div class="rc-hd">
+          <div style="display:flex;align-items:center;gap:8px"><div class="rc-date">${fmt(r.fecha)}</div>${horario}</div>
+          <div class="rc-badges">${viatBadge}${heBadge}</div>
+        </div>
+        <div class="rc-desc">${r.actividades}</div>
+        ${ajusteInfo}
+      </div>`;
+    }).join('');
+  }
+
+  window.renderHistMes=function(mes){ renderHist(mes); };
+  renderHist(mesSelec);
 }
 
 // ADMIN TABS
