@@ -386,8 +386,7 @@ const screen  = id => {
   document.body.style.overflow = id==='loginScreen' ? 'hidden' : '';
 };
 
-// Init admin
-(async()=>{ try{ const s=await get(ref(db,'users/admin')); if(!s.exists()) await set(ref(db,'users/admin'),{nombre:'Administrador',username:'admin',pin:'1234',role:'admin',activo:true}); }catch(e){} })();
+// Admin se configura directamente en Firebase Console — no desde el código
 
 // ── RENDER FUNCTIONS (inject HTML only after auth) ──────
 function renderEmployee(nombre){
@@ -784,7 +783,27 @@ function modalsHTML(){
 }
 
 // ── LOGIN ──────────────────────────────
-// ── MANTENIMIENTO ──────────────────────────────────────
+// ── SEGURIDAD: Hash de PINs con SHA-256 ───────────────
+async function hashPIN(pin){
+  const msgBuffer = new TextEncoder().encode('INNOVA_SALT_2025_' + pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyPIN(pin, stored){
+  // Si el stored ya es un hash (64 chars hex), comparar con hash
+  if(stored && stored.length === 64){
+    const h = await hashPIN(pin);
+    return h === stored;
+  }
+  // Compatibilidad hacia atrás: PIN en texto plano (migración)
+  return String(pin) === String(stored);
+}
+
+async function savePIN(pin){
+  return await hashPIN(pin);
+}
 async function checkMaintenance(){
   try{
     const snap=await get(ref(db,'config/mantenimiento'));
@@ -802,7 +821,10 @@ window.maintLogin=async()=>{
   if(!snap.exists()) return;
   let found=null;
   for(const [k,v] of Object.entries(snap.val())){
-    if(v&&v.username===u&&String(v.pin)===String(p)) found={id:k,...v};
+    if(v&&v.username===u){
+      const ok = await verifyPIN(p, v.pin);
+      if(ok) found={id:k,...v};
+    }
   }
   if(!found||found.role!=='admin'){al.innerHTML='<div class="alert ae">Solo el administrador puede acceder en mantenimiento.</div>';return;}
   if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
@@ -823,7 +845,10 @@ window.doLogin = async ()=>{
   let found=null;
   const raw=snap.val();
   for(const [k,v] of Object.entries(raw)){
-    if(v && v.username===u && String(v.pin)===String(p)) found={id:k,...v};
+    if(v && v.username===u){
+      const ok = await verifyPIN(p, v.pin);
+      if(ok) found={id:k,...v};
+    }
   }
   if(!found){al.innerHTML='<div class="alert ae">Usuario o PIN incorrecto.</div>';return;}
   if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
@@ -1248,12 +1273,13 @@ window.cambiarPin=async()=>{
   const nuevo=$('pinNuevo').value.trim();
   const conf=$('pinConfirm').value.trim();
   if(!actual||!nuevo||!conf){al.innerHTML='<div class="alert ae">Completa todos los campos.</div>';return;}
-  if(String(actual)!==String(me.pin)){al.innerHTML='<div class="alert ae">El PIN actual es incorrecto.</div>';return;}
+  if(!(await verifyPIN(actual,me.pin))){al.innerHTML='<div class="alert ae">El PIN actual es incorrecto.</div>';return;}
   if(nuevo.length<4){al.innerHTML='<div class="alert ae">PIN nuevo mínimo 4 dígitos.</div>';return;}
   if(nuevo!==conf){al.innerHTML='<div class="alert ae">Los PINs nuevos no coinciden.</div>';return;}
   if(nuevo===actual){al.innerHTML='<div class="alert ae">El PIN nuevo debe ser diferente al actual.</div>';return;}
-  await update(ref(db,`users/${me.id}`),{pin:nuevo});
-  me.pin=nuevo;
+  const nuevoHash=await savePIN(nuevo);
+  await update(ref(db,`users/${me.id}`),{pin:nuevoHash});
+  me.pin=nuevoHash;
   al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
   ['pinActual','pinNuevo','pinConfirm'].forEach(id=>$(id).value='');
 };
@@ -1391,9 +1417,91 @@ async function getUsers(){
   return a;
 }
 
+// ── AUTO-REGISTRO ASUETOS Y VACACIONES ────────────────
+async function autoRegistrarDiasEspeciales(regs, users){
+  try{
+    const hoy=today();
+    const emps=users.filter(u=>u.role!=='admin'&&u.role!=='asistente'&&(u.activo===true||u.activo==='true'));
+
+    // 1. Asuetos pasados y de hoy
+    const anioActual=new Date().getFullYear();
+    const anioAnterior=anioActual-1;
+    const asuetos=[
+      ...await getAllAsuetos(anioAnterior),
+      ...await getAllAsuetos(anioActual)
+    ].filter(a=>a.fecha<=hoy);
+
+    // 2. Vacaciones aprobadas
+    const vacAprobadas=regs.filter(r=>
+      r.tipoDia==='vacaciones'&&
+      r.estadoEspecial==='aprobado'&&
+      r.vacIni&&r.vacFin
+    );
+
+    // Índice de registros existentes por userId+fecha
+    const existe=new Set(regs.map(r=>`${r.userId}_${r.fecha}`));
+
+    const promesas=[];
+
+    for(const emp of emps){
+      // Registrar asuetos
+      for(const a of asuetos){
+        const key=`${emp.id}_${a.fecha}`;
+        if(!existe.has(key)){
+          existe.add(key); // evitar duplicados en el mismo ciclo
+          promesas.push(push(ref(db,`registros/${emp.id}`),{
+            fecha:a.fecha,
+            tipoDia:'asueto',
+            actividades:'',
+            viatico:false, he:false,
+            estadoViatico:'na', estadoHE:'na',
+            estadoEspecial:'aprobado',
+            nota:a.nombre,
+            userId:emp.id, userName:emp.nombre, cargo:emp.cargo||'',
+            creadoEn:Date.now(), autoGenerado:true
+          }));
+        }
+      }
+
+      // Registrar días de vacaciones aprobadas de este empleado
+      const misVac=vacAprobadas.filter(v=>v.userId===emp.id);
+      for(const v of misVac){
+        // Generar cada día del rango
+        const ini=new Date(v.vacIni+'T12:00:00');
+        const fin=new Date(v.vacFin+'T12:00:00');
+        for(let d=new Date(ini);d<=fin;d.setDate(d.getDate()+1)){
+          const fecha=d.toISOString().split('T')[0];
+          if(fecha>hoy) continue; // solo días ya pasados o hoy
+          const key=`${emp.id}_${fecha}`;
+          if(!existe.has(key)){
+            existe.add(key);
+            promesas.push(push(ref(db,`registros/${emp.id}`),{
+              fecha,
+              tipoDia:'vacaciones',
+              actividades:'',
+              viatico:false, he:false,
+              estadoViatico:'na', estadoHE:'na',
+              estadoEspecial:'aprobado',
+              nota:'Vacaciones aprobadas',
+              userId:emp.id, userName:emp.nombre, cargo:emp.cargo||'',
+              creadoEn:Date.now(), autoGenerado:true
+            }));
+          }
+        }
+      }
+    }
+
+    if(promesas.length>0) await Promise.all(promesas);
+  }catch(e){ console.error('autoRegistrar error:',e); }
+}
+
 async function loadDash(){
   $('dashDate').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const[regs,users]=await Promise.all([getAllRegs(),getUsers()]);
+
+  // Auto-registrar asuetos y vacaciones aprobadas
+  if(isAdmin()) await autoRegistrarDiasEspeciales(regs, users);
+
   const now=new Date();
   const td=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const hoy=regs.filter(r=>r.fecha===td);
@@ -1797,15 +1905,15 @@ window.cambiarPinAdmin=async()=>{
   const nuevo=$('adPinNuevo').value.trim();
   const conf=$('adPinConfirm').value.trim();
   if(!actual||!nuevo||!conf){al.innerHTML='<div class="alert ae">Completa todos los campos.</div>';return;}
-  if(String(actual)!==String(me.pin)){al.innerHTML='<div class="alert ae">El PIN actual es incorrecto.</div>';return;}
+  if(!(await verifyPIN(actual,me.pin))){al.innerHTML='<div class="alert ae">El PIN actual es incorrecto.</div>';return;}
   if(nuevo.length<4){al.innerHTML='<div class="alert ae">PIN nuevo mínimo 4 dígitos.</div>';return;}
   if(nuevo!==conf){al.innerHTML='<div class="alert ae">Los PINs nuevos no coinciden.</div>';return;}
   if(nuevo===actual){al.innerHTML='<div class="alert ae">El PIN nuevo debe ser diferente al actual.</div>';return;}
-  await update(ref(db,`users/${me.id}`),{pin:nuevo});
-  me.pin=nuevo;
+  const nuevoHash=await savePIN(nuevo);
+  await update(ref(db,`users/${me.id}`),{pin:nuevoHash});
+  me.pin=nuevoHash;
   al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
-  ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
-};
+  ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';}); };
 
 let heAprobKey=null, heAprobCallback=null;
 
@@ -2277,8 +2385,13 @@ window.saveUser=async()=>{
   if(!editUID&&(!pin||pin.length<4)){al.innerHTML='<div class="alert ae">PIN mínimo de 4 dígitos.</div>';return;}
   const users=await getUsers();
   if(users.find(u=>u.username===usr&&u.id!==editUID)){al.innerHTML='<div class="alert ae">Ese usuario ya existe.</div>';return;}
-  if(editUID){const d={nombre:nom,username:usr,role:rol};if(pin.length>=4)d.pin=pin;await update(ref(db,`users/${editUID}`),d);}
-  else await set(push(ref(db,'users')),{nombre:nom,username:usr,pin,role:rol,activo:true});
+  if(editUID){
+    const d={nombre:nom,username:usr,role:rol};
+    if(pin.length>=4){ d.pin=await savePIN(pin); }
+    await update(ref(db,`users/${editUID}`),d);
+  } else {
+    await set(push(ref(db,'users')),{nombre:nom,username:usr,pin:await savePIN(pin),role:rol,activo:true});
+  }
   closeModal('moUsr');loadUsrs();
 };
 
