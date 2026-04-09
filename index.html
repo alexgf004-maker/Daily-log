@@ -1435,17 +1435,13 @@ async function autoRegistrarDiasEspeciales(regs, users){
     const hoy=today();
     const emps=users.filter(u=>u.role!=='admin'&&u.role!=='asistente'&&(u.activo===true||u.activo==='true'));
 
-    // 1. Solo asuetos del año actual que ya pasaron o son hoy
+    // Solo asuetos desde el inicio de la app (abril 2026) hasta hoy
+    const fechaInicioApp='2026-04-01';
     const anioActual=new Date().getFullYear();
-    const asuetos=(await getAllAsuetos(anioActual)).filter(a=>a.fecha<=hoy);
+    const asuetos=(await getAllAsuetos(anioActual)).filter(a=>a.fecha>=fechaInicioApp&&a.fecha<=hoy);
 
-    // Limpiar asuetos auto-generados de años anteriores
-    const anioStr=String(anioActual);
-    const borrar=[];
-    for(const emp of emps){
-      const empRegs=regs.filter(r=>r.userId===emp.id&&r.autoGenerado&&r.tipoDia==='asueto'&&r.fecha&&!r.fecha.startsWith(anioStr));
-      for(const r of empRegs) borrar.push(r);
-    }
+    // Limpiar asuetos auto-generados anteriores a la fecha de inicio
+    const borrar=regs.filter(r=>r.autoGenerado&&r.tipoDia==='asueto'&&r.fecha&&r.fecha<fechaInicioApp);
     if(borrar.length>0){
       await Promise.all(borrar.map(r=>set(ref(db,`registros/${r.userId}/${r.key}`),null)));
     }
