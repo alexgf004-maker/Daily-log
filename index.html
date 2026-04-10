@@ -1065,16 +1065,23 @@ function calcularHE(fecha, entrada, salida){
   } else {
     const baseIni = toMins(base.ini);
     const baseFin = toMins(base.fin);
+
     // HE antes de entrada base
-    if(entMin < baseIni){
-      minHE += baseIni - entMin;
-      if(!heIni) heIni = entrada;
-    }
+    const heAntes = entMin < baseIni ? baseIni - entMin : 0;
     // HE después de salida base
-    if(salMin > baseFin){
-      minHE += salMin - baseFin;
-      heFin = salida;
-      if(!heIni) heIni = fromMins(baseFin);
+    const heDespues = salMin > baseFin ? salMin - baseFin : 0;
+
+    minHE = heAntes + heDespues;
+
+    if(heAntes > 0 && heDespues > 0){
+      // HE en ambos extremos — mostrar rango completo entrada-salida
+      heIni = entrada; heFin = salida;
+    } else if(heAntes > 0){
+      // Solo HE antes — de entrada hasta inicio base
+      heIni = entrada; heFin = base.ini;
+    } else if(heDespues > 0){
+      // Solo HE después — de fin base hasta salida
+      heIni = base.fin; heFin = salida;
     }
   }
 
