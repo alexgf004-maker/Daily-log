@@ -358,6 +358,7 @@ tbody tr:hover td{background:var(--bluelt)}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 
 const cfg = {
   apiKey:"AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
@@ -368,7 +369,15 @@ const cfg = {
   messagingSenderId:"205856894888",
   appId:"1:205856894888:web:998122bcf83d63da15379d"
 };
-const db = getDatabase(initializeApp(cfg));
+const app = initializeApp(cfg);
+
+// App Check — bloquea peticiones desde dominios no autorizados
+initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6Lfd1bMsAAAAAGk4puMSgSLebxVqffk-qsouUIie'),
+  isTokenAutoRefreshEnabled: true
+});
+
+const db = getDatabase(app);
 
 let me=null, editUID=null, rejKey=null, filtRegs=[], tipoDia='normal';
 
