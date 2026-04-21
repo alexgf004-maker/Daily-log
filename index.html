@@ -1218,6 +1218,29 @@ window.guardarReg=async()=>{
   const fecha=$('empFecha').value;
   if(!fecha){al.innerHTML='<div class="alert ae">Selecciona una fecha.</div>';return;}
 
+  // ── VALIDACIÓN DE FECHA EN EL SERVIDOR ──────────────
+  // Verificar que la fecha no sea futura (excepto vacaciones)
+  if(tipoDia!=='vacaciones' && fecha>today()){
+    al.innerHTML='<div class="alert ae">No puedes registrar fechas futuras.</div>';return;
+  }
+  // Verificar rango permitido — consultar extensión real desde Firebase
+  if(tipoDia==='normal'||tipoDia==='incapacidad'||tipoDia==='permiso'){
+    try{
+      const snap=await get(ref(db,`users/${me.id}`));
+      let diasPermitidos=2;
+      if(snap.exists()){
+        const u=snap.val();
+        if(u.extension&&u.extension.hasta&&u.extension.hasta>=today()&&u.extension.dias>3){
+          diasPermitidos=u.extension.dias-1;
+        }
+      }
+      const minFecha=ago(diasPermitidos);
+      if(fecha<minFecha){
+        al.innerHTML=`<div class="alert ae">Solo puedes registrar hasta ${diasPermitidos+1} días atrás. Esta fecha no está permitida.</div>`;return;
+      }
+    }catch(e){}
+  }
+
   // Check duplicado
   try {
     const snap=await get(ref(db,`registros/${me.id}`));
