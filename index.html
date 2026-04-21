@@ -527,7 +527,13 @@ function renderAdmin(){
       <div id="adDash">
         <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
         <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
-        ${me?.role==='admin'?`<div class="card" id="dashObsCard" style="display:none;border-left:3px solid var(--blue)"><div class="card-title">💬 Observaciones de asistentes</div><div id="dashObsList"></div></div>`:''}
+        ${me?.role==='admin'?`
+        <div class="card" id="dashSospCard" style="display:none;border-left:3px solid var(--danger)">
+          <div class="card-title" style="color:var(--danger)">⚠️ Registros sospechosos</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Registros creados fuera del rango de días permitido</div>
+          <div id="dashSospList"></div>
+        </div>
+        <div class="card" id="dashObsCard" style="display:none;border-left:3px solid var(--blue)"><div class="card-title">💬 Observaciones de asistentes</div><div id="dashObsList"></div></div>`:''}
         <div class="card"><div class="card-title">Registros de hoy</div><div id="dashHoy"><div class="spin"></div></div></div>
         <div class="card"><div class="card-title">Sin registro hoy</div><div id="dashSin"><div class="spin"></div></div></div>
       </div>
@@ -1589,7 +1595,47 @@ async function loadDash(){
     ?'<div class="empty" style="padding:20px"><div class="et">✓ Todos registraron hoy</div></div>'
     :sin.map(u=>`<div style="padding:8px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0"></span>${u.nombre}</div>`).join('');
 
-  // Observaciones no leídas — solo para admin
+  // ── AUDITORÍA DE REGISTROS SOSPECHOSOS ──────────────
+  if(isAdmin()){
+    try{
+      const sospechosos=[];
+      for(const r of regs){
+        if(r.autoGenerado) continue; // ignorar auto-generados
+        if(!r.creadoEn||!r.fecha) continue;
+        const fechaCreado=new Date(r.creadoEn).toISOString().split('T')[0];
+        const fechaReg=r.fecha;
+        // Calcular diferencia en días
+        const diffMs=new Date(fechaCreado+'T12:00:00')-new Date(fechaReg+'T12:00:00');
+        const diffDias=Math.round(diffMs/(1000*60*60*24));
+        // Sospechoso si la diferencia es mayor a 3 días (o extensión del usuario)
+        const empUser=users.find(u=>u.id===r.userId);
+        const ext=empUser?.extension;
+        const diasPermitidos=(ext&&ext.hasta&&ext.hasta>=fechaCreado&&ext.dias>3)?ext.dias:3;
+        if(diffDias>diasPermitidos){
+          sospechosos.push({...r, diffDias, diasPermitidos});
+        }
+      }
+      const cardSosp=$('dashSospCard');
+      if(cardSosp){
+        if(sospechosos.length>0){
+          cardSosp.style.display='';
+          $('dashSospList').innerHTML=sospechosos.map(r=>`
+            <div style="padding:10px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <div>
+                <div style="font-size:13px;font-weight:600">${r.userName||r.userId}</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:2px">
+                  Registro del <b>${fmt(r.fecha)}</b> — creado ${r.diffDias} día${r.diffDias>1?'s':''} después
+                  ${r.tipoDia&&r.tipoDia!=='normal'?`· <span style="color:var(--blue)">${r.tipoDia}</span>`:''}
+                </div>
+              </div>
+              <button class="btn btn-gh btn-xs" onclick="abrirPerfilEmp('${r.userId}','${r.userName||r.userId}')">Ver</button>
+            </div>`).join('');
+        } else {
+          cardSosp.style.display='none';
+        }
+      }
+    }catch(e){}
+  }
   if(isAdmin()){
     try{
       const obsSnap=await get(ref(db,'observaciones'));
