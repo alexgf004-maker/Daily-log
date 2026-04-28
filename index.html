@@ -381,8 +381,8 @@ const db = getDatabase(app);
 
 let me=null, editUID=null, rejKey=null, filtRegs=[], tipoDia='normal';
 
-const today   = () => new Date().toISOString().split('T')[0];
-const ago     = n  => { const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; };
+const today   = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const ago     = n  => { const d=new Date(); d.setDate(d.getDate()-n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const fmt     = d  => { if(!d) return ''; const[y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
 const fmtLong = d  => d ? new Date(d+'T12:00:00').toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) : '';
 const $       = id => document.getElementById(id);
@@ -591,7 +591,12 @@ function renderAdmin(){
         </div>
         ${me?.role==='admin'?`
         <div class="card" style="margin-bottom:14px">
-          <div class="card-title">Modo mantenimiento</div>
+          <div class="card-title">Auditoría</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Detecta registros creados fuera del rango de días permitido.</div>
+          <button class="btn btn-gh btn-sm" onclick="toggleAuditoria()">🔍 Ver registros sospechosos</button>
+          <div id="auditoriaResult" style="display:none;margin-top:14px"></div>
+        </div>
+        <div class="card">
           <div class="tog-row">
             <div>
               <div class="tog-lbl">🔧 Activar mantenimiento</div>
@@ -1027,7 +1032,7 @@ function initForm(){
   hide('heBox'); hide('heResumen');
   // Verificar extensión del usuario
   get(ref(db,`users/${me.id}`)).then(snap=>{
-    let diasAtras=2;
+    let diasAtras=3;
     if(snap.exists()){
       const u=snap.val();
       const ext=u.extension;
@@ -1037,7 +1042,7 @@ function initForm(){
     }
     f.min=ago(diasAtras);
     window.onFechaChange();
-  }).catch(()=>{ f.min=ago(2); window.onFechaChange(); });
+  }).catch(()=>{ f.min=ago(3); window.onFechaChange(); });
 }
 
 // Horario base según día de semana
@@ -1215,28 +1220,31 @@ window.togF=f=>{
 
 window.guardarReg=async()=>{
   const al=$('empAlert');al.innerHTML='';
+  const btnGuardar=document.querySelector('#empReg .btn-p');
+  if(btnGuardar){ btnGuardar.disabled=true; btnGuardar.textContent='Guardando...'; }
+  const restoreBtn=()=>{ if(btnGuardar){ btnGuardar.disabled=false; btnGuardar.textContent='Guardar registro'; } };
   const fecha=$('empFecha').value;
   if(!fecha){al.innerHTML='<div class="alert ae">Selecciona una fecha.</div>';return;}
 
   // ── VALIDACIÓN DE FECHA EN EL SERVIDOR ──────────────
   // Verificar que la fecha no sea futura (excepto vacaciones)
   if(tipoDia!=='vacaciones' && fecha>today()){
-    al.innerHTML='<div class="alert ae">No puedes registrar fechas futuras.</div>';return;
+    al.innerHTML='<div class="alert ae">No puedes registrar fechas futuras.</div>';restoreBtn();return;
   }
   // Verificar rango permitido — consultar extensión real desde Firebase
   if(tipoDia==='normal'||tipoDia==='incapacidad'||tipoDia==='permiso'){
     try{
       const snap=await get(ref(db,`users/${me.id}`));
-      let diasPermitidos=2;
+      let diasPermitidos=3;
       if(snap.exists()){
         const u=snap.val();
-        if(u.extension&&u.extension.hasta&&u.extension.hasta>=today()&&u.extension.dias>3){
+        if(u.extension&&u.extension.hasta&&u.extension.hasta>=today()&&u.extension.dias>4){
           diasPermitidos=u.extension.dias-1;
         }
       }
       const minFecha=ago(diasPermitidos);
       if(fecha<minFecha){
-        al.innerHTML=`<div class="alert ae">Solo puedes registrar hasta ${diasPermitidos+1} días atrás. Esta fecha no está permitida.</div>`;return;
+        al.innerHTML=`<div class="alert ae">Solo puedes registrar hasta ${diasPermitidos} días atrás. Esta fecha no está permitida.</div>`;restoreBtn();return;
       }
     }catch(e){}
   }
@@ -1246,9 +1254,9 @@ window.guardarReg=async()=>{
     const snap=await get(ref(db,`registros/${me.id}`));
     if(snap.exists()){
       const dup=Object.values(snap.val()).some(x=>x&&x.fecha===fecha);
-      if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';return;}
+      if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';restoreBtn();return;}
     }
-  } catch(e){al.innerHTML=`<div class="alert ae">Error: ${e.message}</div>`;return;}
+  } catch(e){al.innerHTML=`<div class="alert ae">Error: ${e.message}</div>`;restoreBtn();return;}
 
   let datos = { fecha, creadoEn:Date.now(), userId:me.id, userName:me.nombre, cargo:me.cargo||'', tipoDia };
 
@@ -1257,13 +1265,13 @@ window.guardarReg=async()=>{
     const salida=$('empSalida').value;
     const acts=$('empActs').value.trim();
     const viat=$('togV').classList.contains('on');
-    if(!entrada||!salida||!acts){al.innerHTML='<div class="alert ae">Completa horario y actividades.</div>';return;}
-    if(toMins(salida)<=toMins(entrada)){al.innerHTML='<div class="alert ae">Hora de salida debe ser mayor a la entrada.</div>';return;}
+    if(!entrada||!salida||!acts){al.innerHTML='<div class="alert ae">Completa horario y actividades.</div>';restoreBtn();return;}
+    if(toMins(salida)<=toMins(entrada)){al.innerHTML='<div class="alert ae">Hora de salida debe ser mayor a la entrada.</div>';restoreBtn();return;}
     const asuetoDia=await esAsueto(fecha);
     const r = asuetoDia
       ? { he:true, minHE:toMins(salida)-toMins(entrada), heIni:entrada, heFin:salida }
       : calcularHE(fecha,entrada,salida);
-    if(r.he&&!$('heJust')?.value.trim()){al.innerHTML='<div class="alert ae">Escribe la justificación para las horas extras.</div>';return;}
+    if(r.he&&!$('heJust')?.value.trim()){al.innerHTML='<div class="alert ae">Escribe la justificación para las horas extras.</div>';restoreBtn();return;}
     datos={...datos, actividades:acts, viatico:viat, horaEntrada:entrada, horaSalida:salida,
       he:r.he, minHE:r.minHE, heInicio:r.heIni, heFin:r.heFin,
       heJustif:r.he?($('heJust')?.value.trim()||''):'',
@@ -1275,8 +1283,8 @@ window.guardarReg=async()=>{
     if(tipoDia==='vacaciones'){
       vacIni=$('vacIni')?.value; vacFin=$('vacFin')?.value;
       nota=$('empNota')?.value.trim()||'';
-      if(!vacIni||!vacFin){al.innerHTML='<div class="alert ae">Selecciona fecha inicio y fin de vacaciones.</div>';return;}
-      if(vacFin<vacIni){al.innerHTML='<div class="alert ae">La fecha fin debe ser mayor o igual a inicio.</div>';return;}
+      if(!vacIni||!vacFin){al.innerHTML='<div class="alert ae">Selecciona fecha inicio y fin de vacaciones.</div>';restoreBtn();return;}
+      if(vacFin<vacIni){al.innerHTML='<div class="alert ae">La fecha fin debe ser mayor o igual a inicio.</div>';restoreBtn();return;}
     } else {
       nota=$('empNotaOtro')?.value.trim()||'';
     }
@@ -1303,6 +1311,7 @@ window.guardarReg=async()=>{
     }, 600);
   } catch(e){
     al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
+    restoreBtn();
   }
 };
 
@@ -1589,7 +1598,6 @@ async function loadDash(){
     ?'<div class="empty" style="padding:20px"><div class="et">✓ Todos registraron hoy</div></div>'
     :sin.map(u=>`<div style="padding:8px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0"></span>${u.nombre}</div>`).join('');
 
-  // Observaciones no leídas — solo para admin
   if(isAdmin()){
     try{
       const obsSnap=await get(ref(db,'observaciones'));
@@ -1944,8 +1952,7 @@ window.cargarPerfilEmpleado=async()=>{
   }).join('')+`</div>`;
 };
 
-window.toggleMantenimiento=async()=>{
-  const tog=$('togMant'); if(!tog) return;
+window.toggleMantenimiento=async()=>{  const tog=$('togMant'); if(!tog) return;
   const actual=await checkMaintenance();
   const nuevo=!actual;
   await set(ref(db,'config/mantenimiento'), nuevo);
