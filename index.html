@@ -723,10 +723,16 @@ function modalsHTML(){
       </div>
       <div class="fg">
         <label class="fl">Rol</label>
-        <select id="uRol">
+        <select id="uRol" onchange="onRolChange(this.value)">
           <option value="empleado">Empleado</option>
           <option value="asistente">Asistente</option>
         </select>
+      </div>
+      <!-- Solo visible para asistentes -->
+      <div id="secEmpleadosAsig" style="display:none">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Empleados que puede ver</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Si no seleccionas ninguno, verá todos.</div>
+        <div id="listaEmpleadosAsig" style="max-height:200px;overflow-y:auto;border:1px solid var(--gray200);border-radius:var(--r);padding:8px"></div>
       </div>
       <div class="modal-acts">
         <button class="btn btn-gh" onclick="closeModal('moUsr')">Cancelar</button>
@@ -1738,7 +1744,11 @@ function stopDashRefresh(){ if(dashTimer){clearInterval(dashTimer);dashTimer=nul
 
 async function loadPend(){
   const l=$('pendList');l.innerHTML='<div class="spin"></div>';
-  const all=await getAllRegs();
+  let all=await getAllRegs();
+  // Asistente solo ve registros de sus empleados asignados
+  if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
+    all=all.filter(r=>me.empleadosAsig.includes(r.userId));
+  }
   const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad',permiso:'🙋 Permiso'};
   // HE pendientes + días especiales pendientes (solo incapacidad y vacaciones)
   const pendHE=all.filter(r=>r.he&&r.estadoHE==='pendiente');
@@ -1896,7 +1906,11 @@ async function loadFiltEmps(){
   l.innerHTML='<div class="spin"></div>';
   hide('adEmpPerfil'); show('adEmpList');
   const [users, allRegs] = await Promise.all([getUsers(), getAllRegs()]);
-  const emps = users.filter(u=>u.role!=='admin'&&(u.activo===true||u.activo==='true'));
+  let emps = users.filter(u=>u.role!=='admin'&&u.role!=='asistente'&&(u.activo===true||u.activo==='true'));
+  // Asistente solo ve sus empleados asignados
+  if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
+    emps=emps.filter(u=>me.empleadosAsig.includes(u.id));
+  }
   emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
 
   const now=new Date();
@@ -2529,13 +2543,49 @@ window.quitarExtension=async()=>{
   await update(ref(db,`users/${extUID}`),{extension:null});
   closeModal('moExt');loadUsrs();
 };
-window.openModalUser=uid=>{
+window.onRolChange=async(rol)=>{
+  const sec=$('secEmpleadosAsig');
+  if(!sec) return;
+  if(rol==='asistente'){
+    sec.style.display='block';
+    await cargarListaEmpleadosAsig([]);
+  } else {
+    sec.style.display='none';
+  }
+};
+
+async function cargarListaEmpleadosAsig(seleccionados=[]){
+  const l=$('listaEmpleadosAsig'); if(!l) return;
+  const users=await getUsers();
+  const emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+  emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  l.innerHTML=emps.map(u=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--gray100)">
+      <input type="checkbox" value="${u.id}" ${seleccionados.includes(u.id)?'checked':''} style="width:16px;height:16px;accent-color:var(--blue)">
+      <span>${u.nombre}</span>
+    </label>`).join('');
+}
+
+window.openModalUser=async(uid)=>{
   editUID=uid||null;
-  $('moUsrTitle').textContent=uid?'Editar empleado':'Nuevo empleado';
+  $('moUsrTitle').textContent=uid?'Editar usuario':'Nuevo usuario';
   $('moUsrAlert').innerHTML='';
   ['uNom','uUsr','uPin'].forEach(id=>$(id).value='');
   $('uRol').value='empleado';
-  if(uid)get(ref(db,`users/${uid}`)).then(s=>{if(s.exists()){const u=s.val();$('uNom').value=u.nombre;$('uUsr').value=u.username;$('uRol').value=u.role==='asistente'?'asistente':'empleado';}});
+  $('secEmpleadosAsig').style.display='none';
+  if(uid){
+    const s=await get(ref(db,`users/${uid}`));
+    if(s.exists()){
+      const u=s.val();
+      $('uNom').value=u.nombre;
+      $('uUsr').value=u.username;
+      $('uRol').value=u.role==='asistente'?'asistente':'empleado';
+      if(u.role==='asistente'){
+        $('secEmpleadosAsig').style.display='block';
+        await cargarListaEmpleadosAsig(u.empleadosAsig||[]);
+      }
+    }
+  }
   $('moUsr').classList.add('open');
 };
 
@@ -2547,12 +2597,18 @@ window.saveUser=async()=>{
   if(!editUID&&(!pin||pin.length<4)){al.innerHTML='<div class="alert ae">PIN mínimo de 4 dígitos.</div>';return;}
   const users=await getUsers();
   if(users.find(u=>u.username===usr&&u.id!==editUID)){al.innerHTML='<div class="alert ae">Ese usuario ya existe.</div>';return;}
+  // Obtener empleados asignados si es asistente
+  let empleadosAsig=[];
+  if(rol==='asistente'){
+    const checks=document.querySelectorAll('#listaEmpleadosAsig input[type=checkbox]:checked');
+    empleadosAsig=Array.from(checks).map(c=>c.value);
+  }
   if(editUID){
-    const d={nombre:nom,username:usr,role:rol};
+    const d={nombre:nom,username:usr,role:rol,empleadosAsig:rol==='asistente'?empleadosAsig:[]};
     if(pin.length>=4){ d.pin=await savePIN(pin); }
     await update(ref(db,`users/${editUID}`),d);
   } else {
-    await set(push(ref(db,'users')),{nombre:nom,username:usr,pin:await savePIN(pin),role:rol,activo:true});
+    await set(push(ref(db,'users')),{nombre:nom,username:usr,pin:await savePIN(pin),role:rol,activo:true,empleadosAsig:rol==='asistente'?empleadosAsig:[]});
   }
   closeModal('moUsr');loadUsrs();
 };
