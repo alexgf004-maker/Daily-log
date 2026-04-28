@@ -797,7 +797,18 @@ function modalsHTML(){
 }
 
 // ── LOGIN ──────────────────────────────
-// ── SEGURIDAD: Hash de PINs con SHA-256 ───────────────
+// ── CIERRE DE MES ──────────────────────────────────────
+function mesCerrado(fecha){
+  if(!fecha) return false;
+  const [y,m]=fecha.split('-').map(Number);
+  const hoy=new Date();
+  const mesHoy=hoy.getMonth()+1;
+  const anioHoy=hoy.getFullYear();
+  // El mes está cerrado si es anterior al mes actual
+  if(y<anioHoy) return true;
+  if(y===anioHoy&&m<mesHoy) return true;
+  return false;
+}
 async function hashPIN(pin){
   const msgBuffer = new TextEncoder().encode('INNOVA_SALT_2025_' + pin);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -1020,6 +1031,18 @@ window.setTipoDia=function(tipo,btn){
 function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();
   tipoDia='normal';
+
+  // Aviso de cierre de mes próximo
+  const hoy=new Date();
+  const ultimoDia=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
+  const diaActual=hoy.getDate();
+  const diasRestantes=ultimoDia-diaActual;
+  const al=$('empAlert');
+  if(al&&diasRestantes<=3&&diasRestantes>=0){
+    al.innerHTML=`<div class="alert" style="background:var(--warnlt);color:var(--warn);border-left:3px solid var(--warn);margin-bottom:12px">
+      ⚠️ El mes cierra en ${diasRestantes===0?'hoy':''+diasRestantes+' día'+(diasRestantes>1?'s':'')}. Asegúrate de tener todos tus registros al día — después no podrás modificar nada.
+    </div>`;
+  }
   document.querySelectorAll('.tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
   const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
   show('tipoDiaGrid'); show('camposNormal'); hide('camposEspecial');
@@ -1027,7 +1050,6 @@ function initForm(){
   ['empActs','heJust','empNota','empNotaOtro'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
   ['vacIni','vacFin'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
   const vacRes=$('vacResumen'); if(vacRes) vacRes.textContent='';
-  const al=$('empAlert'); if(al) al.innerHTML='';
   const tv=$('togV'); if(tv) tv.classList.remove('on');
   hide('heBox'); hide('heResumen');
   // Verificar extensión del usuario
@@ -1107,6 +1129,18 @@ window.onFechaChange = async function(){
   if(!f||!f.value) return;
   $('empFechaLbl').textContent=fmtLong(f.value);
   const empAlert=$('empAlert');
+
+  // Verificar cierre de mes primero
+  if(mesCerrado(f.value)){
+    hide('camposNormal');hide('camposEspecial');hide('heResumen');hide('heBox');hide('tipoDiaGrid');
+    if(empAlert) empAlert.innerHTML=`
+      <div style="background:var(--gray100);border:1px solid var(--gray300);border-radius:var(--r);padding:16px;text-align:center">
+        <div style="font-size:22px;margin-bottom:6px">🔒</div>
+        <div style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:6px">Mes cerrado</div>
+        <div style="font-size:13px;color:var(--text2)">Este mes ya fue procesado. No puedes agregar ni modificar registros.</div>
+      </div>`;
+    return;
+  }
 
   // 1. Suspensión — bloqueo total
   const susp=await esSuspension(me.id, f.value);
@@ -1225,6 +1259,12 @@ window.guardarReg=async()=>{
   const restoreBtn=()=>{ if(btnGuardar){ btnGuardar.disabled=false; btnGuardar.textContent='Guardar registro'; } };
   const fecha=$('empFecha').value;
   if(!fecha){al.innerHTML='<div class="alert ae">Selecciona una fecha.</div>';return;}
+
+  // Verificar cierre de mes
+  if(mesCerrado(fecha)){
+    al.innerHTML='<div class="alert ae">🔒 Este mes ya está cerrado. No se pueden agregar ni modificar registros.</div>';
+    restoreBtn();return;
+  }
 
   // ── VALIDACIÓN DE FECHA EN EL SERVIDOR ──────────────
   // Verificar que la fecha no sea futura (excepto vacaciones)
