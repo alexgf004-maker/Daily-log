@@ -992,6 +992,30 @@ window.actualizarResumenVac=function(){
   el.innerHTML=`<span style="color:var(--blue)">📅 ${dias} día${dias>1?'s':''} — del ${fmt(ini)} al ${fmt(fin)}</span>`;
 };
 
+let toastEmpTimer;
+function showToastEmp(msg, duration=3500){
+  clearTimeout(toastEmpTimer);
+  let t=document.getElementById('toastEmp');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toastEmp';
+    t.style.cssText=`position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;
+      font-family:var(--sans);font-size:13px;font-weight:500;
+      box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:999;
+      max-width:320px;width:90%;text-align:center;
+      transition:opacity .3s;white-space:pre-line`;
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.opacity='1';
+  t.style.display='block';
+  toastEmpTimer=setTimeout(()=>{
+    t.style.opacity='0';
+    setTimeout(()=>t.style.display='none', 300);
+  }, duration);
+}
+
 window.setTipoDia=function(tipo,btn){
   tipoDia=tipo;
   document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
@@ -1032,7 +1056,7 @@ function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();
   tipoDia='normal';
 
-  // Notificación de cierre de mes — popup al entrar
+  // Notificación flotante de cierre de mes
   const hoy=new Date();
   const ultimoDia=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
   const diasRestantes=ultimoDia-hoy.getDate();
@@ -1041,22 +1065,48 @@ function initForm(){
     if(!sessionStorage.getItem(key)){
       sessionStorage.setItem(key,'1');
       setTimeout(()=>{
+        const color=diasRestantes===0?'var(--danger)':'var(--warn)';
+        const emoji=diasRestantes===0?'🚨':'⚠️';
+        const titulo=diasRestantes===0?'¡Hoy cierra el mes!':
+          diasRestantes===1?'¡Mañana cierra el mes!':
+          `Cierre de mes en ${diasRestantes} días`;
         const msg=diasRestantes===0
-          ?'⚠️ <b>Hoy es el último día del mes.</b> Después de hoy no podrás agregar ni modificar registros de este mes.'
-          :`⚠️ <b>El mes cierra en ${diasRestantes} día${diasRestantes>1?'s':''}.</b> Asegúrate de tener todos tus registros al día.`;
-        // Crear notificación
-        const notif=document.createElement('div');
-        notif.style.cssText=`position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:999;
-          background:#fff;border:2px solid var(--warn);border-radius:12px;padding:16px 20px;
-          box-shadow:0 8px 24px rgba(0,0,0,.15);max-width:340px;width:90%;text-align:center;
-          animation:fadeUp .3s ease`;
-        notif.innerHTML=`
-          <div style="font-size:24px;margin-bottom:8px">📅</div>
-          <div style="font-size:14px;color:var(--text);line-height:1.5;margin-bottom:14px">${msg}</div>
-          <button onclick="this.parentElement.remove()" style="background:var(--warn);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer">Entendido</button>`;
-        document.body.appendChild(notif);
-        // Auto-cerrar a los 8 segundos
-        setTimeout(()=>notif.remove(), 8000);
+          ?'Después de hoy no podrás agregar ni modificar registros de este mes. Revisa que todo esté completo.'
+          :`Asegúrate de tener todos tus registros al día antes del cierre. Te quedan ${diasRestantes} día${diasRestantes>1?'s':''}.`;
+
+        const card=document.createElement('div');
+        card.id='cierreMesCard';
+        card.style.cssText=`
+          position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);
+          background:#fff;border-radius:16px;padding:24px;width:88%;max-width:320px;
+          box-shadow:0 20px 60px rgba(0,0,0,.25);z-index:1000;
+          animation:cierrePop .35s cubic-bezier(.34,1.56,.64,1) forwards;
+          text-align:center;`;
+        card.innerHTML=`
+          <div style="font-size:44px;margin-bottom:12px">${emoji}</div>
+          <div style="font-size:16px;font-weight:800;color:${color};margin-bottom:8px">${titulo}</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px">${msg}</div>
+          <button onclick="document.getElementById('cierreMesCard').remove();document.getElementById('cierreMesOverlay').remove();"
+            style="width:100%;background:${color};color:#fff;border:none;border-radius:10px;
+            padding:12px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer">
+            Entendido, lo reviso
+          </button>`;
+
+        const overlay=document.createElement('div');
+        overlay.id='cierreMesOverlay';
+        overlay.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:999;`;
+        overlay.onclick=()=>{card.remove();overlay.remove();};
+
+        // Agregar keyframe si no existe
+        if(!document.getElementById('cierreMesStyle')){
+          const st=document.createElement('style');
+          st.id='cierreMesStyle';
+          st.textContent=`@keyframes cierrePop{from{opacity:0;transform:translate(-50%,-50%) scale(0.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}`;
+          document.head.appendChild(st);
+        }
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(card);
       }, 800);
     }
   }
