@@ -1032,16 +1032,33 @@ function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();
   tipoDia='normal';
 
-  // Aviso de cierre de mes próximo
+  // Notificación de cierre de mes — popup al entrar
   const hoy=new Date();
   const ultimoDia=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
-  const diaActual=hoy.getDate();
-  const diasRestantes=ultimoDia-diaActual;
-  const al=$('empAlert');
-  if(al&&diasRestantes<=3&&diasRestantes>=0){
-    al.innerHTML=`<div class="alert" style="background:var(--warnlt);color:var(--warn);border-left:3px solid var(--warn);margin-bottom:12px">
-      ⚠️ El mes cierra en ${diasRestantes===0?'hoy':''+diasRestantes+' día'+(diasRestantes>1?'s':'')}. Asegúrate de tener todos tus registros al día — después no podrás modificar nada.
-    </div>`;
+  const diasRestantes=ultimoDia-hoy.getDate();
+  if(diasRestantes<=3){
+    const key=`cierreMesVisto_${hoy.getFullYear()}_${hoy.getMonth()+1}_${hoy.getDate()}`;
+    if(!sessionStorage.getItem(key)){
+      sessionStorage.setItem(key,'1');
+      setTimeout(()=>{
+        const msg=diasRestantes===0
+          ?'⚠️ <b>Hoy es el último día del mes.</b> Después de hoy no podrás agregar ni modificar registros de este mes.'
+          :`⚠️ <b>El mes cierra en ${diasRestantes} día${diasRestantes>1?'s':''}.</b> Asegúrate de tener todos tus registros al día.`;
+        // Crear notificación
+        const notif=document.createElement('div');
+        notif.style.cssText=`position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:999;
+          background:#fff;border:2px solid var(--warn);border-radius:12px;padding:16px 20px;
+          box-shadow:0 8px 24px rgba(0,0,0,.15);max-width:340px;width:90%;text-align:center;
+          animation:fadeUp .3s ease`;
+        notif.innerHTML=`
+          <div style="font-size:24px;margin-bottom:8px">📅</div>
+          <div style="font-size:14px;color:var(--text);line-height:1.5;margin-bottom:14px">${msg}</div>
+          <button onclick="this.parentElement.remove()" style="background:var(--warn);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer">Entendido</button>`;
+        document.body.appendChild(notif);
+        // Auto-cerrar a los 8 segundos
+        setTimeout(()=>notif.remove(), 8000);
+      }, 800);
+    }
   }
   document.querySelectorAll('.tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
   const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
