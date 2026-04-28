@@ -1052,6 +1052,47 @@ window.setTipoDia=function(tipo,btn){
   }
 };
 
+function mostrarCierreMes(diasRestantes){
+  const color=diasRestantes===0?'var(--danger)':'var(--warn)';
+  const emoji=diasRestantes===0?'🚨':'⚠️';
+  const titulo=diasRestantes===0?'¡Hoy cierra el mes!':
+    diasRestantes===1?'¡Mañana cierra el mes!':
+    `Cierre de mes en ${diasRestantes} días`;
+  const msg=diasRestantes===0
+    ?'Después de hoy no podrás agregar ni modificar registros de este mes. Revisa que todo esté completo.'
+    :`Asegúrate de tener todos tus registros al día antes del cierre. Te quedan ${diasRestantes} día${diasRestantes>1?'s':''}.`;
+
+  const card=document.createElement('div');
+  card.id='cierreMesCard';
+  card.style.cssText=`position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);
+    background:#fff;border-radius:16px;padding:24px;width:88%;max-width:320px;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);z-index:1000;
+    animation:cierrePop .35s cubic-bezier(.34,1.56,.64,1) forwards;text-align:center;`;
+  card.innerHTML=`
+    <div style="font-size:44px;margin-bottom:12px">${emoji}</div>
+    <div style="font-size:16px;font-weight:800;color:${color};margin-bottom:8px">${titulo}</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px">${msg}</div>
+    <button onclick="document.getElementById('cierreMesCard').remove();document.getElementById('cierreMesOverlay').remove();"
+      style="width:100%;background:${color};color:#fff;border:none;border-radius:10px;
+      padding:12px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer">
+      Entendido, lo reviso
+    </button>`;
+
+  const overlay=document.createElement('div');
+  overlay.id='cierreMesOverlay';
+  overlay.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:999;`;
+  overlay.onclick=()=>{card.remove();overlay.remove();};
+
+  if(!document.getElementById('cierreMesStyle')){
+    const st=document.createElement('style');
+    st.id='cierreMesStyle';
+    st.textContent=`@keyframes cierrePop{from{opacity:0;transform:translate(-50%,-50%) scale(0.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}`;
+    document.head.appendChild(st);
+  }
+  document.body.appendChild(overlay);
+  document.body.appendChild(card);
+}
+
 function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();
   tipoDia='normal';
@@ -1061,54 +1102,7 @@ function initForm(){
   const ultimoDia=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
   const diasRestantes=ultimoDia-hoy.getDate();
   if(diasRestantes<=3){
-    const key=`cierreMesVisto_${hoy.getFullYear()}_${hoy.getMonth()+1}_${hoy.getDate()}`;
-    if(!sessionStorage.getItem(key)){
-      sessionStorage.setItem(key,'1');
-      setTimeout(()=>{
-        const color=diasRestantes===0?'var(--danger)':'var(--warn)';
-        const emoji=diasRestantes===0?'🚨':'⚠️';
-        const titulo=diasRestantes===0?'¡Hoy cierra el mes!':
-          diasRestantes===1?'¡Mañana cierra el mes!':
-          `Cierre de mes en ${diasRestantes} días`;
-        const msg=diasRestantes===0
-          ?'Después de hoy no podrás agregar ni modificar registros de este mes. Revisa que todo esté completo.'
-          :`Asegúrate de tener todos tus registros al día antes del cierre. Te quedan ${diasRestantes} día${diasRestantes>1?'s':''}.`;
-
-        const card=document.createElement('div');
-        card.id='cierreMesCard';
-        card.style.cssText=`
-          position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);
-          background:#fff;border-radius:16px;padding:24px;width:88%;max-width:320px;
-          box-shadow:0 20px 60px rgba(0,0,0,.25);z-index:1000;
-          animation:cierrePop .35s cubic-bezier(.34,1.56,.64,1) forwards;
-          text-align:center;`;
-        card.innerHTML=`
-          <div style="font-size:44px;margin-bottom:12px">${emoji}</div>
-          <div style="font-size:16px;font-weight:800;color:${color};margin-bottom:8px">${titulo}</div>
-          <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px">${msg}</div>
-          <button onclick="document.getElementById('cierreMesCard').remove();document.getElementById('cierreMesOverlay').remove();"
-            style="width:100%;background:${color};color:#fff;border:none;border-radius:10px;
-            padding:12px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer">
-            Entendido, lo reviso
-          </button>`;
-
-        const overlay=document.createElement('div');
-        overlay.id='cierreMesOverlay';
-        overlay.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:999;`;
-        overlay.onclick=()=>{card.remove();overlay.remove();};
-
-        // Agregar keyframe si no existe
-        if(!document.getElementById('cierreMesStyle')){
-          const st=document.createElement('style');
-          st.id='cierreMesStyle';
-          st.textContent=`@keyframes cierrePop{from{opacity:0;transform:translate(-50%,-50%) scale(0.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}`;
-          document.head.appendChild(st);
-        }
-
-        document.body.appendChild(overlay);
-        document.body.appendChild(card);
-      }, 800);
-    }
+    setTimeout(()=>mostrarCierreMes(diasRestantes), 800);
   }
   document.querySelectorAll('.tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
   const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
