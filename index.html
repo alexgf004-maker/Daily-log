@@ -1969,20 +1969,29 @@ async function loadFiltEmps(){
   const s=$('empSearch'); if(s) s.value='';
 }
 
-window.abrirPerfilEmp=async(uid, nombre)=>{
+window.abrirPerfilEmp=async(uid, nombre, mesInicial)=>{
   perfilEmpUID=uid;
-  hide('adEmpList'); show('adEmpPerfil');
+  // Ocultar lista y mostrar perfil según vista activa
+  hide('adEmpList'); hide('vistaMes');
+  show('adEmpPerfil');
   $('adEmpNombre').textContent=nombre;
-  // Set mes actual por defecto
   const now=new Date();
   const mesInput=$('adEmpMes');
-  if(mesInput) mesInput.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  if(mesInput) mesInput.value=mesInicial||`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   await cargarPerfilEmpleado();
 };
 
 window.volverListaEmps=()=>{
   perfilEmpUID=null;
-  hide('adEmpPerfil'); show('adEmpList');
+  hide('adEmpPerfil');
+  // Volver a la vista que estaba activa
+  const vistaMesVisible=$('vistaMes')?.style.display!=='none';
+  if(vistaMesVisible||$('mesReporteGlobal')?.value){
+    show('vistaEmpleado'); // el perfil está dentro de vistaEmpleado
+    show('vistaMes'); hide('vistaEmpleado');
+  } else {
+    show('vistaEmpleado');
+  }
 };
 
 window.cargarPerfilEmpleado=async()=>{
@@ -2266,7 +2275,7 @@ window.cargarReporteMes=async()=>{
     <div class="card" style="padding:0;overflow:hidden">
       ${filas.map((f,i)=>`
         <div style="${i>0?'border-top:1px solid var(--gray100);':''}padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer"
-          onclick="abrirPerfilEmp('${f.u.id}','${f.u.nombre}')"
+          onclick="abrirPerfilEmp('${f.u.id}','${f.u.nombre}','${mes}')"
           onmouseover="this.style.background='var(--bluelt)'" onmouseout="this.style.background=''">
           <div style="min-width:0;flex:1">
             <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.u.nombre}</div>
