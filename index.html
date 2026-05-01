@@ -536,36 +536,54 @@ function renderAdmin(){
       </div>
       <div id="adRegs" style="display:none">
         <div class="page-header" style="justify-content:space-between">
-          <div><div class="ph-title">Registros por empleado</div><div class="ph-sub">Selecciona un empleado para ver su historial</div></div>
-          <button class="btn btn-g btn-sm" onclick="exportar()">📥 Exportar</button>
-        </div>
-        <!-- Búsqueda -->
-        <div style="position:relative;margin-bottom:12px">
-          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray400);font-size:15px">🔍</span>
-          <input type="text" id="empSearch" placeholder="Buscar empleado..." oninput="filtrarEmps()"
-            style="padding-left:36px;background:#fff;border:1.5px solid var(--gray200)">
-        </div>
-        <!-- Lista de empleados -->
-        <div id="adEmpList"><div class="spin"></div></div>
-        <!-- Vista de perfil del empleado seleccionado -->
-        <div id="adEmpPerfil" style="display:none">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-            <button class="btn btn-gh btn-sm" onclick="volverListaEmps()">← Volver</button>
-            <div id="adEmpNombre" style="font-size:16px;font-weight:700;color:var(--text)"></div>
+          <div><div class="ph-title">Registros</div><div class="ph-sub" id="adRegsSubtitle">Selecciona un empleado para ver su historial</div></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-gh btn-sm" id="btnVistaEmp" onclick="switchVistaRegs('empleado')">👤 Por empleado</button>
+            <button class="btn btn-p btn-sm" id="btnVistaMes" onclick="switchVistaRegs('mes')">📅 Por mes</button>
           </div>
-          <!-- Resumen del empleado -->
-          <div id="adEmpResumen" style="margin-bottom:14px"></div>
-          <!-- Filtro mes -->
+        </div>
+
+        <!-- Vista por empleado -->
+        <div id="vistaEmpleado">
+          <!-- Búsqueda -->
+          <div style="position:relative;margin-bottom:12px">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray400);font-size:15px">🔍</span>
+            <input type="text" id="empSearch" placeholder="Buscar empleado..." oninput="filtrarEmps()"
+              style="padding-left:36px;background:#fff;border:1.5px solid var(--gray200)">
+          </div>
+          <div id="adEmpList"><div class="spin"></div></div>
+          <div id="adEmpPerfil" style="display:none">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+              <button class="btn btn-gh btn-sm" onclick="volverListaEmps()">← Volver</button>
+              <div id="adEmpNombre" style="font-size:16px;font-weight:700;color:var(--text)"></div>
+            </div>
+            <div id="adEmpResumen" style="margin-bottom:14px"></div>
+            <div class="card" style="margin-bottom:14px">
+              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+                <div class="fg" style="margin-bottom:0;flex:1;min-width:130px">
+                  <label class="fl">Mes</label>
+                  <input type="month" id="adEmpMes">
+                </div>
+                <button class="btn btn-p btn-sm" onclick="cargarPerfilEmpleado()">Ver</button>
+              </div>
+            </div>
+            <div id="adEmpRegs"><div class="spin"></div></div>
+          </div>
+        </div>
+
+        <!-- Vista por mes -->
+        <div id="vistaMes" style="display:none">
           <div class="card" style="margin-bottom:14px">
             <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
               <div class="fg" style="margin-bottom:0;flex:1;min-width:130px">
                 <label class="fl">Mes</label>
-                <input type="month" id="adEmpMes">
+                <input type="month" id="mesReporteGlobal">
               </div>
-              <button class="btn btn-p btn-sm" onclick="cargarPerfilEmpleado()">Ver</button>
+              <button class="btn btn-p btn-sm" onclick="cargarReporteMes()">Ver</button>
+              <button class="btn btn-g btn-sm" onclick="exportarMesCompleto()">📥 Exportar todo</button>
             </div>
           </div>
-          <div id="adEmpRegs"><div class="spin"></div></div>
+          <div id="reporteMesLista"></div>
         </div>
       </div>
       <div id="adPend" style="display:none">
@@ -2178,7 +2196,142 @@ window.aprobarHEyRefresh=async(uid,key)=>{
   await cargarPerfilEmpleado();
 };
 
-window.buscarRegs=async()=>{}; // kept for exportar compatibility
+window.switchVistaRegs=(vista)=>{
+  if(vista==='mes'){
+    show('vistaMes');hide('vistaEmpleado');
+    $('btnVistaMes').className='btn btn-p btn-sm';
+    $('btnVistaEmp').className='btn btn-gh btn-sm';
+    // Pre-llenar mes anterior
+    const now=new Date();
+    const mesAnterior=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const mesStr=`${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth()+1).padStart(2,'0')}`;
+    $('mesReporteGlobal').value=mesStr;
+    cargarReporteMes();
+  } else {
+    show('vistaEmpleado');hide('vistaMes');
+    $('btnVistaEmp').className='btn btn-p btn-sm';
+    $('btnVistaMes').className='btn btn-gh btn-sm';
+    loadFiltEmps();
+  }
+};
+
+window.cargarReporteMes=async()=>{
+  const mes=$('mesReporteGlobal')?.value;
+  if(!mes) return;
+  const l=$('reporteMesLista'); l.innerHTML='<div class="spin"></div>';
+  const [users,allRegs]=await Promise.all([getUsers(),getAllRegs()]);
+  let emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+  if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
+    emps=emps.filter(u=>me.empleadosAsig.includes(u.id));
+  }
+  emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const [y,m]=mes.split('-');
+  const nomMes=new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
+
+  // Totales generales
+  let totViat=0,totMinHE=0,totRegs=0;
+
+  const filas=emps.map(u=>{
+    const regsEmp=allRegs.filter(r=>r.userId===u.id&&r.fecha&&r.fecha.startsWith(mes));
+    const viaticos=regsEmp.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
+    const minHE=regsEmp.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
+    const pendHE=regsEmp.filter(r=>r.he&&r.estadoHE==='pendiente').length;
+    const hrs=Math.floor(minHE/60), mins=minHE%60;
+    totViat+=viaticos; totMinHE+=minHE; totRegs+=regsEmp.length;
+    return {u, regs:regsEmp.length, viaticos, minHE, hrs, mins, pendHE};
+  });
+
+  const totHrs=Math.floor(totMinHE/60), totMins=totMinHE%60;
+
+  l.innerHTML=`
+    <div class="card" style="margin-bottom:14px;border-top:3px solid var(--blue)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div style="font-weight:700;font-size:15px;color:var(--text)">Resumen — ${nomMes}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:0">
+        <div style="background:var(--bluelt);border-radius:8px;padding:12px">
+          <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--blue)">${totRegs}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">Registros</div>
+        </div>
+        <div style="background:var(--greenlt);border-radius:8px;padding:12px">
+          <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green)">${totViat}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">Viáticos</div>
+        </div>
+        <div style="background:var(--warnlt);border-radius:8px;padding:12px">
+          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--warn)">${totMinHE>0?(totHrs>0?totHrs+'h ':'')+totMins+'m':'0'}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">Hrs extras</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      ${filas.map((f,i)=>`
+        <div style="${i>0?'border-top:1px solid var(--gray100);':''}padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer"
+          onclick="abrirPerfilEmp('${f.u.id}','${f.u.nombre}')"
+          onmouseover="this.style.background='var(--bluelt)'" onmouseout="this.style.background=''">
+          <div style="min-width:0;flex:1">
+            <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.u.nombre}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:1px">${f.u.cargo||'—'}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;font-size:12px">
+            ${f.pendHE>0?`<span class="badge bp" style="font-size:10px">⏱${f.pendHE}</span>`:''}
+            <div style="text-align:right">
+              <span style="color:var(--text);font-weight:600">${f.regs}</span> reg &nbsp;
+              <span style="color:var(--green);font-weight:600">${f.viaticos}</span> viát &nbsp;
+              <span style="color:var(--warn);font-weight:600">${f.minHE>0?(f.hrs>0?f.hrs+'h ':'')+f.mins+'m':'—'}</span>
+            </div>
+            <span style="color:var(--gray300);font-size:16px">›</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+};
+
+window.exportarMesCompleto=async()=>{
+  const mes=$('mesReporteGlobal')?.value;
+  if(!mes){alert('Selecciona un mes primero.');return;}
+  if(!window.XLSX){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload=res;s.onerror=rej;document.head.appendChild(s);
+    });
+  }
+  const [users,allRegs]=await Promise.all([getUsers(),getAllRegs()]);
+  let emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+  emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const regsDelMes=allRegs.filter(r=>r.fecha&&r.fecha.startsWith(mes));
+  const wb=XLSX.utils.book_new();
+  // Hoja detalle
+  const headers=['Fecha','Empleado','Cargo','Entrada','Salida','Actividades','Viático','Estado Viático','HE','Mins HE aprobados','Justif. HE','Estado HE','Tipo día','Nota'];
+  const rows=regsDelMes.map(r=>[
+    r.fecha,r.userName||r.userId,r.cargo||'',r.horaEntrada||'',r.horaSalida||'',r.actividades||'',
+    r.viatico?'Sí':'No',r.estadoViatico||'—',r.he?'Sí':'No',
+    r.estadoHE==='aprobado'?(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)):0,
+    r.heJustif||'',r.estadoHE||'—',r.tipoDia||'normal',r.nota||''
+  ]);
+  const ws1=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws1['!cols']=[{wch:12},{wch:30},{wch:28},{wch:9},{wch:9},{wch:40},{wch:8},{wch:14},{wch:6},{wch:12},{wch:30},{wch:14},{wch:12},{wch:25}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Detalle');
+  // Hoja resumen
+  const rHeaders=['Empleado','Cargo','Registros','Viáticos','Días HE aprobados','Total HE'];
+  const rRows=emps.map(u=>{
+    const re=regsDelMes.filter(r=>r.userId===u.id);
+    const v=re.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
+    const heD=re.filter(r=>r.he&&r.estadoHE==='aprobado').length;
+    const min=re.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
+    const h=Math.floor(min/60),m=min%60;
+    return [u.nombre,u.cargo||'',re.length,v,heD,min>0?(h>0?h+'h ':'')+m+'m':'—'];
+  });
+  const totV=rRows.reduce((a,r)=>a+r[3],0);
+  const totD=rRows.reduce((a,r)=>a+r[4],0);
+  const totMin=regsDelMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
+  const tH=Math.floor(totMin/60),tM=totMin%60;
+  const ws2=XLSX.utils.aoa_to_sheet([rHeaders,...rRows,[],['TOTAL GENERAL','',rRows.reduce((a,r)=>a+r[2],0),totV,totD,totMin>0?(tH>0?tH+'h ':'')+tM+'m':'0']]);
+  ws2['!cols']=[{wch:30},{wch:28},{wch:12},{wch:10},{wch:18},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Resumen');
+  const [y,m]=mes.split('-');
+  const nomMes=new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
+  XLSX.writeFile(wb,`planilla-${nomMes.replace(' ','-')}.xlsx`);
+};
 
 // ── OBSERVACIONES ──────────────────────────────────────
 let obsRegKey=null;
