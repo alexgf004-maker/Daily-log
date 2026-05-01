@@ -1082,7 +1082,11 @@ window.setTipoDia=function(tipo,btn){
 
 async function mostrarResumenMesAnterior(){
   const hoy=new Date();
-  if(hoy.getDate()>3) return; // Solo primeros 3 días del mes
+  if(hoy.getDate()>3) return;
+  // Solo una vez por día por usuario
+  const key=`resumenMesVisto_${me?.id||'u'}_${hoy.getFullYear()}_${hoy.getMonth()+1}_${hoy.getDate()}`;
+  if(sessionStorage.getItem(key)) return;
+  sessionStorage.setItem(key,'1'); // Solo primeros 3 días del mes
   const mesAnt=new Date(hoy.getFullYear(),hoy.getMonth()-1,1);
   const mesStr=`${mesAnt.getFullYear()}-${String(mesAnt.getMonth()+1).padStart(2,'0')}`;
   const nomMes=mesAnt.toLocaleDateString('es-SV',{month:'long',year:'numeric'});
