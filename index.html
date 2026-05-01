@@ -1080,6 +1080,88 @@ window.setTipoDia=function(tipo,btn){
   }
 };
 
+async function mostrarResumenMesAnterior(){
+  const hoy=new Date();
+  if(hoy.getDate()>3) return; // Solo primeros 3 días del mes
+  const mesAnt=new Date(hoy.getFullYear(),hoy.getMonth()-1,1);
+  const mesStr=`${mesAnt.getFullYear()}-${String(mesAnt.getMonth()+1).padStart(2,'0')}`;
+  const nomMes=mesAnt.toLocaleDateString('es-SV',{month:'long',year:'numeric'});
+
+  try{
+    const snap=await get(ref(db,`registros/${me.id}`));
+    if(!snap.exists()) return;
+    const regs=Object.values(snap.val()).filter(r=>r.fecha&&r.fecha.startsWith(mesStr));
+    if(!regs.length) return;
+
+    const totalRegs=regs.filter(r=>!r.autoGenerado).length;
+    const viaticos=regs.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
+    const viaticosAnul=regs.filter(r=>r.viatico&&r.estadoViatico==='rechazado').length;
+    const minHE=regs.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
+    const heRechaz=regs.filter(r=>r.he&&r.estadoHE==='rechazado').length;
+    const hePend=regs.filter(r=>r.he&&r.estadoHE==='pendiente').length;
+    const hrs=Math.floor(minHE/60), mins=minHE%60;
+    const heStr=minHE>0?(hrs>0?hrs+'h ':'')+mins+'m':'0';
+
+    const card=document.createElement('div');
+    card.id='resumenMesCard';
+    card.style.cssText=`position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);
+      background:#fff;border-radius:16px;padding:24px;width:88%;max-width:340px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);z-index:1000;
+      animation:cierrePop .35s cubic-bezier(.34,1.56,.64,1) forwards;text-align:center;`;
+    card.innerHTML=`
+      <div style="font-size:36px;margin-bottom:8px">📊</div>
+      <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:4px">Resumen de ${nomMes}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px">Esto es lo que registraste el mes pasado</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+        <div style="background:var(--bluelt);border-radius:8px;padding:10px">
+          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--blue)">${totalRegs}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px">Registros</div>
+        </div>
+        <div style="background:var(--greenlt);border-radius:8px;padding:10px">
+          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--green)">${viaticos}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px">Viáticos</div>
+        </div>
+        <div style="background:var(--warnlt);border-radius:8px;padding:10px">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--warn)">${heStr}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px">HE aprobadas</div>
+        </div>
+      </div>
+      ${viaticosAnul>0||heRechaz>0||hePend>0?`
+      <div style="background:var(--dangerlt);border-radius:8px;padding:10px;margin-bottom:14px;font-size:12px;color:var(--danger);text-align:left">
+        ${viaticosAnul>0?`⚠️ ${viaticosAnul} viático${viaticosAnul>1?'s anulados':' anulado'}<br>`:''}
+        ${heRechaz>0?`⚠️ ${heRechaz} HE rechazada${heRechaz>1?'s':''}<br>`:''}
+        ${hePend>0?`⏳ ${hePend} HE aún pendiente${hePend>1?'s':''}`:''}
+      </div>`:''}
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px">Esto debería reflejarse en tu planilla de este mes.</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="document.getElementById('resumenMesCard').remove();document.getElementById('resumenMesOverlay').remove();"
+          style="flex:1;background:var(--gray100);color:var(--text);border:none;border-radius:10px;
+          padding:11px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer">
+          Cerrar
+        </button>
+        <button onclick="document.getElementById('resumenMesCard').remove();document.getElementById('resumenMesOverlay').remove();empTab('h',document.querySelectorAll('#employeeScreen .tab')[1]);"
+          style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:10px;
+          padding:11px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer">
+          Ver detalle
+        </button>
+      </div>`;
+
+    const overlay=document.createElement('div');
+    overlay.id='resumenMesOverlay';
+    overlay.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:999;`;
+    overlay.onclick=()=>{card.remove();overlay.remove();};
+
+    if(!document.getElementById('cierreMesStyle')){
+      const st=document.createElement('style');
+      st.id='cierreMesStyle';
+      st.textContent=`@keyframes cierrePop{from{opacity:0;transform:translate(-50%,-50%) scale(0.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}`;
+      document.head.appendChild(st);
+    }
+    document.body.appendChild(overlay);
+    document.body.appendChild(card);
+  }catch(e){}
+}
+
 function mostrarCierreMes(diasRestantes){
   const color=diasRestantes===0?'var(--danger)':'var(--warn)';
   const emoji=diasRestantes===0?'🚨':'⚠️';
@@ -1131,6 +1213,11 @@ function initForm(){
   const diasRestantes=ultimoDia-hoy.getDate();
   if(diasRestantes<=3){
     setTimeout(()=>mostrarCierreMes(diasRestantes), 800);
+  }
+
+  // Resumen mes anterior — primeros 3 días del mes
+  if(hoy.getDate()<=3){
+    setTimeout(()=>mostrarResumenMesAnterior(), 1500);
   }
   document.querySelectorAll('.tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
   const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
