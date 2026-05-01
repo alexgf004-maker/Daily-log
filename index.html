@@ -545,30 +545,12 @@ function renderAdmin(){
 
         <!-- Vista por empleado -->
         <div id="vistaEmpleado">
-          <!-- Búsqueda -->
           <div style="position:relative;margin-bottom:12px">
             <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray400);font-size:15px">🔍</span>
             <input type="text" id="empSearch" placeholder="Buscar empleado..." oninput="filtrarEmps()"
               style="padding-left:36px;background:#fff;border:1.5px solid var(--gray200)">
           </div>
           <div id="adEmpList"><div class="spin"></div></div>
-          <div id="adEmpPerfil" style="display:none">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-              <button class="btn btn-gh btn-sm" onclick="volverListaEmps()">← Volver</button>
-              <div id="adEmpNombre" style="font-size:16px;font-weight:700;color:var(--text)"></div>
-            </div>
-            <div id="adEmpResumen" style="margin-bottom:14px"></div>
-            <div class="card" style="margin-bottom:14px">
-              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-                <div class="fg" style="margin-bottom:0;flex:1;min-width:130px">
-                  <label class="fl">Mes</label>
-                  <input type="month" id="adEmpMes">
-                </div>
-                <button class="btn btn-p btn-sm" onclick="cargarPerfilEmpleado()">Ver</button>
-              </div>
-            </div>
-            <div id="adEmpRegs"><div class="spin"></div></div>
-          </div>
         </div>
 
         <!-- Vista por mes -->
@@ -584,6 +566,25 @@ function renderAdmin(){
             </div>
           </div>
           <div id="reporteMesLista"></div>
+        </div>
+
+        <!-- Perfil individual — accesible desde ambas vistas -->
+        <div id="adEmpPerfil" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+            <button class="btn btn-gh btn-sm" onclick="volverListaEmps()">← Volver</button>
+            <div id="adEmpNombre" style="font-size:16px;font-weight:700;color:var(--text)"></div>
+          </div>
+          <div id="adEmpResumen" style="margin-bottom:14px"></div>
+          <div class="card" style="margin-bottom:14px">
+            <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+              <div class="fg" style="margin-bottom:0;flex:1;min-width:130px">
+                <label class="fl">Mes</label>
+                <input type="month" id="adEmpMes">
+              </div>
+              <button class="btn btn-p btn-sm" onclick="cargarPerfilEmpleado()">Ver</button>
+            </div>
+          </div>
+          <div id="adEmpRegs"><div class="spin"></div></div>
         </div>
       </div>
       <div id="adPend" style="display:none">
@@ -1971,8 +1972,7 @@ async function loadFiltEmps(){
 
 window.abrirPerfilEmp=async(uid, nombre, mesInicial)=>{
   perfilEmpUID=uid;
-  // Ocultar lista y mostrar perfil según vista activa
-  hide('adEmpList'); hide('vistaMes');
+  hide('vistaEmpleado'); hide('vistaMes'); hide('adEmpList');
   show('adEmpPerfil');
   $('adEmpNombre').textContent=nombre;
   const now=new Date();
@@ -1981,16 +1981,14 @@ window.abrirPerfilEmp=async(uid, nombre, mesInicial)=>{
   await cargarPerfilEmpleado();
 };
 
+let vistaActiva='empleado';
 window.volverListaEmps=()=>{
   perfilEmpUID=null;
   hide('adEmpPerfil');
-  // Volver a la vista que estaba activa
-  const vistaMesVisible=$('vistaMes')?.style.display!=='none';
-  if(vistaMesVisible||$('mesReporteGlobal')?.value){
-    show('vistaEmpleado'); // el perfil está dentro de vistaEmpleado
-    show('vistaMes'); hide('vistaEmpleado');
+  if(vistaActiva==='mes'){
+    show('vistaMes');hide('vistaEmpleado');
   } else {
-    show('vistaEmpleado');
+    show('vistaEmpleado');hide('vistaMes');show('adEmpList');
   }
 };
 
@@ -2206,17 +2204,19 @@ window.aprobarHEyRefresh=async(uid,key)=>{
 };
 
 window.switchVistaRegs=(vista)=>{
+  vistaActiva=vista;
+  hide('adEmpPerfil');
   if(vista==='mes'){
     show('vistaMes');hide('vistaEmpleado');
     $('btnVistaMes').className='btn btn-p btn-sm';
     $('btnVistaEmp').className='btn btn-gh btn-sm';
-    // Pre-llenar mes anterior
     const now=new Date();
     const mesAnterior=new Date(now.getFullYear(),now.getMonth()-1,1);
     const mesStr=`${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth()+1).padStart(2,'0')}`;
     $('mesReporteGlobal').value=mesStr;
     cargarReporteMes();
   } else {
+    vistaActiva='empleado';
     show('vistaEmpleado');hide('vistaMes');
     $('btnVistaEmp').className='btn btn-p btn-sm';
     $('btnVistaMes').className='btn btn-gh btn-sm';
