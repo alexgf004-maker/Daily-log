@@ -1518,12 +1518,7 @@ window.guardarReg=async()=>{
   }
 
   try {
-    // Timeout de 15 segundos
-    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),15000));
-    await Promise.race([
-      push(ref(db,`registros/${me.id}`), datos),
-      timeout
-    ]);
+    await push(ref(db,`registros/${me.id}`), datos);
     initForm();
     // Esperar a que initForm termine su async y luego poner el mensaje
     setTimeout(()=>{
@@ -1535,12 +1530,8 @@ window.guardarReg=async()=>{
       }
     }, 600);
   } catch(e){
+    al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
     restoreBtn();
-    if(e.message==='timeout'){
-      al.innerHTML='<div class="alert ae">📶 Tu señal no es buena, intenta de nuevo.</div>';
-    } else {
-      al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
-    }
   }
 };
 
