@@ -1517,21 +1517,29 @@ window.guardarReg=async()=>{
     };
   }
 
+const timeoutTimer=setTimeout(()=>{
+    restoreBtn();
+    const alEl=$('empAlert');
+    if(alEl) alEl.innerHTML='<div class="alert ae">📶 Tu señal no es buena, intenta de nuevo.</div>';
+  }, 12000);
+
   try {
     await push(ref(db,`registros/${me.id}`), datos);
+    clearTimeout(timeoutTimer);
+    restoreBtn();
     initForm();
-    // Esperar a que initForm termine su async y luego poner el mensaje
     setTimeout(()=>{
-      const al=$('empAlert');
-      if(al){
-        al.innerHTML='<div class="alert as">✓ Registro guardado correctamente</div>';
+      const alEl=$('empAlert');
+      if(alEl){
+        alEl.innerHTML='<div class="alert as">✓ Registro guardado correctamente</div>';
         window.scrollTo({top:0,behavior:'smooth'});
-        setTimeout(()=>{ if(al) al.innerHTML=''; }, 4000);
+        setTimeout(()=>{ if(alEl) alEl.innerHTML=''; }, 4000);
       }
     }, 600);
   } catch(e){
-    al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
+    clearTimeout(timeoutTimer);
     restoreBtn();
+    al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
   }
 };
 
