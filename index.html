@@ -562,7 +562,7 @@ function renderAdmin(){
                 <input type="month" id="mesReporteGlobal">
               </div>
               <button class="btn btn-p btn-sm" onclick="cargarReporteMes()">Ver</button>
-              <button class="btn btn-g btn-sm" onclick="exportarMesCompleto()">📥 Exportar todo</button>
+              ${me?.role==='admin'?`<button class="btn btn-g btn-sm" onclick="exportarMesCompleto()">📥 Exportar todo</button>`:''}
             </div>
           </div>
           <div id="reporteMesLista"></div>
@@ -582,6 +582,7 @@ function renderAdmin(){
                 <input type="month" id="adEmpMes">
               </div>
               <button class="btn btn-p btn-sm" onclick="cargarPerfilEmpleado()">Ver</button>
+<button class="btn btn-g btn-sm" onclick="exportarEmpleadoIndividual()">📥 Excel</button>
             </div>
           </div>
           <div id="adEmpRegs"><div class="spin"></div></div>
@@ -2392,7 +2393,46 @@ window.cargarReporteMes=async()=>{
         </div>`).join('')}
     </div>`;
 };
+window.exportarEmpleadoIndividual=async()=>{
+  if(!perfilEmpUID){alert('Selecciona un empleado primero.');return;}
+  const mes=$('adEmpMes')?.value;
+  if(!mes){alert('Selecciona un mes primero.');return;}
+  if(!window.XLSX){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload=res;s.onerror=rej;document.head.appendChild(s);
+    });
+  }
+  const snap=await get(ref(db,`registros/${perfilEmpUID}`));
+  if(!snap.exists()){alert('Sin registros para exportar.');return;}
+  const items=Object.entries(snap.val()).map(([k,v])=>({key:k,...v}))
+    .filter(r=>r.fecha&&r.fecha.startsWith(mes));
+  if(!items.length){alert('Sin registros en este mes.');return;}
 
+  const wb=XLSX.utils.book_new();
+  const headers=['Fecha','Entrada','Salida','Actividades','Viático','Estado Viático','HE','Mins HE aprobados','Justif. HE','Estado HE','Tipo día','Nota'];
+  const rows=items.map(r=>[
+    r.fecha, r.horaEntrada||'', r.horaSalida||'', r.actividades||'',
+    r.viatico?'Sí':'No', r.estadoViatico||'—',
+    r.he?'Sí':'No',
+    r.estadoHE==='aprobado'?(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)):0,
+    r.heJustif||'', r.estadoHE||'—', r.tipoDia||'normal', r.nota||''
+  ]);
+  const viat=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
+  const minHE=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
+  const h=Math.floor(minHE/60),m=minHE%60;
+  const nombre=items[0]?.userName||perfilEmpUID;
+  const [y,mo]=mes.split('-');
+  const nomMes=new Date(parseInt(y),parseInt(mo)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
+  const ws=XLSX.utils.aoa_to_sheet([
+    headers,...rows,[],
+    ['RESUMEN','','','',`Viáticos: ${viat}`,'',`HE aprobadas: ${minHE>0?(h>0?h+'h ':'')+m+'m':'0'}`]
+  ]);
+  ws['!cols']=[{wch:12},{wch:9},{wch:9},{wch:40},{wch:8},{wch:14},{wch:6},{wch:12},{wch:30},{wch:14},{wch:12},{wch:25}];
+  XLSX.utils.book_append_sheet(wb,ws,'Registros');
+  XLSX.writeFile(wb,`${nombre.split(' ')[0]}-${nomMes}.xlsx`);
+};
 window.exportarMesCompleto=async()=>{
   const mes=$('mesReporteGlobal')?.value;
   if(!mes){alert('Selecciona un mes primero.');return;}
