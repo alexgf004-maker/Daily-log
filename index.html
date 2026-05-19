@@ -2762,12 +2762,6 @@ window.openDet=async(uid,key,isAdmin)=>{
       <div style="color:var(--text2);margin-top:3px">Motivo: ${r.notaAjusteHE}</div>
     </div></div>`:''}
     ${r.he&&r.motivoRechazoHE?`<div class="dr"><div class="dk">Motivo rechazo HE</div><div class="dv" style="color:var(--danger)">${r.motivoRechazoHE}</div></div>`:''}`;
-  $('moDetActs').innerHTML=(isAdmin&&r.he&&eh==='pendiente')
-    ?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${uid}','${key}');closeModal('moDet')">✓ Aprobar HE</button>
-       <button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','he')">✗ Rechazar HE</button>`
-    :(isAdmin&&r.viatico&&ev!=='rechazado')
-    ?`<button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','viatico')">✗ Anular viático</button>`
-    :'';
   $('moDetActs').innerHTML=isAdmin()?(
     (r.he&&eh==='pendiente')
       ?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${uid}','${key}');closeModal('moDet')">✓ Aprobar HE</button>
