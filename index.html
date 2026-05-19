@@ -2549,24 +2549,36 @@ function updateObsBadge(items){
 window.marcarLeida=async(key)=>{
   try{
     await set(ref(db,`observaciones/${key}/leida`), true);
-    await loadObservaciones();
-    // Actualizar badge inmediatamente
     const obsSnap=await get(ref(db,'observaciones'));
     const badge=$('obsBadge');
-    if(badge){
-      const noLeidas=obsSnap.exists()
-        ? Object.values(obsSnap.val()).filter(o=>!o.leida&&o.detalle).length
-        : 0;
-      if(noLeidas>0){badge.textContent=noLeidas;badge.style.display='inline';}
-      else badge.style.display='none';
+    const card=$('dashObsCard');
+    const listEl=$('dashObsList');
+    if(obsSnap.exists()){
+      const obsItems=Object.entries(obsSnap.val()).map(([k,v])=>({key:k,...v}));
+      const noLeidas=obsItems.filter(o=>!o.leida&&o.detalle);
+      if(badge){ if(noLeidas.length){badge.textContent=noLeidas.length;badge.style.display='inline';}else badge.style.display='none'; }
+      if(card){
+        if(noLeidas.length){
+          card.style.display='';
+          const tipoLabels={viatico:'💰 Viático',he:'⏱ HE',general:'📋 General'};
+          if(listEl) listEl.innerHTML=noLeidas.slice(0,5).map(o=>`
+            <div style="padding:10px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <div style="flex:1;min-width:0">
+                <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||'📋'}</span>
+                <span style="font-size:11px;color:var(--text2);margin-left:4px">${o.asistente||''}</span>
+                <div style="font-size:13px;color:var(--text);margin-top:3px">${o.detalle}</div>
+              </div>
+              <button class="btn btn-gh btn-xs" style="flex-shrink:0" onclick="marcarLeida('${o.key}')">✓ Leída</button>
+            </div>`).join('')+
+            (noLeidas.length>5?`<div style="font-size:12px;color:var(--text2);padding-top:8px">+${noLeidas.length-5} más en la pestaña Observaciones</div>`:'');
+        } else card.style.display='none';
+      }
+    } else {
+      if(badge) badge.style.display='none';
+      if(card) card.style.display='none';
     }
-    // Actualizar tarjeta del dashboard si está visible
-    const dashCard=$('dashObsCard');
-    if(dashCard&&dashCard.style.display!=='none') await loadDash();
+    if($('adObs')&&$('adObs').style.display!=='none') await loadObservaciones();
   }catch(e){ alert('Error al marcar: '+e.message); }
-};
-window.verRegObs=async(uid,key)=>{
-  await openDet(uid,key,true);
 };
 
 // ── ASUETOS ────────────────────────────────────────────
@@ -2756,7 +2768,18 @@ window.openDet=async(uid,key,isAdmin)=>{
     :(isAdmin&&r.viatico&&ev!=='rechazado')
     ?`<button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','viatico')">✗ Anular viático</button>`
     :'';
-  $('moDet').classList.add('open');
+  $('moDetActs').innerHTML=isAdmin()?(
+    (r.he&&eh==='pendiente')
+      ?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${uid}','${key}');closeModal('moDet')">✓ Aprobar HE</button>
+         <button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','he')">✗ Rechazar HE</button>`
+      :(r.he&&eh==='aprobado')
+      ?`<button class="btn btn-gh btn-sm" onclick="closeModal('moDet');aprobarHEyRefresh('${uid}','${key}')">✏️ Ajustar HE</button>
+         <button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','he')">✗ Rechazar HE</button>
+         ${r.viatico&&ev!=='rechazado'?`<button class="btn btn-gh btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','viatico')">✗ Anular viático</button>`:''}`
+      :(r.viatico&&ev!=='rechazado')
+      ?`<button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','viatico')">✗ Anular viático</button>`
+      :''
+  ):'';
 };
 
 async function loadUsrs(){
