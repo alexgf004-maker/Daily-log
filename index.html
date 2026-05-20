@@ -2743,7 +2743,7 @@ window.exportar=async()=>{
   XLSX.writeFile(wb, `registro-planilla-${nombre.split(' ')[0]}-${today()}.xlsx`);
 };
 
-window.openDet=async(uid,key,isAdmin)=>{
+window.openDet=async(uid,key,fromAdmin)=>{
   const snap=await get(ref(db,`registros/${uid}/${key}`));if(!snap.exists())return;
   const r=snap.val();
   const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
@@ -2765,7 +2765,8 @@ window.openDet=async(uid,key,isAdmin)=>{
       <div style="color:var(--text2);margin-top:3px">Motivo: ${r.notaAjusteHE}</div>
     </div></div>`:''}
     ${r.he&&r.motivoRechazoHE?`<div class="dr"><div class="dk">Motivo rechazo HE</div><div class="dv" style="color:var(--danger)">${r.motivoRechazoHE}</div></div>`:''}`;
-  $('moDetActs').innerHTML=isAdmin()?(
+  const puedeActuar=isAdmin()||fromAdmin===true;
+$('moDetActs').innerHTML=puedeActuar?(
     (r.he&&eh==='pendiente')
       ?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${uid}','${key}');closeModal('moDet')">✓ Aprobar HE</button>
          <button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','he')">✗ Rechazar HE</button>`
