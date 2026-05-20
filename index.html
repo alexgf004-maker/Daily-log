@@ -2778,6 +2778,7 @@ $('moDetActs').innerHTML=puedeActuar?(
       ?`<button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','viatico')">✗ Anular viático</button>`
       :''
   ):'';
+  $('moDet').classList.add('open')
 };
 
 async function loadUsrs(){
