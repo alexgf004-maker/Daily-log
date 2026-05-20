@@ -2545,7 +2545,10 @@ function updateObsBadge(items){
   if(noLeidas>0){ badge.textContent=noLeidas; badge.style.display='inline'; }
   else badge.style.display='none';
 }
-
+window.verRegObs=async(uid,key)=>{
+  if(!uid||!key){ alert('Referencia de registro no válida.'); return; }
+  await openDet(uid, key, true);
+};
 window.marcarLeida=async(key)=>{
   try{
     await set(ref(db,`observaciones/${key}/leida`), true);
