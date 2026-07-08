@@ -1831,7 +1831,7 @@ async function loadDash(){
     try{
       const obsSnap=await get(ref(db,'observaciones'));
       if(obsSnap.exists()){
-        const obsItems=Object.entries(obsSnap.val()).map(([k,v])=>({key:k,...v}));
+        const obsItems=Object.entries(obsSnap.val()).map(([k,v])=>({...v,obsId:k}));
         const noLeidas=obsItems.filter(o=>!o.leida&&o.detalle);
         const badge=$('obsBadge'); if(badge){ if(noLeidas.length){badge.textContent=noLeidas.length;badge.style.display='inline';}else badge.style.display='none'; }
         const card=$('dashObsCard');
@@ -2513,7 +2513,7 @@ async function loadObservaciones(){
   l.innerHTML='<div class="spin"></div>';
   const snap=await get(ref(db,'observaciones'));
   if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei">💬</div><div class="et">Sin observaciones</div></div>';return;}
-  const items=Object.entries(snap.val()).map(([k,v])=>({key:k,...v}))
+  const items=Object.entries(snap.val()).map(([k,v])=>({...v,obsId:k}))
     .sort((a,b)=>b.creadoEn-a.creadoEn);
   const tipoLabels={viatico:'💰 Viático no corresponde',he:'⏱ HE no corresponden',general:'📋 General'};
   l.innerHTML=`<div class="card" style="padding:0;overflow:hidden">`+items.map((o,i)=>{
@@ -2530,7 +2530,7 @@ async function loadObservaciones(){
       <div style="font-size:13px;color:var(--text);margin-bottom:8px">${o.detalle||'—'}</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         ${o.uid&&o.key?`<button class="btn btn-gh btn-xs" onclick="verRegObs('${o.uid}','${o.key}')">Ver registro</button>`:''}
-        ${!o.leida?`<button class="btn btn-gh btn-xs" onclick="marcarLeida('${o.key}')">Marcar leída</button>`:'<span style="font-size:11px;color:var(--gray400)">✓ Leída</span>'}
+       ${!o.leida?`<button class="btn btn-gh btn-xs" onclick="marcarLeida('${o.obsId}')">Marcar leída</button>`:'<span style="font-size:11px;color:var(--gray400)">✓ Leída</span>'}
       </div>
     </div>`;
   }).filter(Boolean).join('')+`</div>`;
@@ -2557,7 +2557,7 @@ window.marcarLeida=async(key)=>{
     const card=$('dashObsCard');
     const listEl=$('dashObsList');
     if(obsSnap.exists()){
-      const obsItems=Object.entries(obsSnap.val()).map(([k,v])=>({key:k,...v}));
+      const obsItems=Object.entries(obsSnap.val()).map(([k,v])=>({...v,obsId:k}));
       const noLeidas=obsItems.filter(o=>!o.leida&&o.detalle);
       if(badge){ if(noLeidas.length){badge.textContent=noLeidas.length;badge.style.display='inline';}else badge.style.display='none'; }
       if(card){
