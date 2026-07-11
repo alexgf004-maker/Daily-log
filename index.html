@@ -676,7 +676,7 @@ window.maintLogin=async()=>{
   if(!found||found.role!=='admin'){al.innerHTML='<div class="alert ae">Solo el administrador puede acceder en mantenimiento.</div>';return;}
   if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
   me=found;
-  sessionStorage.setItem('innova_session',JSON.stringify(me));
+  localStorage.setItem('innova_session',JSON.stringify(me));
   renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
 };
 const _mp=$('maintPin'); if(_mp) _mp.addEventListener('keydown',e=>{if(e.key==='Enter')window.maintLogin();});
@@ -705,7 +705,7 @@ window.doLogin = async ()=>{
     al.innerHTML='<div class="alert ae">La aplicación está en mantenimiento. Solo el administrador puede acceder.</div>';return;
   }
   me=found;
-  sessionStorage.setItem('innova_session', JSON.stringify(me));
+  localStorage.setItem('innova_session', JSON.stringify(me));
   if(me.role==='admin'||me.role==='asistente'){
     renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
   } else {
@@ -715,7 +715,7 @@ window.doLogin = async ()=>{
 
 window.doLogout=()=>{
   me=null;
-  sessionStorage.removeItem('innova_session');
+  localStorage.removeItem('innova_session');
   stopDashRefresh();
   $('appContainer').innerHTML='';
   $('loginUser').value='';
@@ -731,7 +731,7 @@ const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='
   const enMant=await checkMaintenance();
   if(enMant){
     // Solo admin puede pasar — si hay sesión guardada de admin, dejarla pasar
-    const saved=sessionStorage.getItem('innova_session');
+    const saved=localStorage.getItem('innova_session');
     if(saved){
       try{
         const user=JSON.parse(saved);
@@ -740,7 +740,7 @@ const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='
           const fresh=snap.val();
           if(fresh.activo&&fresh.role==='admin'){
             me={id:user.id,...fresh};
-            sessionStorage.setItem('innova_session',JSON.stringify(me));
+            localStorage.setItem('innova_session',JSON.stringify(me));
             renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
             return;
           }
@@ -753,23 +753,23 @@ const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='
   }
 
   // Sin mantenimiento — restaurar sesión normal
-  const saved = sessionStorage.getItem('innova_session');
+  const saved = localStorage.getItem('innova_session');
   if(!saved) return;
   try {
     const user = JSON.parse(saved);
     if(!user||!user.id||!user.username) return;
     const snap = await get(ref(db,`users/${user.id}`));
-    if(!snap.exists()) { sessionStorage.removeItem('innova_session'); return; }
+    if(!snap.exists()) { localStorage.removeItem('innova_session'); return; }
     const fresh = snap.val();
-    if(!fresh.activo) { sessionStorage.removeItem('innova_session'); return; }
+    if(!fresh.activo) { localStorage.removeItem('innova_session'); return; }
     me = {id:user.id, ...fresh};
-    sessionStorage.setItem('innova_session', JSON.stringify(me));
+    localStorage.setItem('innova_session', JSON.stringify(me));
     if(me.role==='admin'||me.role==='asistente'){
       renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
     } else {
       renderEmployee(me.nombre); screen('employeeScreen'); initForm();
     }
-  } catch(e) { sessionStorage.removeItem('innova_session'); }
+  } catch(e) { localStorage.removeItem('innova_session'); }
 })();
 
 // EMP TABS
