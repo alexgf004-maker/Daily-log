@@ -1,4 +1,4 @@
-// ── UTILIDADES PURAS ───────────────────────────────────
+// ── UTILIDADES PURAS ────────────────────────────────
 // Funciones sin dependencia de estado compartido (me, db, etc).
 // Extraídas del index.html para reducir su tamaño.
 
