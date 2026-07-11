@@ -33,7 +33,8 @@ export function sedeEfectiva(user, hoy){
 function horarioOficial(fecha){
   const d=new Date(fecha+'T12:00:00');
   const dow=d.getDay();
-  if(dow===0||dow===6) return null; // fin de semana: sin horario oficial de marcaje
+  if(dow===0) return null; // domingo: sin horario oficial de marcaje
+  if(dow===6) return {entrada:'06:00',salida:'14:00'}; // sábado
   return dow===5 ? {entrada:'07:00',salida:'16:00'} : {entrada:'07:00',salida:'17:00'};
 }
 
