@@ -87,7 +87,7 @@
   // Service Worker (inline via blob) — cache básico para offline
   if('serviceWorker' in navigator){
     const swCode = `
-const CACHE = 'innova-v3';
+const CACHE = 'innova-v4';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -120,7 +120,7 @@ self.addEventListener('fetch', e => {
   <div style="text-align:center;padding:32px 24px;max-width:360px">
     <div style="font-size:56px;margin-bottom:20px">🔧</div>
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px">En mantenimiento</div>
-    <div style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:28px">La aplicación está temporalmente en mantenimiento. Por favor intenta al ratillo, sino preguntale a David</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:28px">La aplicación está temporalmente en mantenimiento. Por favor intenta al ratillo, sino jodé a David</div>
     <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px">
       <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px">Acceso administración</div>
       <div id="maintAlert"></div>
@@ -168,6 +168,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
+import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS } from "./js/marcaje.js";
 
 const cfg = {
   apiKey:"AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
@@ -225,6 +226,7 @@ function renderEmployee(nombre){
     <div class="content">
       <div id="empReg">
         <div class="page-header"><div><div class="ph-title">Registro de actividades</div><div class="ph-sub" id="empFechaLbl"></div></div></div>
+        <div id="marcajeCard" style="display:none"></div>
         <div class="card">
           <div id="empAlert"></div>
           <div class="fg"><label class="fl">Fecha</label><input type="date" id="empFecha" onchange="onFechaChange()"></div>
@@ -560,6 +562,19 @@ function modalsHTML(){
         <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Si no seleccionas ninguno, verá todos.</div>
         <div id="listaEmpleadosAsig" style="max-height:200px;overflow-y:auto;border:1px solid var(--gray200);border-radius:var(--r);padding:8px"></div>
       </div>
+      <!-- Solo visible para empleados -->
+      <div id="secSede" style="display:none">
+        <div class="fg">
+          <label class="fl">Sede (para marcaje de asistencia)</label>
+          <select id="uSede">
+            <option value="">Sin asignar</option>
+            <option value="plantel">Plantel Central</option>
+            <option value="cucumacayan">Subestación Cucumacayán</option>
+            <option value="zacatecoluca">Subestación Zacatecoluca</option>
+          </select>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Sin sede asignada, el empleado no verá el marcaje.</div>
+        </div>
+      </div>
       <div class="modal-acts">
         <button class="btn btn-gh" onclick="closeModal('moUsr')">Cancelar</button>
         <button class="btn btn-p" onclick="saveUser()">Guardar</button>
@@ -593,6 +608,29 @@ function modalsHTML(){
         <button class="btn btn-gh" onclick="closeModal('moExt')">Cancelar</button>
         <button class="btn btn-d btn-sm" id="extBtnQuitar" onclick="quitarExtension()" style="display:none">Quitar extensión</button>
         <button class="btn btn-p" onclick="guardarExtension()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="moSedeTemp">
+    <div class="modal">
+      <div class="modal-title" id="moSedeTempTitle">Cambiar sede temporalmente</div>
+      <div id="moSedeTempInfo" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
+      <div class="fg">
+        <label class="fl">Sede alterna</label>
+        <select id="sedeTempSede">
+          <option value="plantel">Plantel Central</option>
+          <option value="cucumacayan">Subestación Cucumacayán</option>
+          <option value="zacatecoluca">Subestación Zacatecoluca</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Válido hasta</label>
+        <input type="date" id="sedeTempHasta">
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moSedeTemp')">Cancelar</button>
+        <button class="btn btn-d btn-sm" id="sedeTempBtnQuitar" onclick="quitarSedeTemp()" style="display:none">Quitar</button>
+        <button class="btn btn-p" onclick="guardarSedeTemp()">Guardar</button>
       </div>
     </div>
   </div>
@@ -1004,6 +1042,7 @@ function mostrarCierreMes(diasRestantes){
 function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();
   tipoDia='normal';
+  renderMarcajeCard();
 
   // Notificación flotante de cierre de mes
   const hoy=new Date();
@@ -1043,6 +1082,78 @@ function initForm(){
 
 // Horario base según día de semana
 // horarioBase, toMins, fromMins, calcularHE -> importados de utils.js
+
+// ── MARCAJE GPS ─────────────────────────────────────────
+async function renderMarcajeCard(){
+  const cont=$('marcajeCard');
+  if(!cont||!me||me.role!=='empleado'){ if(cont) cont.style.display='none'; return; }
+
+  const hoy=today();
+  const sede=sedeEfectiva(me,hoy);
+  if(!sede){ cont.style.display='none'; return; } // sin sede asignada: no se muestra
+
+  cont.style.display='';
+  cont.innerHTML='<div class="card"><div class="spin"></div></div>';
+
+  const marc=await obtenerMarcajeDia(db,{ref,get},me.id,hoy);
+  const entrada=marc?.entrada, salida=marc?.salida;
+
+  const badge=(estado)=>{
+    const info=ESTADO_LABELS[estado]||ESTADO_LABELS.normal;
+    return `<span class="badge ${info.color}" style="font-size:10px">${info.texto}</span>`;
+  };
+
+  cont.innerHTML=`
+    <div class="card" style="border-left:3px solid var(--blue);margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="card-title" style="margin-bottom:0">📍 Marcaje — ${sede.nombre}${sede.temporal?' <span class="badge by" style="font-size:9px">temporal</span>':''}</div>
+      </div>
+      <div id="marcajeAlert"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          ${entrada
+            ?`<div style="background:var(--bluelt);border-radius:10px;padding:12px;text-align:center">
+                <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--blue)">${entrada.horaStr||'--:--'}</div>
+                <div style="font-size:11px;color:var(--text2);margin:2px 0 4px">Entrada</div>
+                ${badge(entrada.estado)}
+              </div>`
+            :`<button class="btn btn-p" style="width:100%" onclick="marcarAsistenciaUI('entrada')">✓ Marcar entrada</button>`}
+        </div>
+        <div>
+          ${salida
+            ?`<div style="background:var(--bluelt);border-radius:10px;padding:12px;text-align:center">
+                <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--blue)">${salida.horaStr||'--:--'}</div>
+                <div style="font-size:11px;color:var(--text2);margin:2px 0 4px">Salida</div>
+                ${badge(salida.estado)}
+              </div>`
+            :entrada
+              ?`<button class="btn btn-p" style="width:100%" onclick="marcarAsistenciaUI('salida')">✓ Marcar salida</button>`
+              :`<button class="btn btn-gh" style="width:100%" disabled>Marca entrada primero</button>`}
+        </div>
+      </div>
+    </div>`;
+}
+
+window.marcarAsistenciaUI=async function(tipo){
+  const al=$('marcajeAlert');
+  if(al) al.innerHTML='<div style="font-size:12px;color:var(--text2);padding:6px 0">📡 Obteniendo ubicación...</div>';
+  try{
+    const res=await marcarAsistencia(db,{ref,get,set,update},me,tipo,today());
+    if(al) al.innerHTML=`<div class="alert as" style="font-size:12px">✓ ${tipo==='entrada'?'Entrada':'Salida'} marcada — ${res.horaStr}</div>`;
+    await renderMarcajeCard();
+  }catch(e){
+    const mensajes={
+      SIN_SEDE:'No tienes una sede asignada. Contacta a Madelyn.',
+      SIN_GPS:'Tu navegador no soporta ubicación GPS.',
+      PERMISO_DENEGADO:'Debes permitir el acceso a tu ubicación para marcar.',
+      GPS_TIMEOUT:'No se pudo obtener tu ubicación a tiempo. Intenta de nuevo.',
+      GPS_ERROR:'Error al obtener tu ubicación. Intenta de nuevo.',
+      FUERA_DE_RANGO:e.message,
+      YA_MARCADO:e.message
+    };
+    if(al) al.innerHTML=`<div class="alert ae" style="font-size:12px">${mensajes[e.code]||e.message}</div>`;
+  }
+};
 
 window.onFechaChange = async function(){
   const f=$('empFecha');
@@ -2496,10 +2607,16 @@ async function loadUsrs(){
     const activo=u.activo===true||u.activo==='true';
     const ext=u.extension; // {dias, hasta}
     const extActiva=ext&&ext.hasta&&ext.hasta>=today();
+    const st=u.sedeTemporal;
+    const sedeTempActiva=st&&st.hasta&&st.hasta>=today();
+    const sedeLabel=u.role==='empleado'
+      ?(sedeTempActiva?`${NOMBRE_SEDES[st.sede]||st.sede} (temporal)`:(u.sede?NOMBRE_SEDES[u.sede]:'Sin sede'))
+      :'';
     return `<div class="ur">
     <div>
       <div class="un">${u.nombre} <span class="badge ${activo?'bac':'bin'}">${activo?'Activo':'Inactivo'}</span>
         ${extActiva?`<span class="badge by" style="font-size:10px">+${ext.dias}d hasta ${fmt(ext.hasta)}</span>`:''}
+        ${u.role==='empleado'?`<span class="badge ${sedeTempActiva?'by':'bn'}" style="font-size:10px">📍 ${sedeLabel}</span>`:''}
       </div>
       <div class="um">@${u.username}</div>
     </div>
@@ -2507,6 +2624,7 @@ async function loadUsrs(){
       ${isAdmin()?`
       <button class="btn btn-gh btn-sm" onclick="openModalUser('${u.id}')">Editar</button>
       <button class="btn btn-gh btn-sm" onclick="openExtension('${u.id}','${u.nombre}')">${extActiva?'Ver extensión':'+ Extensión'}</button>
+      ${u.role==='empleado'?`<button class="btn btn-gh btn-sm" onclick="openSedeTemp('${u.id}','${u.nombre}')">${sedeTempActiva?'Ver sede temp.':'Cambiar sede'}</button>`:''}
       <button class="btn btn-d btn-sm" onclick="openSuspension('${u.id}','${u.nombre}')">Suspender</button>
       <button class="btn btn-sm ${activo?'btn-d':'btn-g'}" onclick="togActivo('${u.id}',${activo})">${activo?'Desactivar':'Activar'}</button>
       `:`<span style="font-size:12px;color:var(--text2)">Solo lectura</span>`}
@@ -2574,15 +2692,43 @@ window.quitarExtension=async()=>{
   await update(ref(db,`users/${extUID}`),{extension:null});
   closeModal('moExt');loadUsrs();
 };
+
+let sedeTempUID=null;
+window.openSedeTemp=async(uid,nombre)=>{
+  sedeTempUID=uid;
+  $('moSedeTempTitle').textContent=`Sede temporal — ${nombre}`;
+  const snap=await get(ref(db,`users/${uid}`));
+  const u=snap.exists()?snap.val():{};
+  const st=u.sedeTemporal;
+  const activa=st&&st.hasta&&st.hasta>=today();
+  $('moSedeTempInfo').textContent=activa
+    ?`Sede temporal activa: ${NOMBRE_SEDES[st.sede]||st.sede}, válida hasta ${fmt(st.hasta)}.`
+    :`Sede permanente: ${u.sede?NOMBRE_SEDES[u.sede]:'sin asignar'}.`;
+  $('sedeTempSede').value=st?.sede||'plantel';
+  $('sedeTempHasta').value=st?.hasta||'';
+  $('sedeTempBtnQuitar').style.display=activa?'':'none';
+  $('moSedeTemp').classList.add('open');
+};
+window.guardarSedeTemp=async()=>{
+  const sede=$('sedeTempSede').value;
+  const hasta=$('sedeTempHasta').value;
+  if(!sede||!hasta){alert('Completa los campos.');return;}
+  if(hasta<today()){alert('La fecha de vencimiento debe ser hoy o en el futuro.');return;}
+  await update(ref(db,`users/${sedeTempUID}`),{sedeTemporal:{sede,hasta}});
+  closeModal('moSedeTemp');loadUsrs();
+};
+window.quitarSedeTemp=async()=>{
+  await update(ref(db,`users/${sedeTempUID}`),{sedeTemporal:null});
+  closeModal('moSedeTemp');loadUsrs();
+};
 window.onRolChange=async(rol)=>{
   const sec=$('secEmpleadosAsig');
-  if(!sec) return;
-  if(rol==='asistente'){
-    sec.style.display='block';
-    await cargarListaEmpleadosAsig([]);
-  } else {
-    sec.style.display='none';
+  const secSede=$('secSede');
+  if(sec){
+    if(rol==='asistente'){ sec.style.display='block'; await cargarListaEmpleadosAsig([]); }
+    else sec.style.display='none';
   }
+  if(secSede){ secSede.style.display=(rol==='empleado')?'block':'none'; }
 };
 
 async function cargarListaEmpleadosAsig(seleccionados=[]){
@@ -2604,6 +2750,8 @@ window.openModalUser=async(uid)=>{
   ['uNom','uUsr','uPin'].forEach(id=>$(id).value='');
   $('uRol').value='empleado';
   $('secEmpleadosAsig').style.display='none';
+  if($('uSede')) $('uSede').value='';
+  if($('secSede')) $('secSede').style.display='block';
   if(uid){
     const s=await get(ref(db,`users/${uid}`));
     if(s.exists()){
@@ -2613,8 +2761,10 @@ window.openModalUser=async(uid)=>{
       $('uRol').value=u.role==='asistente'?'asistente':'empleado';
       if(u.role==='asistente'){
         $('secEmpleadosAsig').style.display='block';
+        if($('secSede')) $('secSede').style.display='none';
         await cargarListaEmpleadosAsig(u.empleadosAsig||[]);
       }
+      if($('uSede')) $('uSede').value=u.sede||'';
     }
   }
   $('moUsr').classList.add('open');
@@ -2634,12 +2784,13 @@ window.saveUser=async()=>{
     const checks=document.querySelectorAll('#listaEmpleadosAsig input[type=checkbox]:checked');
     empleadosAsig=Array.from(checks).map(c=>c.value);
   }
+  const sede=(rol==='empleado'&&$('uSede'))?($('uSede').value||''):'';
   if(editUID){
-    const d={nombre:nom,username:usr,role:rol,empleadosAsig:rol==='asistente'?empleadosAsig:[]};
+    const d={nombre:nom,username:usr,role:rol,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede};
     if(pin.length>=4){ d.pin=await savePIN(pin); }
     await update(ref(db,`users/${editUID}`),d);
   } else {
-    await set(push(ref(db,'users')),{nombre:nom,username:usr,pin:await savePIN(pin),role:rol,activo:true,empleadosAsig:rol==='asistente'?empleadosAsig:[]});
+    await set(push(ref(db,'users')),{nombre:nom,username:usr,pin:await savePIN(pin),role:rol,activo:true,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede});
   }
   closeModal('moUsr');loadUsrs();
 };
