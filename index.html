@@ -336,6 +336,10 @@ function renderAdmin(){
         <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
         <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
         ${me?.role==='admin'?`<div class="card" id="dashObsCard" style="display:none;border-left:3px solid var(--blue)"><div class="card-title">💬 Observaciones de asistentes</div><div id="dashObsList"></div></div>`:''}
+        <div class="card" id="dashAsistCard" style="display:none">
+          <div class="card-title">📍 Asistencia de hoy</div>
+          <div id="dashAsistList"></div>
+        </div>
         <div class="card"><div class="card-title">Registros de hoy</div><div id="dashHoy"><div class="spin"></div></div></div>
         <div class="card"><div class="card-title">Sin registro hoy</div><div id="dashSin"><div class="spin"></div></div></div>
       </div>
@@ -407,6 +411,15 @@ function renderAdmin(){
           <div><div class="ph-title">Gestión de usuarios</div><div class="ph-sub">Administra el equipo</div></div>
           ${me?.role==='admin'?`<button class="btn btn-g btn-sm" onclick="openModalUser()">+ Nuevo</button>`:''}
         </div>
+        ${me?.role==='admin'?`
+        <div class="card" style="border-left:3px solid var(--warn);margin-bottom:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--warn);margin-bottom:6px">🧪 SOLO PARA PRUEBAS</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Asigna o quita la sede de prueba a todos los empleados de un clic.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-gh btn-sm" onclick="asignarSedePruebaATodos()">Asignar sede de prueba a todos</button>
+            <button class="btn btn-d btn-sm" onclick="quitarSedeATodos()">Quitar sede a todos</button>
+          </div>
+        </div>`:''}
         <div class="card" id="usrList"><div class="spin"></div></div>
       </div>
       <div id="adPerfil" style="display:none">
@@ -622,6 +635,7 @@ function modalsHTML(){
           <option value="plantel">Plantel Central</option>
           <option value="cucumacayan">Subestación Cucumacayán</option>
           <option value="zacatecoluca">Subestación Zacatecoluca</option>
+          <option value="prueba">⚠️ Prueba — no usar</option>
         </select>
       </div>
       <div class="fg">
@@ -1096,7 +1110,15 @@ async function renderMarcajeCard(){
   cont.style.display='';
   cont.innerHTML='<div class="card"><div class="spin"></div></div>';
 
-  const marc=await obtenerMarcajeDia(db,{ref,get},me.id,hoy);
+  let marc;
+  try{
+    marc=await obtenerMarcajeDia(db,{ref,get},me.id,hoy);
+  }catch(e){
+    cont.innerHTML=`<div class="card" style="border-left:3px solid var(--danger)">
+      <div style="font-size:13px;color:var(--danger)">No se pudo cargar el marcaje. Revisa tu conexión o inténtalo de nuevo.</div>
+    </div>`;
+    return;
+  }
   const entrada=marc?.entrada, salida=marc?.salida;
 
   const badge=(estado)=>{
@@ -1430,7 +1452,7 @@ async function loadHist(){
   let mesSelec=mesActual;
   if(!mesesDisp.includes(mesSelec)&&mesesDisp.length>0) mesSelec=mesesDisp[0];
 
-  function renderHist(mes){
+  async function renderHist(mes){
     const items=allItems.filter(r=>r.fecha&&r.fecha.startsWith(mes));
     const viaticos=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
     const totalMinHE=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((acc,r)=>acc+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
@@ -1438,6 +1460,12 @@ async function loadHist(){
     const [anio,mesN]=mes.split('-');
     const nomMes=new Date(parseInt(anio),parseInt(mesN)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
 
+    // Marcajes del mes, indexados por fecha
+    let marcajesPorFecha={};
+    try{
+      const marcs=await obtenerMarcajesMes(db,{ref,get},me.id,mes);
+      marcajesPorFecha=Object.fromEntries(marcs.map(m=>[m.fecha,m]));
+    }catch(e){}
     res.innerHTML=`
       <div class="card" style="margin-bottom:14px;border-top:3px solid var(--blue)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -1492,6 +1520,11 @@ async function loadHist(){
       const horario=r.horaEntrada&&r.horaSalida?`<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.horaEntrada}–${r.horaSalida}</span>`:'';
       const minAprobados=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
       const ajusteInfo=r.heAjustada&&r.notaAjusteHE?`<div style="font-size:11px;color:var(--warn);margin-top:3px">⚠ HE ajustada a ${Math.floor(minAprobados/60)>0?Math.floor(minAprobados/60)+'h ':''+(minAprobados%60)+'m'} — ${r.notaAjusteHE}</div>`:'';
+      const marc=marcajesPorFecha[r.fecha];
+      const marcajeInfo=marc?`<div style="font-size:11px;color:var(--text2);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
+        📍 ${marc.entrada?`Entrada ${marc.entrada.horaStr} <span class="badge ${(ESTADO_LABELS[marc.entrada.estado]||{}).color||'bn'}" style="font-size:9px">${(ESTADO_LABELS[marc.entrada.estado]||{}).texto||''}</span>`:'sin entrada marcada'}
+        ${marc.salida?`· Salida ${marc.salida.horaStr} <span class="badge ${(ESTADO_LABELS[marc.salida.estado]||{}).color||'bn'}" style="font-size:9px">${(ESTADO_LABELS[marc.salida.estado]||{}).texto||''}</span>`:''}
+      </div>`:'';
       return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
         <div class="rc-hd">
           <div style="display:flex;align-items:center;gap:8px"><div class="rc-date">${fmt(r.fecha)}</div>${horario}</div>
@@ -1499,12 +1532,13 @@ async function loadHist(){
         </div>
         <div class="rc-desc">${r.actividades}</div>
         ${ajusteInfo}
+        ${marcajeInfo}
       </div>`;
     }).join('');
   }
 
   window.renderHistMes=function(mes){ renderHist(mes); };
-  renderHist(mesSelec);
+  await renderHist(mesSelec);
 }
 
 // ADMIN TABS
@@ -1677,6 +1711,49 @@ async function loadDash(){
   $('dashSin').innerHTML=sin.length===0
     ?'<div class="empty" style="padding:20px"><div class="et">✓ Todos registraron hoy</div></div>'
     :sin.map(u=>`<div style="padding:8px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0"></span>${u.nombre}</div>`).join('');
+
+  // ── Asistencia (marcaje GPS) de hoy ──
+  try{
+    const empsConSede=emps.filter(u=>sedeEfectiva(u,td));
+    const cardAsist=$('dashAsistCard');
+    if(empsConSede.length>0 && cardAsist){
+      cardAsist.style.display='';
+      const marcajesHoy=await Promise.all(empsConSede.map(async u=>{
+        const m=await obtenerMarcajeDia(db,{ref,get},u.id,td);
+        return {u, m};
+      }));
+      const aTiempo=marcajesHoy.filter(x=>x.m?.entrada?.estado==='a_tiempo').length;
+      const tarde=marcajesHoy.filter(x=>x.m?.entrada?.estado==='tarde').length;
+      const sinMarcar=marcajesHoy.filter(x=>!x.m?.entrada).length;
+
+      $('dashAsistList').innerHTML=`
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:14px">
+          <div style="background:var(--greenlt);border-radius:8px;padding:10px">
+            <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--green)">${aTiempo}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">A tiempo</div>
+          </div>
+          <div style="background:var(--dangerlt);border-radius:8px;padding:10px">
+            <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--danger)">${tarde}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Tarde</div>
+          </div>
+          <div style="background:var(--gray100);border-radius:8px;padding:10px">
+            <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text2)">${sinMarcar}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Sin marcar</div>
+          </div>
+        </div>
+        ${marcajesHoy.filter(x=>x.m?.entrada).sort((a,b)=>(a.m.entrada.horaStr||'').localeCompare(b.m.entrada.horaStr||'')).map(x=>`
+          <div style="padding:7px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:center;font-size:13px">
+            <span>${x.u.nombre}</span>
+            <span style="display:flex;align-items:center;gap:6px">
+              <span style="font-family:var(--mono);color:var(--text2)">${x.m.entrada.horaStr}</span>
+              <span class="badge ${x.m.entrada.estado==='tarde'?'br':'ba'}" style="font-size:10px">${x.m.entrada.estado==='tarde'?'Tarde':'A tiempo'}</span>
+            </span>
+          </div>`).join('')}
+      `;
+    } else if(cardAsist){
+      cardAsist.style.display='none';
+    }
+  }catch(e){}
 
   if(isAdmin()){
     try{
@@ -2261,15 +2338,26 @@ window.exportarEmpleadoIndividual=async()=>{
     .filter(r=>r.fecha&&r.fecha.startsWith(mes));
   if(!items.length){alert('Sin registros en este mes.');return;}
 
+  let marcajesPorFecha={};
+  try{
+    const marcs=await obtenerMarcajesMes(db,{ref,get},perfilEmpUID,mes);
+    marcajesPorFecha=Object.fromEntries(marcs.map(m=>[m.fecha,m]));
+  }catch(e){}
+
   const wb=XLSX.utils.book_new();
-  const headers=['Fecha','Entrada','Salida','Actividades','Viático','Estado Viático','HE','Mins HE aprobados','Justif. HE','Estado HE','Tipo día','Nota'];
-  const rows=items.map(r=>[
-    r.fecha, r.horaEntrada||'', r.horaSalida||'', r.actividades||'',
-    r.viatico?'Sí':'No', r.estadoViatico||'—',
-    r.he?'Sí':'No',
-    r.estadoHE==='aprobado'?(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)):0,
-    r.heJustif||'', r.estadoHE||'—', r.tipoDia||'normal', r.nota||''
-  ]);
+  const headers=['Fecha','Entrada','Salida','Actividades','Viático','Estado Viático','HE','Mins HE aprobados','Justif. HE','Estado HE','Tipo día','Nota','Marcaje entrada','Estado entrada','Marcaje salida','Estado salida'];
+  const rows=items.map(r=>{
+    const marc=marcajesPorFecha[r.fecha];
+    return [
+      r.fecha, r.horaEntrada||'', r.horaSalida||'', r.actividades||'',
+      r.viatico?'Sí':'No', r.estadoViatico||'—',
+      r.he?'Sí':'No',
+      r.estadoHE==='aprobado'?(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)):0,
+      r.heJustif||'', r.estadoHE||'—', r.tipoDia||'normal', r.nota||'',
+      marc?.entrada?.horaStr||'—', marc?.entrada?(ESTADO_LABELS[marc.entrada.estado]?.texto||'—'):'—',
+      marc?.salida?.horaStr||'—', marc?.salida?(ESTADO_LABELS[marc.salida.estado]?.texto||'—'):'—'
+    ];
+  });
   const viat=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
   const minHE=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
   const h=Math.floor(minHE/60),m=minHE%60;
@@ -2280,7 +2368,7 @@ window.exportarEmpleadoIndividual=async()=>{
     headers,...rows,[],
     ['RESUMEN','','','',`Viáticos: ${viat}`,'',`HE aprobadas: ${minHE>0?(h>0?h+'h ':'')+m+'m':'0'}`]
   ]);
-  ws['!cols']=[{wch:12},{wch:9},{wch:9},{wch:40},{wch:8},{wch:14},{wch:6},{wch:12},{wch:30},{wch:14},{wch:12},{wch:25}];
+  ws['!cols']=[{wch:12},{wch:9},{wch:9},{wch:40},{wch:8},{wch:14},{wch:6},{wch:12},{wch:30},{wch:14},{wch:12},{wch:25},{wch:14},{wch:12},{wch:14},{wch:14}];
   XLSX.utils.book_append_sheet(wb,ws,'Registros');
   XLSX.writeFile(wb,`${nombre.split(' ')[0]}-${nomMes}.xlsx`);
 };
@@ -2298,17 +2386,33 @@ window.exportarMesCompleto=async()=>{
   let emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
   emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
   const regsDelMes=allRegs.filter(r=>r.fecha&&r.fecha.startsWith(mes));
+
+  // Marcajes de todos los empleados para el mes, indexados por userId_fecha
+  let marcajesIdx={};
+  try{
+    const listas=await Promise.all(emps.map(async u=>{
+      const marcs=await obtenerMarcajesMes(db,{ref,get},u.id,mes);
+      return marcs.map(m=>({userId:u.id,...m}));
+    }));
+    listas.flat().forEach(m=>{ marcajesIdx[`${m.userId}_${m.fecha}`]=m; });
+  }catch(e){}
+
   const wb=XLSX.utils.book_new();
   // Hoja detalle
-  const headers=['Fecha','Empleado','Cargo','Entrada','Salida','Actividades','Viático','Estado Viático','HE','Mins HE aprobados','Justif. HE','Estado HE','Tipo día','Nota'];
-  const rows=regsDelMes.map(r=>[
-    r.fecha,r.userName||r.userId,r.cargo||'',r.horaEntrada||'',r.horaSalida||'',r.actividades||'',
-    r.viatico?'Sí':'No',r.estadoViatico||'—',r.he?'Sí':'No',
-    r.estadoHE==='aprobado'?(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)):0,
-    r.heJustif||'',r.estadoHE||'—',r.tipoDia||'normal',r.nota||''
-  ]);
+  const headers=['Fecha','Empleado','Cargo','Entrada','Salida','Actividades','Viático','Estado Viático','HE','Mins HE aprobados','Justif. HE','Estado HE','Tipo día','Nota','Marcaje entrada','Estado entrada','Marcaje salida','Estado salida'];
+  const rows=regsDelMes.map(r=>{
+    const marc=marcajesIdx[`${r.userId}_${r.fecha}`];
+    return [
+      r.fecha,r.userName||r.userId,r.cargo||'',r.horaEntrada||'',r.horaSalida||'',r.actividades||'',
+      r.viatico?'Sí':'No',r.estadoViatico||'—',r.he?'Sí':'No',
+      r.estadoHE==='aprobado'?(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)):0,
+      r.heJustif||'',r.estadoHE||'—',r.tipoDia||'normal',r.nota||'',
+      marc?.entrada?.horaStr||'—', marc?.entrada?(ESTADO_LABELS[marc.entrada.estado]?.texto||'—'):'—',
+      marc?.salida?.horaStr||'—', marc?.salida?(ESTADO_LABELS[marc.salida.estado]?.texto||'—'):'—'
+    ];
+  });
   const ws1=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  ws1['!cols']=[{wch:12},{wch:30},{wch:28},{wch:9},{wch:9},{wch:40},{wch:8},{wch:14},{wch:6},{wch:12},{wch:30},{wch:14},{wch:12},{wch:25}];
+  ws1['!cols']=[{wch:12},{wch:30},{wch:28},{wch:9},{wch:9},{wch:40},{wch:8},{wch:14},{wch:6},{wch:12},{wch:30},{wch:14},{wch:12},{wch:25},{wch:14},{wch:12},{wch:14},{wch:14}];
   XLSX.utils.book_append_sheet(wb,ws1,'Detalle');
   // Hoja resumen
   const rHeaders=['Empleado','Cargo','Registros','Viáticos','Días HE aprobados','Total HE'];
@@ -2721,6 +2825,24 @@ window.guardarSedeTemp=async()=>{
 window.quitarSedeTemp=async()=>{
   await update(ref(db,`users/${sedeTempUID}`),{sedeTemporal:null});
   closeModal('moSedeTemp');loadUsrs();
+};
+
+// ── SOLO PARA PRUEBAS: asignar/quitar sede masivamente ──
+window.asignarSedePruebaATodos=async()=>{
+  if(!confirm('Esto asignará la sede de prueba a TODOS los empleados. ¿Continuar?')) return;
+  const users=await getUsers();
+  const emps=users.filter(u=>u.role==='empleado');
+  await Promise.all(emps.map(u=>update(ref(db,`users/${u.id}`),{sede:'prueba'})));
+  alert(`Sede de prueba asignada a ${emps.length} empleados.`);
+  loadUsrs();
+};
+window.quitarSedeATodos=async()=>{
+  if(!confirm('Esto quitará la sede asignada a TODOS los empleados. ¿Continuar?')) return;
+  const users=await getUsers();
+  const emps=users.filter(u=>u.role==='empleado');
+  await Promise.all(emps.map(u=>update(ref(db,`users/${u.id}`),{sede:''})));
+  alert(`Sede quitada a ${emps.length} empleados.`);
+  loadUsrs();
 };
 window.onRolChange=async(rol)=>{
   const sec=$('secEmpleadosAsig');
