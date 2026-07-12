@@ -169,10 +169,15 @@ tbody tr:hover td{background:var(--bluelt)}
 @keyframes sp{to{transform:rotate(360deg)}}
 .rc{background:#fff;border:1px solid var(--gray200);border-radius:var(--r);padding:12px 15px;margin-bottom:8px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
 .rc:hover{border-color:var(--blue2);box-shadow:var(--sh2)}
-.rc-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:5px}
+.rc-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:5px}
 .rc-date{font-family:var(--mono);font-size:12px;color:var(--blue);font-weight:600}
 .rc-badges{display:flex;gap:4px;flex-wrap:wrap}
 .rc-desc{font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-horario{font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:1px}
+.rc-marcaje{display:flex;gap:16px;margin-top:9px;padding-top:9px;border-top:1px solid var(--gray100)}
+.rc-marcaje-item{display:flex;align-items:baseline;gap:6px;font-size:11px}
+.rc-marcaje-lbl{color:var(--text2)}
+.rc-marcaje-val{font-family:var(--mono);font-weight:600;color:var(--text)}
 .ur{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray100);flex-wrap:wrap;gap:8px}
 .ur:last-child{border-bottom:none}
 .un{font-size:14px;font-weight:600}.um{font-size:12px;color:var(--text2);margin-top:1px}
@@ -189,6 +194,7 @@ tbody tr:hover td{background:var(--bluelt)}
   .tr2{grid-template-columns:1fr}
   .tb-user{display:none}
 }
-.tipo-btn{padding:9px 8px;border-radius:var(--r);border:1.5px solid var(--gray200);background:#fff;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text2);text-align:center}
+.tipo-btn{padding:12px 8px;border-radius:var(--r);border:1.5px solid var(--gray200);background:#fff;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text2);text-align:center}
 .tipo-btn:hover{border-color:var(--blue);color:var(--blue)}
 .tipo-btn.active{border-color:var(--blue);background:var(--bluelt);color:var(--blue);font-weight:600}
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
