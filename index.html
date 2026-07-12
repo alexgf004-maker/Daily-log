@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/styles.css?v=3">
 </head>
 <body>
 
@@ -1485,7 +1485,7 @@ async function loadHist(){
           <div class="hist-stat-div"></div>
           <div class="hist-stat"><span class="hist-stat-val" style="color:var(--green)">${viaticos}</span><span class="hist-stat-lbl">Viáticos</span></div>
           <div class="hist-stat-div"></div>
-          <div class="hist-stat"><span class="hist-stat-val" style="color:var(--warn)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</span><span class="hist-stat-lbl">Horas extra</span></div>
+          <div class="hist-stat"><span class="hist-stat-val" style="color:var(--green)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</span><span class="hist-stat-lbl">Horas extra</span></div>
         </div>
       </div>`;
 
