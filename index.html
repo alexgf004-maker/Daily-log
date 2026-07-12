@@ -111,15 +111,20 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=5">
+<link rel="stylesheet" href="css/styles.css?v=6">
 </head>
 <body>
 
 <!-- MANTENIMIENTO -->
 <div id="maintenanceScreen" class="screen" style="background:linear-gradient(135deg,#0f1f3d 0%,#1e3a5f 100%);align-items:center;justify-content:center;min-height:100vh">
   <div style="text-align:center;padding:32px 24px;max-width:360px">
-    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px">En mantenimiento</div>
-    <div style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:28px">La aplicación está temporalmente en mantenimiento. Por favor intenta al ratillo, sino jodé a David</div>
+    <div class="maint-ring">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 2 L4 14 H11 L10 22 L20 9 H13 L14 2 Z" fill="#4ade80"/>
+      </svg>
+    </div>
+    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;margin-top:20px">En mantenimiento</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:28px">Estamos actualizando el sistema. Estará disponible de nuevo en breve.</div>
     <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px">
       <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px">Acceso administración</div>
       <div id="maintAlert"></div>
