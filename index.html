@@ -118,7 +118,6 @@ self.addEventListener('fetch', e => {
 <!-- MANTENIMIENTO -->
 <div id="maintenanceScreen" class="screen" style="background:linear-gradient(135deg,#0f1f3d 0%,#1e3a5f 100%);align-items:center;justify-content:center;min-height:100vh">
   <div style="text-align:center;padding:32px 24px;max-width:360px">
-    <div style="font-size:56px;margin-bottom:20px">🔧</div>
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px">En mantenimiento</div>
     <div style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:28px">La aplicación está temporalmente en mantenimiento. Por favor intenta al ratillo, sino jodé a David</div>
     <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px">
@@ -219,9 +218,9 @@ function renderEmployee(nombre){
       </div>
     </div>
     <div class="tabs">
-      <button class="tab active" onclick="empTab('r',this)">📝 Nuevo Registro</button>
-      <button class="tab" onclick="empTab('h',this)">📋 Mi Historial</button>
-      <button class="tab" onclick="empTab('p',this)">👤 Mi Perfil</button>
+      <button class="tab active" onclick="empTab('r',this)">Nuevo Registro</button>
+      <button class="tab" onclick="empTab('h',this)">Mi Historial</button>
+      <button class="tab" onclick="empTab('p',this)">Mi Perfil</button>
     </div>
     <div class="content">
       <div id="empReg">
@@ -234,10 +233,10 @@ function renderEmployee(nombre){
           <div class="fg">
             <label class="fl">Tipo de día</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap" id="tipoDiaGrid">
-              <button type="button" class="tipo-btn active" onclick="setTipoDia('normal',this)">📋 Día normal</button>
-              <button type="button" class="tipo-btn" onclick="setTipoDia('vacaciones',this)">🏖 Vacaciones</button>
-              <button type="button" class="tipo-btn" onclick="setTipoDia('incapacidad',this)">🏥 Incapacidad</button>
-              <button type="button" class="tipo-btn" onclick="setTipoDia('permiso',this)">🙋 Permiso</button>
+              <button type="button" class="tipo-btn active" onclick="setTipoDia('normal',this)">Día normal</button>
+              <button type="button" class="tipo-btn" onclick="setTipoDia('vacaciones',this)">Vacaciones</button>
+              <button type="button" class="tipo-btn" onclick="setTipoDia('incapacidad',this)">Incapacidad</button>
+              <button type="button" class="tipo-btn" onclick="setTipoDia('permiso',this)">Permiso</button>
             </div>
           </div>
           <!-- Campos día normal -->
@@ -249,7 +248,7 @@ function renderEmployee(nombre){
             <div id="heResumen" style="display:none;margin-bottom:14px"></div>
             <div class="fg"><label class="fl">Actividades realizadas</label><textarea id="empActs" placeholder="Describe las actividades del día..."></textarea></div>
             <div class="tog-row">
-              <div><div class="tog-lbl">💰 Viático</div><div class="tog-sub">Activar si realizaste salida a campo</div></div>
+              <div><div class="tog-lbl">Viático</div><div class="tog-sub">Activar si realizaste salida a campo</div></div>
               <div class="toggle" id="togV" onclick="togF('v')"></div>
             </div>
             <div id="heBox" style="display:none;background:var(--bluelt);border-radius:var(--r);padding:14px;margin-top:12px;border:1px solid var(--bluemid)">
@@ -321,23 +320,23 @@ function renderAdmin(){
       </div>
     </div>
     <div class="tabs">
-      <button class="tab active" onclick="adTab('dash',this)">📊 Dashboard</button>
-      <button class="tab" onclick="adTab('regs',this)">📁 Registros</button>
+      <button class="tab active" onclick="adTab('dash',this)">Dashboard</button>
+      <button class="tab" onclick="adTab('regs',this)">Registros</button>
       ${me?.role==='admin'?`
-      <button class="tab" id="tabPend" onclick="adTab('pend',this)">⏳ Pendientes <span id="pendBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
-      <button class="tab" onclick="adTab('usrs',this)">👥 Usuarios</button>
-      <button class="tab" onclick="adTab('asuetos',this)">🎉 Asuetos</button>
-      <button class="tab" id="tabObs" onclick="adTab('obs',this)">💬 Observaciones <span id="obsBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
+      <button class="tab" id="tabPend" onclick="adTab('pend',this)">Pendientes <span id="pendBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
+      <button class="tab" onclick="adTab('usrs',this)">Usuarios</button>
+      <button class="tab" onclick="adTab('asuetos',this)">Asuetos</button>
+      <button class="tab" id="tabObs" onclick="adTab('obs',this)">Observaciones <span id="obsBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
       `:''}
-      <button class="tab" onclick="adTab('perfil',this)">👤 Mi Perfil</button>
+      <button class="tab" onclick="adTab('perfil',this)">Mi Perfil</button>
     </div>
     <div class="content">
       <div id="adDash">
         <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
         <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
-        ${me?.role==='admin'?`<div class="card" id="dashObsCard" style="display:none;border-left:3px solid var(--blue)"><div class="card-title">💬 Observaciones de asistentes</div><div id="dashObsList"></div></div>`:''}
+        ${me?.role==='admin'?`<div class="card" id="dashObsCard" style="display:none;border-left:3px solid var(--blue)"><div class="card-title">Observaciones de asistentes</div><div id="dashObsList"></div></div>`:''}
         <div class="card" id="dashAsistCard" style="display:none">
-          <div class="card-title">📍 Asistencia de hoy</div>
+          <div class="card-title">Asistencia de hoy</div>
           <div id="dashAsistList"></div>
         </div>
         <div class="card"><div class="card-title">Registros de hoy</div><div id="dashHoy"><div class="spin"></div></div></div>
@@ -347,8 +346,8 @@ function renderAdmin(){
         <div class="page-header" style="justify-content:space-between">
           <div><div class="ph-title">Registros</div><div class="ph-sub" id="adRegsSubtitle">Selecciona un empleado para ver su historial</div></div>
           <div style="display:flex;gap:6px">
-            <button class="btn btn-gh btn-sm" id="btnVistaEmp" onclick="switchVistaRegs('empleado')">👤 Por empleado</button>
-            <button class="btn btn-p btn-sm" id="btnVistaMes" onclick="switchVistaRegs('mes')">📅 Por mes</button>
+            <button class="btn btn-gh btn-sm" id="btnVistaEmp" onclick="switchVistaRegs('empleado')">Por empleado</button>
+            <button class="btn btn-p btn-sm" id="btnVistaMes" onclick="switchVistaRegs('mes')">Por mes</button>
           </div>
         </div>
 
@@ -371,7 +370,7 @@ function renderAdmin(){
                 <input type="month" id="mesReporteGlobal">
               </div>
               <button class="btn btn-p btn-sm" onclick="cargarReporteMes()">Ver</button>
-              ${me?.role==='admin'?`<button class="btn btn-g btn-sm" onclick="exportarMesCompleto()">📥 Exportar todo</button>`:''}
+              ${me?.role==='admin'?`<button class="btn btn-g btn-sm" onclick="exportarMesCompleto()">Exportar todo</button>`:''}
             </div>
           </div>
           <div id="reporteMesLista"></div>
@@ -391,7 +390,7 @@ function renderAdmin(){
                 <input type="month" id="adEmpMes">
               </div>
               <button class="btn btn-p btn-sm" onclick="cargarPerfilEmpleado()">Ver</button>
-<button class="btn btn-g btn-sm" onclick="exportarEmpleadoIndividual()">📥 Excel</button>
+<button class="btn btn-g btn-sm" onclick="exportarEmpleadoIndividual()">Excel</button>
             </div>
           </div>
           <div id="adEmpRegs"><div class="spin"></div></div>
@@ -400,8 +399,8 @@ function renderAdmin(){
       <div id="adPend" style="display:none">
         <div class="page-header"><div><div class="ph-title">Pendientes</div><div class="ph-sub">Horas extras por aprobar · Viáticos para revisar</div></div></div>
         <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-          <button class="btn btn-p btn-sm" onclick="verPendHE(this)">⏱ HE pendientes</button>
-          <button class="btn btn-gh btn-sm" onclick="verPendViat(this)">💰 Viáticos aprobados</button>
+          <button class="btn btn-p btn-sm" onclick="verPendHE(this)">HE pendientes</button>
+          <button class="btn btn-gh btn-sm" onclick="verPendViat(this)">Viáticos aprobados</button>
         </div>
         <div id="pendList"><div class="spin"></div></div>
         <div id="viatList" style="display:none"></div>
@@ -413,7 +412,7 @@ function renderAdmin(){
         </div>
         ${me?.role==='admin'?`
         <div class="card" style="border-left:3px solid var(--warn);margin-bottom:14px">
-          <div style="font-size:12px;font-weight:700;color:var(--warn);margin-bottom:6px">🧪 SOLO PARA PRUEBAS</div>
+          <div style="font-size:12px;font-weight:700;color:var(--warn);margin-bottom:6px">SOLO PARA PRUEBAS</div>
           <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Asigna o quita la sede de prueba a todos los empleados de un clic.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-gh btn-sm" onclick="asignarSedePruebaATodos()">Asignar sede de prueba a todos</button>
@@ -434,13 +433,13 @@ function renderAdmin(){
         <div class="card" style="margin-bottom:14px">
           <div class="card-title">Auditoría</div>
           <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Detecta registros creados fuera del rango de días permitido.</div>
-          <button class="btn btn-gh btn-sm" onclick="toggleAuditoria()">🔍 Ver registros sospechosos</button>
+          <button class="btn btn-gh btn-sm" onclick="toggleAuditoria()">Ver registros sospechosos</button>
           <div id="auditoriaResult" style="display:none;margin-top:14px"></div>
         </div>
         <div class="card">
           <div class="tog-row">
             <div>
-              <div class="tog-lbl">🔧 Activar mantenimiento</div>
+              <div class="tog-lbl">Activar mantenimiento</div>
               <div class="tog-sub">Solo tú podrás acceder mientras esté activo</div>
             </div>
             <div class="toggle" id="togMant" onclick="toggleMantenimiento()"></div>
@@ -509,9 +508,9 @@ function modalsHTML(){
       <div class="fg">
         <label class="fl">Tipo de observación</label>
         <select id="obsTipo">
-          <option value="viatico">💰 Viático no corresponde</option>
-          <option value="he">⏱ Horas extras no corresponden</option>
-          <option value="general">📋 Observación general</option>
+          <option value="viatico">Viático no corresponde</option>
+          <option value="he">Horas extras no corresponden</option>
+          <option value="general">Observación general</option>
         </select>
       </div>
       <div class="fg"><label class="fl">Detalle</label><textarea id="obsDetalle" placeholder="Describe tu observación..."></textarea></div>
@@ -864,7 +863,7 @@ window.actualizarResumenVac=function(){
   if(fin<ini){el.innerHTML='<span style="color:var(--danger)">La fecha fin debe ser mayor o igual a inicio.</span>';return;}
   const d1=new Date(ini+'T12:00:00'), d2=new Date(fin+'T12:00:00');
   const dias=Math.round((d2-d1)/(1000*60*60*24))+1;
-  el.innerHTML=`<span style="color:var(--blue)">📅 ${dias} día${dias>1?'s':''} — del ${fmt(ini)} al ${fmt(fin)}</span>`;
+  el.innerHTML=`<span style="color:var(--blue)">${dias} día${dias>1?'s':''} — del ${fmt(ini)} al ${fmt(fin)}</span>`;
 };
 
 let toastEmpTimer;
@@ -960,7 +959,6 @@ async function mostrarResumenMesAnterior(){
       box-shadow:0 20px 60px rgba(0,0,0,.25);z-index:1000;
       animation:cierrePop .35s cubic-bezier(.34,1.56,.64,1) forwards;text-align:center;`;
     card.innerHTML=`
-      <div style="font-size:36px;margin-bottom:8px">📊</div>
       <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:4px">Resumen de ${nomMes}</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:16px">Esto es lo que registraste el mes pasado</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
@@ -981,7 +979,7 @@ async function mostrarResumenMesAnterior(){
       <div style="background:var(--dangerlt);border-radius:8px;padding:10px;margin-bottom:14px;font-size:12px;color:var(--danger);text-align:left">
         ${viaticosAnul>0?`⚠️ ${viaticosAnul} viático${viaticosAnul>1?'s anulados':' anulado'}<br>`:''}
         ${heRechaz>0?`⚠️ ${heRechaz} HE rechazada${heRechaz>1?'s':''}<br>`:''}
-        ${hePend>0?`⏳ ${hePend} HE aún pendiente${hePend>1?'s':''}`:''}
+        ${hePend>0?`${hePend} HE aún pendiente${hePend>1?'s':''}`:''}
       </div>`:''}
       <div style="font-size:12px;color:var(--text2);margin-bottom:16px">Esto debería reflejarse en tu planilla de este mes.</div>
       <div style="display:flex;gap:8px">
@@ -1015,7 +1013,7 @@ async function mostrarResumenMesAnterior(){
 
 function mostrarCierreMes(diasRestantes){
   const color=diasRestantes===0?'var(--danger)':'var(--warn)';
-  const emoji=diasRestantes===0?'🚨':'⚠️';
+  const emoji=diasRestantes===0?'':'⚠️';
   const titulo=diasRestantes===0?'¡Hoy cierra el mes!':
     diasRestantes===1?'¡Mañana cierra el mes!':
     `Cierre de mes en ${diasRestantes} días`;
@@ -1129,7 +1127,7 @@ async function renderMarcajeCard(){
   cont.innerHTML=`
     <div class="card" style="border-left:3px solid var(--blue);margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div class="card-title" style="margin-bottom:0">📍 Marcaje — ${sede.nombre}${sede.temporal?' <span class="badge by" style="font-size:9px">temporal</span>':''}</div>
+        <div class="card-title" style="margin-bottom:0">Marcaje — ${sede.nombre}${sede.temporal?' <span class="badge by" style="font-size:9px">temporal</span>':''}</div>
       </div>
       <div id="marcajeAlert"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1159,7 +1157,7 @@ async function renderMarcajeCard(){
 
 window.marcarAsistenciaUI=async function(tipo){
   const al=$('marcajeAlert');
-  if(al) al.innerHTML='<div style="font-size:12px;color:var(--text2);padding:6px 0">📡 Obteniendo ubicación...</div>';
+  if(al) al.innerHTML='<div style="font-size:12px;color:var(--text2);padding:6px 0">Obteniendo ubicación...</div>';
   try{
     const res=await marcarAsistencia(db,{ref,get,set,update},me,tipo,today());
     if(al) al.innerHTML=`<div class="alert as" style="font-size:12px">✓ ${tipo==='entrada'?'Entrada':'Salida'} marcada — ${res.horaStr}</div>`;
@@ -1220,7 +1218,6 @@ window.onFechaChange = async function(){
         hide('camposNormal');hide('camposEspecial');hide('heResumen');hide('heBox');hide('tipoDiaGrid');
         if(empAlert) empAlert.innerHTML=`
           <div style="background:var(--greenlt);border:1px solid #6ee7b7;border-radius:var(--r);padding:16px;text-align:center">
-            <div style="font-size:22px;margin-bottom:6px">🏖</div>
             <div style="font-weight:700;font-size:15px;color:var(--green);margin-bottom:6px">Vacaciones aprobadas</div>
             <div style="font-size:13px;color:var(--text2)">Del ${fmt(vacAprobada.vacIni)} al ${fmt(vacAprobada.vacFin)}. No necesitas registrar nada.</div>
           </div>`;
@@ -1236,7 +1233,6 @@ window.onFechaChange = async function(){
     hide('camposNormal');hide('heResumen');hide('heBox');hide('camposEspecial');hide('tipoDiaGrid');
     if(empAlert) empAlert.innerHTML=`
       <div style="background:var(--bluelt);border:1px solid var(--bluemid);border-radius:var(--r);padding:16px;text-align:center">
-        <div style="font-size:22px;margin-bottom:6px">🎉</div>
         <div style="font-weight:700;font-size:15px;margin-bottom:4px">${asueto.nombre}</div>
         <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Este día es asueto. Si no trabajaste, no necesitas registrar nada.</div>
         <button class="btn btn-gh" onclick="trabajeEnAsueto('${asueto.nombre}')">Trabajé este día →</button>
@@ -1290,7 +1286,7 @@ window.calcHE = async function(){
         ? `${diasNombre[dow]} — jornada completa cuenta como horas extras`
         : `Fuera del horario base (${horarioBase(fecha)?.ini}–${horarioBase(fecha)?.fin})`;
     resEl.innerHTML=`<div style="background:var(--warnlt);border:1px solid #fcd34d;border-radius:var(--r);padding:12px 14px;font-size:13px">
-      <div style="font-weight:600;color:var(--warn);margin-bottom:4px">⏱ Se detectaron ${tiempoStr} de horas extras</div>
+      <div style="font-weight:600;color:var(--warn);margin-bottom:4px">Se detectaron ${tiempoStr} de horas extras</div>
       <div style="color:var(--text2)">${motivo}</div>
     </div>`;
     show('heResumen'); show('heBox');
@@ -1438,7 +1434,7 @@ async function loadHist(){
   const l=$('empHistList');l.innerHTML='<div class="spin"></div>';
   const res=$('empResumenMes');res.innerHTML='';
   const snap=await get(ref(db,`registros/${me.id}`));
-  if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">No tienes registros aún</div></div>';return;}
+  if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">No tienes registros aún</div></div>';return;}
   const raw=snap.val();
   const allItems=Object.entries(raw).map(([k,v])=>({key:k,...v}));
   allItems.sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -1495,11 +1491,11 @@ async function loadHist(){
       </div>`;
 
     if(!items.length){
-      l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">Sin registros en este mes</div></div>';
+      l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros en este mes</div></div>';
       return;
     }
 
-    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad',permiso:'🙋 Permiso'};
+    const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso'};
     l.innerHTML=items.map(r=>{
       const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
       if(esEspecial){
@@ -1515,14 +1511,14 @@ async function loadHist(){
       }
       const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
       const eh=r.estadoHE||(r.he?'pendiente':'na');
-      const viatBadge=r.viatico?(ev==='rechazado'?'<span class="badge br">💰 Anulado</span>':'<span class="badge ba">💰 Viático</span>'):'';
-      const heBadge=r.he?(eh==='aprobado'?'<span class="badge ba">⏱ HE ✓</span>':eh==='rechazado'?'<span class="badge br">⏱ HE ✗</span>':'<span class="badge bp">⏱ HE pendiente</span>'):'';
+      const viatBadge=r.viatico?(ev==='rechazado'?'<span class="badge br">Anulado</span>':'<span class="badge ba">Viático</span>'):'';
+      const heBadge=r.he?(eh==='aprobado'?'<span class="badge ba">HE ✓</span>':eh==='rechazado'?'<span class="badge br">HE ✗</span>':'<span class="badge bp">HE pendiente</span>'):'';
       const horario=r.horaEntrada&&r.horaSalida?`<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.horaEntrada}–${r.horaSalida}</span>`:'';
       const minAprobados=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
       const ajusteInfo=r.heAjustada&&r.notaAjusteHE?`<div style="font-size:11px;color:var(--warn);margin-top:3px">⚠ HE ajustada a ${Math.floor(minAprobados/60)>0?Math.floor(minAprobados/60)+'h ':''+(minAprobados%60)+'m'} — ${r.notaAjusteHE}</div>`:'';
       const marc=marcajesPorFecha[r.fecha];
       const marcajeInfo=marc?`<div style="font-size:11px;color:var(--text2);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
-        📍 ${marc.entrada?`Entrada ${marc.entrada.horaStr} <span class="badge ${(ESTADO_LABELS[marc.entrada.estado]||{}).color||'bn'}" style="font-size:9px">${(ESTADO_LABELS[marc.entrada.estado]||{}).texto||''}</span>`:'sin entrada marcada'}
+        ${marc.entrada?`Entrada ${marc.entrada.horaStr} <span class="badge ${(ESTADO_LABELS[marc.entrada.estado]||{}).color||'bn'}" style="font-size:9px">${(ESTADO_LABELS[marc.entrada.estado]||{}).texto||''}</span>`:'sin entrada marcada'}
         ${marc.salida?`· Salida ${marc.salida.horaStr} <span class="badge ${(ESTADO_LABELS[marc.salida.estado]||{}).color||'bn'}" style="font-size:9px">${(ESTADO_LABELS[marc.salida.estado]||{}).texto||''}</span>`:''}
       </div>`:'';
       return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
@@ -1766,11 +1762,11 @@ async function loadDash(){
         if(card){
           if(noLeidas.length){
             card.style.display='';
-            const tipoLabels={viatico:'💰 Viático',he:'⏱ HE',general:'📋 General'};
+            const tipoLabels={viatico:'Viático',he:'HE',general:'General'};
             $('dashObsList').innerHTML=noLeidas.slice(0,5).map(o=>`
               <div style="padding:10px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
                 <div style="flex:1;min-width:0">
-                  <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||'📋'}</span>
+                  <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||''}</span>
                   <span style="font-size:11px;color:var(--text2);margin-left:4px">${o.asistente||''}</span>
                   <div style="font-size:13px;color:var(--text);margin-top:3px">${o.detalle}</div>
                 </div>
@@ -1799,7 +1795,7 @@ async function loadPend(){
   if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
     all=all.filter(r=>me.empleadosAsig.includes(r.userId));
   }
-  const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad',permiso:'🙋 Permiso'};
+  const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso'};
   // HE pendientes + días especiales pendientes (solo incapacidad y vacaciones)
   const pendHE=all.filter(r=>r.he&&r.estadoHE==='pendiente');
   const pendEsp=all.filter(r=>r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente');  const pend=[...pendHE,...pendEsp].sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -1813,7 +1809,7 @@ async function loadPend(){
           <div><div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div><div style="font-size:12px;color:var(--text2)">${fmtLong(r.fecha)}</div></div>
           <span class="badge by">${label}</span>
         </div>
-        ${r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin?`<div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:8px">📅 Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)} · ${Math.round((new Date(r.vacFin+'T12:00:00')-new Date(r.vacIni+'T12:00:00'))/(1000*60*60*24))+1} días</div>`:''}
+        ${r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin?`<div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:8px">Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)} · ${Math.round((new Date(r.vacFin+'T12:00:00')-new Date(r.vacIni+'T12:00:00'))/(1000*60*60*24))+1} días</div>`:''}
         ${r.nota?`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">${r.nota}</div>`:''}
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           ${isAdmin()?`<button class="btn btn-g btn-sm" onclick="${
@@ -1821,14 +1817,14 @@ async function loadPend(){
             r.tipoDia==='vacaciones'?`aprobarVacacionesPend('${r.userId}','${r.key}')`:
             `aprobarEspecialPend('${r.userId}','${r.key}')`}">✓ Aprobar</button>
           <button class="btn btn-gh btn-sm" onclick="openRejEspecial('${r.userId}','${r.key}');rejCallback=loadPend">Rechazar</button>`:''}
-          <button class="btn btn-gh btn-sm" onclick="openObs('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button>
+          <button class="btn btn-gh btn-sm" onclick="openObs('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')">Observación</button>
         </div>
       </div>`;
     }
     return `<div class="card" style="border-left:4px solid var(--warn)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:10px">
         <div><div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${fmtLong(r.fecha)}</div></div>
-        <span class="badge bp">⏱ HE — ${r.heInicio||''}–${r.heFin||''}</span>
+        <span class="badge bp">HE — ${r.heInicio||''}–${r.heFin||''}</span>
       </div>
       <div style="font-size:12px;background:var(--bluelt);padding:9px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">${r.actividades}</div>
@@ -1836,7 +1832,7 @@ async function loadPend(){
         ${isAdmin()?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${r.userId}','${r.key}')">✓ Aprobar HE</button>
         <button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}','he')">✗ Rechazar HE</button>`:''}
         <button class="btn btn-gh btn-sm" onclick="openDet('${r.userId}','${r.key}',true)">Ver detalle</button>
-        ${!isAdmin()?`<button class="btn btn-gh btn-sm" onclick="openObs('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button>`:''}
+        ${!isAdmin()?`<button class="btn btn-gh btn-sm" onclick="openObs('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')">Observación</button>`:''}
       </div></div>`;
   }).join('');
 }
@@ -1887,7 +1883,7 @@ window.verPendViat=async btn=>{
   const l=$('viatList');l.innerHTML='<div class="spin"></div>';
   const all=await getAllRegs();
   const viats=all.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  if(!viats.length){l.innerHTML='<div class="empty"><div class="ei">💰</div><div class="et">Sin viáticos registrados</div></div>';return;}
+  if(!viats.length){l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin viáticos registrados</div></div>';return;}
   l.innerHTML=viats.map(r=>{
     const rechazado=r.estadoViatico==='rechazado';
     return `<div class="card" style="border-left:4px solid ${rechazado?'var(--danger)':'var(--green)'}">
@@ -1983,7 +1979,7 @@ async function loadFiltEmps(){
           <div style="font-size:12px;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.cargo||'—'}</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-          ${pendHE>0?`<span class="badge bp">⏱${pendHE}</span>`:''}
+          ${pendHE>0?`<span class="badge bp">HE ${pendHE}</span>`:''}
           <div style="text-align:right;font-size:12px;color:var(--text2);line-height:1.5">
             <span style="color:var(--text);font-weight:600">${delMes.length}</span> reg &nbsp;
             <span style="color:var(--green);font-weight:600">${viaticos}</span> viát &nbsp;
@@ -2026,7 +2022,7 @@ window.cargarPerfilEmpleado=async()=>{
   const snap=await get(ref(db,`registros/${perfilEmpUID}`));
 
   if(!snap.exists()){
-    l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">Sin registros</div></div>';
+    l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros</div></div>';
     $('adEmpResumen').innerHTML=''; return;
   }
 
@@ -2046,10 +2042,10 @@ window.cargarPerfilEmpleado=async()=>{
       <div class="stat-card"><div class="stat-val">${viaticos}</div><div class="stat-lbl">Viáticos</div></div>
       <div class="stat-card w"><div class="stat-val" style="font-size:20px">${totalMin>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</div><div class="stat-lbl">Hrs extras</div></div>
     </div>
-    ${pendHE>0?`<div class="alert ae" style="margin-bottom:0">⏱ ${pendHE} hora${pendHE>1?'s extra pendientes':' extra pendiente'} de aprobación</div>`:''}`;
+    ${pendHE>0?`<div class="alert ae" style="margin-bottom:0">${pendHE} hora${pendHE>1?'s extra pendientes':' extra pendiente'} de aprobación</div>`:''}`;
 
   if(!items.length){
-    l.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">Sin registros en este período</div></div>';
+    l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros en este período</div></div>';
     return;
   }
 
@@ -2062,7 +2058,7 @@ window.cargarPerfilEmpleado=async()=>{
     const border=i>0?'border-top:1px solid var(--gray100);':'';
     const pendiente=r.he&&eh==='pendiente';
     const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
-    const tipoLabels={asueto:'🎉 Asueto',vacaciones:'🏖 Vacaciones',incapacidad:'🏥 Incapacidad',permiso:'🙋 Permiso'};
+    const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso'};
     const pendEspecial=esEspecial&&r.estadoEspecial==='pendiente';
 
     if(esEspecial){
@@ -2071,7 +2067,7 @@ window.cargarPerfilEmpleado=async()=>{
       const remBadge=(r.tipoDia==='permiso'&&est==='aprobado')
         ?(r.remunerado===false?'<span class="badge br" style="font-size:10px">No remunerado</span>':'<span class="badge ba" style="font-size:10px">Remunerado</span>'):'';
       const rangoVac=(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin)
-        ?`<div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:6px">📅 Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)} · ${Math.round((new Date(r.vacFin+'T12:00:00')-new Date(r.vacIni+'T12:00:00'))/(1000*60*60*24))+1} días</div>`:'';
+        ?`<div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:6px">Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)} · ${Math.round((new Date(r.vacFin+'T12:00:00')-new Date(r.vacIni+'T12:00:00'))/(1000*60*60*24))+1} días</div>`:'';
       return `<div style="${border}padding:16px;border-left:3px solid ${pendEspecial?'var(--warn)':est==='aprobado'?'var(--green)':'var(--danger)'}">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rangoVac||r.nota||pendEspecial?'8px':'0'}">
           <div><div style="font-weight:700;font-size:14px">${fmt(r.fecha)}</div></div>
@@ -2117,8 +2113,8 @@ window.cargarPerfilEmpleado=async()=>{
       ${pendiente||(r.viatico&&ev!=='rechazado')?`<div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--gray100)">
         ${isAdmin()&&pendiente?`<button class="btn btn-g btn-xs" onclick="aprobarHEyRefresh('${perfilEmpUID}','${r.key}')">✓ Aprobar HE</button><button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','he');rejCallback=cargarPerfilEmpleado">Rechazar HE</button>`:''}
         ${isAdmin()&&r.viatico&&ev!=='rechazado'?`<button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','viatico');rejCallback=cargarPerfilEmpleado">Anular viático</button>`:''}
-        ${!isAdmin()?`<button class="btn btn-gh btn-xs" onclick="openObs('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button>`:''}
-      </div>`:(!isAdmin()?`<div style="padding-top:8px;border-top:1px solid var(--gray100)"><button class="btn btn-gh btn-xs" onclick="openObs('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}')">💬 Observación</button></div>`:'')}
+        ${!isAdmin()?`<button class="btn btn-gh btn-xs" onclick="openObs('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}')">Observación</button>`:''}
+      </div>`:(!isAdmin()?`<div style="padding-top:8px;border-top:1px solid var(--gray100)"><button class="btn btn-gh btn-xs" onclick="openObs('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}')">Observación</button></div>`:'')}
     </div>`;
   }).join('')+`</div>`;
 };
@@ -2310,7 +2306,7 @@ window.cargarReporteMes=async()=>{
             <div style="font-size:11px;color:var(--text2);margin-top:1px">${f.u.cargo||'—'}</div>
           </div>
           <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;font-size:12px">
-            ${f.pendHE>0?`<span class="badge bp" style="font-size:10px">⏱${f.pendHE}</span>`:''}
+            ${f.pendHE>0?`<span class="badge bp" style="font-size:10px">HE ${f.pendHE}</span>`:''}
             <div style="text-align:right">
               <span style="color:var(--text);font-weight:600">${f.regs}</span> reg &nbsp;
               <span style="color:var(--green);font-weight:600">${f.viaticos}</span> viát &nbsp;
@@ -2467,17 +2463,17 @@ async function loadObservaciones(){
   const l=$('adObsList'); if(!l) return;
   l.innerHTML='<div class="spin"></div>';
   const snap=await get(ref(db,'observaciones'));
-  if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei">💬</div><div class="et">Sin observaciones</div></div>';return;}
+  if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin observaciones</div></div>';return;}
   const items=Object.entries(snap.val()).map(([k,v])=>({...v,obsId:k}))
     .sort((a,b)=>b.creadoEn-a.creadoEn);
-  const tipoLabels={viatico:'💰 Viático no corresponde',he:'⏱ HE no corresponden',general:'📋 General'};
+  const tipoLabels={viatico:'Viático no corresponde',he:'HE no corresponden',general:'General'};
   l.innerHTML=`<div class="card" style="padding:0;overflow:hidden">`+items.map((o,i)=>{
     if(!o.detalle&&!o.tipo) return ''; // skip corrupt entries
     return `
     <div style="${i>0?'border-top:1px solid var(--gray100);':''}padding:14px 16px;${o.leida?'':'background:var(--bluelt)'}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
         <div>
-          <span class="badge by" style="font-size:11px">${tipoLabels[o.tipo]||'📋 General'}</span>
+          <span class="badge by" style="font-size:11px">${tipoLabels[o.tipo]||'General'}</span>
           ${!o.leida?'<span class="badge bp" style="font-size:10px;margin-left:4px">Nueva</span>':''}
         </div>
         <div style="font-size:11px;color:var(--text2);white-space:nowrap">${o.asistente||'—'}</div>
@@ -2518,11 +2514,11 @@ window.marcarLeida=async(key)=>{
       if(card){
         if(noLeidas.length){
           card.style.display='';
-          const tipoLabels={viatico:'💰 Viático',he:'⏱ HE',general:'📋 General'};
+          const tipoLabels={viatico:'Viático',he:'HE',general:'General'};
           if(listEl) listEl.innerHTML=noLeidas.slice(0,5).map(o=>`
             <div style="padding:10px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
               <div style="flex:1;min-width:0">
-                <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||'📋'}</span>
+                <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||''}</span>
                 <span style="font-size:11px;color:var(--text2);margin-left:4px">${o.asistente||''}</span>
                 <div style="font-size:13px;color:var(--text);margin-top:3px">${o.detalle}</div>
               </div>
@@ -2678,7 +2674,7 @@ window.openDet=async(uid,key,fromAdmin)=>{
       :'<span class="badge bn">No</span>'}</div></div>
     ${r.viatico&&r.motivoRechazoViatico?`<div class="dr"><div class="dk">Motivo anulación viático</div><div class="dv" style="color:var(--danger)">${r.motivoRechazoViatico}</div></div>`:''}
     <div class="dr"><div class="dk">Horas Extras</div><div class="dv">${r.he
-      ?`${r.heInicio} a ${r.heFin} — <span class="badge ${eh==='aprobado'?'ba':eh==='rechazado'?'br':'bp'}">${eh==='aprobado'?'✓ Aprobada':eh==='rechazado'?'✗ Rechazada':'⏳ Pendiente'}</span>`
+      ?`${r.heInicio} a ${r.heFin} — <span class="badge ${eh==='aprobado'?'ba':eh==='rechazado'?'br':'bp'}">${eh==='aprobado'?'✓ Aprobada':eh==='rechazado'?'✗ Rechazada':'Pendiente'}</span>`
       :'<span class="badge bn">No</span>'}</div></div>
     ${r.he?`<div class="dr"><div class="dk">Justificación HE</div><div class="dv">${r.heJustif}</div></div>`:''}
     ${r.he&&r.heAjustada?`<div class="dr"><div class="dk" style="color:var(--warn)">HE ajustada</div><div class="dv">
@@ -2692,7 +2688,7 @@ $('moDetActs').innerHTML=puedeActuar?(
       ?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${uid}','${key}');closeModal('moDet')">✓ Aprobar HE</button>
          <button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','he')">✗ Rechazar HE</button>`
       :(r.he&&eh==='aprobado')
-      ?`<button class="btn btn-gh btn-sm" onclick="closeModal('moDet');aprobarHEyRefresh('${uid}','${key}')">✏️ Ajustar HE</button>
+      ?`<button class="btn btn-gh btn-sm" onclick="closeModal('moDet');aprobarHEyRefresh('${uid}','${key}')">️ Ajustar HE</button>
          <button class="btn btn-d btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','he')">✗ Rechazar HE</button>
          ${r.viatico&&ev!=='rechazado'?`<button class="btn btn-gh btn-sm" onclick="closeModal('moDet');openRej('${uid}','${key}','viatico')">✗ Anular viático</button>`:''}`
       :(r.viatico&&ev!=='rechazado')
@@ -2721,7 +2717,7 @@ async function loadUsrs(){
     <div>
       <div class="un">${u.nombre} <span class="badge ${activo?'bac':'bin'}">${activo?'Activo':'Inactivo'}</span>
         ${extActiva?`<span class="badge by" style="font-size:10px">+${ext.dias}d hasta ${fmt(ext.hasta)}</span>`:''}
-        ${u.role==='empleado'?`<span class="badge ${sedeTempActiva?'by':'bn'}" style="font-size:10px">📍 ${sedeLabel}</span>`:''}
+        ${u.role==='empleado'?`<span class="badge ${sedeTempActiva?'by':'bn'}" style="font-size:10px">${sedeLabel}</span>`:''}
       </div>
       <div class="um">@${u.username}</div>
     </div>
