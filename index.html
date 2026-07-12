@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=4">
+<link rel="stylesheet" href="css/styles.css?v=5">
 </head>
 <body>
 
@@ -133,8 +133,13 @@ self.addEventListener('fetch', e => {
   </div>
 </div>
 
+<!-- BOOT: se muestra mientras se verifica sesión/mantenimiento, evita el parpadeo del login -->
+<div id="bootScreen" class="screen active" style="background:linear-gradient(135deg,#0f1f3d 0%,#1e3a5f 100%);align-items:center;justify-content:center;min-height:100vh">
+  <div class="boot-spin"></div>
+</div>
+
 <!-- LOGIN -->
-<div id="loginScreen" class="screen active">
+<div id="loginScreen" class="screen">
   <div class="orb1"></div>
   <div class="orb2"></div>
   <div class="login-panel">
@@ -779,49 +784,54 @@ const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='
 
 // ── RESTORE SESSION ON PAGE LOAD ──────────────────
 (async()=>{
-  // Verificar mantenimiento primero
-  const enMant=await checkMaintenance();
-  if(enMant){
-    // Solo admin puede pasar — si hay sesión guardada de admin, dejarla pasar
-    const saved=localStorage.getItem('innova_session');
-    if(saved){
-      try{
-        const user=JSON.parse(saved);
-        const snap=await get(ref(db,`users/${user.id}`));
-        if(snap.exists()){
-          const fresh=snap.val();
-          if(fresh.activo&&fresh.role==='admin'){
-            me={id:user.id,...fresh};
-            localStorage.setItem('innova_session',JSON.stringify(me));
-            renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
-            return;
+  try{
+    // Verificar mantenimiento primero
+    const enMant=await checkMaintenance();
+    if(enMant){
+      // Solo admin puede pasar — si hay sesión guardada de admin, dejarla pasar
+      const saved=localStorage.getItem('innova_session');
+      if(saved){
+        try{
+          const user=JSON.parse(saved);
+          const snap=await get(ref(db,`users/${user.id}`));
+          if(snap.exists()){
+            const fresh=snap.val();
+            if(fresh.activo&&fresh.role==='admin'){
+              me={id:user.id,...fresh};
+              localStorage.setItem('innova_session',JSON.stringify(me));
+              renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+              return;
+            }
           }
-        }
-      }catch(e){}
+        }catch(e){}
+      }
+      screen('maintenanceScreen');
+      document.body.style.overflow='hidden';
+      return;
     }
-    screen('maintenanceScreen');
-    document.body.style.overflow='hidden';
-    return;
-  }
 
-  // Sin mantenimiento — restaurar sesión normal
-  const saved = localStorage.getItem('innova_session');
-  if(!saved) return;
-  try {
-    const user = JSON.parse(saved);
-    if(!user||!user.id||!user.username) return;
-    const snap = await get(ref(db,`users/${user.id}`));
-    if(!snap.exists()) { localStorage.removeItem('innova_session'); return; }
-    const fresh = snap.val();
-    if(!fresh.activo) { localStorage.removeItem('innova_session'); return; }
-    me = {id:user.id, ...fresh};
-    localStorage.setItem('innova_session', JSON.stringify(me));
-    if(me.role==='admin'||me.role==='asistente'){
-      renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
-    } else {
-      renderEmployee(me.nombre); screen('employeeScreen'); initForm();
-    }
-  } catch(e) { localStorage.removeItem('innova_session'); }
+    // Sin mantenimiento — restaurar sesión normal
+    const saved = localStorage.getItem('innova_session');
+    if(!saved){ screen('loginScreen'); return; }
+    try {
+      const user = JSON.parse(saved);
+      if(!user||!user.id||!user.username){ screen('loginScreen'); return; }
+      const snap = await get(ref(db,`users/${user.id}`));
+      if(!snap.exists()) { localStorage.removeItem('innova_session'); screen('loginScreen'); return; }
+      const fresh = snap.val();
+      if(!fresh.activo) { localStorage.removeItem('innova_session'); screen('loginScreen'); return; }
+      me = {id:user.id, ...fresh};
+      localStorage.setItem('innova_session', JSON.stringify(me));
+      if(me.role==='admin'||me.role==='asistente'){
+        renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+      } else {
+        renderEmployee(me.nombre); screen('employeeScreen'); initForm();
+      }
+    } catch(e) { localStorage.removeItem('innova_session'); screen('loginScreen'); }
+  } catch(e){
+    // Cualquier fallo inesperado — no dejar al usuario atrapado en la pantalla de carga
+    screen('loginScreen');
+  }
 })();
 
 // EMP TABS
