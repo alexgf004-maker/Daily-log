@@ -232,7 +232,7 @@ function renderEmployee(nombre){
           <!-- Tipo de día -->
           <div class="fg">
             <label class="fl">Tipo de día</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap" id="tipoDiaGrid">
+            <div class="tipo-grid" id="tipoDiaGrid">
               <button type="button" class="tipo-btn active" onclick="setTipoDia('normal',this)">Día normal</button>
               <button type="button" class="tipo-btn" onclick="setTipoDia('vacaciones',this)">Vacaciones</button>
               <button type="button" class="tipo-btn" onclick="setTipoDia('incapacidad',this)">Incapacidad</button>
@@ -1513,17 +1513,19 @@ async function loadHist(){
       const eh=r.estadoHE||(r.he?'pendiente':'na');
       const viatBadge=r.viatico?(ev==='rechazado'?'<span class="badge br">Anulado</span>':'<span class="badge ba">Viático</span>'):'';
       const heBadge=r.he?(eh==='aprobado'?'<span class="badge ba">HE ✓</span>':eh==='rechazado'?'<span class="badge br">HE ✗</span>':'<span class="badge bp">HE pendiente</span>'):'';
-      const horario=r.horaEntrada&&r.horaSalida?`<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.horaEntrada}–${r.horaSalida}</span>`:'';
+      const horario=r.horaEntrada&&r.horaSalida?`<div class="rc-horario">${r.horaEntrada}–${r.horaSalida}</div>`:'';
       const minAprobados=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
-      const ajusteInfo=r.heAjustada&&r.notaAjusteHE?`<div style="font-size:11px;color:var(--warn);margin-top:3px">⚠ HE ajustada a ${Math.floor(minAprobados/60)>0?Math.floor(minAprobados/60)+'h ':''+(minAprobados%60)+'m'} — ${r.notaAjusteHE}</div>`:'';
+      const ajusteInfo=r.heAjustada&&r.notaAjusteHE?`<div style="font-size:11px;color:var(--warn);margin-top:6px">⚠ HE ajustada a ${Math.floor(minAprobados/60)>0?Math.floor(minAprobados/60)+'h ':''+(minAprobados%60)+'m'} — ${r.notaAjusteHE}</div>`:'';
       const marc=marcajesPorFecha[r.fecha];
-      const marcajeInfo=marc?`<div style="font-size:11px;color:var(--text2);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
-        ${marc.entrada?`Entrada ${marc.entrada.horaStr} <span class="badge ${(ESTADO_LABELS[marc.entrada.estado]||{}).color||'bn'}" style="font-size:9px">${(ESTADO_LABELS[marc.entrada.estado]||{}).texto||''}</span>`:'sin entrada marcada'}
-        ${marc.salida?`· Salida ${marc.salida.horaStr} <span class="badge ${(ESTADO_LABELS[marc.salida.estado]||{}).color||'bn'}" style="font-size:9px">${(ESTADO_LABELS[marc.salida.estado]||{}).texto||''}</span>`:''}
-      </div>`:'';
+      const marcItem=(label,dato)=>{
+        if(!dato) return `<div class="rc-marcaje-item"><span class="rc-marcaje-lbl">${label}</span><span class="rc-marcaje-val">—</span></div>`;
+        const info=ESTADO_LABELS[dato.estado]||{};
+        return `<div class="rc-marcaje-item"><span class="rc-marcaje-lbl">${label}</span><span class="rc-marcaje-val">${dato.horaStr}</span>${info.texto&&info.texto!=='—'?`<span class="badge ${info.color||'bn'}" style="font-size:9px">${info.texto}</span>`:''}</div>`;
+      };
+      const marcajeInfo=marc?`<div class="rc-marcaje">${marcItem('Entrada',marc.entrada)}${marcItem('Salida',marc.salida)}</div>`:'';
       return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
         <div class="rc-hd">
-          <div style="display:flex;align-items:center;gap:8px"><div class="rc-date">${fmt(r.fecha)}</div>${horario}</div>
+          <div><div class="rc-date">${fmt(r.fecha)}</div>${horario}</div>
           <div class="rc-badges">${viatBadge}${heBadge}</div>
         </div>
         <div class="rc-desc">${r.actividades}</div>
