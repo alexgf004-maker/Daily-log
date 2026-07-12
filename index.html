@@ -1448,13 +1448,17 @@ async function loadHist(){
   let mesSelec=mesActual;
   if(!mesesDisp.includes(mesSelec)&&mesesDisp.length>0) mesSelec=mesesDisp[0];
 
+  let mesEnVista=mesSelec;
+
   async function renderHist(mes){
+    mesEnVista=mes;
     const items=allItems.filter(r=>r.fecha&&r.fecha.startsWith(mes));
     const viaticos=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
     const totalMinHE=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((acc,r)=>acc+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
     const hrsHE=Math.floor(totalMinHE/60), minsHE=totalMinHE%60;
     const [anio,mesN]=mes.split('-');
-    const nomMes=new Date(parseInt(anio),parseInt(mesN)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
+    const nomMesRaw=new Date(parseInt(anio),parseInt(mesN)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
+    const nomMes=nomMesRaw.charAt(0).toUpperCase()+nomMesRaw.slice(1);
 
     // Marcajes del mes, indexados por fecha
     let marcajesPorFecha={};
@@ -1463,30 +1467,25 @@ async function loadHist(){
       marcajesPorFecha=Object.fromEntries(marcs.map(m=>[m.fecha,m]));
     }catch(e){}
     res.innerHTML=`
-      <div class="card" style="margin-bottom:14px;border-top:3px solid var(--blue)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <div class="card-title" style="margin-bottom:0">Resumen — ${nomMes}</div>
-          <select onchange="renderHistMes(this.value)" style="width:auto;padding:5px 10px;font-size:12px;border:1px solid var(--gray200);border-radius:6px;background:#fff">
-            ${mesesDisp.map(m=>{
-              const [y,mo]=m.split('-');
-              const nm=new Date(parseInt(y),parseInt(mo)-1,1).toLocaleDateString('es-SV',{month:'short',year:'numeric'});
-              return `<option value="${m}" ${m===mes?'selected':''}>${nm}</option>`;
-            }).join('')}
-          </select>
+      <div class="hist-summary">
+        <div class="hist-summary-hd">
+          <button class="hist-nav" onclick="mesAdyacente(-1)" ${mesesDisp.indexOf(mes)>=mesesDisp.length-1?'disabled':''} aria-label="Mes anterior">‹</button>
+          <button class="hist-summary-mes" onclick="toggleMesPicker()">${nomMes}</button>
+          <button class="hist-nav" onclick="mesAdyacente(1)" ${mesesDisp.indexOf(mes)<=0?'disabled':''} aria-label="Mes siguiente">›</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
-          <div style="background:var(--bluelt);border-radius:8px;padding:12px">
-            <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--blue)">${items.length}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:3px">Registros</div>
-          </div>
-          <div style="background:var(--greenlt);border-radius:8px;padding:12px">
-            <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--green)">${viaticos}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:3px">Viáticos</div>
-          </div>
-          <div style="background:var(--warnlt);border-radius:8px;padding:12px">
-            <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--warn)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:3px">Hrs extras</div>
-          </div>
+        <div class="hist-mes-picker" id="histMesPicker" style="display:none">
+          ${mesesDisp.map(m=>{
+            const [my,mm]=m.split('-');
+            const abrev=new Date(parseInt(my),parseInt(mm)-1,1).toLocaleDateString('es-SV',{month:'short',year:'2-digit'});
+            return `<button class="hist-mes-chip ${m===mes?'active':''}" onclick="renderHistMes('${m}')">${abrev}</button>`;
+          }).join('')}
+        </div>
+        <div class="hist-stats">
+          <div class="hist-stat"><span class="hist-stat-val">${items.length}</span><span class="hist-stat-lbl">Registros</span></div>
+          <div class="hist-stat-div"></div>
+          <div class="hist-stat"><span class="hist-stat-val" style="color:var(--green)">${viaticos}</span><span class="hist-stat-lbl">Viáticos</span></div>
+          <div class="hist-stat-div"></div>
+          <div class="hist-stat"><span class="hist-stat-val" style="color:var(--warn)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</span><span class="hist-stat-lbl">Horas extra</span></div>
         </div>
       </div>`;
 
@@ -1535,7 +1534,18 @@ async function loadHist(){
     }).join('');
   }
 
-  window.renderHistMes=function(mes){ renderHist(mes); };
+  window.renderHistMes=function(mes){ const p=$('histMesPicker'); if(p) p.style.display='none'; renderHist(mes); };
+  window.mesAdyacente=function(delta){
+    // delta=-1 → mes anterior (más viejo); delta=+1 → mes siguiente (más reciente)
+    const idx=mesesDisp.indexOf(mesEnVista);
+    const nuevoIdx=idx-delta;
+    if(nuevoIdx<0||nuevoIdx>=mesesDisp.length) return;
+    renderHist(mesesDisp[nuevoIdx]);
+  };
+  window.toggleMesPicker=function(){
+    const p=$('histMesPicker');
+    if(p) p.style.display=(p.style.display==='none'||!p.style.display)?'flex':'none';
+  };
   await renderHist(mesSelec);
 }
 
