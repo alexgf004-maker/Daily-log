@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="INNOVA">
 <meta name="description" content="Registro de Planilla — INNOVA Servicios técnicos y comerciales">
 <title>Registro de Planilla — INNOVA</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script>
 // ── PWA SETUP ──────────────────────────────────────────
 (function(){
@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=3">
+<link rel="stylesheet" href="css/styles.css?v=4">
 </head>
 <body>
 
@@ -1485,7 +1485,7 @@ async function loadHist(){
           <div class="hist-stat-div"></div>
           <div class="hist-stat"><span class="hist-stat-val" style="color:var(--green)">${viaticos}</span><span class="hist-stat-lbl">Viáticos</span></div>
           <div class="hist-stat-div"></div>
-          <div class="hist-stat"><span class="hist-stat-val" style="color:var(--green)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</span><span class="hist-stat-lbl">Horas extra</span></div>
+          <div class="hist-stat"><span class="hist-stat-val" style="color:var(--blue)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</span><span class="hist-stat-lbl">Horas extra</span></div>
         </div>
       </div>`;
 
