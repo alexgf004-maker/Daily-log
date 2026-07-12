@@ -212,6 +212,6 @@ tbody tr:hover td{background:var(--bluelt)}
 .hist-mes-chip.active{border-color:var(--blue);background:var(--bluelt);color:var(--blue)}
 .hist-stats{display:flex;align-items:center;justify-content:center;gap:22px;margin-top:16px;padding-top:16px;border-top:1px solid var(--gray100)}
 .hist-stat{display:flex;flex-direction:column;align-items:center;gap:3px}
-.hist-stat-val{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text)}
+.hist-stat-val{font-family:var(--sans);font-size:23px;font-weight:800;color:var(--text)}
 .hist-stat-lbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px}
 .hist-stat-div{width:1px;height:30px;background:var(--gray200)}
