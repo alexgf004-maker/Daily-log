@@ -47,14 +47,17 @@ function horaAminutos(horaStr){
 
 function calcularEstado(tipo, horaStr, fecha){
   const horario=horarioOficial(fecha);
-  if(!horario) return 'normal';
+  if(!horario) return {estado:'normal', minDiff:0};
   const min=horaAminutos(horaStr);
   if(tipo==='entrada'){
-    const limite=horaAminutos(horario.entrada)+TOLERANCIA_MIN;
-    return min<=limite ? 'a_tiempo' : 'tarde';
+    const oficial=horaAminutos(horario.entrada);
+    const limite=oficial+TOLERANCIA_MIN;
+    if(min<=limite) return {estado:'a_tiempo', minDiff:0};
+    return {estado:'tarde', minDiff:min-oficial};
   } else {
-    const limite=horaAminutos(horario.salida);
-    return min>=limite ? 'a_tiempo' : 'salida_temprana';
+    const oficial=horaAminutos(horario.salida);
+    if(min>=oficial) return {estado:'a_tiempo', minDiff:0};
+    return {estado:'salida_temprana', minDiff:oficial-min};
   }
 }
 
@@ -75,12 +78,35 @@ function obtenerUbicacion(){
 }
 
 // ── Marcar entrada o salida ──
+// ── Vínculo de dispositivo ──────────────────────────────
+// Genera/recupera un identificador único para este celular, guardado localmente.
+function obtenerDispositivoId(){
+  let id=localStorage.getItem('innova_device_id');
+  if(!id){
+    id=(crypto?.randomUUID)?crypto.randomUUID():('dev-'+Date.now()+'-'+Math.random().toString(36).slice(2));
+    localStorage.setItem('innova_device_id',id);
+  }
+  return id;
+}
+
 // tipo: 'entrada' | 'salida'
-// Lanza errores con código: SIN_SEDE, SIN_GPS, PERMISO_DENEGADO, GPS_TIMEOUT, GPS_ERROR, FUERA_DE_RANGO, YA_MARCADO
+// Lanza errores con código: SIN_SEDE, DISPOSITIVO_NO_COINCIDE, SIN_GPS, PERMISO_DENEGADO, GPS_TIMEOUT, GPS_ERROR, FUERA_DE_RANGO, YA_MARCADO
 export async function marcarAsistencia(db, fns, user, tipo, hoy){
   const {ref,get,set,update}=fns;
   const sede=sedeEfectiva(user, hoy);
   if(!sede){ const e=new Error('Sin sede asignada'); e.code='SIN_SEDE'; throw e; }
+
+  // Verificar vínculo de dispositivo — evita que alguien marque desde otro celular en tu nombre
+  const deviceId=obtenerDispositivoId();
+  const dispSnap=await get(ref(db,`users/${user.id}/dispositivoId`));
+  const dispositivoRegistrado=dispSnap.exists()?dispSnap.val():null;
+  if(!dispositivoRegistrado){
+    // Primera vez que esta cuenta marca — queda vinculada a este dispositivo
+    await set(ref(db,`users/${user.id}/dispositivoId`),deviceId);
+  } else if(dispositivoRegistrado!==deviceId){
+    const e=new Error('Esta cuenta ya está vinculada a otro celular. Contacta a Madelyn para reactivarla.');
+    e.code='DISPOSITIVO_NO_COINCIDE'; throw e;
+  }
 
   let pos;
   try{ pos=await obtenerUbicacion(); }
@@ -108,11 +134,11 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
   const datos=releido.val();
   const horaReal=new Date(datos.ts);
   const horaStr=`${String(horaReal.getHours()).padStart(2,'0')}:${String(horaReal.getMinutes()).padStart(2,'0')}`;
-  const estado=calcularEstado(tipo,horaStr,hoy);
+  const {estado,minDiff}=calcularEstado(tipo,horaStr,hoy);
 
-  await update(ref(db,`${path}/${tipo}`),{ estado, horaStr });
+  await update(ref(db,`${path}/${tipo}`),{ estado, horaStr, minDiff });
 
-  return { estado, horaStr, sede:sede.nombre, tipo };
+  return { estado, horaStr, minDiff, sede:sede.nombre, tipo };
 }
 
 // ── Obtener el marcaje del día actual para un usuario ──
@@ -133,7 +159,26 @@ export async function obtenerMarcajesMes(db, fns, uid, mes){
     .sort((a,b)=>b.fecha.localeCompare(a.fecha));
 }
 
-// ── Etiquetas visuales para estados ──
+// ── Texto y color según estado y minutos de diferencia ──
+// Formato corto para badges/chips en listas
+export function chipEstado(marc){
+  if(!marc||!marc.estado) return {texto:'—',color:'bn'};
+  const {estado,minDiff}=marc;
+  if(estado==='tarde') return {texto:`${minDiff} min tarde`,color:'br'};
+  if(estado==='salida_temprana') return {texto:`${minDiff} min antes`,color:'br'};
+  if(estado==='a_tiempo') return {texto:'A tiempo',color:'ba'};
+  return {texto:'—',color:'bn'};
+}
+
+// Frase completa para el mensaje de confirmación al marcar
+export function mensajeMarcaje(tipo, estado, minDiff){
+  if(estado==='tarde') return `Entraste ${minDiff} minuto${minDiff===1?'':'s'} tarde`;
+  if(estado==='salida_temprana') return `Saliste ${minDiff} minuto${minDiff===1?'':'s'} antes de tu hora de salida`;
+  if(estado==='a_tiempo') return tipo==='entrada' ? 'Entraste a tiempo' : 'Cumpliste tu jornada completa';
+  return tipo==='entrada' ? 'Entrada registrada' : 'Salida registrada';
+}
+
+// Mantenido por compatibilidad — mapea estado a texto/color sin minutos (fallback)
 export const ESTADO_LABELS={
   a_tiempo:{texto:'A tiempo',color:'ba'},
   tarde:{texto:'Tarde',color:'br'},
