@@ -169,6 +169,18 @@ tbody tr:hover td{background:var(--bluelt)}
 .boot-spin{width:26px;height:26px;border:2.5px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite}
 .maint-ring{width:64px;height:64px;border-radius:50%;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);display:flex;align-items:center;justify-content:center;margin:0 auto;animation:maintPulse 2.4s ease-in-out infinite}
 @keyframes maintPulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.22)}50%{box-shadow:0 0 0 12px rgba(74,222,128,0)}}
+
+.marcaje-card{background:#fff;border:1px solid var(--gray200);border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
+.marcaje-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.marcaje-sede-lbl{font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--text2);text-transform:uppercase}
+.marcaje-sede-val{font-size:13px;font-weight:700;color:var(--text)}
+.marcaje-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.marcaje-btn{width:100%;min-height:86px;border:none;border-radius:12px;background:var(--top);color:#fff;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px}
+.marcaje-btn:hover{background:var(--top2)}
+.marcaje-btn-disabled{width:100%;min-height:86px;border:1.5px dashed var(--gray200);border-radius:12px;background:var(--gray50);color:var(--text2);font-size:13px;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px}
+.marcaje-result{background:var(--bluelt);border-radius:12px;padding:14px 10px;text-align:center;min-height:86px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.marcaje-time{font-size:21px;font-weight:800;color:var(--text)}
+.marcaje-lbl{font-size:11px;color:var(--text2)}
 @keyframes sp{to{transform:rotate(360deg)}}
 .rc{background:#fff;border:1px solid var(--gray200);border-radius:var(--r);padding:12px 15px;margin-bottom:8px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
 .rc:hover{border-color:var(--blue2);box-shadow:var(--sh2)}
