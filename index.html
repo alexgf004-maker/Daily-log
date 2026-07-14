@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=6">
+<link rel="stylesheet" href="css/styles.css?v=7">
 </head>
 <body>
 
@@ -177,7 +177,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
-import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS } from "./js/marcaje.js";
+import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje } from "./js/marcaje.js";
 
 const cfg = {
   apiKey:"AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
@@ -1134,37 +1134,34 @@ async function renderMarcajeCard(){
   }
   const entrada=marc?.entrada, salida=marc?.salida;
 
-  const badge=(estado)=>{
-    const info=ESTADO_LABELS[estado]||ESTADO_LABELS.normal;
-    return `<span class="badge ${info.color}" style="font-size:10px">${info.texto}</span>`;
+  const slotResultado=(dato,etiqueta)=>{
+    const chip=chipEstado(dato);
+    return `<div class="marcaje-result">
+      <div class="marcaje-time">${dato.horaStr||'--:--'}</div>
+      <div class="marcaje-lbl">${etiqueta}</div>
+      <span class="badge ${chip.color}" style="font-size:10px">${chip.texto}</span>
+    </div>`;
   };
 
   cont.innerHTML=`
-    <div class="card" style="border-left:3px solid var(--blue);margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div class="card-title" style="margin-bottom:0">Marcaje — ${sede.nombre}${sede.temporal?' <span class="badge by" style="font-size:9px">temporal</span>':''}</div>
+    <div class="marcaje-card">
+      <div class="marcaje-hd">
+        <span class="marcaje-sede-lbl">Marcaje</span>
+        <span class="marcaje-sede-val">${sede.nombre}${sede.temporal?' · temporal':''}</span>
       </div>
       <div id="marcajeAlert"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div>
+      <div class="marcaje-grid">
+        <div class="marcaje-slot">
           ${entrada
-            ?`<div style="background:var(--bluelt);border-radius:10px;padding:12px;text-align:center">
-                <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--blue)">${entrada.horaStr||'--:--'}</div>
-                <div style="font-size:11px;color:var(--text2);margin:2px 0 4px">Entrada</div>
-                ${badge(entrada.estado)}
-              </div>`
-            :`<button class="btn btn-p" style="width:100%" onclick="marcarAsistenciaUI('entrada')">✓ Marcar entrada</button>`}
+            ? slotResultado(entrada,'Entrada')
+            : `<button class="marcaje-btn" onclick="marcarAsistenciaUI('entrada')">Marcar entrada</button>`}
         </div>
-        <div>
+        <div class="marcaje-slot">
           ${salida
-            ?`<div style="background:var(--bluelt);border-radius:10px;padding:12px;text-align:center">
-                <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--blue)">${salida.horaStr||'--:--'}</div>
-                <div style="font-size:11px;color:var(--text2);margin:2px 0 4px">Salida</div>
-                ${badge(salida.estado)}
-              </div>`
-            :entrada
-              ?`<button class="btn btn-p" style="width:100%" onclick="marcarAsistenciaUI('salida')">✓ Marcar salida</button>`
-              :`<button class="btn btn-gh" style="width:100%" disabled>Marca entrada primero</button>`}
+            ? slotResultado(salida,'Salida')
+            : entrada
+              ? `<button class="marcaje-btn" onclick="marcarAsistenciaUI('salida')">Marcar salida</button>`
+              : `<div class="marcaje-btn-disabled">Marca entrada primero</div>`}
         </div>
       </div>
     </div>`;
@@ -1175,11 +1172,13 @@ window.marcarAsistenciaUI=async function(tipo){
   if(al) al.innerHTML='<div style="font-size:12px;color:var(--text2);padding:6px 0">Obteniendo ubicación...</div>';
   try{
     const res=await marcarAsistencia(db,{ref,get,set,update},me,tipo,today());
-    if(al) al.innerHTML=`<div class="alert as" style="font-size:12px">✓ ${tipo==='entrada'?'Entrada':'Salida'} marcada — ${res.horaStr}</div>`;
+    const msg=mensajeMarcaje(tipo,res.estado,res.minDiff);
+    if(al) al.innerHTML=`<div class="alert as" style="font-size:12px">${msg} — ${res.horaStr}</div>`;
     await renderMarcajeCard();
   }catch(e){
     const mensajes={
       SIN_SEDE:'No tienes una sede asignada. Contacta a Madelyn.',
+      DISPOSITIVO_NO_COINCIDE:e.message,
       SIN_GPS:'Tu navegador no soporta ubicación GPS.',
       PERMISO_DENEGADO:'Debes permitir el acceso a tu ubicación para marcar.',
       GPS_TIMEOUT:'No se pudo obtener tu ubicación a tiempo. Intenta de nuevo.',
@@ -1533,8 +1532,8 @@ async function loadHist(){
       const marc=marcajesPorFecha[r.fecha];
       const marcItem=(label,dato)=>{
         if(!dato) return `<div class="rc-marcaje-item"><span class="rc-marcaje-lbl">${label}</span><span class="rc-marcaje-val">—</span></div>`;
-        const info=ESTADO_LABELS[dato.estado]||{};
-        return `<div class="rc-marcaje-item"><span class="rc-marcaje-lbl">${label}</span><span class="rc-marcaje-val">${dato.horaStr}</span>${info.texto&&info.texto!=='—'?`<span class="badge ${info.color||'bn'}" style="font-size:9px">${info.texto}</span>`:''}</div>`;
+        const chip=chipEstado(dato);
+        return `<div class="rc-marcaje-item"><span class="rc-marcaje-lbl">${label}</span><span class="rc-marcaje-val">${dato.horaStr}</span>${chip.texto&&chip.texto!=='—'?`<span class="badge ${chip.color}" style="font-size:9px">${chip.texto}</span>`:''}</div>`;
       };
       const marcajeInfo=marc?`<div class="rc-marcaje">${marcItem('Entrada',marc.entrada)}${marcItem('Salida',marc.salida)}</div>`:'';
       return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
@@ -1764,14 +1763,16 @@ async function loadDash(){
             <div style="font-size:11px;color:var(--text2);margin-top:2px">Sin marcar</div>
           </div>
         </div>
-        ${marcajesHoy.filter(x=>x.m?.entrada).sort((a,b)=>(a.m.entrada.horaStr||'').localeCompare(b.m.entrada.horaStr||'')).map(x=>`
-          <div style="padding:7px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:center;font-size:13px">
+        ${marcajesHoy.filter(x=>x.m?.entrada).sort((a,b)=>(a.m.entrada.horaStr||'').localeCompare(b.m.entrada.horaStr||'')).map(x=>{
+          const chip=chipEstado(x.m.entrada);
+          return `<div style="padding:7px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:center;font-size:13px">
             <span>${x.u.nombre}</span>
             <span style="display:flex;align-items:center;gap:6px">
-              <span style="font-family:var(--mono);color:var(--text2)">${x.m.entrada.horaStr}</span>
-              <span class="badge ${x.m.entrada.estado==='tarde'?'br':'ba'}" style="font-size:10px">${x.m.entrada.estado==='tarde'?'Tarde':'A tiempo'}</span>
+              <span style="color:var(--text2)">${x.m.entrada.horaStr}</span>
+              <span class="badge ${chip.color}" style="font-size:10px">${chip.texto}</span>
             </span>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       `;
     } else if(cardAsist){
       cardAsist.style.display='none';
@@ -2377,8 +2378,8 @@ window.exportarEmpleadoIndividual=async()=>{
       r.he?'Sí':'No',
       r.estadoHE==='aprobado'?(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)):0,
       r.heJustif||'', r.estadoHE||'—', r.tipoDia||'normal', r.nota||'',
-      marc?.entrada?.horaStr||'—', marc?.entrada?(ESTADO_LABELS[marc.entrada.estado]?.texto||'—'):'—',
-      marc?.salida?.horaStr||'—', marc?.salida?(ESTADO_LABELS[marc.salida.estado]?.texto||'—'):'—'
+      marc?.entrada?.horaStr||'—', marc?.entrada?chipEstado(marc.entrada).texto:'—',
+      marc?.salida?.horaStr||'—', marc?.salida?chipEstado(marc.salida).texto:'—'
     ];
   });
   const viat=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
@@ -2430,8 +2431,8 @@ window.exportarMesCompleto=async()=>{
       r.viatico?'Sí':'No',r.estadoViatico||'—',r.he?'Sí':'No',
       r.estadoHE==='aprobado'?(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)):0,
       r.heJustif||'',r.estadoHE||'—',r.tipoDia||'normal',r.nota||'',
-      marc?.entrada?.horaStr||'—', marc?.entrada?(ESTADO_LABELS[marc.entrada.estado]?.texto||'—'):'—',
-      marc?.salida?.horaStr||'—', marc?.salida?(ESTADO_LABELS[marc.salida.estado]?.texto||'—'):'—'
+      marc?.entrada?.horaStr||'—', marc?.entrada?chipEstado(marc.entrada).texto:'—',
+      marc?.salida?.horaStr||'—', marc?.salida?chipEstado(marc.salida).texto:'—'
     ];
   });
   const ws1=XLSX.utils.aoa_to_sheet([headers,...rows]);
@@ -2753,6 +2754,7 @@ async function loadUsrs(){
       <button class="btn btn-gh btn-sm" onclick="openModalUser('${u.id}')">Editar</button>
       <button class="btn btn-gh btn-sm" onclick="openExtension('${u.id}','${u.nombre}')">${extActiva?'Ver extensión':'+ Extensión'}</button>
       ${u.role==='empleado'?`<button class="btn btn-gh btn-sm" onclick="openSedeTemp('${u.id}','${u.nombre}')">${sedeTempActiva?'Ver sede temp.':'Cambiar sede'}</button>`:''}
+      ${u.role==='empleado'&&u.dispositivoId?`<button class="btn btn-gh btn-sm" onclick="reiniciarDispositivo('${u.id}','${u.nombre}')">Reiniciar celular vinculado</button>`:''}
       <button class="btn btn-d btn-sm" onclick="openSuspension('${u.id}','${u.nombre}')">Suspender</button>
       <button class="btn btn-sm ${activo?'btn-d':'btn-g'}" onclick="togActivo('${u.id}',${activo})">${activo?'Desactivar':'Activar'}</button>
       `:`<span style="font-size:12px;color:var(--text2)">Solo lectura</span>`}
@@ -2848,6 +2850,12 @@ window.guardarSedeTemp=async()=>{
 window.quitarSedeTemp=async()=>{
   await update(ref(db,`users/${sedeTempUID}`),{sedeTemporal:null});
   closeModal('moSedeTemp');loadUsrs();
+};
+
+window.reiniciarDispositivo=async(uid,nombre)=>{
+  if(!confirm(`¿Reiniciar el celular vinculado de ${nombre}? La próxima vez que marque entrada, quedará vinculado el celular que use en ese momento.`)) return;
+  await update(ref(db,`users/${uid}`),{dispositivoId:null});
+  loadUsrs();
 };
 
 // ── SOLO PARA PRUEBAS: asignar/quitar sede masivamente ──
