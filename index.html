@@ -451,6 +451,16 @@ function renderAdmin(){
             </div>
           </div>
         </div>
+        <div class="card" id="adPerfilMarcajeCard" style="display:none;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            <div class="card-title" style="margin-bottom:0">Mi historial de marcaje</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="month" id="adPerfilMarcajeMes" style="padding:5px 8px;font-size:12px;border:1px solid var(--gray200);border-radius:6px">
+              <button class="btn btn-gh btn-sm" onclick="cargarMiMarcaje()">Ver</button>
+            </div>
+          </div>
+          <div id="adPerfilMarcajeList"><div class="spin"></div></div>
+        </div>
         ${me?.role==='admin'?`
         <div class="card" style="margin-bottom:14px">
           <div class="card-title">Auditoría</div>
@@ -1590,6 +1600,20 @@ window.adTab=(t,btn)=>{
     $('adPerfilNombre').textContent=me.nombre||'';
     $('adPerfilUsername').textContent='@'+(me.username||'');
     if($('adPerfilSede')) $('adPerfilSede').value=me.sede||'';
+    const card=$('adPerfilMarcajeCard');
+    if(card){
+      if(me.sede){
+        card.style.display='';
+        const mesInput=$('adPerfilMarcajeMes');
+        if(mesInput&&!mesInput.value){
+          const now=new Date();
+          mesInput.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+        }
+        cargarMiMarcaje();
+      } else {
+        card.style.display='none';
+      }
+    }
     $('adPerfilAlert').innerHTML='';
     ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
     // Cargar estado de mantenimiento
@@ -2877,6 +2901,35 @@ window.guardarSedePropiaAdmin=async(sede)=>{
   me.sede=sede;
   localStorage.setItem('innova_session',JSON.stringify(me));
   await renderMarcajeCard();
+  const card=$('adPerfilMarcajeCard');
+  if(card){
+    if(sede){ card.style.display=''; cargarMiMarcaje(); }
+    else card.style.display='none';
+  }
+};
+
+window.cargarMiMarcaje=async()=>{
+  const l=$('adPerfilMarcajeList');
+  const mes=$('adPerfilMarcajeMes')?.value;
+  if(!l||!mes) return;
+  l.innerHTML='<div class="spin"></div>';
+  try{
+    const marcs=await obtenerMarcajesMes(db,{ref,get},me.id,mes);
+    if(!marcs.length){ l.innerHTML='<div class="empty" style="padding:16px"><div class="et">Sin marcajes en este mes</div></div>'; return; }
+    l.innerHTML=marcs.map(m=>{
+      const chipE=m.entrada?chipEstado(m.entrada):null;
+      const chipS=m.salida?chipEstado(m.salida):null;
+      return `<div style="padding:9px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <span style="font-size:13px;font-weight:600">${fmt(m.fecha)}</span>
+        <span style="display:flex;gap:14px;font-size:12px">
+          <span>Entrada ${m.entrada?`<b>${m.entrada.horaStr}</b> <span class="badge ${chipE.color}" style="font-size:9px">${chipE.texto}</span>`:'—'}</span>
+          <span>Salida ${m.salida?`<b>${m.salida.horaStr}</b> <span class="badge ${chipS.color}" style="font-size:9px">${chipS.texto}</span>`:'—'}</span>
+        </span>
+      </div>`;
+    }).join('');
+  }catch(e){
+    l.innerHTML='<div style="font-size:13px;color:var(--danger);padding:12px 0">No se pudo cargar el historial.</div>';
+  }
 };
 
 // ── SOLO PARA PRUEBAS: asignar/quitar sede masivamente ──
