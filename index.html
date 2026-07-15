@@ -343,6 +343,7 @@ function renderAdmin(){
     <div class="content">
       <div id="adDash">
         <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
+        <div id="marcajeCard" style="display:none"></div>
         <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
         ${me?.role==='admin'?`<div class="card" id="dashObsCard" style="display:none;border-left:3px solid var(--blue)"><div class="card-title">Observaciones de asistentes</div><div id="dashObsList"></div></div>`:''}
         <div class="card" id="dashAsistCard" style="display:none">
@@ -438,6 +439,17 @@ function renderAdmin(){
           <div class="dr"><div class="dk">Nombre</div><div class="dv" id="adPerfilNombre" style="font-size:16px;font-weight:600"></div></div>
           <div class="dr"><div class="dk">Usuario</div><div class="dv" id="adPerfilUsername" style="font-family:var(--mono);font-size:13px"></div></div>
           <div class="dr"><div class="dk">Rol</div><div class="dv"><span class="badge ba">Administradora</span></div></div>
+          <div class="dr">
+            <div class="dk">Sede (para marcaje)</div>
+            <div class="dv">
+              <select id="adPerfilSede" onchange="guardarSedePropiaAdmin(this.value)" style="width:auto;padding:5px 10px;font-size:13px">
+                <option value="">Sin asignar</option>
+                <option value="plantel">Plantel Central</option>
+                <option value="cucumacayan">Subestación Cucumacayán</option>
+                <option value="zacatecoluca">Subestación Zacatecoluca</option>
+              </select>
+            </div>
+          </div>
         </div>
         ${me?.role==='admin'?`
         <div class="card" style="margin-bottom:14px">
@@ -1114,7 +1126,7 @@ function initForm(){
 // ── MARCAJE GPS ─────────────────────────────────────────
 async function renderMarcajeCard(){
   const cont=$('marcajeCard');
-  if(!cont||!me||me.role!=='empleado'){ if(cont) cont.style.display='none'; return; }
+  if(!cont||!me||(me.role!=='empleado'&&me.role!=='admin')){ if(cont) cont.style.display='none'; return; }
 
   const hoy=today();
   const sede=sedeEfectiva(me,hoy);
@@ -1577,6 +1589,7 @@ window.adTab=(t,btn)=>{
     show('adPerfil');
     $('adPerfilNombre').textContent=me.nombre||'';
     $('adPerfilUsername').textContent='@'+(me.username||'');
+    if($('adPerfilSede')) $('adPerfilSede').value=me.sede||'';
     $('adPerfilAlert').innerHTML='';
     ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
     // Cargar estado de mantenimiento
@@ -1696,6 +1709,7 @@ async function autoRegistrarDiasEspeciales(regs, users){
 
 async function loadDash(){
   $('dashDate').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  renderMarcajeCard();
   const[regs,users]=await Promise.all([getAllRegs(),getUsers()]);
 
   // Auto-registrar asuetos y vacaciones aprobadas
@@ -2856,6 +2870,13 @@ window.reiniciarDispositivo=async(uid,nombre)=>{
   if(!confirm(`¿Reiniciar el celular vinculado de ${nombre}? La próxima vez que marque entrada, quedará vinculado el celular que use en ese momento.`)) return;
   await update(ref(db,`users/${uid}`),{dispositivoId:null});
   loadUsrs();
+};
+
+window.guardarSedePropiaAdmin=async(sede)=>{
+  await update(ref(db,`users/${me.id}`),{sede});
+  me.sede=sede;
+  localStorage.setItem('innova_session',JSON.stringify(me));
+  await renderMarcajeCard();
 };
 
 // ── SOLO PARA PRUEBAS: asignar/quitar sede masivamente ──
