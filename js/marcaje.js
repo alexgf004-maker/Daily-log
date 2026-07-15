@@ -38,7 +38,7 @@ function horarioOficial(fecha){
   return dow===5 ? {entrada:'07:00',salida:'16:00'} : {entrada:'07:00',salida:'17:00'};
 }
 
-const TOLERANCIA_MIN = 5;
+const TOLERANCIA_MIN = 0;
 
 function horaAminutos(horaStr){
   const [h,m]=horaStr.split(':').map(Number);
@@ -113,7 +113,13 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
   catch(err){ const e=new Error('No se pudo obtener tu ubicación'); e.code=err.message; throw e; }
 
   const dist=haversineMetros(pos.coords.latitude,pos.coords.longitude,sede.lat,sede.lng);
-  if(dist>sede.radio){ const e=new Error(`Estás a ${Math.round(dist)}m de ${sede.nombre} — debes estar a menos de ${sede.radio}m`); e.code='FUERA_DE_RANGO'; e.distancia=Math.round(dist); throw e; }
+  if(dist>sede.radio){
+    let msg=`Estás a ${Math.round(dist)}m de ${sede.nombre} — debes estar a menos de ${sede.radio}m.`;
+    if(dist>500){
+      msg+=' Si estás físicamente en el lugar, tu celular puede estar dando una ubicación imprecisa. En iPhone: Configuración → Privacidad y seguridad → Localización → busca esta app → activa "Ubicación exacta".';
+    }
+    const e=new Error(msg); e.code='FUERA_DE_RANGO'; e.distancia=Math.round(dist); throw e;
+  }
 
   const path=`marcajes/${user.id}/${hoy}`;
   const snap=await get(ref(db,path));
