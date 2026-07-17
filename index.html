@@ -178,7 +178,7 @@ import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.co
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje } from "./js/marcaje.js";
-import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy } from "./js/asistencia.js";
+import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores } from "./js/asistencia.js";
 
 const cfg = {
   apiKey:"AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
@@ -346,10 +346,18 @@ function renderAdmin(){
       <div id="adDash">
         <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
         <div id="marcajeCard" style="display:none"></div>
+        <div id="dashAlertaAyer"></div>
         <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
         ${me?.role==='admin'?`<div class="card" id="dashObsCard" style="display:none;border-left:3px solid var(--blue)"><div class="card-title">Observaciones de asistentes</div><div id="dashObsList"></div></div>`:''}
         <div class="card" id="dashAsistCard" style="display:none">
-          <div class="card-title">Asistencia de hoy</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            <div class="card-title" style="margin-bottom:0">Asistencia</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="hist-nav" onclick="dashAsistDia(-1)" aria-label="Día anterior">‹</button>
+              <span id="dashAsistFecha" style="font-size:13px;font-weight:700;min-width:130px;text-align:center"></span>
+              <button class="hist-nav" onclick="dashAsistDia(1)" id="dashAsistNext" aria-label="Día siguiente">›</button>
+            </div>
+          </div>
           <div id="dashAsistList"></div>
         </div>
         <div class="card"><div class="card-title">Registros de hoy</div><div id="dashHoy"><div class="spin"></div></div></div>
@@ -1814,60 +1822,10 @@ async function loadDash(){
     ?'<div class="empty" style="padding:20px"><div class="et">✓ Todos registraron hoy</div></div>'
     :sin.map(u=>`<div style="padding:8px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0"></span>${u.nombre}</div>`).join('');
 
-  // ── Asistencia (marcaje GPS) de hoy ──
-  try{
-    const empsConSede=emps.filter(u=>sedeEfectiva(u,td));
-    const cardAsist=$('dashAsistCard');
-    if(empsConSede.length>0 && cardAsist){
-      cardAsist.style.display='';
-      const marcajesArr=await Promise.all(empsConSede.map(async u=>{
-        const m=await obtenerMarcajeDia(db,{ref,get},u.id,td);
-        return {uid:u.id, m};
-      }));
-      const marcajesHoy=Object.fromEntries(marcajesArr.map(x=>[x.uid,x.m]));
-      const sabados=await obtenerSabadosLaborales(db,{ref,get},td.slice(0,7));
-      const res=asistenciaHoy(empsConSede, marcajesHoy, td, sabados);
-
-      const lista=(arr,fn)=>arr.length?arr.map(fn).join(''):'<div style="font-size:12px;color:var(--text2);padding:4px 0">Ninguno</div>';
-      const dow=new Date(td+'T12:00:00').getDay();
-      const noLaboral=(dow===0)||(dow===6&&Object.keys(sabados).indexOf(td)<0);
-
-      if(noLaboral){
-        $('dashAsistList').innerHTML='<div style="font-size:13px;color:var(--text2);padding:8px 0">Hoy no es día laboral. El marcaje no se evalúa.</div>';
-      } else {
-        $('dashAsistList').innerHTML=`
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:16px">
-            <div style="background:var(--greenlt);border-radius:8px;padding:10px">
-              <div style="font-size:20px;font-weight:800;color:var(--green)">${res.aTiempo.length}</div>
-              <div style="font-size:11px;color:var(--text2);margin-top:2px">A tiempo</div>
-            </div>
-            <div style="background:var(--dangerlt);border-radius:8px;padding:10px">
-              <div style="font-size:20px;font-weight:800;color:var(--danger)">${res.tarde.length}</div>
-              <div style="font-size:11px;color:var(--text2);margin-top:2px">Tarde</div>
-            </div>
-            <div style="background:var(--gray100);border-radius:8px;padding:10px">
-              <div style="font-size:20px;font-weight:800;color:var(--text2)">${res.noMarco.length}</div>
-              <div style="font-size:11px;color:var(--text2);margin-top:2px">Sin marcar</div>
-            </div>
-          </div>
-          <div style="margin-bottom:12px">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--danger);margin-bottom:6px">Llegaron tarde</div>
-            ${lista(res.tarde.sort((a,b)=>b.min-a.min),x=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px"><span>${x.nombre}</span><span><span style="color:var(--text2)">${x.hora}</span> <span class="badge br" style="font-size:10px">${x.min} min tarde</span></span></div>`)}
-          </div>
-          <div style="margin-bottom:12px">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--warn);margin-bottom:6px">Salieron temprano</div>
-            ${lista(res.salidaTemprana.sort((a,b)=>b.min-a.min),x=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px"><span>${x.nombre}</span><span><span style="color:var(--text2)">${x.hora}</span> <span class="badge br" style="font-size:10px">${x.min} min antes</span></span></div>`)}
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">No han marcado</div>
-            ${lista(res.noMarco,x=>`<div style="padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px">${x.nombre}</div>`)}
-          </div>
-        `;
-      }
-    } else if(cardAsist){
-      cardAsist.style.display='none';
-    }
-  }catch(e){}
+  // ── Asistencia (marcaje GPS) ──
+  dashAsistFechaSel=td;
+  renderDashAsist();
+  renderAlertaAyer();
 
   if(isAdmin()){
     try{
@@ -1903,7 +1861,15 @@ async function loadDash(){
 
 // Auto-refresh dashboard every 60 seconds
 let dashTimer=null;
-function startDashRefresh(){ dashTimer=setInterval(()=>{ if($('adDash')&&$('adDash').style.display!=='none') loadDash(); },60000); }
+function startDashRefresh(){
+  dashTimer=setInterval(()=>{
+    if($('adDash')&&$('adDash').style.display!=='none'){
+      // Refresco ligero cada 30s: solo la asistencia en vivo del día actual,
+      // sin recargar todo el dashboard (evita parpadeo).
+      if(dashAsistFechaSel===today() || dashAsistFechaSel===null) renderDashAsist();
+    }
+  },30000);
+}
 function stopDashRefresh(){ if(dashTimer){clearInterval(dashTimer);dashTimer=null;} }
 
 async function loadPend(){
@@ -2943,6 +2909,150 @@ window.quitarSedeTemp=async()=>{
 };
 
 // ── ASISTENCIA ─────────────────────────────────────────
+let dashAsistFechaSel=null; // fecha mostrada en la tarjeta de asistencia del dashboard
+
+async function renderDashAsist(){
+  const cardAsist=$('dashAsistCard');
+  const cont=$('dashAsistList');
+  if(!cardAsist||!cont) return;
+  const td=today();
+  const fecha=dashAsistFechaSel||td;
+  try{
+    const users=await getUsers();
+    let emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true')&&sedeEfectiva(u,td));
+    if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
+      emps=emps.filter(u=>me.empleadosAsig.includes(u.id));
+    }
+    if(!emps.length){ cardAsist.style.display='none'; return; }
+    cardAsist.style.display='';
+
+    // Etiqueta de fecha + deshabilitar "siguiente" si ya es hoy
+    const esHoy=fecha===td;
+    $('dashAsistFecha').textContent=esHoy?'Hoy':fmtLong(fecha).replace(/^\w/,c=>c.toUpperCase());
+    const btnNext=$('dashAsistNext'); if(btnNext) btnNext.disabled=esHoy;
+
+    const marcajesArr=await Promise.all(emps.map(async u=>{
+      const m=await obtenerMarcajeDia(db,{ref,get},u.id,fecha);
+      return {uid:u.id, m};
+    }));
+    const marcajesDia=Object.fromEntries(marcajesArr.map(x=>[x.uid,x.m]));
+    const sabados=await obtenerSabadosLaborales(db,{ref,get},fecha.slice(0,7));
+    const res=asistenciaDia(emps, marcajesDia, fecha, sabados);
+
+    const dow=new Date(fecha+'T12:00:00').getDay();
+    const noLaboral=(dow===0)||(dow===6&&!sabados[fecha]);
+    if(noLaboral){
+      cont.innerHTML='<div style="font-size:13px;color:var(--text2);padding:8px 0">Este día no es laboral. El marcaje no se evalúa.</div>';
+      return;
+    }
+
+    const lista=(arr,fn)=>arr.length?arr.map(fn).join(''):'<div style="font-size:12px;color:var(--text2);padding:4px 0">Ninguno</div>';
+    cont.innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-bottom:16px">
+        <div style="background:var(--greenlt);border-radius:8px;padding:10px">
+          <div style="font-size:20px;font-weight:800;color:var(--green)">${res.aTiempo.length}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">A tiempo</div>
+        </div>
+        <div style="background:var(--dangerlt);border-radius:8px;padding:10px">
+          <div style="font-size:20px;font-weight:800;color:var(--danger)">${res.tarde.length}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">Tarde</div>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--danger);margin-bottom:6px">Llegaron tarde</div>
+        ${lista(res.tarde.sort((a,b)=>b.min-a.min),x=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px"><span>${x.nombre}</span><span><span style="color:var(--text2)">${x.hora}</span> <span class="badge br" style="font-size:10px">${x.min} min tarde</span></span></div>`)}
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--warn);margin-bottom:6px">Salieron temprano</div>
+        ${lista(res.salidaTemprana.sort((a,b)=>b.min-a.min),x=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px"><span>${x.nombre}</span><span><span style="color:var(--text2)">${x.hora}</span> <span class="badge br" style="font-size:10px">${x.min} min antes</span></span></div>`)}
+      </div>
+    `;
+  }catch(e){ cardAsist.style.display='none'; }
+}
+
+window.dashAsistDia=(delta)=>{
+  const td=today();
+  const base=dashAsistFechaSel||td;
+  const d=new Date(base+'T12:00:00');
+  d.setDate(d.getDate()+delta);
+  const nueva=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  if(nueva>td) return; // no ir al futuro
+  dashAsistFechaSel=nueva;
+  renderDashAsist();
+};
+
+async function renderAlertaAyer(){
+  const cont=$('dashAlertaAyer');
+  if(!cont) return;
+  const td=today();
+  try{
+    const sabadosMes=await obtenerSabadosLaborales(db,{ref,get},td.slice(0,7));
+    // También traer del mes anterior por si el día hábil anterior cae ahí
+    const prevMes=(()=>{ const d=new Date(td+'T12:00:00'); d.setMonth(d.getMonth()-1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; })();
+    const sabadosPrev=await obtenerSabadosLaborales(db,{ref,get},prevMes);
+    const sabados={...sabadosPrev,...sabadosMes};
+
+    const fechas=diasHabilesAnteriores(td, sabados);
+    if(!fechas.length){ cont.innerHTML=''; return; }
+
+    const users=await getUsers();
+    let emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true')&&sedeEfectiva(u,td));
+    if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
+      emps=emps.filter(u=>me.empleadosAsig.includes(u.id));
+    }
+    if(!emps.length){ cont.innerHTML=''; return; }
+
+    // Acumular incidencias de todos los días hábiles anteriores
+    let tarde=[], salidaTemprana=[], noMarco=[];
+    for(const fecha of fechas){
+      const marcajesArr=await Promise.all(emps.map(async u=>{
+        const m=await obtenerMarcajeDia(db,{ref,get},u.id,fecha);
+        return {uid:u.id, m};
+      }));
+      const marcajesDia=Object.fromEntries(marcajesArr.map(x=>[x.uid,x.m]));
+      // Excluir justificados (vacaciones/incap/permiso) del "no marcó"
+      const res=asistenciaDia(emps, marcajesDia, fecha, sabados);
+      const etiqueta=fmt(fecha);
+      tarde.push(...res.tarde.map(x=>({...x,fecha:etiqueta})));
+      salidaTemprana.push(...res.salidaTemprana.map(x=>({...x,fecha:etiqueta})));
+      // Verificar justificación para no marcó
+      for(const nm of res.noMarco){
+        const u=emps.find(e=>e.nombre===nm.nombre);
+        let justificado=false;
+        if(u){
+          const rsnap=await get(ref(db,`registros/${u.id}`));
+          if(rsnap.exists()){
+            justificado=Object.values(rsnap.val()).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia));
+          }
+        }
+        if(!justificado) noMarco.push({nombre:nm.nombre, fecha:etiqueta});
+      }
+    }
+
+    if(!tarde.length&&!salidaTemprana.length&&!noMarco.length){
+      cont.innerHTML=`<div class="card" style="border-left:3px solid var(--green);margin-bottom:14px">
+        <div style="font-size:13px;color:var(--text)">Sin incidencias en ${fechas.map(f=>fmt(f)).join(' y ')}. Todos cumplieron.</div>
+      </div>`;
+      return;
+    }
+
+    const rango=fechas.length>1?`${fmt(fechas[0])} y ${fmt(fechas[fechas.length-1])}`:fmt(fechas[0]);
+    const bloque=(titulo,arr,color,fn)=>arr.length?`
+      <div style="margin-top:10px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${color};margin-bottom:4px">${titulo} (${arr.length})</div>
+        ${arr.map(fn).join('')}
+      </div>`:'';
+
+    cont.innerHTML=`<div class="card" style="border-left:3px solid var(--warn);margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:2px">Revisión — ${rango}</div>
+      <div style="font-size:12px;color:var(--text2)">Incidencias del día hábil anterior para dar seguimiento.</div>
+      ${bloque('Llegaron tarde',tarde.sort((a,b)=>b.min-a.min),'var(--danger)',x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span><span class="badge br" style="font-size:10px">${x.min} min</span></div>`)}
+      ${bloque('Salieron temprano',salidaTemprana.sort((a,b)=>b.min-a.min),'var(--warn)',x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span><span class="badge br" style="font-size:10px">${x.min} min</span></div>`)}
+      ${bloque('No marcaron',noMarco,'var(--text2)',x=>`<div style="padding:4px 0;font-size:13px">${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></div>`)}
+    </div>`;
+  }catch(e){ cont.innerHTML=''; }
+}
+
 async function empleadosParaAsistencia(){
   const users=await getUsers();
   let emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true')&&sedeEfectiva(u,today()));
