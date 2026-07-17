@@ -119,7 +119,51 @@ export async function resumenMesTodos(mes, empleados, getMarcajesEmpleado, getRe
   return filas;
 }
 
-// ── ASISTENCIA DE HOY (para dashboard) ─────────────────
+// ── ASISTENCIA DE UN DÍA ESPECÍFICO ────────────────────
+// Igual que asistenciaHoy pero para cualquier fecha (para el selector de día).
+// marcajesDia: { uid: { entrada, salida } }
+export function asistenciaDia(empleados, marcajesDia, fecha, sabadosLaborales){
+  return asistenciaHoy(empleados, marcajesDia, fecha, sabadosLaborales);
+}
+
+// ── DÍAS HÁBILES ANTERIORES ────────────────────────────
+// Dado hoy, devuelve las fechas hábiles inmediatamente anteriores a revisar.
+// - Si hoy es lunes: devuelve [viernes, sábado] (sábado solo si fue laboral).
+// - Otro día: devuelve [día hábil anterior].
+// No incluye domingos.
+export function diasHabilesAnteriores(hoy, sabadosLaborales){
+  const d=new Date(hoy+'T12:00:00');
+  const dow=d.getDay();
+  const fechas=[];
+  const fmtISO=dt=>`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+
+  if(dow===1){ // lunes → viernes y sábado (si laboral)
+    const vie=new Date(d); vie.setDate(d.getDate()-3);
+    const sab=new Date(d); sab.setDate(d.getDate()-2);
+    fechas.push(fmtISO(vie));
+    const sabStr=fmtISO(sab);
+    if(sabadosLaborales[sabStr]) fechas.push(sabStr);
+  } else if(dow===0){ // domingo → viernes y sábado (si laboral)
+    const vie=new Date(d); vie.setDate(d.getDate()-2);
+    const sab=new Date(d); sab.setDate(d.getDate()-1);
+    fechas.push(fmtISO(vie));
+    const sabStr=fmtISO(sab);
+    if(sabadosLaborales[sabStr]) fechas.push(sabStr);
+  } else { // martes-sábado → día anterior (si es sábado que viene de domingo, ya cubierto)
+    const ant=new Date(d); ant.setDate(d.getDate()-1);
+    const antDow=ant.getDay();
+    if(antDow===0){ // el anterior es domingo, saltar a sábado laboral o viernes
+      const sab=new Date(d); sab.setDate(d.getDate()-2);
+      const sabStr=fmtISO(sab);
+      if(sabadosLaborales[sabStr]) fechas.push(sabStr);
+      else { const vie=new Date(d); vie.setDate(d.getDate()-3); fechas.push(fmtISO(vie)); }
+    } else {
+      fechas.push(fmtISO(ant));
+    }
+  }
+  return fechas.sort();
+}
+
 // Devuelve listas con nombres: tarde, salidaTemprana, noMarco
 export function asistenciaHoy(empleados, marcajesHoy, hoy, sabadosLaborales){
   const dow=new Date(hoy+'T12:00:00').getDay();
