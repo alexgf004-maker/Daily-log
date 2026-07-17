@@ -1781,6 +1781,8 @@ async function autoRegistrarDiasEspeciales(regs, users){
   }catch(e){ console.error('autoRegistrar error:',e); }
 }
 
+let dashAsistFechaSel=null; // fecha mostrada en la tarjeta de asistencia del dashboard
+
 async function loadDash(){
   $('dashDate').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   renderMarcajeCard();
@@ -2909,8 +2911,6 @@ window.quitarSedeTemp=async()=>{
 };
 
 // ── ASISTENCIA ─────────────────────────────────────────
-let dashAsistFechaSel=null; // fecha mostrada en la tarjeta de asistencia del dashboard
-
 async function renderDashAsist(){
   const cardAsist=$('dashAsistCard');
   const cont=$('dashAsistList');
