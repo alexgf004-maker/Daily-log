@@ -2959,8 +2959,17 @@ async function renderDashAsist(){
         </div>
       </div>
       <div style="margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--danger);margin-bottom:6px">Llegaron tarde</div>
-        ${lista(res.tarde.sort((a,b)=>b.min-a.min),x=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px"><span>${x.nombre}</span><span><span style="color:var(--text2)">${x.hora}</span> <span class="badge br" style="font-size:10px">${x.min} min tarde</span></span></div>`)}
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Ingresos del día (${res.ingresos.length})</div>
+        ${lista(res.ingresos.sort((a,b)=>(a.hora||'').localeCompare(b.hora||'')),x=>{
+          const esTarde=x.estado==='tarde';
+          return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px">
+            <span>${x.nombre}</span>
+            <span style="display:flex;align-items:center;gap:6px">
+              <span style="font-weight:600">${x.hora}</span>
+              <span class="badge ${esTarde?'br':'ba'}" style="font-size:10px">${esTarde?x.min+' min tarde':'A tiempo'}</span>
+            </span>
+          </div>`;
+        })}
       </div>
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--warn);margin-bottom:6px">Salieron temprano</div>
@@ -3003,33 +3012,36 @@ async function renderAlertaAyer(){
     if(!emps.length){ cont.innerHTML=''; return; }
 
     // Acumular incidencias de todos los días hábiles anteriores
-    let tarde=[], salidaTemprana=[], noMarco=[];
+    let tarde=[], salidaTemprana=[], noEntrada=[], noSalida=[];
     for(const fecha of fechas){
       const marcajesArr=await Promise.all(emps.map(async u=>{
         const m=await obtenerMarcajeDia(db,{ref,get},u.id,fecha);
         return {uid:u.id, m};
       }));
       const marcajesDia=Object.fromEntries(marcajesArr.map(x=>[x.uid,x.m]));
-      // Excluir justificados (vacaciones/incap/permiso) del "no marcó"
       const res=asistenciaDia(emps, marcajesDia, fecha, sabados);
       const etiqueta=fmt(fecha);
       tarde.push(...res.tarde.map(x=>({...x,fecha:etiqueta})));
       salidaTemprana.push(...res.salidaTemprana.map(x=>({...x,fecha:etiqueta})));
-      // Verificar justificación para no marcó
-      for(const nm of res.noMarco){
-        const u=emps.find(e=>e.nombre===nm.nombre);
-        let justificado=false;
-        if(u){
-          const rsnap=await get(ref(db,`registros/${u.id}`));
-          if(rsnap.exists()){
-            justificado=Object.values(rsnap.val()).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia));
-          }
-        }
-        if(!justificado) noMarco.push({nombre:nm.nombre, fecha:etiqueta});
+
+      // Helper: ¿el empleado tiene día justificado (vacaciones/incap/permiso) esa fecha?
+      const estaJustificado=async(nombre)=>{
+        const u=emps.find(e=>e.nombre===nombre);
+        if(!u) return false;
+        const rsnap=await get(ref(db,`registros/${u.id}`));
+        if(!rsnap.exists()) return false;
+        return Object.values(rsnap.val()).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia));
+      };
+
+      for(const nm of res.noMarcoEntrada){
+        if(!(await estaJustificado(nm.nombre))) noEntrada.push({nombre:nm.nombre, fecha:etiqueta});
+      }
+      for(const nm of res.noMarcoSalida){
+        if(!(await estaJustificado(nm.nombre))) noSalida.push({nombre:nm.nombre, fecha:etiqueta});
       }
     }
 
-    if(!tarde.length&&!salidaTemprana.length&&!noMarco.length){
+    if(!tarde.length&&!salidaTemprana.length&&!noEntrada.length&&!noSalida.length){
       cont.innerHTML=`<div class="card" style="border-left:3px solid var(--green);margin-bottom:14px">
         <div style="font-size:13px;color:var(--text)">Sin incidencias en ${fechas.map(f=>fmt(f)).join(' y ')}. Todos cumplieron.</div>
       </div>`;
@@ -3042,13 +3054,16 @@ async function renderAlertaAyer(){
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${color};margin-bottom:4px">${titulo} (${arr.length})</div>
         ${arr.map(fn).join('')}
       </div>`:'';
+    const filaMin=x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span><span class="badge br" style="font-size:10px">${x.min} min</span></div>`;
+    const filaNombre=x=>`<div style="padding:4px 0;font-size:13px">${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></div>`;
 
     cont.innerHTML=`<div class="card" style="border-left:3px solid var(--warn);margin-bottom:14px">
       <div style="font-size:13px;font-weight:700;margin-bottom:2px">Revisión — ${rango}</div>
       <div style="font-size:12px;color:var(--text2)">Incidencias del día hábil anterior para dar seguimiento.</div>
-      ${bloque('Llegaron tarde',tarde.sort((a,b)=>b.min-a.min),'var(--danger)',x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span><span class="badge br" style="font-size:10px">${x.min} min</span></div>`)}
-      ${bloque('Salieron temprano',salidaTemprana.sort((a,b)=>b.min-a.min),'var(--warn)',x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span><span class="badge br" style="font-size:10px">${x.min} min</span></div>`)}
-      ${bloque('No marcaron',noMarco,'var(--text2)',x=>`<div style="padding:4px 0;font-size:13px">${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></div>`)}
+      ${bloque('Llegaron tarde',tarde.sort((a,b)=>b.min-a.min),'var(--danger)',filaMin)}
+      ${bloque('Salieron temprano',salidaTemprana.sort((a,b)=>b.min-a.min),'var(--warn)',filaMin)}
+      ${bloque('No marcaron entrada',noEntrada,'var(--danger)',filaNombre)}
+      ${bloque('No marcaron salida',noSalida,'var(--text2)',filaNombre)}
     </div>`;
   }catch(e){ cont.innerHTML=''; }
 }
