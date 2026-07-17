@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=7">
+<link rel="stylesheet" href="css/styles.css?v=8">
 </head>
 <body>
 
@@ -178,6 +178,7 @@ import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.co
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje } from "./js/marcaje.js";
+import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy } from "./js/asistencia.js";
 
 const cfg = {
   apiKey:"AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
@@ -332,6 +333,7 @@ function renderAdmin(){
     <div class="tabs">
       <button class="tab active" onclick="adTab('dash',this)">Dashboard</button>
       <button class="tab" onclick="adTab('regs',this)">Registros</button>
+      <button class="tab" onclick="adTab('asist',this)">Asistencia</button>
       ${me?.role==='admin'?`
       <button class="tab" id="tabPend" onclick="adTab('pend',this)">Pendientes <span id="pendBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
       <button class="tab" onclick="adTab('usrs',this)">Usuarios</button>
@@ -406,6 +408,18 @@ function renderAdmin(){
           </div>
           <div id="adEmpRegs"><div class="spin"></div></div>
         </div>
+      </div>
+      <div id="adAsist" style="display:none">
+        <div class="page-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div><div class="ph-title">Asistencia</div><div class="ph-sub">Tardanzas, salidas tempranas y ausencias del mes</div></div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <input type="month" id="asistMes" style="padding:6px 10px;font-size:13px;border:1px solid var(--gray200);border-radius:6px">
+            <button class="btn btn-p btn-sm" onclick="cargarAsistencia()">Ver</button>
+            <button class="btn btn-g btn-sm" onclick="exportarAsistencia()">Excel</button>
+          </div>
+        </div>
+        ${me?.role==='admin'?`<div style="margin-bottom:12px"><button class="btn btn-gh btn-sm" onclick="openSabadoLaboral()">Configurar sábado laboral</button></div>`:''}
+        <div id="asistList"><div class="empty" style="padding:20px"><div class="et">Selecciona un mes y toca Ver</div></div></div>
       </div>
       <div id="adPend" style="display:none">
         <div class="page-header"><div><div class="ph-title">Pendientes</div><div class="ph-sub">Horas extras por aprobar · Viáticos para revisar</div></div></div>
@@ -677,6 +691,26 @@ function modalsHTML(){
         <button class="btn btn-gh" onclick="closeModal('moSedeTemp')">Cancelar</button>
         <button class="btn btn-d btn-sm" id="sedeTempBtnQuitar" onclick="quitarSedeTemp()" style="display:none">Quitar</button>
         <button class="btn btn-p" onclick="guardarSedeTemp()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="moSabado">
+    <div class="modal">
+      <div class="modal-title">Configurar sábado laboral</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Elige la fecha del sábado y marca qué empleados trabajarán. Solo ellos contarán para tardanzas y ausencias ese día.</div>
+      <div id="moSabadoAlert"></div>
+      <div class="fg">
+        <label class="fl">Fecha del sábado</label>
+        <input type="date" id="sabadoFecha" onchange="onSabadoFechaChange()">
+      </div>
+      <div class="fg">
+        <label class="fl">Empleados que trabajan</label>
+        <div id="sabadoEmpleados" style="max-height:240px;overflow-y:auto;border:1px solid var(--gray200);border-radius:var(--r);padding:8px"><div style="font-size:12px;color:var(--text2)">Selecciona una fecha primero.</div></div>
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moSabado')">Cancelar</button>
+        <button class="btn btn-d btn-sm" id="sabadoBtnQuitar" onclick="quitarSabado()" style="display:none">Quitar sábado</button>
+        <button class="btn btn-p" onclick="guardarSabado()">Guardar</button>
       </div>
     </div>
   </div>
@@ -1588,9 +1622,17 @@ async function loadHist(){
 // ADMIN TABS
 window.adTab=(t,btn)=>{
   document.querySelectorAll('#adminScreen .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
-  ['adDash','adRegs','adPend','adUsrs','adPerfil','adAsuetos','adObs'].forEach(id=>{const e=$(id);if(e)hide(id);});
+  ['adDash','adRegs','adAsist','adPend','adUsrs','adPerfil','adAsuetos','adObs'].forEach(id=>{const e=$(id);if(e)hide(id);});
   if(t==='dash'){show('adDash');loadDash();}
   if(t==='regs'){show('adRegs');loadFiltEmps();}
+  if(t==='asist'){
+    show('adAsist');
+    const mesInput=$('asistMes');
+    if(mesInput&&!mesInput.value){
+      const now=new Date();
+      mesInput.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    }
+  }
   if(t==='pend'){show('adPend');show('pendList');hide('viatList');loadPend();}
   if(t==='usrs'&&isAdmin()){show('adUsrs');loadUsrs();}
   if(t==='asuetos'&&isAdmin()){show('adAsuetos');loadAsuetos();}
@@ -1778,40 +1820,50 @@ async function loadDash(){
     const cardAsist=$('dashAsistCard');
     if(empsConSede.length>0 && cardAsist){
       cardAsist.style.display='';
-      const marcajesHoy=await Promise.all(empsConSede.map(async u=>{
+      const marcajesArr=await Promise.all(empsConSede.map(async u=>{
         const m=await obtenerMarcajeDia(db,{ref,get},u.id,td);
-        return {u, m};
+        return {uid:u.id, m};
       }));
-      const aTiempo=marcajesHoy.filter(x=>x.m?.entrada?.estado==='a_tiempo').length;
-      const tarde=marcajesHoy.filter(x=>x.m?.entrada?.estado==='tarde').length;
-      const sinMarcar=marcajesHoy.filter(x=>!x.m?.entrada).length;
+      const marcajesHoy=Object.fromEntries(marcajesArr.map(x=>[x.uid,x.m]));
+      const sabados=await obtenerSabadosLaborales(db,{ref,get},td.slice(0,7));
+      const res=asistenciaHoy(empsConSede, marcajesHoy, td, sabados);
 
-      $('dashAsistList').innerHTML=`
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:14px">
-          <div style="background:var(--greenlt);border-radius:8px;padding:10px">
-            <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--green)">${aTiempo}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">A tiempo</div>
+      const lista=(arr,fn)=>arr.length?arr.map(fn).join(''):'<div style="font-size:12px;color:var(--text2);padding:4px 0">Ninguno</div>';
+      const dow=new Date(td+'T12:00:00').getDay();
+      const noLaboral=(dow===0)||(dow===6&&Object.keys(sabados).indexOf(td)<0);
+
+      if(noLaboral){
+        $('dashAsistList').innerHTML='<div style="font-size:13px;color:var(--text2);padding:8px 0">Hoy no es día laboral. El marcaje no se evalúa.</div>';
+      } else {
+        $('dashAsistList').innerHTML=`
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:16px">
+            <div style="background:var(--greenlt);border-radius:8px;padding:10px">
+              <div style="font-size:20px;font-weight:800;color:var(--green)">${res.aTiempo.length}</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px">A tiempo</div>
+            </div>
+            <div style="background:var(--dangerlt);border-radius:8px;padding:10px">
+              <div style="font-size:20px;font-weight:800;color:var(--danger)">${res.tarde.length}</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px">Tarde</div>
+            </div>
+            <div style="background:var(--gray100);border-radius:8px;padding:10px">
+              <div style="font-size:20px;font-weight:800;color:var(--text2)">${res.noMarco.length}</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px">Sin marcar</div>
+            </div>
           </div>
-          <div style="background:var(--dangerlt);border-radius:8px;padding:10px">
-            <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--danger)">${tarde}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">Tarde</div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--danger);margin-bottom:6px">Llegaron tarde</div>
+            ${lista(res.tarde.sort((a,b)=>b.min-a.min),x=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px"><span>${x.nombre}</span><span><span style="color:var(--text2)">${x.hora}</span> <span class="badge br" style="font-size:10px">${x.min} min tarde</span></span></div>`)}
           </div>
-          <div style="background:var(--gray100);border-radius:8px;padding:10px">
-            <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text2)">${sinMarcar}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">Sin marcar</div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--warn);margin-bottom:6px">Salieron temprano</div>
+            ${lista(res.salidaTemprana.sort((a,b)=>b.min-a.min),x=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px"><span>${x.nombre}</span><span><span style="color:var(--text2)">${x.hora}</span> <span class="badge br" style="font-size:10px">${x.min} min antes</span></span></div>`)}
           </div>
-        </div>
-        ${marcajesHoy.filter(x=>x.m?.entrada).sort((a,b)=>(a.m.entrada.horaStr||'').localeCompare(b.m.entrada.horaStr||'')).map(x=>{
-          const chip=chipEstado(x.m.entrada);
-          return `<div style="padding:7px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:center;font-size:13px">
-            <span>${x.u.nombre}</span>
-            <span style="display:flex;align-items:center;gap:6px">
-              <span style="color:var(--text2)">${x.m.entrada.horaStr}</span>
-              <span class="badge ${chip.color}" style="font-size:10px">${chip.texto}</span>
-            </span>
-          </div>`;
-        }).join('')}
-      `;
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">No han marcado</div>
+            ${lista(res.noMarco,x=>`<div style="padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px">${x.nombre}</div>`)}
+          </div>
+        `;
+      }
     } else if(cardAsist){
       cardAsist.style.display='none';
     }
@@ -2888,6 +2940,207 @@ window.guardarSedeTemp=async()=>{
 window.quitarSedeTemp=async()=>{
   await update(ref(db,`users/${sedeTempUID}`),{sedeTemporal:null});
   closeModal('moSedeTemp');loadUsrs();
+};
+
+// ── ASISTENCIA ─────────────────────────────────────────
+async function empleadosParaAsistencia(){
+  const users=await getUsers();
+  let emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true')&&sedeEfectiva(u,today()));
+  // Asistente: solo sus asignados
+  if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
+    emps=emps.filter(u=>me.empleadosAsig.includes(u.id));
+  }
+  return emps;
+}
+
+// Marcajes de un empleado en un mes, indexados por fecha
+async function marcajesEmpleadoMes(uid, mes){
+  const marcs=await obtenerMarcajesMes(db,{ref,get},uid,mes);
+  return Object.fromEntries(marcs.map(m=>[m.fecha,m]));
+}
+// Registros de un empleado en un mes, indexados por fecha
+async function regsEmpleadoMes(uid, mes){
+  const snap=await get(ref(db,`registros/${uid}`));
+  if(!snap.exists()) return {};
+  const out={};
+  Object.values(snap.val()).forEach(r=>{ if(r.fecha&&r.fecha.startsWith(mes)) out[r.fecha]=r; });
+  return out;
+}
+
+let asistCache=null; // guarda el último resumen para el detalle y el Excel
+
+window.cargarAsistencia=async()=>{
+  const cont=$('asistList');
+  const mes=$('asistMes')?.value;
+  if(!mes){ alert('Selecciona un mes.'); return; }
+  cont.innerHTML='<div class="spin"></div>';
+  try{
+    const emps=await empleadosParaAsistencia();
+    if(!emps.length){ cont.innerHTML='<div class="empty" style="padding:20px"><div class="et">No hay empleados con sede asignada</div></div>'; return; }
+    const sabados=await obtenerSabadosLaborales(db,{ref,get},mes);
+    const filas=await resumenMesTodos(mes, emps,
+      uid=>marcajesEmpleadoMes(uid,mes),
+      uid=>regsEmpleadoMes(uid,mes),
+      sabados, today());
+    asistCache={mes, filas};
+
+    const totMin=(m)=>m>0?`${Math.floor(m/60)>0?Math.floor(m/60)+'h ':''}${m%60}m`:'—';
+    cont.innerHTML=`
+      <div class="card" style="padding:0;overflow-x:auto">
+        <table class="asist-table">
+          <thead>
+            <tr>
+              <th style="text-align:left">Empleado</th>
+              <th>Días tarde</th>
+              <th>Min. tarde</th>
+              <th>Salidas antic.</th>
+              <th>Min. antic.</th>
+              <th>No marcó</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filas.map((f,i)=>`
+              <tr class="asist-row" onclick="toggleAsistDetalle(${i})" style="cursor:pointer">
+                <td style="text-align:left;font-weight:600">${f.nombre}</td>
+                <td class="${f.diasTarde>0?'asist-bad':''}">${f.diasTarde||'—'}</td>
+                <td class="${f.minTarde>0?'asist-bad':''}">${totMin(f.minTarde)}</td>
+                <td class="${f.salidasTemp>0?'asist-bad':''}">${f.salidasTemp||'—'}</td>
+                <td class="${f.minTemp>0?'asist-bad':''}">${totMin(f.minTemp)}</td>
+                <td class="${f.noMarco>0?'asist-bad':''}">${f.noMarco||'—'}</td>
+              </tr>
+              <tr id="asistDet${i}" style="display:none"><td colspan="6" style="padding:0;background:var(--gray50)">
+                <div style="padding:12px 16px">${renderAsistDetalle(f)}</div>
+              </td></tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }catch(e){
+    cont.innerHTML=`<div style="font-size:13px;color:var(--danger);padding:16px">Error al calcular la asistencia: ${e.message}</div>`;
+  }
+};
+
+function renderAsistDetalle(fila){
+  if(!fila.detalle.length) return '<div style="font-size:12px;color:var(--text2)">Sin días hábiles en el mes.</div>';
+  return fila.detalle.map(d=>{
+    if(d.tipo==='no_marco') return `<div class="asist-det-row"><span>${fmt(d.fecha)}</span><span class="badge br" style="font-size:10px">No marcó</span></div>`;
+    if(d.tipo==='justificado') return `<div class="asist-det-row"><span>${fmt(d.fecha)}</span><span class="badge bn" style="font-size:10px">${d.tipoDia||'justificado'}</span></div>`;
+    const chipE=d.entrada?chipEstado(d.entrada):null;
+    const chipS=d.salida?chipEstado(d.salida):null;
+    return `<div class="asist-det-row">
+      <span>${fmt(d.fecha)}</span>
+      <span style="display:flex;gap:12px;font-size:12px;flex-wrap:wrap;justify-content:flex-end">
+        <span>Entrada ${d.entrada?`<b>${d.entrada.horaStr}</b> <span class="badge ${chipE.color}" style="font-size:9px">${chipE.texto}</span>`:'—'}</span>
+        <span>Salida ${d.salida?`<b>${d.salida.horaStr}</b> <span class="badge ${chipS.color}" style="font-size:9px">${chipS.texto}</span>`:'—'}</span>
+      </span>
+    </div>`;
+  }).join('');
+}
+
+window.toggleAsistDetalle=(i)=>{
+  const row=$('asistDet'+i);
+  if(row) row.style.display=row.style.display==='none'?'':'none';
+};
+
+// ── Sábado laboral ──
+window.openSabadoLaboral=async()=>{
+  $('moSabadoAlert').innerHTML='';
+  $('sabadoFecha').value='';
+  $('sabadoEmpleados').innerHTML='<div style="font-size:12px;color:var(--text2)">Selecciona una fecha primero.</div>';
+  $('sabadoBtnQuitar').style.display='none';
+  $('moSabado').classList.add('open');
+};
+
+window.onSabadoFechaChange=async()=>{
+  const fecha=$('sabadoFecha').value;
+  const cont=$('sabadoEmpleados');
+  const alert=$('moSabadoAlert');
+  alert.innerHTML='';
+  if(!fecha){ return; }
+  // Validar que sea sábado
+  const dow=new Date(fecha+'T12:00:00').getDay();
+  if(dow!==6){ alert.innerHTML='<div class="alert ae" style="font-size:12px">La fecha seleccionada no es un sábado.</div>'; cont.innerHTML=''; $('sabadoBtnQuitar').style.display='none'; return; }
+  cont.innerHTML='<div class="spin"></div>';
+  const users=await getUsers();
+  const emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true')&&sedeEfectiva(u,today()));
+  emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  // Cargar selección existente si ya hay sábado configurado
+  const snap=await get(ref(db,`config/sabadosLaborales/${fecha}`));
+  const yaAsignados=snap.exists()&&Array.isArray(snap.val().empleados)?snap.val().empleados:[];
+  $('sabadoBtnQuitar').style.display=snap.exists()?'':'none';
+  if(!emps.length){ cont.innerHTML='<div style="font-size:12px;color:var(--text2)">No hay empleados con sede asignada.</div>'; return; }
+  cont.innerHTML=emps.map(u=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px">
+      <input type="checkbox" value="${u.id}" ${yaAsignados.includes(u.id)?'checked':''} style="width:auto;margin:0">
+      ${u.nombre}
+    </label>`).join('');
+};
+
+window.guardarSabado=async()=>{
+  const fecha=$('sabadoFecha').value;
+  if(!fecha){ $('moSabadoAlert').innerHTML='<div class="alert ae" style="font-size:12px">Selecciona una fecha.</div>'; return; }
+  const dow=new Date(fecha+'T12:00:00').getDay();
+  if(dow!==6){ $('moSabadoAlert').innerHTML='<div class="alert ae" style="font-size:12px">La fecha no es un sábado.</div>'; return; }
+  const checks=document.querySelectorAll('#sabadoEmpleados input[type=checkbox]:checked');
+  const empleados=Array.from(checks).map(c=>c.value);
+  if(!empleados.length){ $('moSabadoAlert').innerHTML='<div class="alert ae" style="font-size:12px">Marca al menos un empleado.</div>'; return; }
+  await guardarSabadoLaboral(db,{ref,set},fecha,empleados);
+  closeModal('moSabado');
+  if($('asistMes')?.value) cargarAsistencia();
+};
+
+window.quitarSabado=async()=>{
+  const fecha=$('sabadoFecha').value;
+  if(!fecha) return;
+  if(!confirm('¿Quitar este sábado laboral? Ese día dejará de contar para asistencia.')) return;
+  await quitarSabadoLaboral(db,{ref,set},fecha);
+  closeModal('moSabado');
+  if($('asistMes')?.value) cargarAsistencia();
+};
+
+// ── Exportar asistencia a Excel ──
+window.exportarAsistencia=async()=>{
+  if(!asistCache||!asistCache.filas.length){ alert('Primero carga la asistencia de un mes.'); return; }
+  if(!window.XLSX){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload=res;s.onerror=rej;document.head.appendChild(s);
+    });
+  }
+  const {mes,filas}=asistCache;
+  const [y,mo]=mes.split('-');
+  const nomMes=new Date(parseInt(y),parseInt(mo)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
+  const wb=XLSX.utils.book_new();
+
+  // Hoja 1: Resumen
+  const resHeaders=['Empleado','Días tarde','Min. tarde','Salidas anticipadas','Min. anticipados','No marcó'];
+  const resRows=filas.map(f=>[f.nombre,f.diasTarde,f.minTarde,f.salidasTemp,f.minTemp,f.noMarco]);
+  const ws1=XLSX.utils.aoa_to_sheet([resHeaders,...resRows]);
+  ws1['!cols']=[{wch:30},{wch:12},{wch:12},{wch:18},{wch:16},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Resumen');
+
+  // Hoja 2: Detalle día por día
+  const detHeaders=['Empleado','Fecha','Entrada','Estado entrada','Min. tarde','Salida','Estado salida','Min. antic.','Observación'];
+  const detRows=[];
+  filas.forEach(f=>{
+    f.detalle.forEach(d=>{
+      if(d.tipo==='no_marco'){ detRows.push([f.nombre,d.fecha,'—','','','—','','','No marcó']); return; }
+      if(d.tipo==='justificado'){ detRows.push([f.nombre,d.fecha,'—','','','—','','',d.tipoDia||'Justificado']); return; }
+      const eTarde=d.entrada?.estado==='tarde'?(d.entrada.minDiff||0):'';
+      const sTemp=d.salida?.estado==='salida_temprana'?(d.salida.minDiff||0):'';
+      detRows.push([
+        f.nombre, d.fecha,
+        d.entrada?.horaStr||'—', d.entrada?(chipEstado(d.entrada).texto):'', eTarde,
+        d.salida?.horaStr||'—', d.salida?(chipEstado(d.salida).texto):'', sTemp, ''
+      ]);
+    });
+  });
+  const ws2=XLSX.utils.aoa_to_sheet([detHeaders,...detRows]);
+  ws2['!cols']=[{wch:30},{wch:12},{wch:9},{wch:14},{wch:10},{wch:9},{wch:14},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Detalle');
+
+  XLSX.writeFile(wb,`Asistencia-${nomMes}.xlsx`);
 };
 
 window.reiniciarDispositivo=async(uid,nombre)=>{
