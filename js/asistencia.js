@@ -164,12 +164,12 @@ export function diasHabilesAnteriores(hoy, sabadosLaborales){
   return fechas.sort();
 }
 
-// Devuelve listas con nombres: tarde, salidaTemprana, noMarco
+// Devuelve listas con nombres: tarde, salidaTemprana, noMarcoEntrada, noMarcoSalida, aTiempo, ingresos
 export function asistenciaHoy(empleados, marcajesHoy, hoy, sabadosLaborales){
   const dow=new Date(hoy+'T12:00:00').getDay();
   const esDomingo=dow===0;
   const esSabado=dow===6;
-  const tarde=[], salidaTemprana=[], noMarco=[], aTiempo=[];
+  const tarde=[], salidaTemprana=[], noMarcoEntrada=[], noMarcoSalida=[], aTiempo=[], ingresos=[];
 
   for(const u of empleados){
     // ¿Hoy es día laboral para este empleado?
@@ -180,10 +180,15 @@ export function asistenciaHoy(empleados, marcajesHoy, hoy, sabadosLaborales){
     if(!esLaboral) continue;
 
     const m=marcajesHoy[u.id];
+    // Ingresos: todos los que marcaron entrada, con hora y estado
+    if(m?.entrada){
+      ingresos.push({nombre:u.nombre, hora:m.entrada.horaStr, estado:m.entrada.estado, min:m.entrada.minDiff||0});
+    }
     if(m?.entrada?.estado==='tarde') tarde.push({nombre:u.nombre, min:m.entrada.minDiff||0, hora:m.entrada.horaStr});
     else if(m?.entrada?.estado==='a_tiempo') aTiempo.push({nombre:u.nombre, hora:m.entrada.horaStr});
     if(m?.salida?.estado==='salida_temprana') salidaTemprana.push({nombre:u.nombre, min:m.salida.minDiff||0, hora:m.salida.horaStr});
-    if(!m?.entrada) noMarco.push({nombre:u.nombre});
+    if(!m?.entrada) noMarcoEntrada.push({nombre:u.nombre});
+    if(!m?.salida) noMarcoSalida.push({nombre:u.nombre});
   }
-  return { tarde, salidaTemprana, noMarco, aTiempo };
+  return { tarde, salidaTemprana, noMarcoEntrada, noMarcoSalida, noMarco:noMarcoEntrada, aTiempo, ingresos };
 }
