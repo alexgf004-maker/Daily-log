@@ -1,4 +1,4 @@
-// ── UTILIDADES PURAS ────────────────────────────────
+// ── UTILIDADES PURAS ───────────────────────────────────
 // Funciones sin dependencia de estado compartido (me, db, etc).
 // Extraídas del index.html para reducir su tamaño.
 
@@ -104,8 +104,7 @@ export function asuetosFijos(y){
     {fecha:`${y}-06-17`,nombre:'Día del Padre',oficial:true},
     {fecha:lunes,nombre:'Fiestas Agostinas',oficial:true},
     {fecha:`${y}-08-03`,nombre:'Fiestas Agostinas',oficial:true},
-    {fecha:`${y}-08-04`,nombre:'Fiestas Agostinas',oficial:true},
-    {fecha:`${y}-08-05`,nombre:'Fiestas Agostinas',oficial:true},
+    {fecha:`${y}-08-06`,nombre:'Fiestas Agostinas',oficial:true},
     {fecha:`${y}-09-15`,nombre:'Independencia de El Salvador',oficial:true},
     {fecha:`${y}-11-02`,nombre:'Día de los Difuntos',oficial:true},
     {fecha:`${y}-12-25`,nombre:'Navidad',oficial:true},
