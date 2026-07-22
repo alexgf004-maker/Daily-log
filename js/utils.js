@@ -102,7 +102,6 @@ export function asuetosFijos(y){
     {fecha:`${y}-05-01`,nombre:'Día del Trabajo',oficial:true},
     {fecha:`${y}-05-10`,nombre:'Día de la Madre',oficial:true},
     {fecha:`${y}-06-17`,nombre:'Día del Padre',oficial:true},
-    {fecha:lunes,nombre:'Fiestas Agostinas',oficial:true},
     {fecha:`${y}-08-03`,nombre:'Fiestas Agostinas',oficial:true},
     {fecha:`${y}-08-06`,nombre:'Fiestas Agostinas',oficial:true},
     {fecha:`${y}-09-15`,nombre:'Independencia de El Salvador',oficial:true},
