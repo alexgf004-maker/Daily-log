@@ -293,15 +293,26 @@ function renderEmployee(nombre){
         <div id="empHistList"><div class="spin"></div></div>
       </div>
       <div id="empCalc" style="display:none">
-        <div class="page-header"><div><div class="ph-title">Calculadora de descuentos</div><div class="ph-sub">Estima tu líquido a recibir antes de tu pago</div></div></div>
+        <div class="page-header"><div><div class="ph-title">Calculadora de descuentos</div><div class="ph-sub">Estima cuánto deberías recibir este mes</div></div></div>
         <div class="card">
-          <div class="card-title">Datos del período</div>
-          <div class="fg"><label class="fl">Salario devengado</label><input type="number" id="calcSalario" placeholder="0.00" step="0.01" min="0" oninput="actualizarCalculadora()"></div>
-          <div class="fg"><label class="fl">Horas extra (total devengado)</label><input type="number" id="calcExtras" placeholder="0.00" step="0.01" min="0" oninput="actualizarCalculadora()"></div>
-          <div class="fg"><label class="fl">Viáticos</label><input type="number" id="calcViaticos" placeholder="0.00" step="0.01" min="0" oninput="actualizarCalculadora()"></div>
+          <div class="card-title">Lo que devengaste</div>
+          <div class="fg">
+            <label class="fl">Salario del mes</label>
+            <div class="calc-wrap"><span class="calc-pre">$</span><input type="number" id="calcSalario" placeholder="0.00" step="0.01" min="0" inputmode="decimal" oninput="actualizarCalculadora()"></div>
+            <div class="calc-hint">Tu salario base, antes de cualquier descuento.</div>
+          </div>
+          <div class="fg">
+            <label class="fl">Horas extra</label>
+            <div class="calc-wrap"><span class="calc-pre">$</span><input type="number" id="calcExtras" placeholder="0.00" step="0.01" min="0" inputmode="decimal" oninput="actualizarCalculadora()"></div>
+            <div class="calc-hint">El monto en dólares de tus horas extra del mes, diurnas y nocturnas juntas. Aparece en tu boleta como EXTRAS D y EXTRAS N.</div>
+          </div>
+          <div class="fg">
+            <label class="fl">Viáticos</label>
+            <div class="calc-wrap"><span class="calc-pre">$</span><input type="number" id="calcViaticos" placeholder="0.00" step="0.01" min="0" inputmode="decimal" oninput="actualizarCalculadora()"></div>
+            <div class="calc-hint">Se te pagan completos: no se les descuenta ISSS, AFP ni Renta.</div>
+          </div>
         </div>
         <div id="calcResultado"></div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px">Este cálculo es una estimación con base en la tabla de retención de ISR vigente. No sustituye tu boleta de pago oficial.</div>
       </div>
       <div id="empPerfil" style="display:none">
         <div class="page-header"><div><div class="ph-title">Mi perfil</div><div class="ph-sub">Información y acceso</div></div></div>
@@ -940,25 +951,88 @@ window.actualizarCalculadora=()=>{
   const viaticos = parseFloat($('calcViaticos').value) || 0;
 
   if(salario<=0 && extras<=0 && viaticos<=0){
-    $('calcResultado').innerHTML='';
+    $('calcResultado').innerHTML=`
+      <div class="calc-explain">
+        Llena los campos de arriba para ver el detalle de tus descuentos y
+        cuánto deberías recibir. El cálculo se actualiza solo.
+      </div>`;
     return;
   }
 
   const r = calcularDescuentos({salario, extras, viaticos});
-  const m = n => `$${n.toFixed(2)}`;
+  const m = n => '$'+n.toFixed(2);
+  const t = r.tramo;
+
+  const explicaRenta = t.exento
+    ? `Tu base para renta es <b>${m(r.baseRenta)}</b>, y no llega al mínimo exento
+       de <b>$550.00</b>. Por eso este mes <b>no se te retiene Renta</b>.`
+    : `Tu base para renta es <b>${m(r.baseRenta)}</b>, que cae en el
+       <span class="calc-tramo">${t.label}</span><br>
+       En ese tramo solo se paga sobre lo que pasa de <b>${m(t.exceso)}</b>,
+       más una cuota fija de <b>${m(t.cuotaFija)}</b>.
+       <span class="calc-formula">(${m(r.baseRenta)} − ${m(t.exceso)}) × ${(t.tasa*100).toFixed(0)}% + ${m(t.cuotaFija)} = ${m(r.renta)}</span>`;
 
   $('calcResultado').innerHTML=`
-    <div class="card">
-      <div class="card-title">Desglose estimado</div>
-      <div class="dr"><div class="dk">Total devengado</div><div class="dv" style="font-weight:600">${m(r.totalDevengado)}</div></div>
-      <div class="dr"><div class="dk">Seguro Social (ISSS 3%)</div><div class="dv">− ${m(r.isss)}</div></div>
-      <div class="dr"><div class="dk">AFP (7.25%)</div><div class="dv">− ${m(r.afp)}</div></div>
-      <div class="dr"><div class="dk">Renta (ISR)</div><div class="dv">− ${m(r.renta)}</div></div>
-      <div class="dr"><div class="dk" style="font-weight:600">Total descuentos</div><div class="dv" style="font-weight:600">− ${m(r.totalDescuentos)}</div></div>
+    <div class="calc-total">
+      <div class="calc-total-lbl">Deberías recibir</div>
+      <div class="calc-total-val">${m(r.liquidoARecibir)}</div>
     </div>
-    <div class="card" style="background:var(--bluelt);border-color:var(--bluemid)">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Líquido a recibir estimado</div>
-      <div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--blue)">${m(r.liquidoARecibir)}</div>
+
+    <div class="card">
+      <div class="card-title">Desglose</div>
+      <div class="calc-row">
+        <div><div class="calc-row-lbl">Salario + horas extra</div>
+        <div class="calc-row-sub">Sobre esto se calculan los descuentos</div></div>
+        <div class="calc-row-val">${m(r.baseGravable)}</div>
+      </div>
+      ${viaticos>0?`
+      <div class="calc-row">
+        <div><div class="calc-row-lbl">Viáticos</div>
+        <div class="calc-row-sub">Se pagan completos, sin descuentos</div></div>
+        <div class="calc-row-val">${m(viaticos)}</div>
+      </div>`:''}
+      <div class="calc-row">
+        <div><div class="calc-row-lbl">Total devengado</div></div>
+        <div class="calc-row-val">${m(r.totalDevengado)}</div>
+      </div>
+      <div class="calc-row">
+        <div><div class="calc-row-lbl">Seguro Social (ISSS)</div>
+        <div class="calc-row-sub">${r.isssTope
+          ? '3% con tope de $30.00 — tu salario ya pasó el tope'
+          : '3% de '+m(r.baseGravable)}</div></div>
+        <div class="calc-row-val calc-neg">− ${m(r.isss)}</div>
+      </div>
+      <div class="calc-row">
+        <div><div class="calc-row-lbl">AFP</div>
+        <div class="calc-row-sub">7.25% de ${m(r.baseGravable)}</div></div>
+        <div class="calc-row-val calc-neg">− ${m(r.afp)}</div>
+      </div>
+      <div class="calc-row">
+        <div><div class="calc-row-lbl">Renta (ISR)</div>
+        <div class="calc-row-sub">${t.exento?'Exento este mes':t.label}</div></div>
+        <div class="calc-row-val calc-neg">− ${m(r.renta)}</div>
+      </div>
+      <div class="calc-row calc-sum">
+        <div><div class="calc-row-lbl" style="font-weight:600">Total de descuentos</div></div>
+        <div class="calc-row-val calc-neg">− ${m(r.totalDescuentos)}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Cómo se calcula la Renta</div>
+      <div class="calc-explain">
+        La Renta <b>no se cobra sobre todo lo que ganás</b>. Primero se restan
+        el ISSS y la AFP, y sobre lo que queda se aplica la tabla del
+        Ministerio de Hacienda.<br><br>
+        ${m(r.baseGravable)} − ${m(r.isss)} de ISSS − ${m(r.afp)} de AFP
+        = <b>${m(r.baseRenta)}</b><br><br>
+        ${explicaRenta}
+      </div>
+    </div>
+
+    <div class="calc-explain" style="border-left-color:var(--gray200)">
+      Este es un cálculo estimado con la tabla de retención vigente. Si no
+      coincide con tu boleta, revisalo con la coordinación antes de reclamar.
     </div>`;
 };
 
