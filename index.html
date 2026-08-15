@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=8">
+<link rel="stylesheet" href="css/styles.css?v=9">
 </head>
 <body>
 
@@ -180,6 +180,7 @@ import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, ca
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
+import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
 
 const cfg = {
   apiKey:"AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
@@ -239,6 +240,7 @@ function renderEmployee(nombre){
       <div id="empReg">
         <div class="page-header"><div><div class="ph-title">Registro de actividades</div><div class="ph-sub" id="empFechaLbl"></div></div></div>
         <div id="marcajeCard" style="display:none"></div>
+        <div id="progEmpCard" style="display:none"></div>
         <div class="card">
           <div id="empAlert"></div>
           <div class="fg"><label class="fl">Fecha</label><input type="date" id="empFecha" onchange="onFechaChange()"></div>
@@ -360,6 +362,7 @@ function renderAdmin(){
       <button class="tab" onclick="adTab('asist',this)">Asistencia</button>
       ${me?.role==='admin'?`
       <button class="tab" id="tabPend" onclick="adTab('pend',this)">Pendientes <span id="pendBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
+      <button class="tab" onclick="adTab('prog',this)">Programación</button>
       <button class="tab" onclick="adTab('usrs',this)">Usuarios</button>
       <button class="tab" onclick="adTab('asuetos',this)">Asuetos</button>
       <button class="tab" id="tabObs" onclick="adTab('obs',this)">Observaciones <span id="obsBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
@@ -461,6 +464,42 @@ function renderAdmin(){
         </div>
         <div id="pendList"><div class="spin"></div></div>
         <div id="viatList" style="display:none"></div>
+      </div>
+      <div id="adProg" style="display:none">
+        <div class="prog-subtabs">
+          <button class="prog-subtab active" id="progSubArmar" onclick="progSub('armar')">Programar</button>
+          <button class="prog-subtab" id="progSubHist" onclick="progSub('hist')">Historial</button>
+          <button class="prog-subtab" id="progSubCat" onclick="progSub('cat')">Catálogos</button>
+        </div>
+
+        <!-- ARMAR PROGRAMACIÓN -->
+        <div id="progArmar">
+          <div id="progArmarBody"><div class="spin"></div></div>
+        </div>
+
+        <!-- HISTORIAL -->
+        <div id="progHist" style="display:none">
+          <div id="progHistBody"><div class="spin"></div></div>
+        </div>
+
+        <!-- CATÁLOGOS -->
+        <div id="progCat" style="display:none">
+          <div class="page-header"><div><div class="ph-title">Catálogos</div><div class="ph-sub">Vehículos y campañas disponibles</div></div></div>
+          <div class="card" style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div class="card-title" style="margin-bottom:0">Vehículos</div>
+              <button class="btn btn-g btn-sm" onclick="openVehiculo()">+ Vehículo</button>
+            </div>
+            <div id="catVehiculos"><div class="spin"></div></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div class="card-title" style="margin-bottom:0">Campañas</div>
+              <button class="btn btn-g btn-sm" onclick="openCampania()">+ Campaña</button>
+            </div>
+            <div id="catCampanias"><div class="spin"></div></div>
+          </div>
+        </div>
       </div>
       <div id="adUsrs" style="display:none">
         <div class="page-header" style="justify-content:space-between">
@@ -743,6 +782,88 @@ function modalsHTML(){
         <button class="btn btn-gh" onclick="closeModal('moSabado')">Cancelar</button>
         <button class="btn btn-d btn-sm" id="sabadoBtnQuitar" onclick="quitarSabado()" style="display:none">Quitar sábado</button>
         <button class="btn btn-p" onclick="guardarSabado()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="moVehiculo">
+    <div class="modal">
+      <div class="modal-title" id="moVehiculoTitle">Nuevo vehículo</div>
+      <div id="moVehiculoAlert"></div>
+      <div class="fg">
+        <label class="fl">Nombre / placa</label>
+        <input type="text" id="vehNombre" placeholder="Ej: CPT-160" autocomplete="off">
+      </div>
+      <div class="fg">
+        <label class="fl">Tipo</label>
+        <select id="vehTipo">
+          <option value="carro">Carro</option>
+          <option value="moto">Moto</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Estado</label>
+        <select id="vehEstado">
+          <option value="disponible">Disponible</option>
+          <option value="mantenimiento">En mantenimiento</option>
+          <option value="prestado">Prestado</option>
+          <option value="baja">De baja</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Restringir a campañas (opcional)</label>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Si no marcas ninguna, el vehículo puede usarse en cualquier campaña.</div>
+        <div id="vehCampanias" style="max-height:180px;overflow-y:auto;border:1px solid var(--gray200);border-radius:var(--r);padding:8px"><div style="font-size:12px;color:var(--text2)">Cargando…</div></div>
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moVehiculo')">Cancelar</button>
+        <button class="btn btn-d btn-sm" id="vehBtnEliminar" onclick="eliminarVehiculoUI()" style="display:none">Eliminar</button>
+        <button class="btn btn-p" onclick="guardarVehiculoUI()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="moCampania">
+    <div class="modal">
+      <div class="modal-title" id="moCampaniaTitle">Nueva campaña</div>
+      <div id="moCampaniaAlert"></div>
+      <div class="fg">
+        <label class="fl">Nombre</label>
+        <input type="text" id="campNombre" placeholder="Ej: Inspección de acometidas" autocomplete="off">
+      </div>
+      <div class="fg">
+        <label class="fl">Área</label>
+        <select id="campArea">
+          <option value="campo">Campo</option>
+          <option value="plantel">Plantel</option>
+        </select>
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moCampania')">Cancelar</button>
+        <button class="btn btn-d btn-sm" id="campBtnEliminar" onclick="eliminarCampaniaUI()" style="display:none">Eliminar</button>
+        <button class="btn btn-p" onclick="guardarCampaniaUI()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="moGrupo">
+    <div class="modal">
+      <div class="modal-title" id="moGrupoTitle">Nuevo grupo</div>
+      <div id="moGrupoAlert"></div>
+      <div class="fg">
+        <label class="fl">Campaña</label>
+        <select id="grupoCampania" onchange="onGrupoCampaniaChange()"></select>
+      </div>
+      <div class="fg">
+        <label class="fl">Personal</label>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Toca para agregar o quitar. Puede ir 1 o varios.</div>
+        <div id="grupoPersonal" style="max-height:220px;overflow-y:auto;border:1px solid var(--gray200);border-radius:var(--r);padding:8px"></div>
+      </div>
+      <div class="fg" id="grupoVehiculoWrap">
+        <label class="fl">Vehículo (opcional)</label>
+        <select id="grupoVehiculo"></select>
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moGrupo')">Cancelar</button>
+        <button class="btn btn-d btn-sm" id="grupoBtnEliminar" onclick="eliminarGrupoUI()" style="display:none">Quitar grupo</button>
+        <button class="btn btn-p" onclick="guardarGrupoUI()">Guardar grupo</button>
       </div>
     </div>
   </div>
@@ -1252,6 +1373,7 @@ function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();
   tipoDia='normal';
   renderMarcajeCard();
+  renderProgEmpCard();
 
   // Notificación flotante de cierre de mes
   const hoy=new Date();
@@ -1293,6 +1415,31 @@ function initForm(){
 // horarioBase, toMins, fromMins, calcularHE -> importados de utils.js
 
 // ── MARCAJE GPS ─────────────────────────────────────────
+// Vista del empleado: dónde le tocó hoy según la programación
+async function renderProgEmpCard(){
+  const cont=$('progEmpCard');
+  if(!cont||!me||me.role!=='empleado'){ if(cont) cont.style.display='none'; return; }
+  try{
+    const hoy=today();
+    const prog=await obtenerProgramacion(db,{ref,get},hoy);
+    const grupo=grupoDeEmpleado(prog, me.id);
+    if(!grupo){ cont.style.display='none'; return; }
+    cont.style.display='';
+    const companeros=(grupo.empleadosNombres||[]).filter(n=>n!==me.nombre);
+    const esCampo=grupo.area==='campo';
+    cont.innerHTML=`
+      <div class="card" style="border-left:3px solid ${esCampo?'var(--blue)':'var(--warn)'};margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span class="${esCampo?'prog-badge-campo':'prog-badge-plantel'}">${esCampo?'Campo':'Plantel'}</span>
+          <span style="font-size:11px;color:var(--text2)">Tu programación de hoy</span>
+        </div>
+        <div style="font-size:17px;font-weight:800;margin-bottom:6px">${grupo.campania}</div>
+        ${grupo.vehiculoNombre?`<div style="font-size:13px;margin-bottom:4px"><span style="color:var(--text2)">Vehículo:</span> <b>${grupo.vehiculoNombre}</b></div>`:''}
+        ${companeros.length?`<div style="font-size:13px"><span style="color:var(--text2)">Con:</span> ${companeros.join(' · ')}</div>`:'<div style="font-size:13px;color:var(--text2)">Vas solo</div>'}
+      </div>`;
+  }catch(e){ cont.style.display='none'; }
+}
+
 async function renderMarcajeCard(){
   const cont=$('marcajeCard');
   if(!cont||!me||(me.role!=='empleado'&&me.role!=='admin')){ if(cont) cont.style.display='none'; return; }
@@ -1747,7 +1894,7 @@ async function loadHist(){
 // ADMIN TABS
 window.adTab=(t,btn)=>{
   document.querySelectorAll('#adminScreen .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
-  ['adDash','adRegs','adAsist','adPend','adUsrs','adPerfil','adAsuetos','adObs'].forEach(id=>{const e=$(id);if(e)hide(id);});
+  ['adDash','adRegs','adAsist','adProg','adPend','adUsrs','adPerfil','adAsuetos','adObs'].forEach(id=>{const e=$(id);if(e)hide(id);});
   if(t==='dash'){show('adDash');loadDash();}
   if(t==='regs'){show('adRegs');loadFiltEmps();}
   if(t==='asist'){
@@ -1758,6 +1905,7 @@ window.adTab=(t,btn)=>{
       mesInput.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     }
   }
+  if(t==='prog'&&isAdmin()){show('adProg');initProgramacion();}
   if(t==='pend'){show('adPend');show('pendList');hide('viatList');loadPend();}
   if(t==='usrs'&&isAdmin()){show('adUsrs');loadUsrs();}
   if(t==='asuetos'&&isAdmin()){show('adAsuetos');loadAsuetos();}
@@ -3383,6 +3531,380 @@ window.exportarAsistencia=async()=>{
   XLSX.utils.book_append_sheet(wb,ws2,'Detalle');
 
   XLSX.writeFile(wb,`Asistencia-${nomMes}.xlsx`);
+};
+
+// ── PROGRAMACIÓN ───────────────────────────────────────
+let progCampanias=[];   // catálogo en memoria
+let progVehiculos=[];    // catálogo en memoria
+let progFecha=null;      // fecha en edición
+let progGrupos=[];       // grupos de la fecha en edición
+let progNoDisp={personal:[],vehiculos:[]}; // no disponibles marcados a mano
+let progEditIdx=null;    // índice de grupo en edición
+let progGrupoSel={empleados:[]}; // selección temporal en el modal de grupo
+
+async function initProgramacion(){
+  progSub('armar');
+  // Sembrar catálogos la primera vez
+  try{ await sembrarCatalogos(db,{ref,get,push,set}); }catch(e){}
+  progCampanias=await obtenerCampanias(db,{ref,get});
+  progVehiculos=await obtenerVehiculos(db,{ref,get});
+  // Fecha por defecto: hoy
+  progFecha=today();
+  await cargarProgramacionFecha(progFecha);
+}
+
+window.progSub=(cual)=>{
+  ['armar','hist','cat'].forEach(s=>{
+    const btn=$('progSub'+s.charAt(0).toUpperCase()+s.slice(1));
+    const panel=$('prog'+s.charAt(0).toUpperCase()+s.slice(1));
+    if(btn) btn.classList.toggle('active', s===cual);
+    if(panel) panel.style.display = s===cual?'':'none';
+  });
+  if(cual==='cat') renderCatalogos();
+  if(cual==='hist') renderHistorialProg();
+};
+
+// ── ARMAR PROGRAMACIÓN ──
+async function cargarProgramacionFecha(fecha){
+  progFecha=fecha;
+  const prog=await obtenerProgramacion(db,{ref,get},fecha);
+  progGrupos = prog?.grupos ? JSON.parse(JSON.stringify(prog.grupos)) : [];
+  progNoDisp = prog?.noDisponibles ? JSON.parse(JSON.stringify(prog.noDisponibles)) : {personal:[],vehiculos:[]};
+  renderArmar();
+}
+
+window.progCambiarFecha=(val)=>{ if(val) cargarProgramacionFecha(val); };
+
+window.progCopiarAyer=async()=>{
+  // Buscar la programación más reciente anterior a la fecha actual
+  const fechas=await obtenerFechasProgramadas(db,{ref,get});
+  const anterior=fechas.find(f=>f<progFecha);
+  if(!anterior){ alert('No hay una programación anterior para copiar.'); return; }
+  const prog=await obtenerProgramacion(db,{ref,get},anterior);
+  if(!prog||!prog.grupos||!prog.grupos.length){ alert('La programación anterior está vacía.'); return; }
+  if(progGrupos.length && !confirm('Esto reemplazará lo que tienes ahora con la programación del '+fmt(anterior)+'. ¿Continuar?')) return;
+  progGrupos=JSON.parse(JSON.stringify(prog.grupos));
+  progNoDisp=prog.noDisponibles?JSON.parse(JSON.stringify(prog.noDisponibles)):{personal:[],vehiculos:[]};
+  renderArmar();
+  await persistProg();
+};
+
+async function persistProg(){
+  await guardarProgramacion(db,{ref,get,set}, progFecha, {grupos:progGrupos, noDisponibles:progNoDisp});
+}
+
+async function renderArmar(){
+  const cont=$('progArmarBody');
+  if(!cont) return;
+  // Empleados y su disponibilidad
+  const users=await getUsers();
+  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+  // Ausencias automáticas del día (vacaciones/incap/permiso aprobados)
+  const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
+
+  // Set de asignados
+  const asignados=new Set();
+  progGrupos.forEach(g=>(g.empleados||[]).forEach(uid=>asignados.add(uid)));
+
+  const conflictos=detectarConflictos(progGrupos, progVehiculos);
+
+  const campoGrupos=progGrupos.filter(g=>g.area==='campo');
+  const plantelGrupos=progGrupos.filter(g=>g.area==='plantel');
+
+  const tarjetaGrupo=(g)=>{
+    const idx=progGrupos.indexOf(g);
+    const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
+    return `<div class="prog-card" onclick="openGrupo(${idx})">
+      <div class="prog-card-hd">
+        <span class="prog-card-camp">${g.campania||'(sin campaña)'}</span>
+        ${veh?`<span class="prog-card-veh">${veh.nombre}</span>`:'<span class="prog-card-veh prog-sinveh">Sin vehículo</span>'}
+      </div>
+      <div class="prog-card-personas">${(g.empleadosNombres||[]).join(' · ')||'<span style="color:var(--text2)">Sin personal</span>'}</div>
+    </div>`;
+  };
+
+  // Disponibles por asignar (no asignados, no ausentes auto, no marcados no-disp)
+  const disponibles=empleados.filter(u=>!asignados.has(u.id)&&!ausentesAuto.includes(u.id)&&!progNoDisp.personal.includes(u.id));
+
+  cont.innerHTML=`
+    <div class="page-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div><div class="ph-title">Programación</div><div class="ph-sub">${fmtLong(progFecha).replace(/^\w/,c=>c.toUpperCase())}</div></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="progFechaInput" value="${progFecha}" onchange="progCambiarFecha(this.value)" style="padding:6px 10px;font-size:13px;border:1px solid var(--gray200);border-radius:6px">
+        <button class="btn btn-gh btn-sm" onclick="progCopiarAyer()">Copiar de ayer</button>
+      </div>
+    </div>
+
+    ${conflictos.length?`<div class="prog-avisos">
+      <div style="font-weight:700;font-size:12px;margin-bottom:4px">Avisos</div>
+      ${conflictos.map(a=>`<div class="prog-aviso">${a}</div>`).join('')}
+    </div>`:''}
+
+    <div class="prog-seccion">
+      <div class="prog-seccion-hd"><span class="prog-badge-campo">Campo</span> <button class="btn btn-g btn-sm" onclick="openGrupo(null,'campo')">+ Grupo</button></div>
+      ${campoGrupos.length?campoGrupos.map(tarjetaGrupo).join(''):'<div class="prog-vacio">Sin grupos de campo aún.</div>'}
+    </div>
+
+    <div class="prog-seccion">
+      <div class="prog-seccion-hd"><span class="prog-badge-plantel">Plantel</span> <button class="btn btn-g btn-sm" onclick="openGrupo(null,'plantel')">+ Grupo</button></div>
+      ${plantelGrupos.length?plantelGrupos.map(tarjetaGrupo).join(''):'<div class="prog-vacio">Sin grupos de plantel aún.</div>'}
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">Por asignar (${disponibles.length})</div>
+      ${disponibles.length?`<div class="prog-chips">${disponibles.map(u=>`<span class="prog-chip">${u.nombre}</span>`).join('')}</div>`:'<div style="font-size:13px;color:var(--text2)">Todos asignados o no disponibles.</div>'}
+      ${ausentesAuto.length?`<div style="font-size:12px;color:var(--text2);margin-top:10px">No disponibles hoy (vacaciones/permiso/incapacidad): ${ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?u.nombre:'';}).filter(Boolean).join(', ')}</div>`:''}
+    </div>
+  `;
+}
+
+// Empleados con vacaciones/incap/permiso aprobado en esa fecha
+async function empleadosAusentesFecha(fecha, empleados){
+  const ausentes=[];
+  await Promise.all(empleados.map(async u=>{
+    const snap=await get(ref(db,`registros/${u.id}`));
+    if(!snap.exists()) return;
+    const hay=Object.values(snap.val()).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
+    if(hay) ausentes.push(u.id);
+  }));
+  return ausentes;
+}
+
+// ── MODAL DE GRUPO ──
+window.openGrupo=async(idx, areaPre)=>{
+  progEditIdx = (idx===null||idx===undefined)?null:idx;
+  const g = progEditIdx!==null ? progGrupos[progEditIdx] : {campania:'',area:areaPre||'campo',empleados:[],empleadosNombres:[],vehiculo:'',vehiculoNombre:''};
+  progGrupoSel={empleados:[...(g.empleados||[])]};
+  $('moGrupoTitle').textContent = progEditIdx!==null?'Editar grupo':'Nuevo grupo';
+  $('moGrupoAlert').innerHTML='';
+  $('grupoBtnEliminar').style.display = progEditIdx!==null?'':'none';
+
+  // Campañas del área correspondiente (o todas si es edición)
+  const areaObjetivo=g.area||areaPre||'campo';
+  const opts=progCampanias.filter(c=>c.activa!==false && c.area===areaObjetivo)
+    .map(c=>`<option value="${c.nombre}" ${c.nombre===g.campania?'selected':''}>${c.nombre}</option>`).join('');
+  $('grupoCampania').innerHTML=opts||'<option value="">(sin campañas de esta área)</option>';
+  if(g.campania) $('grupoCampania').value=g.campania;
+  $('grupoCampania').dataset.area=areaObjetivo;
+
+  // Personal disponible para elegir: no asignados en OTROS grupos, no ausentes, no no-disp
+  const users=await getUsers();
+  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+  const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
+  const asignadosOtros=new Set();
+  progGrupos.forEach((gr,i)=>{ if(i!==progEditIdx)(gr.empleados||[]).forEach(uid=>asignadosOtros.add(uid)); });
+
+  const elegibles=empleados.filter(u=>!ausentesAuto.includes(u.id)&&!progNoDisp.personal.includes(u.id)&&!asignadosOtros.has(u.id));
+  elegibles.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  renderGrupoPersonal(elegibles);
+
+  // Vehículos (solo para campo; plantel oculta el selector)
+  const wrap=$('grupoVehiculoWrap');
+  if(areaObjetivo==='plantel'){ wrap.style.display='none'; }
+  else {
+    wrap.style.display='';
+    const vehDisp=progVehiculos.filter(v=>v.estado==='disponible'||v.id===g.vehiculo);
+    $('grupoVehiculo').innerHTML='<option value="">Sin vehículo</option>'+vehDisp.map(v=>`<option value="${v.id}" ${v.id===g.vehiculo?'selected':''}>${v.nombre}${v.estado!=='disponible'?' ('+(ESTADOS_VEHICULO[v.estado]?.texto||v.estado)+')':''}</option>`).join('');
+  }
+
+  $('moGrupo').classList.add('open');
+};
+
+function renderGrupoPersonal(elegibles){
+  const cont=$('grupoPersonal');
+  cont.innerHTML=elegibles.map(u=>{
+    const sel=progGrupoSel.empleados.includes(u.id);
+    return `<div class="grupo-persona ${sel?'sel':''}" onclick="toggleGrupoPersona('${u.id}','${(u.nombre||'').replace(/'/g,"\\'")}')">
+      <span>${u.nombre}</span>${sel?'<span class="grupo-check">✓</span>':''}
+    </div>`;
+  }).join('')||'<div style="font-size:12px;color:var(--text2)">No hay personal disponible para asignar.</div>';
+}
+
+window.toggleGrupoPersona=(uid,nombre)=>{
+  const i=progGrupoSel.empleados.indexOf(uid);
+  if(i>=0) progGrupoSel.empleados.splice(i,1);
+  else progGrupoSel.empleados.push(uid);
+  // Re-render manteniendo la lista actual
+  openGrupoReRenderPersonal();
+};
+
+// Re-render ligero de la lista de personal sin recargar todo el modal
+async function openGrupoReRenderPersonal(){
+  const users=await getUsers();
+  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+  const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
+  const asignadosOtros=new Set();
+  progGrupos.forEach((gr,i)=>{ if(i!==progEditIdx)(gr.empleados||[]).forEach(uid=>asignadosOtros.add(uid)); });
+  const elegibles=empleados.filter(u=>!ausentesAuto.includes(u.id)&&!progNoDisp.personal.includes(u.id)&&!asignadosOtros.has(u.id));
+  elegibles.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  renderGrupoPersonal(elegibles);
+}
+
+window.onGrupoCampaniaChange=()=>{}; // reservado (por si luego filtramos vehículos por campaña)
+
+window.guardarGrupoUI=async()=>{
+  const campania=$('grupoCampania').value;
+  const area=$('grupoCampania').dataset.area||'campo';
+  if(!campania){ $('moGrupoAlert').innerHTML='<div class="alert ae" style="font-size:12px">Selecciona una campaña.</div>'; return; }
+  if(!progGrupoSel.empleados.length){ $('moGrupoAlert').innerHTML='<div class="alert ae" style="font-size:12px">Selecciona al menos una persona.</div>'; return; }
+
+  // Nombres del personal
+  const users=await getUsers();
+  const nombres=progGrupoSel.empleados.map(uid=>{const u=users.find(x=>x.id===uid);return u?u.nombre:'';});
+  const vehiculo = area==='plantel' ? '' : ($('grupoVehiculo').value||'');
+  const vehiculoNombre = vehiculo ? (progVehiculos.find(v=>v.id===vehiculo)?.nombre||'') : '';
+
+  const grupo={campania,area,empleados:[...progGrupoSel.empleados],empleadosNombres:nombres,vehiculo,vehiculoNombre};
+  if(progEditIdx!==null) progGrupos[progEditIdx]=grupo;
+  else progGrupos.push(grupo);
+
+  await persistProg();
+  closeModal('moGrupo');
+  renderArmar();
+};
+
+window.eliminarGrupoUI=async()=>{
+  if(progEditIdx===null) return;
+  if(!confirm('¿Quitar este grupo?')) return;
+  progGrupos.splice(progEditIdx,1);
+  await persistProg();
+  closeModal('moGrupo');
+  renderArmar();
+};
+
+// ── CATÁLOGOS UI ──
+async function renderCatalogos(){
+  progCampanias=await obtenerCampanias(db,{ref,get});
+  progVehiculos=await obtenerVehiculos(db,{ref,get});
+
+  const cv=$('catVehiculos');
+  const carros=progVehiculos.filter(v=>v.tipo==='carro');
+  const motos=progVehiculos.filter(v=>v.tipo==='moto');
+  const filaVeh=v=>{
+    const est=ESTADOS_VEHICULO[v.estado]||ESTADOS_VEHICULO.disponible;
+    const restr=Array.isArray(v.campanias)&&v.campanias.length?` · solo ${v.campanias.join(', ')}`:'';
+    return `<div class="cat-row" onclick="openVehiculo('${v.id}')">
+      <div><span style="font-weight:600">${v.nombre}</span><span style="font-size:11px;color:var(--text2)">${restr}</span></div>
+      <span class="badge ${est.color}" style="font-size:10px">${est.texto}</span>
+    </div>`;
+  };
+  cv.innerHTML=`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">Carros (${carros.length})</div>
+    ${carros.map(filaVeh).join('')||'<div style="font-size:12px;color:var(--text2)">Ninguno</div>'}
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 0 6px">Motos (${motos.length})</div>
+    ${motos.map(filaVeh).join('')||'<div style="font-size:12px;color:var(--text2)">Ninguno</div>'}
+  `;
+
+  const cc=$('catCampanias');
+  const campo=progCampanias.filter(c=>c.area==='campo');
+  const plantel=progCampanias.filter(c=>c.area==='plantel');
+  const filaCamp=c=>`<div class="cat-row" onclick="openCampania('${c.id}')"><span style="font-weight:600">${c.nombre}</span>${c.activa===false?'<span class="badge bn" style="font-size:10px">inactiva</span>':''}</div>`;
+  cc.innerHTML=`
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">Campo (${campo.length})</div>
+    ${campo.map(filaCamp).join('')||'<div style="font-size:12px;color:var(--text2)">Ninguna</div>'}
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 0 6px">Plantel (${plantel.length})</div>
+    ${plantel.map(filaCamp).join('')||'<div style="font-size:12px;color:var(--text2)">Ninguna</div>'}
+  `;
+}
+
+let vehEditId=null;
+window.openVehiculo=(id)=>{
+  vehEditId=id||null;
+  $('moVehiculoTitle').textContent=id?'Editar vehículo':'Nuevo vehículo';
+  $('moVehiculoAlert').innerHTML='';
+  const v=id?progVehiculos.find(x=>x.id===id):null;
+  $('vehNombre').value=v?.nombre||'';
+  $('vehTipo').value=v?.tipo||'carro';
+  $('vehEstado').value=v?.estado||'disponible';
+  $('vehBtnEliminar').style.display=id?'':'none';
+  // Campañas de campo para restricción
+  const campo=progCampanias.filter(c=>c.area==='campo'&&c.activa!==false);
+  const marcadas=v?.campanias||[];
+  $('vehCampanias').innerHTML=campo.map(c=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:13px">
+      <input type="checkbox" value="${c.nombre}" ${marcadas.includes(c.nombre)?'checked':''} style="width:auto;margin:0">${c.nombre}
+    </label>`).join('')||'<div style="font-size:12px;color:var(--text2)">No hay campañas de campo.</div>';
+  $('moVehiculo').classList.add('open');
+};
+window.guardarVehiculoUI=async()=>{
+  const nombre=$('vehNombre').value.trim();
+  if(!nombre){ $('moVehiculoAlert').innerHTML='<div class="alert ae" style="font-size:12px">Escribe el nombre o placa.</div>'; return; }
+  const campanias=Array.from(document.querySelectorAll('#vehCampanias input:checked')).map(c=>c.value);
+  await guardarVehiculo(db,{ref,set,push,update}, vehEditId, {nombre,tipo:$('vehTipo').value,estado:$('vehEstado').value,campanias});
+  closeModal('moVehiculo');
+  await renderCatalogos();
+};
+window.eliminarVehiculoUI=async()=>{
+  if(!vehEditId) return;
+  if(!confirm('¿Eliminar este vehículo del catálogo?')) return;
+  await eliminarVehiculo(db,{ref,set}, vehEditId);
+  closeModal('moVehiculo');
+  await renderCatalogos();
+};
+
+let campEditId=null;
+window.openCampania=(id)=>{
+  campEditId=id||null;
+  $('moCampaniaTitle').textContent=id?'Editar campaña':'Nueva campaña';
+  $('moCampaniaAlert').innerHTML='';
+  const c=id?progCampanias.find(x=>x.id===id):null;
+  $('campNombre').value=c?.nombre||'';
+  $('campArea').value=c?.area||'campo';
+  $('campBtnEliminar').style.display=id?'':'none';
+  $('moCampania').classList.add('open');
+};
+window.guardarCampaniaUI=async()=>{
+  const nombre=$('campNombre').value.trim();
+  if(!nombre){ $('moCampaniaAlert').innerHTML='<div class="alert ae" style="font-size:12px">Escribe el nombre.</div>'; return; }
+  await guardarCampania(db,{ref,set,push,update}, campEditId, {nombre,area:$('campArea').value});
+  closeModal('moCampania');
+  await renderCatalogos();
+};
+window.eliminarCampaniaUI=async()=>{
+  if(!campEditId) return;
+  if(!confirm('¿Eliminar esta campaña?')) return;
+  await eliminarCampania(db,{ref,set}, campEditId);
+  closeModal('moCampania');
+  await renderCatalogos();
+};
+
+// ── HISTORIAL DE PROGRAMACIÓN ──
+async function renderHistorialProg(){
+  const cont=$('progHistBody');
+  cont.innerHTML='<div class="spin"></div>';
+  const fechas=await obtenerFechasProgramadas(db,{ref,get});
+  if(!fechas.length){ cont.innerHTML='<div class="empty" style="padding:20px"><div class="et">Aún no hay programaciones guardadas</div></div>'; return; }
+  cont.innerHTML=`
+    <div class="page-header"><div><div class="ph-title">Historial</div><div class="ph-sub">Programaciones guardadas</div></div></div>
+    <div class="card" style="padding:0">
+      ${fechas.map(f=>`<div class="cat-row" onclick="verHistorialDia('${f}')"><span style="font-weight:600">${fmtLong(f).replace(/^\w/,c=>c.toUpperCase())}</span><span style="color:var(--text2);font-size:18px">›</span></div>`).join('')}
+    </div>
+    <div id="histDiaDetalle" style="margin-top:14px"></div>`;
+}
+
+window.verHistorialDia=async(fecha)=>{
+  const cont=$('histDiaDetalle');
+  cont.innerHTML='<div class="spin"></div>';
+  const prog=await obtenerProgramacion(db,{ref,get},fecha);
+  if(!prog||!prog.grupos||!prog.grupos.length){ cont.innerHTML='<div style="font-size:13px;color:var(--text2);padding:12px">Sin grupos ese día.</div>'; return; }
+  const secc=(area,titulo,claseBadge)=>{
+    const gs=prog.grupos.filter(g=>g.area===area);
+    if(!gs.length) return '';
+    return `<div class="prog-seccion">
+      <div class="prog-seccion-hd"><span class="${claseBadge}">${titulo}</span></div>
+      ${gs.map(g=>{
+        const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
+        return `<div class="prog-card" style="cursor:default">
+          <div class="prog-card-hd"><span class="prog-card-camp">${g.campania}</span>${veh?`<span class="prog-card-veh">${veh.nombre}</span>`:(g.vehiculoNombre?`<span class="prog-card-veh">${g.vehiculoNombre}</span>`:'<span class="prog-card-veh prog-sinveh">Sin vehículo</span>')}</div>
+          <div class="prog-card-personas">${(g.empleadosNombres||[]).join(' · ')}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  };
+  cont.innerHTML=`<div class="card"><div class="card-title">${fmtLong(fecha).replace(/^\w/,c=>c.toUpperCase())}</div>
+    ${secc('campo','Campo','prog-badge-campo')}
+    ${secc('plantel','Plantel','prog-badge-plantel')}
+  </div>`;
 };
 
 window.reiniciarDispositivo=async(uid,nombre)=>{
