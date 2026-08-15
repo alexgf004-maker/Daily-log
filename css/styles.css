@@ -266,3 +266,38 @@ tbody tr:hover td{background:var(--bluelt)}
 .grupo-persona:hover{background:var(--gray100)}
 .grupo-persona.sel{background:var(--bluelt);color:var(--blue);font-weight:600}
 .grupo-check{color:var(--blue);font-weight:700}
+
+/* ── TABLERO DE PROGRAMACIÓN ── */
+.tbl-bolsas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+@media(max-width:560px){.tbl-bolsas{grid-template-columns:1fr}}
+.tbl-bolsa{background:var(--gray50);border:1px solid var(--gray200);border-radius:var(--r);padding:12px}
+.tbl-bolsa-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px}
+.tbl-bolsa-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:20px}
+.tbl-bolsa-vacio{font-size:12px;color:var(--text2)}
+.tbl-chip{display:inline-block;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;cursor:grab;user-select:none;border:1px solid transparent}
+.tbl-chip:active{cursor:grabbing}
+.tbl-chip-pers{background:var(--bluelt);color:var(--blue)}
+.tbl-chip-veh{background:#ecfdf5;color:var(--green)}
+.tbl-chip.sel{outline:2px solid var(--blue);outline-offset:1px}
+.tbl-selaviso{background:var(--bluelt);border:1px solid var(--bluemid);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--blue);margin-bottom:14px}
+.tbl-seccion{margin-bottom:18px}
+.tbl-seccion-hd{margin-bottom:10px}
+.tbl-camp{background:#fff;border:1px solid var(--gray200);border-radius:var(--r);padding:12px;margin-bottom:10px}
+.tbl-camp-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.tbl-camp-nom{font-weight:700;font-size:15px}
+.tbl-camp-add{border:1px solid var(--gray200);background:#fff;color:var(--blue);border-radius:16px;padding:4px 12px;font-size:12px;font-weight:600;font-family:var(--sans);cursor:pointer}
+.tbl-camp-add:hover{border-color:var(--blue);background:var(--bluelt)}
+.tbl-camp-vacio{font-size:12px;color:var(--text2);padding:8px;text-align:center;border:1px dashed var(--gray200);border-radius:8px}
+.tbl-grupo{border:1.5px dashed var(--gray300);border-radius:10px;padding:10px;margin-bottom:8px;transition:border-color .15s,background .15s}
+.tbl-grupo:hover{border-color:var(--blue)}
+.tbl-grupo-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.tbl-grupo-num{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.tbl-grupo-del{font-size:11px;color:var(--danger);cursor:pointer}
+.tbl-grupo-personas{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;margin-bottom:6px}
+.tbl-drop-hint{font-size:12px;color:var(--text2);font-style:italic}
+.tbl-veh-hint{font-size:12px;color:var(--text2)}
+.tbl-asig{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:14px;font-size:13px;font-weight:600;cursor:pointer}
+.tbl-asig-pers{background:var(--bluelt);color:var(--blue)}
+.tbl-asig-veh{background:#ecfdf5;color:var(--green)}
+.tbl-x{font-size:14px;opacity:.6}
+.tbl-asig:hover .tbl-x{opacity:1}
