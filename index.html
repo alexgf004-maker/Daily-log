@@ -3665,6 +3665,7 @@ async function renderArmar(){
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <input type="date" id="progFechaInput" value="${progFecha}" onchange="progCambiarFecha(this.value)" style="padding:6px 10px;font-size:13px;border:1px solid var(--gray200);border-radius:6px">
         <button class="btn btn-gh btn-sm" onclick="progCopiarAyer()">Copiar de ayer</button>
+        <button class="btn btn-g btn-sm" onclick="progGenerarImagen()">Compartir imagen</button>
       </div>
     </div>
 
@@ -3766,6 +3767,145 @@ window.progEliminarGrupo=async(idx)=>{
   if(!confirm('¿Quitar este grupo?')) return;
   progGrupos.splice(idx,1);
   await persistProg(); renderArmar();
+};
+
+// ── GENERAR IMAGEN PARA WHATSAPP ──
+window.progGenerarImagen=async()=>{
+  if(!progGrupos.length){ alert('No hay grupos en la programación de este día.'); return; }
+
+  // Ausentes del día (incapacidad/permiso/vacaciones)
+  const users=await getUsers();
+  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+  const ausentes={vacaciones:[],incapacidad:[],permiso:[]};
+  await Promise.all(empleados.map(async u=>{
+    const snap=await get(ref(db,`registros/${u.id}`));
+    if(!snap.exists()) return;
+    const reg=Object.values(snap.val()).find(r=>r.fecha===progFecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
+    if(reg) ausentes[reg.tipoDia].push(u.nombre);
+  }));
+
+  const campo=progGrupos.filter(g=>g.area==='campo');
+  const plantel=progGrupos.filter(g=>g.area==='plantel');
+
+  // ── Dibujo en canvas ──
+  const W=1080;
+  const scale=2; // nitidez retina
+  const pad=48;
+  const azul='#1e3a5f', azulClaro='#2563eb', verde='#059669', gris='#64748b', texto='#0f172a';
+
+  // Primera pasada: medir alto necesario
+  const lineH=52;       // alto por grupo
+  const headH=170;      // encabezado
+  const seccH=58;       // título de sección
+  let alto=headH;
+  if(campo.length){ alto+=seccH+campo.length*lineH+16; }
+  if(plantel.length){ alto+=seccH+plantel.length*lineH+16; }
+  const totalAusentes=ausentes.vacaciones.length+ausentes.incapacidad.length+ausentes.permiso.length;
+  if(totalAusentes){ alto+=seccH; if(ausentes.vacaciones.length)alto+=44; if(ausentes.incapacidad.length)alto+=44; if(ausentes.permiso.length)alto+=44; alto+=16; }
+  alto+=pad;
+
+  const canvas=document.createElement('canvas');
+  canvas.width=W*scale; canvas.height=alto*scale;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(scale,scale);
+
+  // Fondo
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,alto);
+
+  // Encabezado azul
+  ctx.fillStyle=azul; ctx.fillRect(0,0,W,120);
+  ctx.fillStyle='#ffffff';
+  ctx.font='800 34px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('PROGRAMACIÓN', pad, 56);
+  ctx.font='500 22px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle='#cbd5e1';
+  const fechaTxt=fmtLong(progFecha).replace(/^\w/,c=>c.toUpperCase());
+  ctx.fillText(fechaTxt, pad, 92);
+  ctx.font='700 18px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle='#4ade80';
+  ctx.textAlign='right';
+  ctx.fillText('INNOVA', W-pad, 56);
+  ctx.textAlign='left';
+
+  let y=headH;
+
+  const dibujarSeccion=(titulo, color)=>{
+    ctx.fillStyle=color;
+    ctx.font='800 24px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(titulo, pad, y);
+    ctx.strokeStyle=color; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(pad, y+12); ctx.lineTo(W-pad, y+12); ctx.stroke();
+    y+=seccH;
+  };
+
+  const dibujarGrupo=(g)=>{
+    // Actividad (izquierda, negrita)
+    ctx.fillStyle=texto;
+    ctx.font='700 21px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(g.campania, pad, y);
+    // Personal (debajo o al lado)
+    ctx.fillStyle=gris;
+    ctx.font='500 19px "Plus Jakarta Sans", sans-serif';
+    const personas=(g.empleadosNombres||[]).join(' · ');
+    ctx.fillText(personas, pad+22, y+26);
+    // Vehículo (derecha)
+    if(g.vehiculo){
+      const veh=progVehiculos.find(v=>v.id===g.vehiculo);
+      if(veh){
+        ctx.fillStyle=azulClaro;
+        ctx.font='700 19px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign='right';
+        ctx.fillText(veh.nombre, W-pad, y);
+        ctx.textAlign='left';
+      }
+    }
+    y+=lineH;
+  };
+
+  if(campo.length){
+    dibujarSeccion('CAMPO', azulClaro);
+    campo.forEach(dibujarGrupo);
+    y+=16;
+  }
+  if(plantel.length){
+    dibujarSeccion('PLANTEL', '#d97706');
+    plantel.forEach(dibujarGrupo);
+    y+=16;
+  }
+
+  if(totalAusentes){
+    dibujarSeccion('NO DISPONIBLES', gris);
+    ctx.font='500 19px "Plus Jakarta Sans", sans-serif';
+    const linea=(etq,arr)=>{
+      if(!arr.length) return;
+      ctx.fillStyle=texto; ctx.font='700 19px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(etq+':', pad, y);
+      ctx.fillStyle=gris; ctx.font='500 19px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(arr.join(', '), pad+ctx.measureText(etq+': ').width+8, y);
+      y+=44;
+    };
+    linea('Vacaciones', ausentes.vacaciones);
+    linea('Incapacidad', ausentes.incapacidad);
+    linea('Permiso', ausentes.permiso);
+  }
+
+  // ── Compartir o descargar ──
+  canvas.toBlob(async (blob)=>{
+    const nombreArch=`Programacion-${progFecha}.png`;
+    const file=new File([blob], nombreArch, {type:'image/png'});
+    // Intentar compartir nativo (celular)
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file], title:'Programación', text:'Programación '+fechaTxt});
+        return;
+      }catch(e){ /* si cancela, cae a descarga */ }
+    }
+    // Descargar como respaldo
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=nombreArch; a.click();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
 };
 
 // ── CATÁLOGOS UI ──
