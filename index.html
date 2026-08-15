@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=9">
+<link rel="stylesheet" href="css/styles.css?v=10">
 </head>
 <body>
 
@@ -840,30 +840,6 @@ function modalsHTML(){
         <button class="btn btn-gh" onclick="closeModal('moCampania')">Cancelar</button>
         <button class="btn btn-d btn-sm" id="campBtnEliminar" onclick="eliminarCampaniaUI()" style="display:none">Eliminar</button>
         <button class="btn btn-p" onclick="guardarCampaniaUI()">Guardar</button>
-      </div>
-    </div>
-  </div>
-  <div class="mo" id="moGrupo">
-    <div class="modal">
-      <div class="modal-title" id="moGrupoTitle">Nuevo grupo</div>
-      <div id="moGrupoAlert"></div>
-      <div class="fg">
-        <label class="fl">Campaña</label>
-        <select id="grupoCampania" onchange="onGrupoCampaniaChange()"></select>
-      </div>
-      <div class="fg">
-        <label class="fl">Personal</label>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Toca para agregar o quitar. Puede ir 1 o varios.</div>
-        <div id="grupoPersonal" style="max-height:220px;overflow-y:auto;border:1px solid var(--gray200);border-radius:var(--r);padding:8px"></div>
-      </div>
-      <div class="fg" id="grupoVehiculoWrap">
-        <label class="fl">Vehículo (opcional)</label>
-        <select id="grupoVehiculo"></select>
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moGrupo')">Cancelar</button>
-        <button class="btn btn-d btn-sm" id="grupoBtnEliminar" onclick="eliminarGrupoUI()" style="display:none">Quitar grupo</button>
-        <button class="btn btn-p" onclick="guardarGrupoUI()">Guardar grupo</button>
       </div>
     </div>
   </div>
@@ -3596,35 +3572,78 @@ async function persistProg(){
 async function renderArmar(){
   const cont=$('progArmarBody');
   if(!cont) return;
-  // Empleados y su disponibilidad
+
   const users=await getUsers();
   const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  // Ausencias automáticas del día (vacaciones/incap/permiso aprobados)
   const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
 
-  // Set de asignados
-  const asignados=new Set();
-  progGrupos.forEach(g=>(g.empleados||[]).forEach(uid=>asignados.add(uid)));
+  // Conjunto de asignados (personas y vehículos ya en algún grupo)
+  const persAsignadas=new Set();
+  const vehAsignados=new Set();
+  progGrupos.forEach(g=>{
+    (g.empleados||[]).forEach(uid=>persAsignadas.add(uid));
+    if(g.vehiculo) vehAsignados.add(g.vehiculo);
+  });
+
+  // Disponibles
+  const persLibres=empleados
+    .filter(u=>!persAsignadas.has(u.id)&&!ausentesAuto.includes(u.id)&&!progNoDisp.personal.includes(u.id))
+    .sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const vehLibres=progVehiculos
+    .filter(v=>v.estado==='disponible'&&!vehAsignados.has(v.id))
+    .sort((a,b)=>a.nombre.localeCompare(b.nombre));
 
   const conflictos=detectarConflictos(progGrupos, progVehiculos);
 
-  const campoGrupos=progGrupos.filter(g=>g.area==='campo');
-  const plantelGrupos=progGrupos.filter(g=>g.area==='plantel');
+  // Chip de persona (arrastrable + tocable)
+  const chipPers=u=>`<span class="tbl-chip tbl-chip-pers ${progSel&&progSel.tipo==='pers'&&progSel.id===u.id?'sel':''}"
+      draggable="true"
+      ondragstart="progDragStart(event,'pers','${u.id}')"
+      onclick="progTapChip('pers','${u.id}','${(u.nombre||'').replace(/'/g,"\\'")}')">${u.nombre}</span>`;
+  const chipVeh=v=>`<span class="tbl-chip tbl-chip-veh ${progSel&&progSel.tipo==='veh'&&progSel.id===v.id?'sel':''}"
+      draggable="true"
+      ondragstart="progDragStart(event,'veh','${v.id}')"
+      onclick="progTapChip('veh','${v.id}','${(v.nombre||'').replace(/'/g,"\\'")}')">${v.nombre}</span>`;
 
-  const tarjetaGrupo=(g)=>{
+  // Caja de un grupo
+  const cajaGrupo=(g)=>{
     const idx=progGrupos.indexOf(g);
     const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
-    return `<div class="prog-card" onclick="openGrupo(${idx})">
-      <div class="prog-card-hd">
-        <span class="prog-card-camp">${g.campania||'(sin campaña)'}</span>
-        ${veh?`<span class="prog-card-veh">${veh.nombre}</span>`:'<span class="prog-card-veh prog-sinveh">Sin vehículo</span>'}
+    const personas=(g.empleados||[]).map((uid,k)=>{
+      const nom=(g.empleadosNombres||[])[k]||'';
+      return `<span class="tbl-asig tbl-asig-pers" onclick="progQuitarPersona(${idx},'${uid}')">${nom} <span class="tbl-x">×</span></span>`;
+    }).join('');
+    const vehChip = veh
+      ? `<span class="tbl-asig tbl-asig-veh" onclick="progQuitarVehiculo(${idx})">${veh.nombre} <span class="tbl-x">×</span></span>`
+      : (g.area==='campo'?'<span class="tbl-veh-hint">Sin vehículo</span>':'');
+    return `<div class="tbl-grupo" ondragover="progDragOver(event)" ondrop="progDrop(event,${idx})" onclick="progTapCaja(${idx})">
+      <div class="tbl-grupo-top">
+        <span class="tbl-grupo-num">Grupo ${(g.__n||0)}</span>
+        <span class="tbl-grupo-del" onclick="event.stopPropagation();progEliminarGrupo(${idx})">Quitar</span>
       </div>
-      <div class="prog-card-personas">${(g.empleadosNombres||[]).join(' · ')||'<span style="color:var(--text2)">Sin personal</span>'}</div>
+      <div class="tbl-grupo-personas">${personas||'<span class="tbl-drop-hint">Arrastra o toca personal aquí</span>'}</div>
+      ${g.area==='campo'?`<div class="tbl-grupo-veh">${vehChip}</div>`:''}
     </div>`;
   };
 
-  // Disponibles por asignar (no asignados, no ausentes auto, no marcados no-disp)
-  const disponibles=empleados.filter(u=>!asignados.has(u.id)&&!ausentesAuto.includes(u.id)&&!progNoDisp.personal.includes(u.id));
+  // Numerar grupos dentro de cada campaña (para etiqueta "Grupo N")
+  const numerar=(gs)=>{ const porCamp={}; gs.forEach(g=>{ porCamp[g.campania]=(porCamp[g.campania]||0)+1; g.__n=porCamp[g.campania]; }); };
+
+  // Render de campañas de un área
+  const bloqueArea=(area)=>{
+    const camps=progCampanias.filter(c=>c.activa!==false&&c.area===area).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+    return camps.map(c=>{
+      const gs=progGrupos.filter(g=>g.campania===c.nombre&&g.area===area);
+      numerar(gs);
+      return `<div class="tbl-camp">
+        <div class="tbl-camp-hd">
+          <span class="tbl-camp-nom">${c.nombre}</span>
+          <button class="tbl-camp-add" onclick="progAgregarGrupo('${c.nombre.replace(/'/g,"\\'")}','${area}')">+ grupo</button>
+        </div>
+        ${gs.length?gs.map(cajaGrupo).join(''):'<div class="tbl-camp-vacio">Sin grupos. Toca "+ grupo".</div>'}
+      </div>`;
+    }).join('');
+  };
 
   cont.innerHTML=`
     <div class="page-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
@@ -3635,141 +3654,106 @@ async function renderArmar(){
       </div>
     </div>
 
+    ${progSel?`<div class="tbl-selaviso">Tocando: <b>${progSel.nombre}</b> — ahora toca un grupo para asignarlo. <span onclick="progCancelSel()" style="text-decoration:underline;cursor:pointer">cancelar</span></div>`:''}
+
     ${conflictos.length?`<div class="prog-avisos">
       <div style="font-weight:700;font-size:12px;margin-bottom:4px">Avisos</div>
       ${conflictos.map(a=>`<div class="prog-aviso">${a}</div>`).join('')}
     </div>`:''}
 
-    <div class="prog-seccion">
-      <div class="prog-seccion-hd"><span class="prog-badge-campo">Campo</span> <button class="btn btn-g btn-sm" onclick="openGrupo(null,'campo')">+ Grupo</button></div>
-      ${campoGrupos.length?campoGrupos.map(tarjetaGrupo).join(''):'<div class="prog-vacio">Sin grupos de campo aún.</div>'}
+    <div class="tbl-bolsas">
+      <div class="tbl-bolsa">
+        <div class="tbl-bolsa-hd">Personal libre (${persLibres.length})</div>
+        <div class="tbl-bolsa-chips">${persLibres.map(chipPers).join('')||'<span class="tbl-bolsa-vacio">Todos asignados</span>'}</div>
+      </div>
+      <div class="tbl-bolsa">
+        <div class="tbl-bolsa-hd">Vehículos libres (${vehLibres.length})</div>
+        <div class="tbl-bolsa-chips">${vehLibres.map(chipVeh).join('')||'<span class="tbl-bolsa-vacio">Ninguno libre</span>'}</div>
+      </div>
     </div>
 
-    <div class="prog-seccion">
-      <div class="prog-seccion-hd"><span class="prog-badge-plantel">Plantel</span> <button class="btn btn-g btn-sm" onclick="openGrupo(null,'plantel')">+ Grupo</button></div>
-      ${plantelGrupos.length?plantelGrupos.map(tarjetaGrupo).join(''):'<div class="prog-vacio">Sin grupos de plantel aún.</div>'}
+    <div class="tbl-seccion">
+      <div class="tbl-seccion-hd"><span class="prog-badge-campo">Campo</span></div>
+      ${bloqueArea('campo')||'<div class="prog-vacio">No hay campañas de campo.</div>'}
+    </div>
+    <div class="tbl-seccion">
+      <div class="tbl-seccion-hd"><span class="prog-badge-plantel">Plantel</span></div>
+      ${bloqueArea('plantel')||'<div class="prog-vacio">No hay campañas de plantel.</div>'}
     </div>
 
-    <div class="card" style="margin-top:14px">
-      <div class="card-title">Por asignar (${disponibles.length})</div>
-      ${disponibles.length?`<div class="prog-chips">${disponibles.map(u=>`<span class="prog-chip">${u.nombre}</span>`).join('')}</div>`:'<div style="font-size:13px;color:var(--text2)">Todos asignados o no disponibles.</div>'}
-      ${ausentesAuto.length?`<div style="font-size:12px;color:var(--text2);margin-top:10px">No disponibles hoy (vacaciones/permiso/incapacidad): ${ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?u.nombre:'';}).filter(Boolean).join(', ')}</div>`:''}
-    </div>
+    ${ausentesAuto.length?`<div class="card" style="margin-top:6px"><div style="font-size:12px;color:var(--text2)">No disponibles hoy (vacaciones/permiso/incapacidad): ${ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?u.nombre:'';}).filter(Boolean).join(', ')}</div></div>`:''}
   `;
 }
 
-// Empleados con vacaciones/incap/permiso aprobado en esa fecha
-async function empleadosAusentesFecha(fecha, empleados){
-  const ausentes=[];
-  await Promise.all(empleados.map(async u=>{
-    const snap=await get(ref(db,`registros/${u.id}`));
-    if(!snap.exists()) return;
-    const hay=Object.values(snap.val()).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
-    if(hay) ausentes.push(u.id);
-  }));
-  return ausentes;
-}
+// ── Estado de selección (para modo tocar) ──
+let progSel=null; // {tipo:'pers'|'veh', id, nombre}
 
-// ── MODAL DE GRUPO ──
-window.openGrupo=async(idx, areaPre)=>{
-  progEditIdx = (idx===null||idx===undefined)?null:idx;
-  const g = progEditIdx!==null ? progGrupos[progEditIdx] : {campania:'',area:areaPre||'campo',empleados:[],empleadosNombres:[],vehiculo:'',vehiculoNombre:''};
-  progGrupoSel={empleados:[...(g.empleados||[])]};
-  $('moGrupoTitle').textContent = progEditIdx!==null?'Editar grupo':'Nuevo grupo';
-  $('moGrupoAlert').innerHTML='';
-  $('grupoBtnEliminar').style.display = progEditIdx!==null?'':'none';
+window.progTapChip=(tipo,id,nombre)=>{
+  if(progSel&&progSel.tipo===tipo&&progSel.id===id){ progSel=null; }
+  else { progSel={tipo,id,nombre}; }
+  renderArmar();
+};
+window.progCancelSel=()=>{ progSel=null; renderArmar(); };
 
-  // Campañas del área correspondiente (o todas si es edición)
-  const areaObjetivo=g.area||areaPre||'campo';
-  const opts=progCampanias.filter(c=>c.activa!==false && c.area===areaObjetivo)
-    .map(c=>`<option value="${c.nombre}" ${c.nombre===g.campania?'selected':''}>${c.nombre}</option>`).join('');
-  $('grupoCampania').innerHTML=opts||'<option value="">(sin campañas de esta área)</option>';
-  if(g.campania) $('grupoCampania').value=g.campania;
-  $('grupoCampania').dataset.area=areaObjetivo;
+window.progTapCaja=(idx)=>{
+  if(!progSel) return; // sin selección, tocar la caja no hace nada
+  asignarAGrupo(idx, progSel.tipo, progSel.id);
+  progSel=null;
+};
 
-  // Personal disponible para elegir: no asignados en OTROS grupos, no ausentes, no no-disp
-  const users=await getUsers();
-  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
-  const asignadosOtros=new Set();
-  progGrupos.forEach((gr,i)=>{ if(i!==progEditIdx)(gr.empleados||[]).forEach(uid=>asignadosOtros.add(uid)); });
+// ── Drag & drop ──
+let progDrag=null;
+window.progDragStart=(ev,tipo,id)=>{ progDrag={tipo,id}; try{ev.dataTransfer.setData('text/plain',id);ev.dataTransfer.effectAllowed='move';}catch(e){} };
+window.progDragOver=(ev)=>{ ev.preventDefault(); };
+window.progDrop=(ev,idx)=>{
+  ev.preventDefault();
+  if(!progDrag) return;
+  asignarAGrupo(idx, progDrag.tipo, progDrag.id);
+  progDrag=null;
+};
 
-  const elegibles=empleados.filter(u=>!ausentesAuto.includes(u.id)&&!progNoDisp.personal.includes(u.id)&&!asignadosOtros.has(u.id));
-  elegibles.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  renderGrupoPersonal(elegibles);
-
-  // Vehículos (solo para campo; plantel oculta el selector)
-  const wrap=$('grupoVehiculoWrap');
-  if(areaObjetivo==='plantel'){ wrap.style.display='none'; }
-  else {
-    wrap.style.display='';
-    const vehDisp=progVehiculos.filter(v=>v.estado==='disponible'||v.id===g.vehiculo);
-    $('grupoVehiculo').innerHTML='<option value="">Sin vehículo</option>'+vehDisp.map(v=>`<option value="${v.id}" ${v.id===g.vehiculo?'selected':''}>${v.nombre}${v.estado!=='disponible'?' ('+(ESTADOS_VEHICULO[v.estado]?.texto||v.estado)+')':''}</option>`).join('');
+// ── Asignar persona o vehículo a un grupo ──
+async function asignarAGrupo(idx, tipo, id){
+  const g=progGrupos[idx];
+  if(!g) return;
+  if(tipo==='pers'){
+    if(!(g.empleados||[]).includes(id)){
+      const users=await getUsers();
+      const u=users.find(x=>x.id===id);
+      g.empleados=g.empleados||[]; g.empleadosNombres=g.empleadosNombres||[];
+      g.empleados.push(id); g.empleadosNombres.push(u?u.nombre:'');
+    }
+  } else if(tipo==='veh'){
+    if(g.area==='plantel'){ /* plantel no lleva vehículo */ }
+    else {
+      const veh=progVehiculos.find(v=>v.id===id);
+      g.vehiculo=id; g.vehiculoNombre=veh?veh.nombre:'';
+    }
   }
-
-  $('moGrupo').classList.add('open');
-};
-
-function renderGrupoPersonal(elegibles){
-  const cont=$('grupoPersonal');
-  cont.innerHTML=elegibles.map(u=>{
-    const sel=progGrupoSel.empleados.includes(u.id);
-    return `<div class="grupo-persona ${sel?'sel':''}" onclick="toggleGrupoPersona('${u.id}','${(u.nombre||'').replace(/'/g,"\\'")}')">
-      <span>${u.nombre}</span>${sel?'<span class="grupo-check">✓</span>':''}
-    </div>`;
-  }).join('')||'<div style="font-size:12px;color:var(--text2)">No hay personal disponible para asignar.</div>';
-}
-
-window.toggleGrupoPersona=(uid,nombre)=>{
-  const i=progGrupoSel.empleados.indexOf(uid);
-  if(i>=0) progGrupoSel.empleados.splice(i,1);
-  else progGrupoSel.empleados.push(uid);
-  // Re-render manteniendo la lista actual
-  openGrupoReRenderPersonal();
-};
-
-// Re-render ligero de la lista de personal sin recargar todo el modal
-async function openGrupoReRenderPersonal(){
-  const users=await getUsers();
-  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
-  const asignadosOtros=new Set();
-  progGrupos.forEach((gr,i)=>{ if(i!==progEditIdx)(gr.empleados||[]).forEach(uid=>asignadosOtros.add(uid)); });
-  const elegibles=empleados.filter(u=>!ausentesAuto.includes(u.id)&&!progNoDisp.personal.includes(u.id)&&!asignadosOtros.has(u.id));
-  elegibles.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  renderGrupoPersonal(elegibles);
-}
-
-window.onGrupoCampaniaChange=()=>{}; // reservado (por si luego filtramos vehículos por campaña)
-
-window.guardarGrupoUI=async()=>{
-  const campania=$('grupoCampania').value;
-  const area=$('grupoCampania').dataset.area||'campo';
-  if(!campania){ $('moGrupoAlert').innerHTML='<div class="alert ae" style="font-size:12px">Selecciona una campaña.</div>'; return; }
-  if(!progGrupoSel.empleados.length){ $('moGrupoAlert').innerHTML='<div class="alert ae" style="font-size:12px">Selecciona al menos una persona.</div>'; return; }
-
-  // Nombres del personal
-  const users=await getUsers();
-  const nombres=progGrupoSel.empleados.map(uid=>{const u=users.find(x=>x.id===uid);return u?u.nombre:'';});
-  const vehiculo = area==='plantel' ? '' : ($('grupoVehiculo').value||'');
-  const vehiculoNombre = vehiculo ? (progVehiculos.find(v=>v.id===vehiculo)?.nombre||'') : '';
-
-  const grupo={campania,area,empleados:[...progGrupoSel.empleados],empleadosNombres:nombres,vehiculo,vehiculoNombre};
-  if(progEditIdx!==null) progGrupos[progEditIdx]=grupo;
-  else progGrupos.push(grupo);
-
   await persistProg();
-  closeModal('moGrupo');
   renderArmar();
+}
+
+window.progQuitarPersona=async(idx,uid)=>{
+  const g=progGrupos[idx]; if(!g) return;
+  const k=(g.empleados||[]).indexOf(uid);
+  if(k>=0){ g.empleados.splice(k,1); (g.empleadosNombres||[]).splice(k,1); }
+  await persistProg(); renderArmar();
+};
+window.progQuitarVehiculo=async(idx)=>{
+  const g=progGrupos[idx]; if(!g) return;
+  g.vehiculo=''; g.vehiculoNombre='';
+  await persistProg(); renderArmar();
 };
 
-window.eliminarGrupoUI=async()=>{
-  if(progEditIdx===null) return;
+window.progAgregarGrupo=async(campania,area)=>{
+  progGrupos.push({campania,area,empleados:[],empleadosNombres:[],vehiculo:'',vehiculoNombre:''});
+  await persistProg(); renderArmar();
+};
+window.progEliminarGrupo=async(idx)=>{
   if(!confirm('¿Quitar este grupo?')) return;
-  progGrupos.splice(progEditIdx,1);
-  await persistProg();
-  closeModal('moGrupo');
-  renderArmar();
+  progGrupos.splice(idx,1);
+  await persistProg(); renderArmar();
 };
 
 // ── CATÁLOGOS UI ──
