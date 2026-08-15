@@ -3517,6 +3517,8 @@ let progGrupos=[];       // grupos de la fecha en edición
 let progNoDisp={personal:[],vehiculos:[]}; // no disponibles marcados a mano
 let progEditIdx=null;    // índice de grupo en edición
 let progGrupoSel={empleados:[]}; // selección temporal en el modal de grupo
+let progSel=null;        // selección activa en modo tocar {tipo,id,nombre}
+let progDrag=null;       // arrastre activo {tipo,id}
 
 async function initProgramacion(){
   progSub('armar');
@@ -3685,8 +3687,7 @@ async function renderArmar(){
   `;
 }
 
-// ── Estado de selección (para modo tocar) ──
-let progSel=null; // {tipo:'pers'|'veh', id, nombre}
+// ── Estado de selección (para modo tocar) ── (progSel declarado arriba con las demás variables)
 
 window.progTapChip=(tipo,id,nombre)=>{
   if(progSel&&progSel.tipo===tipo&&progSel.id===id){ progSel=null; }
@@ -3701,8 +3702,7 @@ window.progTapCaja=(idx)=>{
   progSel=null;
 };
 
-// ── Drag & drop ──
-let progDrag=null;
+// ── Drag & drop ── (progDrag declarado arriba con las demás variables)
 window.progDragStart=(ev,tipo,id)=>{ progDrag={tipo,id}; try{ev.dataTransfer.setData('text/plain',id);ev.dataTransfer.effectAllowed='move';}catch(e){} };
 window.progDragOver=(ev)=>{ ev.preventDefault(); };
 window.progDrop=(ev,idx)=>{
