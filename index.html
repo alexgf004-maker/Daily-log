@@ -14,7 +14,7 @@
 <title>Registro de Planilla — INNOVA</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script>
-// ── PWA SETUP  ──────────────────────────────────────────
+// ── PWA SETUP ──────────────────────────────────────────
 (function(){
   // SVG icon — documento con barra verde y letra I
   const iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=11">
+<link rel="stylesheet" href="css/styles.css?v=12">
 </head>
 <body>
 
@@ -180,7 +180,7 @@ import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, ca
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
-import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
+import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED, ZONAS } from "./js/programacion.js";
 
 const cfg = {
   apiKey:"AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
@@ -3648,7 +3648,13 @@ async function renderArmar(){
     return `<div class="tbl-grupo" ondragover="progDragOver(event)" ondrop="progDrop(event,${idx})" onclick="progTapCaja(${idx})">
       <div class="tbl-grupo-top">
         <span class="tbl-grupo-num">Grupo ${(g.__n||0)}</span>
-        <span class="tbl-grupo-del" onclick="event.stopPropagation();progEliminarGrupo(${idx})">Quitar</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select class="tbl-zona-sel" onclick="event.stopPropagation()" onchange="progSetZona(${idx},this.value)">
+            <option value="">Zona…</option>
+            ${ZONAS.map(z=>`<option value="${z.codigo}" ${g.zona===z.codigo?'selected':''}>${z.codigo} · ${z.nombre}</option>`).join('')}
+          </select>
+          <span class="tbl-grupo-del" onclick="event.stopPropagation();progEliminarGrupo(${idx})">Quitar</span>
+        </div>
       </div>
       <div class="tbl-grupo-personas">${personas||'<span class="tbl-drop-hint">Arrastra o toca personal aquí</span>'}</div>
       ${g.area==='campo'?`<div class="tbl-grupo-veh">${vehChip}</div>`:''}
@@ -3787,6 +3793,13 @@ window.progQuitarVehiculo=async(idx)=>{
   await persistProg(); renderArmar();
 };
 
+window.progSetZona=async(idx,zona)=>{
+  const g=progGrupos[idx]; if(!g) return;
+  g.zona=zona||'';
+  await persistProg();
+  // No hace falta re-render completo; el select ya muestra el valor
+};
+
 window.progAgregarGrupo=async(campania,area)=>{
   progGrupos.push({campania,area,empleados:[],empleadosNombres:[],vehiculo:'',vehiculoNombre:''});
   await persistProg(); renderArmar();
@@ -3826,8 +3839,8 @@ window.progGenerarImagen=async()=>{
   const headH=170;      // encabezado
   const seccH=58;       // título de sección
   let alto=headH;
-  if(campo.length){ alto+=seccH+campo.length*lineH+16; }
-  if(plantel.length){ alto+=seccH+plantel.length*lineH+16; }
+  if(campo.length){ alto+=seccH+campo.length*lineH+40; }
+  if(plantel.length){ alto+=seccH+plantel.length*lineH+40; }
   const totalAusentes=ausentes.vacaciones.length+ausentes.incapacidad.length+ausentes.permiso.length;
   if(totalAusentes){ alto+=seccH; if(ausentes.vacaciones.length)alto+=44; if(ausentes.incapacidad.length)alto+=44; if(ausentes.permiso.length)alto+=44; alto+=16; }
   alto+=pad;
@@ -3866,15 +3879,13 @@ window.progGenerarImagen=async()=>{
     y+=seccH;
   };
 
-  const dibujarGrupo=(g)=>{
-    // Actividad (izquierda, negrita)
-    ctx.fillStyle=texto;
-    ctx.font='700 21px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(g.campania, pad, y);
-    // Personal (debajo o al lado)
+  // Dibuja una fila de grupo: personal + vehículo + (opcional) prefijo de zona
+  const dibujarFilaGrupo=(g, conZonaPrefijo)=>{
+    // Personal, con prefijo de zona si aplica
     ctx.fillStyle=gris;
     ctx.font='500 19px "Plus Jakarta Sans", sans-serif';
-    const personas=(g.empleadosNombres||[]).join(' · ');
+    let personas=(g.empleadosNombres||[]).join(' · ');
+    if(conZonaPrefijo && g.zona) personas=g.zona+'  ·  '+personas;
     ctx.fillText(personas, pad+22, y+26);
     // Vehículo (derecha)
     if(g.vehiculo){
@@ -3883,21 +3894,54 @@ window.progGenerarImagen=async()=>{
         ctx.fillStyle=azulClaro;
         ctx.font='700 19px "Plus Jakarta Sans", sans-serif';
         ctx.textAlign='right';
-        ctx.fillText(veh.nombre, W-pad, y);
+        ctx.fillText(veh.nombre, W-pad, y+26);
         ctx.textAlign='left';
       }
     }
-    y+=lineH;
+    y+=44;
+  };
+
+  // Dibuja todos los grupos de un área, agrupando por campaña
+  const dibujarArea=(grupos)=>{
+    // Agrupar por nombre de campaña, preservando orden de aparición
+    const orden=[]; const porCamp={};
+    grupos.forEach(g=>{ if(!porCamp[g.campania]){porCamp[g.campania]=[];orden.push(g.campania);} porCamp[g.campania].push(g); });
+    orden.forEach(nombre=>{
+      const gs=porCamp[nombre];
+      // Título de la campaña
+      ctx.fillStyle=texto;
+      ctx.font='700 21px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(nombre, pad, y);
+      if(gs.length===1){
+        // Un solo grupo: si tiene vehículo, va a la derecha del título
+        const g=gs[0];
+        if(g.vehiculo){
+          const veh=progVehiculos.find(v=>v.id===g.vehiculo);
+          if(veh){ ctx.fillStyle=azulClaro; ctx.font='700 19px "Plus Jakarta Sans", sans-serif'; ctx.textAlign='right'; ctx.fillText(veh.nombre, W-pad, y); ctx.textAlign='left'; }
+        }
+        // Personal debajo (con zona si tiene)
+        ctx.fillStyle=gris; ctx.font='500 19px "Plus Jakarta Sans", sans-serif';
+        let personas=(g.empleadosNombres||[]).join(' · ');
+        if(g.zona) personas=g.zona+'  ·  '+personas;
+        ctx.fillText(personas, pad+22, y+26);
+        y+=lineH;
+      } else {
+        // Varios grupos bajo el mismo título: cada uno en su fila con zona
+        y+=28;
+        gs.forEach(g=>dibujarFilaGrupo(g, true));
+        y+=8;
+      }
+    });
   };
 
   if(campo.length){
     dibujarSeccion('CAMPO', azulClaro);
-    campo.forEach(dibujarGrupo);
+    dibujarArea(campo);
     y+=16;
   }
   if(plantel.length){
     dibujarSeccion('PLANTEL', '#d97706');
-    plantel.forEach(dibujarGrupo);
+    dibujarArea(plantel);
     y+=16;
   }
 
