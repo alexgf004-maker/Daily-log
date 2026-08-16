@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=12">
+<link rel="stylesheet" href="css/styles.css?v=13">
 </head>
 <body>
 
@@ -180,7 +180,7 @@ import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, ca
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
-import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED, ZONAS } from "./js/programacion.js";
+import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
 
 const cfg = {
   apiKey:"AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE",
@@ -3618,9 +3618,13 @@ async function renderArmar(){
   const persLibres=empleados
     .filter(u=>!persAsignadas.has(u.id)&&!ausentesAuto.includes(u.id)&&!progNoDisp.personal.includes(u.id))
     .sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  const vehLibres=progVehiculos
-    .filter(v=>v.estado==='disponible'&&!vehAsignados.has(v.id))
-    .sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  // Vehículos: separar carros/motos; disponibles seleccionables, no-disponibles solo visibles (rojo)
+  const vehNoAsignados=progVehiculos.filter(v=>!vehAsignados.has(v.id));
+  const carrosDisp=vehNoAsignados.filter(v=>v.tipo==='carro'&&v.estado==='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const motosDisp=vehNoAsignados.filter(v=>v.tipo==='moto'&&v.estado==='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const carrosNo=vehNoAsignados.filter(v=>v.tipo==='carro'&&v.estado!=='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const motosNo=vehNoAsignados.filter(v=>v.tipo==='moto'&&v.estado!=='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const totalVehDisp=carrosDisp.length+motosDisp.length;
 
   const conflictos=detectarConflictos(progGrupos, progVehiculos);
 
@@ -3629,10 +3633,16 @@ async function renderArmar(){
       draggable="true"
       ondragstart="progDragStart(event,'pers','${u.id}')"
       onclick="progTapChip('pers','${u.id}','${(nombreMostrar(u)||'').replace(/'/g,"\\'")}')">${nombreMostrar(u)}</span>`;
+  // Chip de vehículo disponible (seleccionable)
   const chipVeh=v=>`<span class="tbl-chip tbl-chip-veh ${progSel&&progSel.tipo==='veh'&&progSel.id===v.id?'sel':''}"
       draggable="true"
       ondragstart="progDragStart(event,'veh','${v.id}')"
       onclick="progTapChip('veh','${v.id}','${(v.nombre||'').replace(/'/g,"\\'")}')">${v.nombre}</span>`;
+  // Chip de vehículo NO disponible (rojo, no seleccionable, solo informativo)
+  const chipVehNo=v=>{
+    const est=ESTADOS_VEHICULO[v.estado]?.texto||v.estado;
+    return `<span class="tbl-chip tbl-chip-vehno" title="${est}">${v.nombre} · ${est}</span>`;
+  };
 
   // Caja de un grupo
   const cajaGrupo=(g)=>{
@@ -3649,10 +3659,7 @@ async function renderArmar(){
       <div class="tbl-grupo-top">
         <span class="tbl-grupo-num">Grupo ${(g.__n||0)}</span>
         <div style="display:flex;align-items:center;gap:8px">
-          <select class="tbl-zona-sel" onclick="event.stopPropagation()" onchange="progSetZona(${idx},this.value)">
-            <option value="">Zona…</option>
-            ${ZONAS.map(z=>`<option value="${z.codigo}" ${g.zona===z.codigo?'selected':''}>${z.codigo} · ${z.nombre}</option>`).join('')}
-          </select>
+          ${g.area==='campo'?`<input type="text" class="tbl-zona-inp" placeholder="Zona / detalle" value="${(g.zona||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()" onchange="progSetZona(${idx},this.value)">`:''}
           <span class="tbl-grupo-del" onclick="event.stopPropagation();progEliminarGrupo(${idx})">Quitar</span>
         </div>
       </div>
@@ -3716,8 +3723,13 @@ async function renderArmar(){
         <div class="tbl-bolsa-chips">${persLibres.map(chipPers).join('')||'<span class="tbl-bolsa-vacio">Todos asignados</span>'}</div>
       </div>
       <div class="tbl-bolsa">
-        <div class="tbl-bolsa-hd">Vehículos libres (${vehLibres.length})</div>
-        <div class="tbl-bolsa-chips">${vehLibres.map(chipVeh).join('')||'<span class="tbl-bolsa-vacio">Ninguno libre</span>'}</div>
+        <div class="tbl-bolsa-hd">Vehículos libres (${totalVehDisp})</div>
+        <div class="tbl-bolsa-chips-veh">
+          <div class="tbl-veh-sub">Pick-ups</div>
+          <div class="tbl-bolsa-chips">${carrosDisp.map(chipVeh).join('')||'<span class="tbl-bolsa-vacio">Ninguno libre</span>'}${carrosNo.map(chipVehNo).join('')}</div>
+          <div class="tbl-veh-sub">Motos</div>
+          <div class="tbl-bolsa-chips">${motosDisp.map(chipVeh).join('')||'<span class="tbl-bolsa-vacio">Ninguna libre</span>'}${motosNo.map(chipVehNo).join('')}</div>
+        </div>
       </div>
     </div>
 
@@ -3774,6 +3786,7 @@ async function asignarAGrupo(idx, tipo, id){
     if(g.area==='plantel'){ /* plantel no lleva vehículo */ }
     else {
       const veh=progVehiculos.find(v=>v.id===id);
+      if(veh && veh.estado!=='disponible'){ return; } // no asignar vehículos en mantenimiento/prestado/baja
       g.vehiculo=id; g.vehiculoNombre=veh?veh.nombre:'';
     }
   }
