@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=10">
+<link rel="stylesheet" href="css/styles.css?v=11">
 </head>
 <body>
 
@@ -672,6 +672,8 @@ function modalsHTML(){
       <div class="modal-title" id="moUsrTitle">Nuevo empleado</div>
       <div id="moUsrAlert"></div>
       <div class="fg"><label class="fl">Nombre completo</label><input type="text" id="uNom" placeholder="Juan Pérez"></div>
+      <div class="fg"><label class="fl">Nombre corto (opcional)</label><input type="text" id="uNomCorto" placeholder="Juan Pérez" autocomplete="off"><div style="font-size:11px;color:var(--text2);margin-top:4px">Se usa en la programación para ahorrar espacio. Si lo dejas vacío, se usa el nombre completo.</div></div>
+      <div class="fg"><label class="fl">Cargo / puesto</label><input type="text" id="uCargo" placeholder="Técnico en medidores" autocomplete="off"></div>
       <div class="fg"><label class="fl">Usuario de acceso</label><input type="text" id="uUsr" placeholder="juan.perez" autocomplete="off"></div>
       <div class="fg">
         <label class="fl">PIN (4–8 dígitos)</label>
@@ -835,6 +837,13 @@ function modalsHTML(){
           <option value="campo">Campo</option>
           <option value="plantel">Plantel</option>
         </select>
+      </div>
+      <div class="fg">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px">
+          <input type="checkbox" id="campFrecuente" style="width:auto;margin:0">
+          Mostrar siempre en el tablero (frecuente)
+        </label>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Las que no marques quedan bajo "Ver más".</div>
       </div>
       <div class="modal-acts">
         <button class="btn btn-gh" onclick="closeModal('moCampania')">Cancelar</button>
@@ -3519,6 +3528,12 @@ let progEditIdx=null;    // índice de grupo en edición
 let progGrupoSel={empleados:[]}; // selección temporal en el modal de grupo
 let progSel=null;        // selección activa en modo tocar {tipo,id,nombre}
 let progDrag=null;       // arrastre activo {tipo,id}
+let progVerMas={campo:false,plantel:false}; // "ver más" campañas por área
+
+window.progToggleVerMas=(area)=>{ progVerMas[area]=!progVerMas[area]; renderArmar(); };
+
+// Nombre a mostrar en programación: usa nombreCorto si existe, si no el completo
+function nombreMostrar(u){ return (u&&u.nombreCorto&&u.nombreCorto.trim())?u.nombreCorto.trim():(u?u.nombre:''); }
 
 async function initProgramacion(){
   progSub('armar');
@@ -3613,7 +3628,7 @@ async function renderArmar(){
   const chipPers=u=>`<span class="tbl-chip tbl-chip-pers ${progSel&&progSel.tipo==='pers'&&progSel.id===u.id?'sel':''}"
       draggable="true"
       ondragstart="progDragStart(event,'pers','${u.id}')"
-      onclick="progTapChip('pers','${u.id}','${(u.nombre||'').replace(/'/g,"\\'")}')">${u.nombre}</span>`;
+      onclick="progTapChip('pers','${u.id}','${(nombreMostrar(u)||'').replace(/'/g,"\\'")}')">${nombreMostrar(u)}</span>`;
   const chipVeh=v=>`<span class="tbl-chip tbl-chip-veh ${progSel&&progSel.tipo==='veh'&&progSel.id===v.id?'sel':''}"
       draggable="true"
       ondragstart="progDragStart(event,'veh','${v.id}')"
@@ -3645,8 +3660,14 @@ async function renderArmar(){
 
   // Render de campañas de un área
   const bloqueArea=(area)=>{
-    const camps=progCampanias.filter(c=>c.activa!==false&&c.area===area).sort((a,b)=>a.nombre.localeCompare(b.nombre));
-    return camps.map(c=>{
+    const todas=progCampanias.filter(c=>c.activa!==false&&c.area===area).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+    // Campañas con grupos ya asignados este día (siempre visibles aunque no sean frecuentes)
+    const conGrupos=new Set(progGrupos.filter(g=>g.area===area).map(g=>g.campania));
+    const visibles=todas.filter(c=>c.frecuente!==false || conGrupos.has(c.nombre));
+    const ocultas=todas.filter(c=>c.frecuente===false && !conGrupos.has(c.nombre));
+    const abierto=progVerMas[area];
+
+    const render=(c)=>{
       const gs=progGrupos.filter(g=>g.campania===c.nombre&&g.area===area);
       numerar(gs);
       return `<div class="tbl-camp">
@@ -3656,7 +3677,14 @@ async function renderArmar(){
         </div>
         ${gs.length?gs.map(cajaGrupo).join(''):'<div class="tbl-camp-vacio">Sin grupos. Toca "+ grupo".</div>'}
       </div>`;
-    }).join('');
+    };
+
+    let html=visibles.map(render).join('');
+    if(abierto) html+=ocultas.map(render).join('');
+    if(ocultas.length){
+      html+=`<button class="tbl-vermas" onclick="progToggleVerMas('${area}')">${abierto?'Ver menos':`Ver más (${ocultas.length})`}</button>`;
+    }
+    return html;
   };
 
   cont.innerHTML=`
@@ -3696,7 +3724,7 @@ async function renderArmar(){
       ${bloqueArea('plantel')||'<div class="prog-vacio">No hay campañas de plantel.</div>'}
     </div>
 
-    ${ausentesAuto.length?`<div class="card" style="margin-top:6px"><div style="font-size:12px;color:var(--text2)">No disponibles hoy (vacaciones/permiso/incapacidad): ${ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?u.nombre:'';}).filter(Boolean).join(', ')}</div></div>`:''}
+    ${ausentesAuto.length?`<div class="card" style="margin-top:6px"><div style="font-size:12px;color:var(--text2)">No disponibles hoy (vacaciones/permiso/incapacidad): ${ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?nombreMostrar(u):'';}).filter(Boolean).join(', ')}</div></div>`:''}
   `;
 }
 
@@ -3734,7 +3762,7 @@ async function asignarAGrupo(idx, tipo, id){
       const users=await getUsers();
       const u=users.find(x=>x.id===id);
       g.empleados=g.empleados||[]; g.empleadosNombres=g.empleadosNombres||[];
-      g.empleados.push(id); g.empleadosNombres.push(u?u.nombre:'');
+      g.empleados.push(id); g.empleadosNombres.push(nombreMostrar(u));
     }
   } else if(tipo==='veh'){
     if(g.area==='plantel'){ /* plantel no lleva vehículo */ }
@@ -3781,7 +3809,7 @@ window.progGenerarImagen=async()=>{
     const snap=await get(ref(db,`registros/${u.id}`));
     if(!snap.exists()) return;
     const reg=Object.values(snap.val()).find(r=>r.fecha===progFecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
-    if(reg) ausentes[reg.tipoDia].push(u.nombre);
+    if(reg) ausentes[reg.tipoDia].push(nombreMostrar(u));
   }));
 
   const campo=progGrupos.filter(g=>g.area==='campo');
@@ -3986,13 +4014,15 @@ window.openCampania=(id)=>{
   const c=id?progCampanias.find(x=>x.id===id):null;
   $('campNombre').value=c?.nombre||'';
   $('campArea').value=c?.area||'campo';
+  if($('campFrecuente')) $('campFrecuente').checked = c ? (c.frecuente===true) : true; // nueva = frecuente por defecto
   $('campBtnEliminar').style.display=id?'':'none';
   $('moCampania').classList.add('open');
 };
 window.guardarCampaniaUI=async()=>{
   const nombre=$('campNombre').value.trim();
   if(!nombre){ $('moCampaniaAlert').innerHTML='<div class="alert ae" style="font-size:12px">Escribe el nombre.</div>'; return; }
-  await guardarCampania(db,{ref,set,push,update}, campEditId, {nombre,area:$('campArea').value});
+  const frecuente=$('campFrecuente')?$('campFrecuente').checked:true;
+  await guardarCampania(db,{ref,set,push,update}, campEditId, {nombre,area:$('campArea').value,frecuente});
   closeModal('moCampania');
   await renderCatalogos();
 };
@@ -4128,7 +4158,7 @@ window.openModalUser=async(uid)=>{
   editUID=uid||null;
   $('moUsrTitle').textContent=uid?'Editar usuario':'Nuevo usuario';
   $('moUsrAlert').innerHTML='';
-  ['uNom','uUsr','uPin'].forEach(id=>$(id).value='');
+  ['uNom','uNomCorto','uCargo','uUsr','uPin'].forEach(id=>{if($(id))$(id).value='';});
   $('uRol').value='empleado';
   $('secEmpleadosAsig').style.display='none';
   if($('uSede')) $('uSede').value='';
@@ -4138,6 +4168,8 @@ window.openModalUser=async(uid)=>{
     if(s.exists()){
       const u=s.val();
       $('uNom').value=u.nombre;
+      if($('uNomCorto')) $('uNomCorto').value=u.nombreCorto||'';
+      if($('uCargo')) $('uCargo').value=u.cargo||'';
       $('uUsr').value=u.username;
       $('uRol').value=u.role==='asistente'?'asistente':'empleado';
       if(u.role==='asistente'){
@@ -4154,6 +4186,8 @@ window.openModalUser=async(uid)=>{
 window.saveUser=async()=>{
   const al=$('moUsrAlert');
   const nom=$('uNom').value.trim(),usr=$('uUsr').value.trim().toLowerCase(),pin=$('uPin').value.trim();
+  const nomCorto=$('uNomCorto')?$('uNomCorto').value.trim():'';
+  const cargo=$('uCargo')?$('uCargo').value.trim():'';
   const rol=$('uRol').value||'empleado';
   if(!nom||!usr){al.innerHTML='<div class="alert ae">Nombre y usuario son obligatorios.</div>';return;}
   if(!editUID&&(!pin||pin.length<4)){al.innerHTML='<div class="alert ae">PIN mínimo de 4 dígitos.</div>';return;}
@@ -4167,11 +4201,11 @@ window.saveUser=async()=>{
   }
   const sede=(rol==='empleado'&&$('uSede'))?($('uSede').value||''):'';
   if(editUID){
-    const d={nombre:nom,username:usr,role:rol,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede};
+    const d={nombre:nom,nombreCorto:nomCorto,cargo,username:usr,role:rol,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede};
     if(pin.length>=4){ d.pin=await savePIN(pin); }
     await update(ref(db,`users/${editUID}`),d);
   } else {
-    await set(push(ref(db,'users')),{nombre:nom,username:usr,pin:await savePIN(pin),role:rol,activo:true,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede});
+    await set(push(ref(db,'users')),{nombre:nom,nombreCorto:nomCorto,cargo,username:usr,pin:await savePIN(pin),role:rol,activo:true,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede});
   }
   closeModal('moUsr');loadUsrs();
 };
