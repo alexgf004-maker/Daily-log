@@ -53,6 +53,15 @@ export const ESTADOS_VEHICULO = {
   baja:         { texto:'De baja',         color:'bn' },
 };
 
+// Zonas (departamentos) — código para mostrar compacto, nombre para el menú
+export const ZONAS = [
+  { codigo:'ZC', nombre:'Zacatecoluca' },
+  { codigo:'SS', nombre:'San Salvador' },
+  { codigo:'ST', nombre:'Santa Tecla' },
+  { codigo:'LL', nombre:'La Libertad' },
+  { codigo:'OP', nombre:'San Juan Opico' },
+];
+
 // ── CATÁLOGOS: leer y sembrar ──────────────────────────
 export async function obtenerCampanias(db, fns){
   const {ref,get}=fns;
