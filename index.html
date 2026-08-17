@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=13">
+<link rel="stylesheet" href="css/styles.css?v=14">
 </head>
 <body>
 
@@ -3528,6 +3528,7 @@ let progEditIdx=null;    // índice de grupo en edición
 let progGrupoSel={empleados:[]}; // selección temporal en el modal de grupo
 let progSel=null;        // selección activa en modo tocar {tipo,id,nombre}
 let progDrag=null;       // arrastre activo {tipo,id}
+let progVehAbierto=null; // índice de grupo con el selector de vehículo abierto
 let progVerMas={campo:false,plantel:false}; // "ver más" campañas por área
 
 window.progToggleVerMas=(area)=>{ progVerMas[area]=!progVerMas[area]; renderArmar(); };
@@ -3618,43 +3619,49 @@ async function renderArmar(){
   const persLibres=empleados
     .filter(u=>!persAsignadas.has(u.id)&&!ausentesAuto.includes(u.id)&&!progNoDisp.personal.includes(u.id))
     .sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  // Vehículos: separar carros/motos; disponibles seleccionables, no-disponibles solo visibles (rojo)
-  const vehNoAsignados=progVehiculos.filter(v=>!vehAsignados.has(v.id));
-  const carrosDisp=vehNoAsignados.filter(v=>v.tipo==='carro'&&v.estado==='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  const motosDisp=vehNoAsignados.filter(v=>v.tipo==='moto'&&v.estado==='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  const carrosNo=vehNoAsignados.filter(v=>v.tipo==='carro'&&v.estado!=='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  const motosNo=vehNoAsignados.filter(v=>v.tipo==='moto'&&v.estado!=='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  const totalVehDisp=carrosDisp.length+motosDisp.length;
 
   const conflictos=detectarConflictos(progGrupos, progVehiculos);
 
-  // Chip de persona (arrastrable + tocable)
+  // Chip de persona (tocable para selección, luego se toca la caja del grupo)
   const chipPers=u=>`<span class="tbl-chip tbl-chip-pers ${progSel&&progSel.tipo==='pers'&&progSel.id===u.id?'sel':''}"
       draggable="true"
       ondragstart="progDragStart(event,'pers','${u.id}')"
       onclick="progTapChip('pers','${u.id}','${(nombreMostrar(u)||'').replace(/'/g,"\\'")}')">${nombreMostrar(u)}</span>`;
-  // Chip de vehículo disponible (seleccionable)
-  const chipVeh=v=>`<span class="tbl-chip tbl-chip-veh ${progSel&&progSel.tipo==='veh'&&progSel.id===v.id?'sel':''}"
-      draggable="true"
-      ondragstart="progDragStart(event,'veh','${v.id}')"
-      onclick="progTapChip('veh','${v.id}','${(v.nombre||'').replace(/'/g,"\\'")}')">${v.nombre}</span>`;
-  // Chip de vehículo NO disponible (rojo, no seleccionable, solo informativo)
-  const chipVehNo=v=>{
-    const est=ESTADOS_VEHICULO[v.estado]?.texto||v.estado;
-    return `<span class="tbl-chip tbl-chip-vehno" title="${est}">${v.nombre} · ${est}</span>`;
+
+  // Selector de vehículo desplegable dentro del grupo
+  const vehSelector=(idx,g)=>{
+    if(g.area!=='campo') return '';
+    const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
+    if(veh){
+      return `<div class="tbl-grupo-veh"><span class="tbl-asig tbl-asig-veh" onclick="event.stopPropagation();progQuitarVehiculo(${idx})">${veh.nombre} <span class="tbl-x">×</span></span></div>`;
+    }
+    // Sin vehículo: botón para abrir/cerrar el selector
+    const abierto=progVehAbierto===idx;
+    if(!abierto){
+      return `<div class="tbl-grupo-veh"><button class="tbl-veh-btn" onclick="event.stopPropagation();progAbrirVeh(${idx})">+ Asignar vehículo</button></div>`;
+    }
+    // Selector abierto: pick-ups y motos disponibles + no disponibles en rojo
+    const vehAsig=vehAsignados;
+    const disp=(tipo)=>progVehiculos.filter(v=>v.tipo===tipo&&v.estado==='disponible'&&(!vehAsig.has(v.id))).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+    const noDisp=(tipo)=>progVehiculos.filter(v=>v.tipo===tipo&&v.estado!=='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
+    const opt=v=>`<span class="tbl-veh-opt" onclick="event.stopPropagation();progElegirVeh(${idx},'${v.id}')">${v.nombre}</span>`;
+    const optNo=v=>`<span class="tbl-veh-opt tbl-veh-opt-no" title="${ESTADOS_VEHICULO[v.estado]?.texto||v.estado}">${v.nombre} · ${ESTADOS_VEHICULO[v.estado]?.texto||v.estado}</span>`;
+    return `<div class="tbl-veh-panel" onclick="event.stopPropagation()">
+      <div class="tbl-veh-panel-hd">Elegir vehículo <span class="tbl-veh-cerrar" onclick="progAbrirVeh(null)">cerrar</span></div>
+      <div class="tbl-veh-sub2">Pick-ups</div>
+      <div class="tbl-veh-opts">${disp('carro').map(opt).join('')||'<span class="tbl-bolsa-vacio">Ninguno libre</span>'}${noDisp('carro').map(optNo).join('')}</div>
+      <div class="tbl-veh-sub2">Motos</div>
+      <div class="tbl-veh-opts">${disp('moto').map(opt).join('')||'<span class="tbl-bolsa-vacio">Ninguna libre</span>'}${noDisp('moto').map(optNo).join('')}</div>
+    </div>`;
   };
 
   // Caja de un grupo
   const cajaGrupo=(g)=>{
     const idx=progGrupos.indexOf(g);
-    const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
     const personas=(g.empleados||[]).map((uid,k)=>{
       const nom=(g.empleadosNombres||[])[k]||'';
-      return `<span class="tbl-asig tbl-asig-pers" onclick="progQuitarPersona(${idx},'${uid}')">${nom} <span class="tbl-x">×</span></span>`;
+      return `<span class="tbl-asig tbl-asig-pers" onclick="event.stopPropagation();progQuitarPersona(${idx},'${uid}')">${nom} <span class="tbl-x">×</span></span>`;
     }).join('');
-    const vehChip = veh
-      ? `<span class="tbl-asig tbl-asig-veh" onclick="progQuitarVehiculo(${idx})">${veh.nombre} <span class="tbl-x">×</span></span>`
-      : (g.area==='campo'?'<span class="tbl-veh-hint">Sin vehículo</span>':'');
     return `<div class="tbl-grupo" ondragover="progDragOver(event)" ondrop="progDrop(event,${idx})" onclick="progTapCaja(${idx})">
       <div class="tbl-grupo-top">
         <span class="tbl-grupo-num">Grupo ${(g.__n||0)}</span>
@@ -3663,8 +3670,8 @@ async function renderArmar(){
           <span class="tbl-grupo-del" onclick="event.stopPropagation();progEliminarGrupo(${idx})">Quitar</span>
         </div>
       </div>
-      <div class="tbl-grupo-personas">${personas||'<span class="tbl-drop-hint">Arrastra o toca personal aquí</span>'}</div>
-      ${g.area==='campo'?`<div class="tbl-grupo-veh">${vehChip}</div>`:''}
+      <div class="tbl-grupo-personas">${personas||'<span class="tbl-drop-hint">Toca un nombre de arriba, luego esta caja</span>'}</div>
+      ${vehSelector(idx,g)}
     </div>`;
   };
 
@@ -3717,20 +3724,12 @@ async function renderArmar(){
       ${conflictos.map(a=>`<div class="prog-aviso">${a}</div>`).join('')}
     </div>`:''}
 
-    <div class="tbl-bolsas">
-      <div class="tbl-bolsa">
-        <div class="tbl-bolsa-hd">Personal libre (${persLibres.length})</div>
-        <div class="tbl-bolsa-chips">${persLibres.map(chipPers).join('')||'<span class="tbl-bolsa-vacio">Todos asignados</span>'}</div>
+    <div class="tbl-personal-sticky">
+      <div class="tbl-personal-hd">
+        <span>Personal libre (${persLibres.length})</span>
+        ${progNoDisp.personal.length||ausentesAuto.length?`<span class="tbl-nodisp-link" onclick="progVerNoDisp()">No disponibles</span>`:''}
       </div>
-      <div class="tbl-bolsa">
-        <div class="tbl-bolsa-hd">Vehículos libres (${totalVehDisp})</div>
-        <div class="tbl-bolsa-chips-veh">
-          <div class="tbl-veh-sub">Pick-ups</div>
-          <div class="tbl-bolsa-chips">${carrosDisp.map(chipVeh).join('')||'<span class="tbl-bolsa-vacio">Ninguno libre</span>'}${carrosNo.map(chipVehNo).join('')}</div>
-          <div class="tbl-veh-sub">Motos</div>
-          <div class="tbl-bolsa-chips">${motosDisp.map(chipVeh).join('')||'<span class="tbl-bolsa-vacio">Ninguna libre</span>'}${motosNo.map(chipVehNo).join('')}</div>
-        </div>
-      </div>
+      <div class="tbl-personal-chips">${persLibres.map(chipPers).join('')||'<span class="tbl-bolsa-vacio">Todos asignados</span>'}</div>
     </div>
 
     <div class="tbl-seccion">
@@ -3804,6 +3803,24 @@ window.progQuitarVehiculo=async(idx)=>{
   const g=progGrupos[idx]; if(!g) return;
   g.vehiculo=''; g.vehiculoNombre='';
   await persistProg(); renderArmar();
+};
+
+window.progAbrirVeh=(idx)=>{ progVehAbierto=idx; renderArmar(); };
+window.progElegirVeh=async(idx,vid)=>{
+  const g=progGrupos[idx]; if(!g) return;
+  const veh=progVehiculos.find(v=>v.id===vid);
+  if(veh && veh.estado!=='disponible') return; // no disponibles no se asignan
+  g.vehiculo=vid; g.vehiculoNombre=veh?veh.nombre:'';
+  progVehAbierto=null;
+  await persistProg(); renderArmar();
+};
+window.progVerNoDisp=async()=>{
+  const users=await getUsers();
+  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+  const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
+  const nombres=ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?nombreMostrar(u):'';}).filter(Boolean);
+  if(!nombres.length){ alert('No hay personal marcado como no disponible hoy.'); return; }
+  alert('No disponibles hoy (vacaciones/permiso/incapacidad):\n\n'+nombres.join('\n'));
 };
 
 window.progSetZona=async(idx,zona)=>{
