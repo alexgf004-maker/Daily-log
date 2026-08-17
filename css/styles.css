@@ -279,10 +279,25 @@ tbody tr:hover td{background:var(--bluelt)}
 .tbl-chip{display:inline-block;padding:5px 11px;border-radius:15px;font-size:12.5px;font-weight:600;cursor:grab;user-select:none;border:1px solid transparent;line-height:1.3}
 .tbl-chip:active{cursor:grabbing}
 .tbl-chip-pers{background:var(--bluelt);color:var(--blue)}
-.tbl-personal-sticky{position:sticky;top:0;z-index:20;background:var(--bg);padding:10px 12px 12px;margin:0 -4px 14px;border-bottom:2px solid var(--gray200);box-shadow:0 8px 12px -8px rgba(0,0,0,.35)}
-.tbl-personal-hd{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px}
-.tbl-nodisp-link{color:var(--danger);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600}
-.tbl-personal-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:96px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* Botón flotante de personal */
+.btn-personal-flot{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:40;background:var(--blue);color:#fff;border:none;border-radius:24px;padding:14px 26px;font-family:var(--sans);font-size:15px;font-weight:700;box-shadow:0 6px 20px -4px rgba(37,99,235,.55);cursor:pointer;max-width:90%}
+#progArmarBody{padding-bottom:90px}
+.btn-personal-flot.btn-personal-activo{background:var(--green);box-shadow:0 6px 20px -4px rgba(5,150,105,.55)}
+/* Panel deslizable de personal */
+.panel-personal{position:fixed;inset:0;z-index:45;background:rgba(15,23,42,.45);opacity:0;pointer-events:none;transition:opacity .2s;display:flex;align-items:flex-end;justify-content:center}
+.panel-personal.open{opacity:1;pointer-events:auto}
+.panel-personal-card{background:#fff;width:100%;max-width:520px;border-radius:18px 18px 0 0;max-height:80vh;display:flex;flex-direction:column;padding:16px;transform:translateY(100%);transition:transform .25s}
+.panel-personal.open .panel-personal-card{transform:translateY(0)}
+.panel-personal-hd{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:800;margin-bottom:12px}
+.panel-personal-x{font-size:20px;color:var(--text2);cursor:pointer;padding:4px 8px}
+.panel-buscar{width:100%;padding:12px 14px;border:1.5px solid var(--gray200);border-radius:10px;font-family:var(--sans);font-size:15px;margin-bottom:10px}
+.panel-buscar:focus{outline:none;border-color:var(--blue)}
+.panel-personal-lista{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:4px}
+.panel-pers-item{padding:13px 14px;border-radius:10px;background:var(--bluelt);color:var(--blue);font-size:15px;font-weight:600;cursor:pointer}
+.panel-pers-item:active{background:var(--bluemid)}
+.panel-nodisp{margin-top:12px;padding-top:12px;border-top:1px solid var(--gray200)}
+.panel-nodisp-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--danger);margin-bottom:4px}
+.panel-nodisp-txt{font-size:13px;color:var(--text2);line-height:1.5}
 .tbl-veh-btn{border:1px dashed var(--gray300);background:#fff;color:var(--blue);border-radius:8px;padding:6px 12px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer}
 .tbl-veh-btn:hover{border-color:var(--blue);background:var(--bluelt)}
 .tbl-veh-panel{margin-top:8px;border:1px solid var(--gray200);border-radius:8px;padding:10px;background:var(--gray50)}
