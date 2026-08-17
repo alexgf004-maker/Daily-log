@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=15">
+<link rel="stylesheet" href="css/styles.css?v=16">
 </head>
 <body>
 
@@ -475,6 +475,20 @@ function renderAdmin(){
         <!-- ARMAR PROGRAMACIÓN -->
         <div id="progArmar">
           <div id="progArmarBody"><div class="spin"></div></div>
+          <button id="btnPersonal" class="btn-personal-flot" onclick="abrirPanelPersonal()" style="display:none">
+            <span id="btnPersonalTxt">Personal libre</span>
+          </button>
+          <div id="panelPersonal" class="panel-personal">
+            <div class="panel-personal-card">
+              <div class="panel-personal-hd">
+                <span id="panelPersonalTit">Personal libre</span>
+                <span class="panel-personal-x" onclick="cerrarPanelPersonal()">✕</span>
+              </div>
+              <input type="text" id="panelBuscar" class="panel-buscar" placeholder="Buscar por nombre…" oninput="renderPanelPersonal()">
+              <div id="panelPersonalLista" class="panel-personal-lista"></div>
+              <div id="panelNoDisp" class="panel-nodisp"></div>
+            </div>
+          </div>
         </div>
 
         <!-- HISTORIAL -->
@@ -3529,6 +3543,8 @@ let progGrupoSel={empleados:[]}; // selección temporal en el modal de grupo
 let progSel=null;        // selección activa en modo tocar {tipo,id,nombre}
 let progDrag=null;       // arrastre activo {tipo,id}
 let progVehAbierto=null; // índice de grupo con el selector de vehículo abierto
+let progPersLibres=[];   // personal libre actual (para el panel)
+let progAusentesLista=[];// nombres de no disponibles (para el panel)
 let progVerMas={campo:false,plantel:false}; // "ver más" campañas por área
 
 window.progToggleVerMas=(area)=>{ progVerMas[area]=!progVerMas[area]; renderArmar(); };
@@ -3622,11 +3638,6 @@ async function renderArmar(){
 
   const conflictos=detectarConflictos(progGrupos, progVehiculos);
 
-  // Chip de persona (tocable para selección, luego se toca la caja del grupo)
-  const chipPers=u=>`<span class="tbl-chip tbl-chip-pers ${progSel&&progSel.tipo==='pers'&&progSel.id===u.id?'sel':''}"
-      draggable="true"
-      ondragstart="progDragStart(event,'pers','${u.id}')"
-      onclick="progTapChip('pers','${u.id}','${(nombreMostrar(u)||'').replace(/'/g,"\\'")}')">${nombreMostrar(u)}</span>`;
 
   // Selector de vehículo desplegable dentro del grupo
   const vehSelector=(idx,g)=>{
@@ -3724,14 +3735,6 @@ async function renderArmar(){
       ${conflictos.map(a=>`<div class="prog-aviso">${a}</div>`).join('')}
     </div>`:''}
 
-    <div class="tbl-personal-sticky">
-      <div class="tbl-personal-hd">
-        <span>Personal libre (${persLibres.length})</span>
-        ${progNoDisp.personal.length||ausentesAuto.length?`<span class="tbl-nodisp-link" onclick="progVerNoDisp()">No disponibles</span>`:''}
-      </div>
-      <div class="tbl-personal-chips">${persLibres.map(chipPers).join('')||'<span class="tbl-bolsa-vacio">Todos asignados</span>'}</div>
-    </div>
-
     <div class="tbl-seccion">
       <div class="tbl-seccion-hd"><span class="prog-badge-campo">Campo</span></div>
       ${bloqueArea('campo')||'<div class="prog-vacio">No hay campañas de campo.</div>'}
@@ -3740,9 +3743,12 @@ async function renderArmar(){
       <div class="tbl-seccion-hd"><span class="prog-badge-plantel">Plantel</span></div>
       ${bloqueArea('plantel')||'<div class="prog-vacio">No hay campañas de plantel.</div>'}
     </div>
-
-    ${ausentesAuto.length?`<div class="card" style="margin-top:6px"><div style="font-size:12px;color:var(--text2)">No disponibles hoy (vacaciones/permiso/incapacidad): ${ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?nombreMostrar(u):'';}).filter(Boolean).join(', ')}</div></div>`:''}
   `;
+
+  // Guardar datos para el panel flotante de personal
+  progPersLibres = persLibres;
+  progAusentesLista = ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?nombreMostrar(u):'';}).filter(Boolean);
+  actualizarBotonPersonal();
 }
 
 // ── Estado de selección (para modo tocar) ── (progSel declarado arriba con las demás variables)
@@ -3821,6 +3827,52 @@ window.progVerNoDisp=async()=>{
   const nombres=ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?nombreMostrar(u):'';}).filter(Boolean);
   if(!nombres.length){ alert('No hay personal marcado como no disponible hoy.'); return; }
   alert('No disponibles hoy (vacaciones/permiso/incapacidad):\n\n'+nombres.join('\n'));
+};
+
+// ── PANEL FLOTANTE DE PERSONAL ──
+function actualizarBotonPersonal(){
+  const btn=$('btnPersonal');
+  if(!btn) return;
+  btn.style.display='';
+  const txt=$('btnPersonalTxt');
+  if(txt) txt.textContent = progSel ? `Asignar: ${progSel.nombre} — toca un grupo` : `Personal libre (${progPersLibres.length})`;
+  btn.classList.toggle('btn-personal-activo', !!progSel);
+}
+window.abrirPanelPersonal=()=>{
+  if(progSel){ // si ya hay uno seleccionado, el botón solo recuerda; abrir igual permite cambiar
+  }
+  const p=$('panelPersonal');
+  if(p){ p.classList.add('open'); }
+  const b=$('panelBuscar'); if(b){ b.value=''; }
+  renderPanelPersonal();
+};
+window.cerrarPanelPersonal=()=>{
+  const p=$('panelPersonal'); if(p) p.classList.remove('open');
+};
+window.renderPanelPersonal=()=>{
+  const cont=$('panelPersonalLista');
+  if(!cont) return;
+  const q=($('panelBuscar')?.value||'').toLowerCase().trim();
+  const lista=progPersLibres.filter(u=>{
+    const n=(nombreMostrar(u)||'').toLowerCase();
+    const full=(u.nombre||'').toLowerCase();
+    return !q || n.includes(q) || full.includes(q);
+  });
+  $('panelPersonalTit').textContent=`Personal libre (${progPersLibres.length})`;
+  cont.innerHTML = lista.length
+    ? lista.map(u=>`<div class="panel-pers-item" onclick="progPanelElegir('${u.id}','${(nombreMostrar(u)||'').replace(/'/g,"\\'")}')">${nombreMostrar(u)}</div>`).join('')
+    : '<div style="font-size:13px;color:var(--text2);padding:12px;text-align:center">Sin coincidencias</div>';
+  const nd=$('panelNoDisp');
+  if(nd){
+    nd.innerHTML = progAusentesLista.length
+      ? `<div class="panel-nodisp-hd">No disponibles hoy</div><div class="panel-nodisp-txt">${progAusentesLista.join(' · ')}</div>`
+      : '';
+  }
+};
+window.progPanelElegir=(id,nombre)=>{
+  progSel={tipo:'pers',id,nombre};
+  cerrarPanelPersonal();
+  actualizarBotonPersonal();
 };
 
 window.progSetZona=async(idx,zona)=>{
