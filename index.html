@@ -3917,12 +3917,15 @@ window.progGenerarImagen=async()=>{
   const azul='#1e3a5f', azulClaro='#2563eb', verde='#059669', gris='#64748b', texto='#0f172a';
 
   // Primera pasada: medir alto necesario
-  const lineH=52;       // alto por grupo
   const headH=170;      // encabezado
   const seccH=58;       // título de sección
+  const cardHt=72;      // tarjeta de grupo + gap
+  const campTit=52;     // título de campaña + aire
+  const campoCamps=new Set(campo.map(g=>g.campania)).size;
+  const plantelCamps=new Set(plantel.map(g=>g.campania)).size;
   let alto=headH;
-  if(campo.length){ alto+=seccH+campo.length*lineH+40; }
-  if(plantel.length){ alto+=seccH+plantel.length*lineH+40; }
+  if(campo.length){ alto+=seccH+campoCamps*campTit+campo.length*cardHt+30; }
+  if(plantel.length){ alto+=seccH+plantelCamps*campTit+plantel.length*cardHt+30; }
   const totalAusentes=ausentes.vacaciones.length+ausentes.incapacidad.length+ausentes.permiso.length;
   if(totalAusentes){ alto+=seccH; if(ausentes.vacaciones.length)alto+=44; if(ausentes.incapacidad.length)alto+=44; if(ausentes.permiso.length)alto+=44; alto+=16; }
   alto+=pad;
@@ -3961,26 +3964,59 @@ window.progGenerarImagen=async()=>{
     y+=seccH;
   };
 
-  // Dibuja una fila de grupo: personal + vehículo + (opcional) prefijo de zona
-  const dibujarFilaGrupo=(g, conZonaPrefijo)=>{
-    // Personal, con prefijo de zona si aplica
-    ctx.fillStyle=gris;
-    ctx.font='500 19px "Plus Jakarta Sans", sans-serif';
-    let personas=(g.empleadosNombres||[]).join(' · ');
-    if(conZonaPrefijo && g.zona) personas=g.zona+'  ·  '+personas;
-    ctx.fillText(personas, pad+22, y+26);
-    // Vehículo (derecha)
+  // Rectángulo redondeado
+  const rrect=(x,yy,w,h,r)=>{
+    ctx.beginPath();
+    ctx.moveTo(x+r,yy);
+    ctx.arcTo(x+w,yy,x+w,yy+h,r);
+    ctx.arcTo(x+w,yy+h,x,yy+h,r);
+    ctx.arcTo(x,yy+h,x,yy,r);
+    ctx.arcTo(x,yy,x+w,yy,r);
+    ctx.closePath();
+  };
+
+  // Dibuja una tarjeta de grupo (pareja): fondo suave, personal izquierda, zona + vehículo
+  const cardH=64; // alto de cada tarjeta
+  const dibujarCard=(g)=>{
+    // Fondo
+    ctx.fillStyle='#f1f5f9';
+    rrect(pad, y, W-pad*2, cardH, 12);
+    ctx.fill();
+    const cy=y+cardH/2; // centro vertical
+    // Zona (chip a la izquierda si existe)
+    let tx=pad+18;
+    if(g.zona){
+      ctx.font='700 16px "Plus Jakarta Sans", sans-serif';
+      const zw=ctx.measureText(g.zona).width+20;
+      ctx.fillStyle='#dbeafe';
+      rrect(tx, cy-15, zw, 30, 8); ctx.fill();
+      ctx.fillStyle=azulClaro; ctx.textBaseline='middle';
+      ctx.fillText(g.zona, tx+10, cy);
+      ctx.textBaseline='alphabetic';
+      tx+=zw+12;
+    }
+    // Personal
+    ctx.fillStyle=texto;
+    ctx.font='600 19px "Plus Jakarta Sans", sans-serif';
+    ctx.textBaseline='middle';
+    const personas=(g.empleadosNombres||[]).join(' · ');
+    ctx.fillText(personas, tx, cy);
+    // Vehículo (chip verde a la derecha)
     if(g.vehiculo){
       const veh=progVehiculos.find(v=>v.id===g.vehiculo);
       if(veh){
-        ctx.fillStyle=azulClaro;
-        ctx.font='700 19px "Plus Jakarta Sans", sans-serif';
-        ctx.textAlign='right';
-        ctx.fillText(veh.nombre, W-pad, y+26);
+        ctx.font='700 18px "Plus Jakarta Sans", sans-serif';
+        const vw=ctx.measureText(veh.nombre).width+24;
+        ctx.fillStyle='#d1fae5';
+        rrect(W-pad-18-vw, cy-16, vw, 32, 8); ctx.fill();
+        ctx.fillStyle='#047857';
+        ctx.textAlign='center';
+        ctx.fillText(veh.nombre, W-pad-18-vw/2, cy);
         ctx.textAlign='left';
       }
     }
-    y+=44;
+    ctx.textBaseline='alphabetic';
+    y+=cardH+8;
   };
 
   // Dibuja todos los grupos de un área, agrupando por campaña
@@ -3988,31 +4024,21 @@ window.progGenerarImagen=async()=>{
     // Agrupar por nombre de campaña, preservando orden de aparición
     const orden=[]; const porCamp={};
     grupos.forEach(g=>{ if(!porCamp[g.campania]){porCamp[g.campania]=[];orden.push(g.campania);} porCamp[g.campania].push(g); });
-    orden.forEach(nombre=>{
+    // Verificación de factibilidad siempre al final
+    orden.sort((a,b)=>{
+      const fa=/factibilidad/i.test(a)?1:0, fb=/factibilidad/i.test(b)?1:0;
+      return fa-fb;
+    });
+    orden.forEach((nombre,ci)=>{
       const gs=porCamp[nombre];
+      if(ci>0) y+=20; // aire entre campañas
       // Título de la campaña
       ctx.fillStyle=texto;
       ctx.font='700 21px "Plus Jakarta Sans", sans-serif';
       ctx.fillText(nombre, pad, y);
-      if(gs.length===1){
-        // Un solo grupo: si tiene vehículo, va a la derecha del título
-        const g=gs[0];
-        if(g.vehiculo){
-          const veh=progVehiculos.find(v=>v.id===g.vehiculo);
-          if(veh){ ctx.fillStyle=azulClaro; ctx.font='700 19px "Plus Jakarta Sans", sans-serif'; ctx.textAlign='right'; ctx.fillText(veh.nombre, W-pad, y); ctx.textAlign='left'; }
-        }
-        // Personal debajo (con zona si tiene)
-        ctx.fillStyle=gris; ctx.font='500 19px "Plus Jakarta Sans", sans-serif';
-        let personas=(g.empleadosNombres||[]).join(' · ');
-        if(g.zona) personas=g.zona+'  ·  '+personas;
-        ctx.fillText(personas, pad+22, y+26);
-        y+=lineH;
-      } else {
-        // Varios grupos bajo el mismo título: cada uno en su fila con zona
-        y+=28;
-        gs.forEach(g=>dibujarFilaGrupo(g, true));
-        y+=8;
-      }
+      y+=16;
+      // Cada grupo (pareja) como tarjeta
+      gs.forEach(dibujarCard);
     });
   };
 
