@@ -279,10 +279,19 @@ tbody tr:hover td{background:var(--bluelt)}
 .tbl-chip{display:inline-block;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;cursor:grab;user-select:none;border:1px solid transparent}
 .tbl-chip:active{cursor:grabbing}
 .tbl-chip-pers{background:var(--bluelt);color:var(--blue)}
-.tbl-chip-veh{background:#ecfdf5;color:var(--green)}
-.tbl-veh-sub{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:8px 0 4px}
-.tbl-veh-sub:first-child{margin-top:0}
-.tbl-chip-vehno{background:var(--dangerlt);color:var(--danger);cursor:not-allowed;opacity:.85;font-size:12px;padding:6px 12px;border-radius:16px;font-weight:600;display:inline-block}
+.tbl-personal-sticky{position:sticky;top:0;z-index:20;background:var(--bg);padding:10px 0;margin-bottom:14px;box-shadow:0 6px 10px -8px rgba(0,0,0,.25)}
+.tbl-personal-hd{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px}
+.tbl-nodisp-link{color:var(--danger);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600}
+.tbl-personal-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:140px;overflow-y:auto}
+.tbl-veh-btn{border:1px dashed var(--gray300);background:#fff;color:var(--blue);border-radius:8px;padding:6px 12px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer}
+.tbl-veh-btn:hover{border-color:var(--blue);background:var(--bluelt)}
+.tbl-veh-panel{margin-top:8px;border:1px solid var(--gray200);border-radius:8px;padding:10px;background:var(--gray50)}
+.tbl-veh-panel-hd{display:flex;justify-content:space-between;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px}
+.tbl-veh-cerrar{color:var(--blue);cursor:pointer;text-transform:none;letter-spacing:0}
+.tbl-veh-sub2{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:6px 0 4px}
+.tbl-veh-opts{display:flex;flex-wrap:wrap;gap:6px}
+.tbl-veh-opt{padding:6px 12px;border-radius:14px;font-size:13px;font-weight:600;cursor:pointer;background:var(--greenlt);color:var(--green)}
+.tbl-veh-opt-no{background:var(--dangerlt);color:var(--danger);cursor:not-allowed;opacity:.8}
 .tbl-chip.sel{outline:2px solid var(--blue);outline-offset:1px}
 .tbl-selaviso{background:var(--bluelt);border:1px solid var(--bluemid);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--blue);margin-bottom:14px}
 .tbl-seccion{margin-bottom:18px}
