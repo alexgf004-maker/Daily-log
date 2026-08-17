@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=16">
+<link rel="stylesheet" href="css/styles.css?v=17">
 </head>
 <body>
 
@@ -468,6 +468,7 @@ function renderAdmin(){
       <div id="adProg" style="display:none">
         <div class="prog-subtabs">
           <button class="prog-subtab active" id="progSubArmar" onclick="progSub('armar')">Programar</button>
+          <button class="prog-subtab" id="progSubAus" onclick="progSub('aus')">Ausencias</button>
           <button class="prog-subtab" id="progSubHist" onclick="progSub('hist')">Historial</button>
           <button class="prog-subtab" id="progSubCat" onclick="progSub('cat')">Catálogos</button>
         </div>
@@ -494,6 +495,15 @@ function renderAdmin(){
         <!-- HISTORIAL -->
         <div id="progHist" style="display:none">
           <div id="progHistBody"><div class="spin"></div></div>
+        </div>
+
+        <!-- AUSENCIAS -->
+        <div id="progAus" style="display:none">
+          <div class="page-header" style="justify-content:space-between">
+            <div><div class="ph-title">Ausencias</div><div class="ph-sub">Registra incapacidad, vacaciones o permiso</div></div>
+            <button class="btn btn-g btn-sm" onclick="openAusencia()">+ Ausencia</button>
+          </div>
+          <div id="ausLista"><div class="spin"></div></div>
         </div>
 
         <!-- CATÁLOGOS -->
@@ -863,6 +873,45 @@ function modalsHTML(){
         <button class="btn btn-gh" onclick="closeModal('moCampania')">Cancelar</button>
         <button class="btn btn-d btn-sm" id="campBtnEliminar" onclick="eliminarCampaniaUI()" style="display:none">Eliminar</button>
         <button class="btn btn-p" onclick="guardarCampaniaUI()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo" id="moAusencia">
+    <div class="modal">
+      <div class="modal-title">Registrar ausencia</div>
+      <div id="moAusenciaAlert"></div>
+      <div class="fg">
+        <label class="fl">Empleado</label>
+        <select id="ausEmpleado"></select>
+      </div>
+      <div class="fg">
+        <label class="fl">Tipo</label>
+        <select id="ausTipo" onchange="onAusTipoChange()">
+          <option value="incapacidad">Incapacidad</option>
+          <option value="vacaciones">Vacaciones</option>
+          <option value="permiso">Permiso (un día)</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl" id="ausIniLbl">Fecha de inicio</label>
+        <input type="date" id="ausIni">
+      </div>
+      <div class="fg" id="ausDiasWrap">
+        <label class="fl">Número de días</label>
+        <input type="number" id="ausDias" min="1" value="1" inputmode="numeric">
+        <div style="font-size:11px;color:var(--text2);margin-top:4px" id="ausDiasHint"></div>
+      </div>
+      <div class="fg" id="ausFinWrap" style="display:none">
+        <label class="fl">Fecha de fin</label>
+        <input type="date" id="ausFin">
+      </div>
+      <div class="fg">
+        <label class="fl">Nota (opcional)</label>
+        <input type="text" id="ausNota" placeholder="Ej: Incapacidad ISSS" autocomplete="off">
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moAusencia')">Cancelar</button>
+        <button class="btn btn-p" onclick="guardarAusenciaUI()">Registrar</button>
       </div>
     </div>
   </div>
@@ -3564,7 +3613,7 @@ async function initProgramacion(){
 }
 
 window.progSub=(cual)=>{
-  ['armar','hist','cat'].forEach(s=>{
+  ['armar','aus','hist','cat'].forEach(s=>{
     const btn=$('progSub'+s.charAt(0).toUpperCase()+s.slice(1));
     const panel=$('prog'+s.charAt(0).toUpperCase()+s.slice(1));
     if(btn) btn.classList.toggle('active', s===cual);
@@ -3572,6 +3621,7 @@ window.progSub=(cual)=>{
   });
   if(cual==='cat') renderCatalogos();
   if(cual==='hist') renderHistorialProg();
+  if(cual==='aus') renderAusencias();
 };
 
 // ── ARMAR PROGRAMACIÓN ──
@@ -4223,6 +4273,182 @@ window.verHistorialDia=async(fecha)=>{
     ${secc('campo','Campo','prog-badge-campo')}
     ${secc('plantel','Plantel','prog-badge-plantel')}
   </div>`;
+};
+
+// ── AUSENCIAS (atajo de admin) ──
+const AUS_TIPO_LABEL={incapacidad:'Incapacidad',vacaciones:'Vacaciones',permiso:'Permiso'};
+
+window.openAusencia=async()=>{
+  $('moAusenciaAlert').innerHTML='';
+  // Cargar empleados en el selector
+  const users=await getUsers();
+  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true')).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  $('ausEmpleado').innerHTML=empleados.map(u=>`<option value="${u.id}">${u.nombre}</option>`).join('');
+  $('ausTipo').value='incapacidad';
+  $('ausIni').value=today();
+  $('ausDias').value='1';
+  $('ausFin').value='';
+  $('ausNota').value='';
+  onAusTipoChange();
+  $('moAusencia').classList.add('open');
+};
+
+window.onAusTipoChange=()=>{
+  const tipo=$('ausTipo').value;
+  const diasWrap=$('ausDiasWrap'), finWrap=$('ausFinWrap'), iniLbl=$('ausIniLbl'), hint=$('ausDiasHint');
+  if(tipo==='incapacidad'){
+    diasWrap.style.display=''; finWrap.style.display='';
+    // incapacidad: inicio + número de días (fin se calcula)
+    finWrap.style.display='none';
+    iniLbl.textContent='Fecha de inicio';
+    if(hint) hint.textContent='Se registran los días corridos a partir del inicio.';
+  } else if(tipo==='vacaciones'){
+    diasWrap.style.display='none'; finWrap.style.display='';
+    iniLbl.textContent='Fecha de inicio';
+  } else { // permiso
+    diasWrap.style.display='none'; finWrap.style.display='none';
+    iniLbl.textContent='Fecha del permiso';
+  }
+};
+
+// Calcula el arreglo de fechas (YYYY-MM-DD) según tipo
+function ausenciaFechas(tipo, ini, dias, fin){
+  const out=[];
+  const d0=new Date(ini+'T12:00:00');
+  if(tipo==='permiso'){ out.push(ini); return out; }
+  if(tipo==='incapacidad'){
+    const n=Math.max(1, parseInt(dias||'1',10));
+    for(let i=0;i<n;i++){ const d=new Date(d0); d.setDate(d.getDate()+i); out.push(d.toISOString().split('T')[0]); }
+    return out;
+  }
+  // vacaciones: rango ini..fin
+  const df=new Date(fin+'T12:00:00');
+  for(let d=new Date(d0); d<=df; d.setDate(d.getDate()+1)){ out.push(d.toISOString().split('T')[0]); }
+  return out;
+}
+
+window.guardarAusenciaUI=async()=>{
+  const al=$('moAusenciaAlert');
+  const uid=$('ausEmpleado').value;
+  const tipo=$('ausTipo').value;
+  const ini=$('ausIni').value;
+  const dias=$('ausDias').value;
+  const fin=$('ausFin').value;
+  const nota=$('ausNota').value.trim();
+  if(!uid){ al.innerHTML='<div class="alert ae" style="font-size:12px">Selecciona un empleado.</div>'; return; }
+  if(!ini){ al.innerHTML='<div class="alert ae" style="font-size:12px">Selecciona la fecha de inicio.</div>'; return; }
+  if(tipo==='vacaciones'){
+    if(!fin){ al.innerHTML='<div class="alert ae" style="font-size:12px">Selecciona la fecha de fin.</div>'; return; }
+    if(fin<ini){ al.innerHTML='<div class="alert ae" style="font-size:12px">La fecha fin debe ser mayor o igual a inicio.</div>'; return; }
+  }
+  if(tipo==='incapacidad'){
+    const n=parseInt(dias||'0',10);
+    if(!n||n<1){ al.innerHTML='<div class="alert ae" style="font-size:12px">Indica cuántos días.</div>'; return; }
+  }
+
+  const fechas=ausenciaFechas(tipo, ini, dias, fin);
+  const users=await getUsers();
+  const emp=users.find(u=>u.id===uid);
+
+  // Registros existentes del empleado (para no duplicar)
+  const snap=await get(ref(db,`registros/${uid}`));
+  const existentes=new Set();
+  if(snap.exists()){
+    Object.values(snap.val()).forEach(r=>{ if(r.fecha) existentes.add(r.fecha); });
+  }
+
+  let escritos=0, saltadosCerrado=0, saltadosExiste=0;
+  const promesas=[];
+  for(const fecha of fechas){
+    if(mesCerrado(fecha)){ saltadosCerrado++; continue; }
+    if(existentes.has(fecha)){ saltadosExiste++; continue; }
+    promesas.push(push(ref(db,`registros/${uid}`),{
+      fecha, tipoDia:tipo,
+      actividades:'', viatico:false, he:false,
+      estadoViatico:'na', estadoHE:'na',
+      estadoEspecial:'aprobado',
+      ...(tipo==='vacaciones'?{vacIni:ini,vacFin:fin}:{}),
+      nota:nota||AUS_TIPO_LABEL[tipo],
+      userId:uid, userName:emp?emp.nombre:'', cargo:emp?.cargo||'',
+      creadoEn:Date.now(), autoGenerado:true, registradoPorAdmin:true
+    }));
+    escritos++;
+  }
+  try{ if(promesas.length) await Promise.all(promesas); }
+  catch(e){ al.innerHTML='<div class="alert ae" style="font-size:12px">Error al guardar. Revisa tu conexión.</div>'; return; }
+
+  closeModal('moAusencia');
+  let msg=`Se registraron ${escritos} día(s) de ${AUS_TIPO_LABEL[tipo].toLowerCase()} para ${emp?emp.nombre:''}.`;
+  if(saltadosExiste) msg+=`\n${saltadosExiste} día(s) ya tenían registro y se respetaron.`;
+  if(saltadosCerrado) msg+=`\n${saltadosCerrado} día(s) caían en un mes cerrado y se omitieron.`;
+  alert(msg);
+  renderAusencias();
+};
+
+async function renderAusencias(){
+  const cont=$('ausLista');
+  if(!cont) return;
+  cont.innerHTML='<div class="spin"></div>';
+  const users=await getUsers();
+  const empleados=users.filter(u=>u.role==='empleado');
+  const hoy=today();
+
+  // Recolectar ausencias activas/futuras (registros tipo incapacidad/vacaciones/permiso con fecha >= hoy)
+  // Agrupamos por empleado+tipo+bloque contiguo para mostrar rangos
+  const items=[];
+  await Promise.all(empleados.map(async u=>{
+    const snap=await get(ref(db,`registros/${u.id}`));
+    if(!snap.exists()) return;
+    const regs=Object.entries(snap.val())
+      .map(([key,r])=>({key,...r}))
+      .filter(r=>['incapacidad','vacaciones','permiso'].includes(r.tipoDia)&&r.fecha&&r.fecha>=hoy)
+      .sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    if(!regs.length) return;
+    // Agrupar días contiguos del mismo tipo en un rango
+    let bloque=null;
+    regs.forEach(r=>{
+      if(bloque && bloque.tipo===r.tipoDia && esDiaSiguiente(bloque.fin, r.fecha)){
+        bloque.fin=r.fecha; bloque.keys.push(r.key); bloque.dias++;
+      } else {
+        if(bloque) items.push(bloque);
+        bloque={uid:u.id, nombre:u.nombre, tipo:r.tipoDia, ini:r.fecha, fin:r.fecha, dias:1, keys:[r.key], nota:r.nota||''};
+      }
+    });
+    if(bloque) items.push(bloque);
+  }));
+
+  items.sort((a,b)=>a.ini.localeCompare(b.ini)||a.nombre.localeCompare(b.nombre));
+
+  if(!items.length){
+    cont.innerHTML='<div class="empty" style="padding:24px"><div class="et">No hay ausencias activas ni próximas</div><div class="es">Toca "+ Ausencia" para registrar una.</div></div>';
+    return;
+  }
+
+  const badge={incapacidad:'br',vacaciones:'ba',permiso:'by'};
+  cont.innerHTML=`<div class="card" style="padding:0">${items.map(it=>{
+    const rango = it.ini===it.fin ? fmt(it.ini) : `${fmt(it.ini)} — ${fmt(it.fin)}`;
+    return `<div class="aus-row">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600">${it.nombre}</div>
+        <div style="font-size:12px;color:var(--text2)">${rango} · ${it.dias} día(s)</div>
+      </div>
+      <span class="badge ${badge[it.tipo]||'bn'}" style="font-size:11px">${AUS_TIPO_LABEL[it.tipo]}</span>
+      <span class="aus-del" onclick='eliminarAusencia(${JSON.stringify(it.keys)},"${it.uid}","${(it.nombre||'').replace(/"/g,'')}")'>Quitar</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function esDiaSiguiente(fecha1, fecha2){
+  const d1=new Date(fecha1+'T12:00:00'); d1.setDate(d1.getDate()+1);
+  return d1.toISOString().split('T')[0]===fecha2;
+}
+
+window.eliminarAusencia=async(keys,uid,nombre)=>{
+  if(!confirm(`¿Quitar esta ausencia de ${nombre}? Se borrarán esos días de su historial.`)) return;
+  try{
+    await Promise.all(keys.map(k=>set(ref(db,`registros/${uid}/${k}`),null)));
+  }catch(e){ alert('Error al quitar. Revisa tu conexión.'); return; }
+  renderAusencias();
 };
 
 window.reiniciarDispositivo=async(uid,nombre)=>{
