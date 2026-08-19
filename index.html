@@ -3998,7 +3998,7 @@ window.progGenerarImagen=async()=>{
   // Primera pasada: medir alto necesario
   const headH=170;      // encabezado
   const seccH=58;       // título de sección
-  const cardHt=53;      // tarjeta de grupo + gap
+  const cardHt=76;      // tarjeta de grupo + gap (holgado por si va a 2 líneas)
   const campTit=38;     // título de campaña + aire
   const campoCamps=new Set(campo.map(g=>g.campania)).size;
   const plantelCamps=new Set(plantel.map(g=>g.campania)).size;
@@ -4057,45 +4057,84 @@ window.progGenerarImagen=async()=>{
   // Dibuja una tarjeta de grupo (pareja): fondo suave, personal izquierda, zona + vehículo
   const cardH=48; // alto de cada tarjeta
   const dibujarCard=(g)=>{
-    // Fondo
+    // Medir vehículo primero para saber el límite derecho
+    let vw=0, veh=null;
+    if(g.vehiculo){
+      veh=progVehiculos.find(v=>v.id===g.vehiculo);
+      if(veh){ ctx.font='700 17px "Plus Jakarta Sans", sans-serif'; vw=ctx.measureText(veh.nombre).width+22; }
+    }
+    const limiteDerecho = veh ? (W-pad-14-vw-12) : (W-pad-14);
+
+    // Zona: medir su ancho para saber dónde empieza el personal
+    let zx=pad+14, zw=0;
+    if(g.zona){ ctx.font='700 15px "Plus Jakarta Sans", sans-serif'; zw=ctx.measureText(g.zona).width+18; }
+    const tx = g.zona ? (zx+zw+10) : (pad+14);
+    const anchoDisp=limiteDerecho-tx;
+
+    // Preparar líneas de personal (envolver a 2 si no cabe)
+    ctx.font='600 18px "Plus Jakarta Sans", sans-serif';
+    const nombres=(g.empleadosNombres||[]);
+    const textoCompleto=nombres.join(' · ');
+    let lineas=[textoCompleto];
+    if(ctx.measureText(textoCompleto).width>anchoDisp && nombres.length>1){
+      // Partir en 2 líneas lo más equilibrado posible respetando el ancho
+      lineas=[]; let actual='';
+      nombres.forEach((n,i)=>{
+        const cand = actual ? actual+' · '+n : n;
+        if(ctx.measureText(cand).width>anchoDisp && actual){
+          lineas.push(actual); actual=n;
+        } else { actual=cand; }
+      });
+      if(actual) lineas.push(actual);
+      // Máximo 2 líneas: si se pasó, reagrupa el resto en la segunda
+      if(lineas.length>2){
+        const prim=lineas[0];
+        const resto=nombres.slice(prim.split(' · ').length).join(' · ');
+        lineas=[prim, resto];
+      }
+    }
+    const dobleLinea = lineas.length>1;
+    const hCard = dobleLinea ? cardH+22 : cardH;
+
+    // Fondo (alto según líneas)
     ctx.fillStyle='#f1f5f9';
-    rrect(pad, y, W-pad*2, cardH, 10);
+    rrect(pad, y, W-pad*2, hCard, 10);
     ctx.fill();
-    const cy=y+cardH/2; // centro vertical
-    // Zona (chip a la izquierda si existe)
-    let tx=pad+14;
+    const cy=y+hCard/2;
+
+    // Vehículo (chip verde, centrado vertical)
+    if(veh){
+      ctx.font='700 17px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle='#d1fae5';
+      rrect(W-pad-14-vw, cy-14, vw, 28, 7); ctx.fill();
+      ctx.fillStyle='#047857';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(veh.nombre, W-pad-14-vw/2, cy);
+      ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    }
+
+    // Zona (chip azul, centrado vertical)
     if(g.zona){
       ctx.font='700 15px "Plus Jakarta Sans", sans-serif';
-      const zw=ctx.measureText(g.zona).width+18;
       ctx.fillStyle='#dbeafe';
-      rrect(tx, cy-13, zw, 26, 7); ctx.fill();
+      rrect(zx, cy-13, zw, 26, 7); ctx.fill();
       ctx.fillStyle=azulClaro; ctx.textBaseline='middle';
-      ctx.fillText(g.zona, tx+9, cy);
+      ctx.fillText(g.zona, zx+9, cy);
       ctx.textBaseline='alphabetic';
-      tx+=zw+10;
     }
-    // Personal
+
+    // Personal (1 o 2 líneas)
     ctx.fillStyle=texto;
     ctx.font='600 18px "Plus Jakarta Sans", sans-serif';
     ctx.textBaseline='middle';
-    const personas=(g.empleadosNombres||[]).join(' · ');
-    ctx.fillText(personas, tx, cy);
-    // Vehículo (chip verde a la derecha)
-    if(g.vehiculo){
-      const veh=progVehiculos.find(v=>v.id===g.vehiculo);
-      if(veh){
-        ctx.font='700 17px "Plus Jakarta Sans", sans-serif';
-        const vw=ctx.measureText(veh.nombre).width+22;
-        ctx.fillStyle='#d1fae5';
-        rrect(W-pad-14-vw, cy-14, vw, 28, 7); ctx.fill();
-        ctx.fillStyle='#047857';
-        ctx.textAlign='center';
-        ctx.fillText(veh.nombre, W-pad-14-vw/2, cy);
-        ctx.textAlign='left';
-      }
+    if(!dobleLinea){
+      ctx.fillText(lineas[0], tx, cy);
+    } else {
+      ctx.fillText(lineas[0], tx, cy-12);
+      ctx.fillText(lineas[1], tx, cy+12);
     }
     ctx.textBaseline='alphabetic';
-    y+=cardH+5;
+    y+=hCard+5;
   };
 
   // Dibuja todos los grupos de un área, agrupando por campaña
