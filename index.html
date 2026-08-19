@@ -2002,16 +2002,25 @@ async function getAllRegs(){
   }
   return a;
 }
-async function getUsers(){
+let _usersCache=null, _usersCacheAt=0;
+const USERS_CACHE_MS=15000; // 15 s
+async function getUsers(forzar){
+  const ahora=Date.now();
+  if(!forzar && _usersCache && (ahora-_usersCacheAt)<USERS_CACHE_MS){
+    return _usersCache;
+  }
   const snap=await get(ref(db,'users'));
   const a=[];
-  if(!snap.exists()) return a;
-  const raw=snap.val();
-  for(const [k,v] of Object.entries(raw)){
-    if(v && typeof v==='object') a.push({id:k,...v});
+  if(snap.exists()){
+    const raw=snap.val();
+    for(const [k,v] of Object.entries(raw)){
+      if(v && typeof v==='object') a.push({id:k,...v});
+    }
   }
+  _usersCache=a; _usersCacheAt=ahora;
   return a;
 }
+function invalidarUsersCache(){ _usersCache=null; _usersCacheAt=0; }
 
 // Lee TODO el nodo registros de una sola vez (1 viaje en vez de 30) y lo cachea unos segundos.
 // Devuelve un objeto { uidEmpleado: { key: registro, ... }, ... }
@@ -3115,6 +3124,7 @@ $('moDetActs').innerHTML=puedeActuar?(
 };
 
 async function loadUsrs(){
+  invalidarUsersCache();
   const l=$('usrList');l.innerHTML='<div class="spin"></div>';
   const users=await getUsers();
   const emps=users.filter(u=>u.role!=='admin');
@@ -3851,7 +3861,7 @@ async function asignarAGrupo(idx, tipo, id){
   if(!g) return;
   if(tipo==='pers'){
     if(!(g.empleados||[]).includes(id)){
-      const users=await getUsers();
+      const users=await getUsers(); // cacheado, no golpea la red si es reciente
       const u=users.find(x=>x.id===id);
       g.empleados=g.empleados||[]; g.empleadosNombres=g.empleadosNombres||[];
       g.empleados.push(id); g.empleadosNombres.push(nombreMostrar(u));
@@ -3860,34 +3870,34 @@ async function asignarAGrupo(idx, tipo, id){
     if(g.area==='plantel'){ /* plantel no lleva vehículo */ }
     else {
       const veh=progVehiculos.find(v=>v.id===id);
-      if(veh && veh.estado!=='disponible'){ return; } // no asignar vehículos en mantenimiento/prestado/baja
+      if(veh && veh.estado!=='disponible'){ return; }
       g.vehiculo=id; g.vehiculoNombre=veh?veh.nombre:'';
     }
   }
-  await persistProg();
-  renderArmar();
+  renderArmar();          // redibuja de inmediato (no espera a Firebase)
+  persistProg();          // guarda en segundo plano
 }
 
-window.progQuitarPersona=async(idx,uid)=>{
+window.progQuitarPersona=(idx,uid)=>{
   const g=progGrupos[idx]; if(!g) return;
   const k=(g.empleados||[]).indexOf(uid);
   if(k>=0){ g.empleados.splice(k,1); (g.empleadosNombres||[]).splice(k,1); }
-  await persistProg(); renderArmar();
+  renderArmar(); persistProg();
 };
-window.progQuitarVehiculo=async(idx)=>{
+window.progQuitarVehiculo=(idx)=>{
   const g=progGrupos[idx]; if(!g) return;
   g.vehiculo=''; g.vehiculoNombre='';
-  await persistProg(); renderArmar();
+  renderArmar(); persistProg();
 };
 
 window.progAbrirVeh=(idx)=>{ progVehAbierto=idx; renderArmar(); };
-window.progElegirVeh=async(idx,vid)=>{
+window.progElegirVeh=(idx,vid)=>{
   const g=progGrupos[idx]; if(!g) return;
   const veh=progVehiculos.find(v=>v.id===vid);
   if(veh && veh.estado!=='disponible') return; // no disponibles no se asignan
   g.vehiculo=vid; g.vehiculoNombre=veh?veh.nombre:'';
   progVehAbierto=null;
-  await persistProg(); renderArmar();
+  renderArmar(); persistProg();
 };
 window.progVerNoDisp=async()=>{
   const users=await getUsers();
@@ -3944,21 +3954,20 @@ window.progPanelElegir=(id,nombre)=>{
   actualizarBotonPersonal();
 };
 
-window.progSetZona=async(idx,zona)=>{
+window.progSetZona=(idx,zona)=>{
   const g=progGrupos[idx]; if(!g) return;
   g.zona=zona||'';
-  await persistProg();
-  // No hace falta re-render completo; el select ya muestra el valor
+  persistProg(); // guarda en segundo plano; el input ya muestra el valor
 };
 
-window.progAgregarGrupo=async(campania,area)=>{
+window.progAgregarGrupo=(campania,area)=>{
   progGrupos.push({campania,area,empleados:[],empleadosNombres:[],vehiculo:'',vehiculoNombre:''});
-  await persistProg(); renderArmar();
+  renderArmar(); persistProg();
 };
-window.progEliminarGrupo=async(idx)=>{
+window.progEliminarGrupo=(idx)=>{
   if(!confirm('¿Quitar este grupo?')) return;
   progGrupos.splice(idx,1);
-  await persistProg(); renderArmar();
+  renderArmar(); persistProg();
 };
 
 // ── GENERAR IMAGEN PARA WHATSAPP ──
