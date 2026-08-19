@@ -2013,6 +2013,23 @@ async function getUsers(){
   return a;
 }
 
+// Lee TODO el nodo registros de una sola vez (1 viaje en vez de 30) y lo cachea unos segundos.
+// Devuelve un objeto { uidEmpleado: { key: registro, ... }, ... }
+let _regsCache=null, _regsCacheAt=0;
+const REGS_CACHE_MS=8000; // 8 s: suficiente para reusar entre llamadas seguidas de un mismo render
+async function getRegistrosAll(forzar){
+  const ahora=Date.now();
+  if(!forzar && _regsCache && (ahora-_regsCacheAt)<REGS_CACHE_MS){
+    return _regsCache;
+  }
+  const snap=await get(ref(db,'registros'));
+  _regsCache = snap.exists()? snap.val() : {};
+  _regsCacheAt = ahora;
+  return _regsCache;
+}
+// Invalida la caché cuando se escribe algo en registros (para no mostrar datos viejos)
+function invalidarRegsCache(){ _regsCache=null; _regsCacheAt=0; }
+
 // ── AUTO-REGISTRO ASUETOS Y VACACIONES ────────────────
 async function autoRegistrarDiasEspeciales(regs, users){
   try{
@@ -3341,9 +3358,10 @@ async function renderAlertaAyer(){
       const estaJustificado=async(nombre)=>{
         const u=emps.find(e=>e.nombre===nombre);
         if(!u) return false;
-        const rsnap=await get(ref(db,`registros/${u.id}`));
-        if(!rsnap.exists()) return false;
-        return Object.values(rsnap.val()).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia));
+        const todos=await getRegistrosAll();
+        const regs=todos[u.id];
+        if(!regs) return false;
+        return Object.values(regs).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia));
       };
 
       for(const nm of res.noMarcoEntrada){
@@ -3656,12 +3674,13 @@ async function persistProg(){
 // Empleados con vacaciones/incapacidad/permiso aprobado en esa fecha
 async function empleadosAusentesFecha(fecha, empleados){
   const ausentes=[];
-  await Promise.all(empleados.map(async u=>{
-    const snap=await get(ref(db,`registros/${u.id}`));
-    if(!snap.exists()) return;
-    const hay=Object.values(snap.val()).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
+  const todos=await getRegistrosAll();
+  empleados.forEach(u=>{
+    const regs=todos[u.id];
+    if(!regs) return;
+    const hay=Object.values(regs).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
     if(hay) ausentes.push(u.id);
-  }));
+  });
   return ausentes;
 }
 
@@ -3950,12 +3969,13 @@ window.progGenerarImagen=async()=>{
   const users=await getUsers();
   const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
   const ausentes={vacaciones:[],incapacidad:[],permiso:[]};
-  await Promise.all(empleados.map(async u=>{
-    const snap=await get(ref(db,`registros/${u.id}`));
-    if(!snap.exists()) return;
-    const reg=Object.values(snap.val()).find(r=>r.fecha===progFecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
+  const todosRegs=await getRegistrosAll();
+  empleados.forEach(u=>{
+    const regs=todosRegs[u.id];
+    if(!regs) return;
+    const reg=Object.values(regs).find(r=>r.fecha===progFecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
     if(reg) ausentes[reg.tipoDia].push(nombreMostrar(u));
-  }));
+  });
 
   const campo=progGrupos.filter(g=>g.area==='campo');
   const plantel=progGrupos.filter(g=>g.area==='plantel');
@@ -4377,6 +4397,7 @@ window.guardarAusenciaUI=async()=>{
   try{ if(promesas.length) await Promise.all(promesas); }
   catch(e){ al.innerHTML='<div class="alert ae" style="font-size:12px">Error al guardar. Revisa tu conexión.</div>'; return; }
 
+  invalidarRegsCache();
   closeModal('moAusencia');
   let msg=`Se registraron ${escritos} día(s) de ${AUS_TIPO_LABEL[tipo].toLowerCase()} para ${emp?emp.nombre:''}.`;
   if(saltadosExiste) msg+=`\n${saltadosExiste} día(s) ya tenían registro y se respetaron.`;
@@ -4396,10 +4417,11 @@ async function renderAusencias(){
   // Recolectar ausencias activas/futuras (registros tipo incapacidad/vacaciones/permiso con fecha >= hoy)
   // Agrupamos por empleado+tipo+bloque contiguo para mostrar rangos
   const items=[];
-  await Promise.all(empleados.map(async u=>{
-    const snap=await get(ref(db,`registros/${u.id}`));
-    if(!snap.exists()) return;
-    const regs=Object.entries(snap.val())
+  const todosRegs=await getRegistrosAll();
+  empleados.forEach(u=>{
+    const raw=todosRegs[u.id];
+    if(!raw) return;
+    const regs=Object.entries(raw)
       .map(([key,r])=>({key,...r}))
       .filter(r=>['incapacidad','vacaciones','permiso'].includes(r.tipoDia)&&r.fecha&&r.fecha>=hoy)
       .sort((a,b)=>a.fecha.localeCompare(b.fecha));
@@ -4415,7 +4437,7 @@ async function renderAusencias(){
       }
     });
     if(bloque) items.push(bloque);
-  }));
+  });
 
   items.sort((a,b)=>a.ini.localeCompare(b.ini)||a.nombre.localeCompare(b.nombre));
 
@@ -4448,6 +4470,7 @@ window.eliminarAusencia=async(keys,uid,nombre)=>{
   try{
     await Promise.all(keys.map(k=>set(ref(db,`registros/${uid}/${k}`),null)));
   }catch(e){ alert('Error al quitar. Revisa tu conexión.'); return; }
+  invalidarRegsCache();
   renderAusencias();
 };
 
