@@ -202,6 +202,8 @@ initializeAppCheck(app, {
 const db = getDatabase(app);
 
 let me=null, editUID=null, rejKey=null, filtRegs=[], tipoDia='normal';
+const AUS_TIPO_LABEL={incapacidad:'Incapacidad',vacaciones:'Vacaciones',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
+const AUS_TIPOS=['vacaciones','incapacidad','permiso','bienestar','injustificado'];
 
 // today, ago, fmt, fmtLong -> importados de utils.js
 const $       = id => document.getElementById(id);
@@ -890,6 +892,8 @@ function modalsHTML(){
           <option value="incapacidad">Incapacidad</option>
           <option value="vacaciones">Vacaciones</option>
           <option value="permiso">Permiso (un día)</option>
+          <option value="bienestar">Día de bienestar (un día)</option>
+          <option value="injustificado">Permiso injustificado (un día)</option>
         </select>
       </div>
       <div class="fg">
@@ -1884,7 +1888,7 @@ async function loadHist(){
       return;
     }
 
-    const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso'};
+    const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
     l.innerHTML=items.map(r=>{
       const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
       if(esEspecial){
@@ -2220,7 +2224,7 @@ async function loadPend(){
   if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
     all=all.filter(r=>me.empleadosAsig.includes(r.userId));
   }
-  const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso'};
+  const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
   // HE pendientes + días especiales pendientes (solo incapacidad y vacaciones)
   const pendHE=all.filter(r=>r.he&&r.estadoHE==='pendiente');
   const pendEsp=all.filter(r=>r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente');  const pend=[...pendHE,...pendEsp].sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -2483,7 +2487,7 @@ window.cargarPerfilEmpleado=async()=>{
     const border=i>0?'border-top:1px solid var(--gray100);':'';
     const pendiente=r.he&&eh==='pendiente';
     const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
-    const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso'};
+    const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
     const pendEspecial=esEspecial&&r.estadoEspecial==='pendiente';
 
     if(esEspecial){
@@ -3371,7 +3375,7 @@ async function renderAlertaAyer(){
         const todos=await getRegistrosAll();
         const regs=todos[u.id];
         if(!regs) return false;
-        return Object.values(regs).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia));
+        return Object.values(regs).some(r=>r.fecha===fecha&&AUS_TIPOS.includes(r.tipoDia));
       };
 
       for(const nm of res.noMarcoEntrada){
@@ -3688,7 +3692,7 @@ async function empleadosAusentesFecha(fecha, empleados){
   empleados.forEach(u=>{
     const regs=todos[u.id];
     if(!regs) return;
-    const hay=Object.values(regs).some(r=>r.fecha===fecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
+    const hay=Object.values(regs).some(r=>r.fecha===fecha&&AUS_TIPOS.includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
     if(hay) ausentes.push(u.id);
   });
   return ausentes;
@@ -3977,12 +3981,12 @@ window.progGenerarImagen=async()=>{
   // Ausentes del día (incapacidad/permiso/vacaciones)
   const users=await getUsers();
   const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  const ausentes={vacaciones:[],incapacidad:[],permiso:[]};
+  const ausentes={vacaciones:[],incapacidad:[],permiso:[],bienestar:[],injustificado:[]};
   const todosRegs=await getRegistrosAll();
   empleados.forEach(u=>{
     const regs=todosRegs[u.id];
     if(!regs) return;
-    const reg=Object.values(regs).find(r=>r.fecha===progFecha&&['vacaciones','incapacidad','permiso'].includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
+    const reg=Object.values(regs).find(r=>r.fecha===progFecha&&AUS_TIPOS.includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
     if(reg) ausentes[reg.tipoDia].push(nombreMostrar(u));
   });
 
@@ -4005,8 +4009,8 @@ window.progGenerarImagen=async()=>{
   let alto=headH;
   if(campo.length){ alto+=seccH+campoCamps*campTit+campo.length*cardHt+30; }
   if(plantel.length){ alto+=seccH+plantelCamps*campTit+plantel.length*cardHt+30; }
-  const totalAusentes=ausentes.vacaciones.length+ausentes.incapacidad.length+ausentes.permiso.length;
-  if(totalAusentes){ alto+=seccH; if(ausentes.vacaciones.length)alto+=44; if(ausentes.incapacidad.length)alto+=44; if(ausentes.permiso.length)alto+=44; alto+=16; }
+  const totalAusentes=ausentes.vacaciones.length+ausentes.incapacidad.length+ausentes.permiso.length+ausentes.bienestar.length+ausentes.injustificado.length;
+  if(totalAusentes){ alto+=seccH; ['vacaciones','incapacidad','permiso','bienestar','injustificado'].forEach(k=>{ if(ausentes[k].length)alto+=44; }); alto+=16; }
   alto+=pad;
 
   const canvas=document.createElement('canvas');
@@ -4185,6 +4189,8 @@ window.progGenerarImagen=async()=>{
     linea('Vacaciones', ausentes.vacaciones);
     linea('Incapacidad', ausentes.incapacidad);
     linea('Permiso', ausentes.permiso);
+    linea('Día de bienestar', ausentes.bienestar);
+    linea('Permiso injustificado', ausentes.injustificado);
   }
 
   // ── Compartir o descargar ──
@@ -4344,7 +4350,6 @@ window.verHistorialDia=async(fecha)=>{
 };
 
 // ── AUSENCIAS (atajo de admin) ──
-const AUS_TIPO_LABEL={incapacidad:'Incapacidad',vacaciones:'Vacaciones',permiso:'Permiso'};
 
 window.openAusencia=async()=>{
   $('moAusenciaAlert').innerHTML='';
@@ -4373,9 +4378,9 @@ window.onAusTipoChange=()=>{
   } else if(tipo==='vacaciones'){
     diasWrap.style.display='none'; finWrap.style.display='';
     iniLbl.textContent='Fecha de inicio';
-  } else { // permiso
+  } else { // permiso, bienestar, injustificado: un solo día
     diasWrap.style.display='none'; finWrap.style.display='none';
-    iniLbl.textContent='Fecha del permiso';
+    iniLbl.textContent='Fecha';
   }
 };
 
@@ -4383,7 +4388,7 @@ window.onAusTipoChange=()=>{
 function ausenciaFechas(tipo, ini, dias, fin){
   const out=[];
   const d0=new Date(ini+'T12:00:00');
-  if(tipo==='permiso'){ out.push(ini); return out; }
+  if(tipo==='permiso'||tipo==='bienestar'||tipo==='injustificado'){ out.push(ini); return out; }
   if(tipo==='incapacidad'){
     const n=Math.max(1, parseInt(dias||'1',10));
     for(let i=0;i<n;i++){ const d=new Date(d0); d.setDate(d.getDate()+i); out.push(d.toISOString().split('T')[0]); }
@@ -4471,7 +4476,7 @@ async function renderAusencias(){
     if(!raw) return;
     const regs=Object.entries(raw)
       .map(([key,r])=>({key,...r}))
-      .filter(r=>['incapacidad','vacaciones','permiso'].includes(r.tipoDia)&&r.fecha&&r.fecha>=hoy)
+      .filter(r=>AUS_TIPOS.includes(r.tipoDia)&&r.fecha&&r.fecha>=hoy)
       .sort((a,b)=>a.fecha.localeCompare(b.fecha));
     if(!regs.length) return;
     // Agrupar días contiguos del mismo tipo en un rango
@@ -4494,7 +4499,7 @@ async function renderAusencias(){
     return;
   }
 
-  const badge={incapacidad:'br',vacaciones:'ba',permiso:'by'};
+  const badge={incapacidad:'br',vacaciones:'ba',permiso:'by',bienestar:'ba',injustificado:'br'};
   cont.innerHTML=`<div class="card" style="padding:0">${items.map(it=>{
     const rango = it.ini===it.fin ? fmt(it.ini) : `${fmt(it.ini)} — ${fmt(it.fin)}`;
     return `<div class="aus-row">
