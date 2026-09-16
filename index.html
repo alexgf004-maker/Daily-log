@@ -1048,6 +1048,15 @@ window.doLogout=()=>{
 };
 const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
 
+// Pedir almacenamiento "persistente": en Android, Chrome puede borrar
+// localStorage de sitios que no lo tienen cuando el teléfono anda bajo de
+// espacio (muy común en los equipos del personal de campo), aunque la app
+// se use a diario — esto evita que la sesión se pierda por esa limpieza
+// automática. No muestra ningún diálogo al usuario.
+if(navigator.storage && navigator.storage.persist){
+  navigator.storage.persist().catch(()=>{});
+}
+
 // ── RESTORE SESSION ON PAGE LOAD ──────────────────
 (async()=>{
   try{
