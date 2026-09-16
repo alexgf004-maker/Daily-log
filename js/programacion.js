@@ -63,36 +63,56 @@ export const ZONAS = [
 ];
 
 // ── CATÁLOGOS: leer y sembrar ──────────────────────────
+// Los catálogos casi no cambian (solo se editan desde la sub-pestaña
+// "Catálogos"), pero se vuelven a pedir cada vez que se abre la pestaña de
+// Programación. Se cachean unos segundos, como ya se hace con usuarios y
+// registros en index.html, y se invalidan al guardar/eliminar un elemento.
+let _campCache=null, _campCacheAt=0;
+let _vehCache=null, _vehCacheAt=0;
+const CATALOGO_CACHE_MS=30000; // 30 s
+
 export async function obtenerCampanias(db, fns){
+  const ahora=Date.now();
+  if(_campCache && (ahora-_campCacheAt)<CATALOGO_CACHE_MS) return _campCache;
   const {ref,get}=fns;
   const snap=await get(ref(db,'config/campanias'));
-  if(!snap.exists()) return [];
-  return Object.entries(snap.val()).map(([id,v])=>({id,...v}));
+  _campCache = snap.exists() ? Object.entries(snap.val()).map(([id,v])=>({id,...v})) : [];
+  _campCacheAt = ahora;
+  return _campCache;
 }
 
 export async function obtenerVehiculos(db, fns){
+  const ahora=Date.now();
+  if(_vehCache && (ahora-_vehCacheAt)<CATALOGO_CACHE_MS) return _vehCache;
   const {ref,get}=fns;
   const snap=await get(ref(db,'config/vehiculos'));
-  if(!snap.exists()) return [];
-  return Object.entries(snap.val()).map(([id,v])=>({id,...v}));
+  _vehCache = snap.exists() ? Object.entries(snap.val()).map(([id,v])=>({id,...v})) : [];
+  _vehCacheAt = ahora;
+  return _vehCache;
 }
 
+function invalidarCatalogoCampanias(){ _campCache=null; _campCacheAt=0; }
+function invalidarCatalogoVehiculos(){ _vehCache=null; _vehCacheAt=0; }
+
 // Siembra los catálogos SOLO si están vacíos. Devuelve true si sembró.
+// Reusa obtenerCampanias/obtenerVehiculos (en vez de leer los nodos aparte)
+// para no duplicar la misma lectura dos veces.
 export async function sembrarCatalogos(db, fns){
-  const {ref,get,push,set}=fns;
+  const {ref,push,set}=fns;
   let sembro=false;
-  const camp=await get(ref(db,'config/campanias'));
-  if(!camp.exists()){
+  const [camp,veh]=await Promise.all([obtenerCampanias(db,fns), obtenerVehiculos(db,fns)]);
+  if(camp.length===0){
     for(const c of CAMPANIAS_SEED){
       await set(push(ref(db,'config/campanias')), { ...c, activa:true });
     }
+    invalidarCatalogoCampanias();
     sembro=true;
   }
-  const veh=await get(ref(db,'config/vehiculos'));
-  if(!veh.exists()){
+  if(veh.length===0){
     for(const v of VEHICULOS_SEED){
       await set(push(ref(db,'config/vehiculos')), { ...v, estado:'disponible' });
     }
+    invalidarCatalogoVehiculos();
     sembro=true;
   }
   return sembro;
@@ -101,25 +121,29 @@ export async function sembrarCatalogos(db, fns){
 // ── CATÁLOGOS: alta / edición / baja ───────────────────
 export async function guardarCampania(db, fns, id, datos){
   const {ref,set,push,update}=fns;
-  if(id){ await update(ref(db,`config/campanias/${id}`), datos); return id; }
+  if(id){ await update(ref(db,`config/campanias/${id}`), datos); invalidarCatalogoCampanias(); return id; }
   const nuevo=push(ref(db,'config/campanias'));
   await set(nuevo, { ...datos, activa:true });
+  invalidarCatalogoCampanias();
   return nuevo.key;
 }
 export async function eliminarCampania(db, fns, id){
   const {ref,set}=fns;
   await set(ref(db,`config/campanias/${id}`), null);
+  invalidarCatalogoCampanias();
 }
 export async function guardarVehiculo(db, fns, id, datos){
   const {ref,set,push,update}=fns;
-  if(id){ await update(ref(db,`config/vehiculos/${id}`), datos); return id; }
+  if(id){ await update(ref(db,`config/vehiculos/${id}`), datos); invalidarCatalogoVehiculos(); return id; }
   const nuevo=push(ref(db,'config/vehiculos'));
   await set(nuevo, { estado:'disponible', campanias:[], ...datos });
+  invalidarCatalogoVehiculos();
   return nuevo.key;
 }
 export async function eliminarVehiculo(db, fns, id){
   const {ref,set}=fns;
   await set(ref(db,`config/vehiculos/${id}`), null);
+  invalidarCatalogoVehiculos();
 }
 
 // ── PROGRAMACIÓN DIARIA ────────────────────────────────

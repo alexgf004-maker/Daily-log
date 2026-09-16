@@ -77,6 +77,26 @@ function obtenerUbicacion(){
   });
 }
 
+// ── Adelanto de GPS ─────────────────────────────────────
+// Pedir el GPS es lo que más tarda al marcar (varios segundos). Para que el
+// botón responda rápido, la pantalla dispara esta función apenas se muestra
+// la tarjeta de marcaje, antes de que el usuario toque el botón. Si al tocar
+// el botón esa misma obtención (o una reciente) sigue vigente, se reutiliza
+// en vez de pedir el GPS otra vez desde cero.
+let _posPromise=null, _posPromiseAt=0;
+const POS_PREFETCH_MS=15000; // 15 s: suficiente entre que se abre la pantalla y se toca el botón
+
+export function prefetchUbicacion(){
+  _posPromise=obtenerUbicacion();
+  _posPromiseAt=Date.now();
+  _posPromise.catch(()=>{}); // evita "unhandled rejection" si nadie llega a consumirla
+}
+
+function obtenerUbicacionRapida(){
+  if(_posPromise && (Date.now()-_posPromiseAt)<POS_PREFETCH_MS) return _posPromise;
+  return obtenerUbicacion();
+}
+
 // ── Marcar entrada o salida ──
 // ── Vínculo de dispositivo ──────────────────────────────
 // Genera/recupera un identificador único para este celular, guardado localmente.
@@ -96,9 +116,27 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
   const sede=sedeEfectiva(user, hoy);
   if(!sede){ const e=new Error('Sin sede asignada'); e.code='SIN_SEDE'; throw e; }
 
-  // Verificar vínculo de dispositivo — evita que alguien marque desde otro celular en tu nombre
   const deviceId=obtenerDispositivoId();
-  const dispSnap=await get(ref(db,`users/${user.id}/dispositivoId`));
+  const path=`marcajes/${user.id}/${hoy}`;
+
+  // Estas tres operaciones no dependen entre sí, así que se disparan juntas
+  // en vez de esperarlas una por una — el GPS (lo que más tarda) se solapa
+  // con las lecturas de Firebase en vez de empezar después de ellas.
+  let dispSnap, snap, pos;
+  try{
+    [dispSnap, snap, pos]=await Promise.all([
+      get(ref(db,`users/${user.id}/dispositivoId`)),
+      get(ref(db,path)),
+      obtenerUbicacionRapida(),
+    ]);
+  }catch(err){
+    if(err instanceof Error && ['PERMISO_DENEGADO','GPS_TIMEOUT','GPS_ERROR','SIN_GPS'].includes(err.message)){
+      const e=new Error('No se pudo obtener tu ubicación'); e.code=err.message; throw e;
+    }
+    throw err;
+  }
+
+  // Verificar vínculo de dispositivo — evita que alguien marque desde otro celular en tu nombre
   const dispositivoRegistrado=dispSnap.exists()?dispSnap.val():null;
   if(!dispositivoRegistrado){
     // Primera vez que esta cuenta marca — queda vinculada a este dispositivo
@@ -107,10 +145,6 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
     const e=new Error('Esta cuenta ya está vinculada a otro celular. Contacta a Madelyn para reactivarla.');
     e.code='DISPOSITIVO_NO_COINCIDE'; throw e;
   }
-
-  let pos;
-  try{ pos=await obtenerUbicacion(); }
-  catch(err){ const e=new Error('No se pudo obtener tu ubicación'); e.code=err.message; throw e; }
 
   const dist=haversineMetros(pos.coords.latitude,pos.coords.longitude,sede.lat,sede.lng);
   if(dist>sede.radio){
@@ -121,8 +155,6 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
     const e=new Error(msg); e.code='FUERA_DE_RANGO'; e.distancia=Math.round(dist); throw e;
   }
 
-  const path=`marcajes/${user.id}/${hoy}`;
-  const snap=await get(ref(db,path));
   const existente=snap.exists()?snap.val():{};
   if(existente[tipo]){ const e=new Error('Ya marcaste tu '+tipo+' hoy'); e.code='YA_MARCADO'; throw e; }
 

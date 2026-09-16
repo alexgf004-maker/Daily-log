@@ -177,7 +177,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
-import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje } from "./js/marcaje.js";
+import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje, prefetchUbicacion } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
@@ -1545,6 +1545,11 @@ async function renderMarcajeCard(){
         </div>
       </div>
     </div>`;
+
+  // Adelantar la obtención de GPS mientras el usuario todavía está leyendo la
+  // pantalla, para que al tocar "Marcar" la ubicación ya esté lista o casi.
+  // Solo si falta algo por marcar (si ya marcó salida, no hace falta GPS).
+  if(!salida) prefetchUbicacion();
 }
 
 window.marcarAsistenciaUI=async function(tipo){
@@ -3635,10 +3640,13 @@ function nombreMostrar(u){ return (u&&u.nombreCorto&&u.nombreCorto.trim())?u.nom
 
 async function initProgramacion(){
   progSub('armar');
-  // Sembrar catálogos la primera vez
+  // Sembrar catálogos la primera vez (ya cachea internamente, no relee de más)
   try{ await sembrarCatalogos(db,{ref,get,push,set}); }catch(e){}
-  progCampanias=await obtenerCampanias(db,{ref,get});
-  progVehiculos=await obtenerVehiculos(db,{ref,get});
+  const [camp,veh]=await Promise.all([
+    obtenerCampanias(db,{ref,get}),
+    obtenerVehiculos(db,{ref,get}),
+  ]);
+  progCampanias=camp; progVehiculos=veh;
   // Fecha por defecto: hoy
   progFecha=today();
   await cargarProgramacionFecha(progFecha);
@@ -3659,7 +3667,13 @@ window.progSub=(cual)=>{
 // ── ARMAR PROGRAMACIÓN ──
 async function cargarProgramacionFecha(fecha){
   progFecha=fecha;
-  const prog=await obtenerProgramacion(db,{ref,get},fecha);
+  // Se dispara junto con el "calentado" de los cachés de usuarios/registros
+  // que usa renderArmar, para que esa lectura no vuelva a esperar en cadena.
+  const [prog]=await Promise.all([
+    obtenerProgramacion(db,{ref,get},fecha),
+    getUsers(),
+    getRegistrosAll(),
+  ]);
   progGrupos = prog?.grupos ? JSON.parse(JSON.stringify(prog.grupos)) : [];
   progNoDisp = prog?.noDisponibles ? JSON.parse(JSON.stringify(prog.noDisponibles)) : {personal:[],vehiculos:[]};
   renderArmar();
@@ -3904,7 +3918,7 @@ window.progElegirVeh=(idx,vid)=>{
   renderArmar(); persistProg();
 };
 window.progVerNoDisp=async()=>{
-  const users=await getUsers();
+  const [users]=await Promise.all([getUsers(), getRegistrosAll()]);
   const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
   const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
   const nombres=ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?nombreMostrar(u):'';}).filter(Boolean);
