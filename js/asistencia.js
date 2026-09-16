@@ -94,8 +94,10 @@ export function resumenMesEmpleado(mes, uid, marcajesPorFecha, regsPorFecha, sab
     }
 
     const item={ fecha, entrada:entrada||null, salida:salida||null };
-    if(entrada?.estado==='tarde'){ diasTarde++; minTarde+=(entrada.minDiff||0); }
-    if(salida?.estado==='salida_temprana'){ salidasTemp++; minTemp+=(salida.minDiff||0); }
+    // Una tardanza/salida temprana justificada por el admin no cuenta en el recuento del mes,
+    // pero se sigue mostrando en el detalle (chipEstado la marca como "Justificado").
+    if(entrada?.estado==='tarde' && !entrada.justificado){ diasTarde++; minTarde+=(entrada.minDiff||0); }
+    if(salida?.estado==='salida_temprana' && !salida.justificado){ salidasTemp++; minTemp+=(salida.minDiff||0); }
     detalle.push(item);
   }
 
@@ -182,11 +184,12 @@ export function asistenciaHoy(empleados, marcajesHoy, hoy, sabadosLaborales){
     const m=marcajesHoy[u.id];
     // Ingresos: todos los que marcaron entrada, con hora y estado
     if(m?.entrada){
-      ingresos.push({nombre:u.nombre, hora:m.entrada.horaStr, estado:m.entrada.estado, min:m.entrada.minDiff||0});
+      ingresos.push({nombre:u.nombre, hora:m.entrada.horaStr, estado:m.entrada.estado, min:m.entrada.minDiff||0, justificado:!!m.entrada.justificado});
     }
-    if(m?.entrada?.estado==='tarde') tarde.push({nombre:u.nombre, min:m.entrada.minDiff||0, hora:m.entrada.horaStr});
+    // Una tardanza/salida temprana justificada no cuenta en las listas/contadores del día.
+    if(m?.entrada?.estado==='tarde' && !m.entrada.justificado) tarde.push({nombre:u.nombre, min:m.entrada.minDiff||0, hora:m.entrada.horaStr});
     else if(m?.entrada?.estado==='a_tiempo') aTiempo.push({nombre:u.nombre, hora:m.entrada.horaStr});
-    if(m?.salida?.estado==='salida_temprana') salidaTemprana.push({nombre:u.nombre, min:m.salida.minDiff||0, hora:m.salida.horaStr});
+    if(m?.salida?.estado==='salida_temprana' && !m.salida.justificado) salidaTemprana.push({nombre:u.nombre, min:m.salida.minDiff||0, hora:m.salida.horaStr});
     if(!m?.entrada) noMarcoEntrada.push({nombre:u.nombre});
     if(!m?.salida) noMarcoSalida.push({nombre:u.nombre});
   }

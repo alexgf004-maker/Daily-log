@@ -76,7 +76,9 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   viatico, he, estadoViatico, estadoHE, estadoEspecial, vacIni?, vacFin?, nota?, ...}`.
   `tipoDia` puede ser: `normal`, `vacaciones`, `incapacidad`, `permiso`, `bienestar`,
   `injustificado`, `asueto`.
-- `marcajes/...`: marcajes de entrada/salida por GPS con timestamp de servidor.
+- `marcajes/{uid}/{fecha}/{entrada|salida}`: marcaje GPS con timestamp de servidor
+  (`ts, lat, lng, precision, sedeUsada, estado, horaStr, minDiff`). Puede tener además
+  `justificado: {por, nombre, nota, ts}` — ver sección 5, "Justificar tardanzas".
 - `config/`: configuración varia (incluye `config/vehiculos`, `config/campanias`,
   `config/sabadosLaborales`).
 - `programaciones/{fecha}`: `{grupos:[{campania, area, empleados[], empleadosNombres[],
@@ -128,6 +130,16 @@ importante — ver sección 7.**
     registrados** (no duplica ni pisa). Saca a la persona de "Personal libre" esos días.
 - **Aprendizaje transversal de diseño**: en celular no caben "personal fijo + campañas"
   a la vez; validar el enfoque antes de construir. La app se usa **mayormente en celular**.
+- **Justificar tardanzas/salidas tempranas** (para que no ensucien el recuento del mes):
+  solo el **admin** puede justificar (los asistentes ven el detalle pero no el botón).
+  Se hace desde el detalle mensual de Asistencia (clic en un empleado → junto a cada
+  tardanza/salida temprana hay un enlace "Justificar" / "Quitar justificación"). Guarda
+  `justificado:{por, nombre, nota, ts}` dentro del propio `marcajes/{uid}/{fecha}/{tipo}`
+  (no se borra ni se mueve el marcaje original — el dato crudo se conserva siempre).
+  Una marca justificada **no cuenta** en `diasTarde`/`minTarde`/`salidasTemp`/`minTemp`
+  (mensual) ni en las listas/contadores del día (`asistenciaHoy`/`asistenciaDia`), pero
+  sigue mostrándose en el detalle y en el Excel exportado con el badge "Justificado", en
+  vez de ocultarse — es trazabilidad, no borrado.
 
 ---
 

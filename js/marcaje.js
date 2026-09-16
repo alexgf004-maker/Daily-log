@@ -201,11 +201,21 @@ export async function obtenerMarcajesMes(db, fns, uid, mes){
 // Formato corto para badges/chips en listas
 export function chipEstado(marc){
   if(!marc||!marc.estado) return {texto:'—',color:'bn'};
+  if(marc.justificado) return {texto:'Justificado',color:'bn'};
   const {estado,minDiff}=marc;
   if(estado==='tarde') return {texto:`${minDiff} min tarde`,color:'br'};
   if(estado==='salida_temprana') return {texto:`${minDiff} min antes`,color:'br'};
   if(estado==='a_tiempo') return {texto:'A tiempo',color:'ba'};
   return {texto:'—',color:'bn'};
+}
+
+// ── Justificar (o quitar justificación de) una tardanza/salida temprana ──
+// Solo debe llamarse desde la UI de admin (el permiso se controla ahí, no aquí).
+// datos: { por:uid, nombre, nota } para marcar, o null para quitar la justificación.
+export async function justificarMarcaje(db, fns, uid, fecha, tipo, datos){
+  const {ref,update}=fns;
+  const justificado = datos ? { ...datos, ts:{ '.sv':'timestamp' } } : null;
+  await update(ref(db,`marcajes/${uid}/${fecha}/${tipo}`), { justificado });
 }
 
 // Frase completa para el mensaje de confirmación al marcar

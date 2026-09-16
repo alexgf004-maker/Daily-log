@@ -189,6 +189,7 @@ tbody tr:hover td{background:var(--bluelt)}
 .asist-bad{color:var(--danger);font-weight:700}
 .asist-det-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--gray200);font-size:13px}
 .asist-det-row:last-child{border-bottom:none}
+.asist-just-btn{font-size:10px;color:var(--blue);text-decoration:underline;cursor:pointer;white-space:nowrap}
 @keyframes sp{to{transform:rotate(360deg)}}
 .rc{background:#fff;border:1px solid var(--gray200);border-radius:var(--r);padding:12px 15px;margin-bottom:8px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
 .rc:hover{border-color:var(--blue2);box-shadow:var(--sh2)}

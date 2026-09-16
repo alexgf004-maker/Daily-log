@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=17">
+<link rel="stylesheet" href="css/styles.css?v=18">
 </head>
 <body>
 
@@ -177,7 +177,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
-import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje, prefetchUbicacion } from "./js/marcaje.js";
+import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
@@ -3319,12 +3319,14 @@ async function renderDashAsist(){
       <div style="margin-bottom:12px">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Ingresos del día (${res.ingresos.length})</div>
         ${lista(res.ingresos.sort((a,b)=>(a.hora||'').localeCompare(b.hora||'')),x=>{
-          const esTarde=x.estado==='tarde';
+          const esTarde=x.estado==='tarde'&&!x.justificado;
+          const txt=x.justificado?'Justificado':(esTarde?x.min+' min tarde':'A tiempo');
+          const color=x.justificado?'bn':(esTarde?'br':'ba');
           return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px">
             <span>${x.nombre}</span>
             <span style="display:flex;align-items:center;gap:6px">
               <span style="font-weight:600">${x.hora}</span>
-              <span class="badge ${esTarde?'br':'ba'}" style="font-size:10px">${esTarde?x.min+' min tarde':'A tiempo'}</span>
+              <span class="badge ${color}" style="font-size:10px">${txt}</span>
             </span>
           </div>`;
         })}
@@ -3506,20 +3508,41 @@ window.cargarAsistencia=async()=>{
 
 function renderAsistDetalle(fila){
   if(!fila.detalle.length) return '<div style="font-size:12px;color:var(--text2)">Sin días hábiles en el mes.</div>';
+  // Justificar tardanzas/salidas tempranas es una decisión de admin, no de asistente.
+  const puedeJustificar=isAdmin();
+  const btnJustificar=(tipo,marc)=>{
+    if(!puedeJustificar) return '';
+    const yaJust=!!marc.justificado;
+    return `<span class="asist-just-btn" onclick="event.stopPropagation();justificarTardanzaUI('${fila.uid}','${marc.__fecha}','${tipo}',${yaJust})">${yaJust?'Quitar justificación':'Justificar'}</span>`;
+  };
   return fila.detalle.map(d=>{
     if(d.tipo==='no_marco') return `<div class="asist-det-row"><span>${fmt(d.fecha)}</span><span class="badge br" style="font-size:10px">No marcó</span></div>`;
     if(d.tipo==='justificado') return `<div class="asist-det-row"><span>${fmt(d.fecha)}</span><span class="badge bn" style="font-size:10px">${d.tipoDia||'justificado'}</span></div>`;
     const chipE=d.entrada?chipEstado(d.entrada):null;
     const chipS=d.salida?chipEstado(d.salida):null;
+    const mostrarJustEntrada=d.entrada?.estado==='tarde';
+    const mostrarJustSalida=d.salida?.estado==='salida_temprana';
     return `<div class="asist-det-row">
       <span>${fmt(d.fecha)}</span>
-      <span style="display:flex;gap:12px;font-size:12px;flex-wrap:wrap;justify-content:flex-end">
-        <span>Entrada ${d.entrada?`<b>${d.entrada.horaStr}</b> <span class="badge ${chipE.color}" style="font-size:9px">${chipE.texto}</span>`:'—'}</span>
-        <span>Salida ${d.salida?`<b>${d.salida.horaStr}</b> <span class="badge ${chipS.color}" style="font-size:9px">${chipS.texto}</span>`:'—'}</span>
+      <span style="display:flex;gap:12px;font-size:12px;flex-wrap:wrap;justify-content:flex-end;align-items:center">
+        <span>Entrada ${d.entrada?`<b>${d.entrada.horaStr}</b> <span class="badge ${chipE.color}" style="font-size:9px">${chipE.texto}</span>${mostrarJustEntrada?btnJustificar('entrada',{...d.entrada,__fecha:d.fecha}):''}`:'—'}</span>
+        <span>Salida ${d.salida?`<b>${d.salida.horaStr}</b> <span class="badge ${chipS.color}" style="font-size:9px">${chipS.texto}</span>${mostrarJustSalida?btnJustificar('salida',{...d.salida,__fecha:d.fecha}):''}`:'—'}</span>
       </span>
     </div>`;
   }).join('');
 }
+
+window.justificarTardanzaUI=async(uid,fecha,tipo,yaJustificado)=>{
+  if(yaJustificado){
+    if(!confirm('¿Quitar la justificación de esta marca? Volverá a contar en el recuento del mes.')) return;
+    await justificarMarcaje(db,{ref,update},uid,fecha,tipo,null);
+  } else {
+    const nota=prompt('Motivo de la justificación (opcional):','');
+    if(nota===null) return; // canceló
+    await justificarMarcaje(db,{ref,update},uid,fecha,tipo,{por:me.id,nombre:me.nombre,nota:nota||''});
+  }
+  cargarAsistencia();
+};
 
 window.toggleAsistDetalle=(i)=>{
   const row=$('asistDet'+i);
