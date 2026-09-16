@@ -3664,6 +3664,8 @@ let progVehAbierto=null; // índice de grupo con el selector de vehículo abiert
 let progPersLibres=[];   // personal libre actual (para el panel)
 let progAusentesLista=[];// nombres de no disponibles (para el panel)
 let progVerMas={campo:false,plantel:false}; // "ver más" campañas por área
+let progEmpleados=[];    // empleados activos, cargados una vez por fecha (no en cada clic)
+let progAusentes=[];     // uids ausentes (vacaciones/incapacidad/permiso) para progFecha
 
 window.progToggleVerMas=(area)=>{ progVerMas[area]=!progVerMas[area]; renderArmar(); };
 
@@ -3697,17 +3699,20 @@ window.progSub=(cual)=>{
 };
 
 // ── ARMAR PROGRAMACIÓN ──
+// Carga los datos de una fecha UNA sola vez (usuarios, ausentes, programación).
+// renderArmar() ya no vuelve a pedir nada de esto en cada clic — por eso cada
+// acción del tablero (asignar, quitar, crear grupo) redibuja al instante.
 async function cargarProgramacionFecha(fecha){
   progFecha=fecha;
-  // Se dispara junto con el "calentado" de los cachés de usuarios/registros
-  // que usa renderArmar, para que esa lectura no vuelva a esperar en cadena.
-  const [prog]=await Promise.all([
+  const [prog,users]=await Promise.all([
     obtenerProgramacion(db,{ref,get},fecha),
     getUsers(),
-    getRegistrosAll(),
+    getRegistrosAll(), // calienta el caché para que empleadosAusentesFecha no espere de nuevo
   ]);
   progGrupos = prog?.grupos ? JSON.parse(JSON.stringify(prog.grupos)) : [];
   progNoDisp = prog?.noDisponibles ? JSON.parse(JSON.stringify(prog.noDisponibles)) : {personal:[],vehiculos:[]};
+  progEmpleados = users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+  progAusentes = await empleadosAusentesFecha(fecha, progEmpleados);
   renderArmar();
 }
 
@@ -3744,13 +3749,14 @@ async function empleadosAusentesFecha(fecha, empleados){
   return ausentes;
 }
 
-async function renderArmar(){
+function renderArmar(){
   const cont=$('progArmarBody');
   if(!cont) return;
 
-  const users=await getUsers();
-  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
+  // Usa lo que ya se cargó en cargarProgramacionFecha — nada de red aquí,
+  // así cada acción del tablero repinta de inmediato.
+  const empleados=progEmpleados;
+  const ausentesAuto=progAusentes;
 
   // Conjunto de asignados (personas y vehículos ya en algún grupo)
   const persAsignadas=new Set();
@@ -3906,13 +3912,12 @@ window.progDrop=(ev,idx)=>{
 };
 
 // ── Asignar persona o vehículo a un grupo ──
-async function asignarAGrupo(idx, tipo, id){
+function asignarAGrupo(idx, tipo, id){
   const g=progGrupos[idx];
   if(!g) return;
   if(tipo==='pers'){
     if(!(g.empleados||[]).includes(id)){
-      const users=await getUsers(); // cacheado, no golpea la red si es reciente
-      const u=users.find(x=>x.id===id);
+      const u=progEmpleados.find(x=>x.id===id); // ya cargado, sin ir a Firebase
       g.empleados=g.empleados||[]; g.empleadosNombres=g.empleadosNombres||[];
       g.empleados.push(id); g.empleadosNombres.push(nombreMostrar(u));
     }
@@ -3949,11 +3954,8 @@ window.progElegirVeh=(idx,vid)=>{
   progVehAbierto=null;
   renderArmar(); persistProg();
 };
-window.progVerNoDisp=async()=>{
-  const [users]=await Promise.all([getUsers(), getRegistrosAll()]);
-  const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  const ausentesAuto=await empleadosAusentesFecha(progFecha, empleados);
-  const nombres=ausentesAuto.map(uid=>{const u=empleados.find(e=>e.id===uid);return u?nombreMostrar(u):'';}).filter(Boolean);
+window.progVerNoDisp=()=>{
+  const nombres=progAusentes.map(uid=>{const u=progEmpleados.find(e=>e.id===uid);return u?nombreMostrar(u):'';}).filter(Boolean);
   if(!nombres.length){ alert('No hay personal marcado como no disponible hoy.'); return; }
   alert('No disponibles hoy (vacaciones/permiso/incapacidad):\n\n'+nombres.join('\n'));
 };
