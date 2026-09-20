@@ -4,10 +4,11 @@
 // desde index.html — no inicializa su propia conexión a Firebase.
 
 export const SEDES = {
-  plantel:      { nombre:'Plantel Central',            lat:13.688409755143281, lng:-89.27993065477382, radio:100 },
-  cucumacayan:  { nombre:'Subestación Cucumacayán',    lat:13.693570433295193, lng:-89.20564341328895, radio:100 },
-  zacatecoluca: { nombre:'Subestación Zacatecoluca',   lat:13.508016211954466, lng:-88.86875891706555, radio:100 },
-  prueba:       { nombre:'Prueba — no usar',           lat:13.828394851402207, lng:-89.26711982035171, radio:100 },
+  plantel:      { nombre:'Plantel Central',                     lat:13.688409755143281, lng:-89.27993065477382, radio:100 },
+  gestionmedida:{ nombre:'Plantel Central · Gestión de la medida', lat:13.687696, lng:-89.280831, radio:100 },
+  cucumacayan:  { nombre:'Subestación Cucumacayán',             lat:13.693570433295193, lng:-89.20564341328895, radio:100 },
+  zacatecoluca: { nombre:'Subestación Zacatecoluca',            lat:13.508016211954466, lng:-88.86875891706555, radio:100 },
+  prueba:       { nombre:'Prueba — no usar',                    lat:13.828394851402207, lng:-89.26711982035171, radio:100 },
 };
 
 // ── Distancia entre dos puntos GPS (fórmula de Haversine) ──

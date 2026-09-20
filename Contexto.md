@@ -93,12 +93,17 @@ importante — ver sección 7.**
 
 ## 5. Decisiones de diseño ya tomadas (no revertir sin consultar)
 
-- **Marcaje GPS**: 3 sedes con radio 100 m — Plantel Central
-  (13.688409755143281, -89.27993065477382), Subestación Cucumacayán
+- **Marcaje GPS**: sedes con radio 100 m — Plantel Central
+  (13.688409755143281, -89.27993065477382), Plantel Central · Gestión de la
+  medida (13.687696, -89.280831), Subestación Cucumacayán
   (13.693570433295193, -89.20564341328895), Subestación Zacatecoluca
   (13.508016211954466, -88.86875891706555). Hora de servidor, no del teléfono.
   Horario: L-J 07:00-17:00, V 07:00-16:00, Sáb 06:00-14:00, Dom sin evaluación.
-  Tolerancia 0 min (7:00 en punto).
+  Tolerancia 0 min (7:00 en punto). El horario es global (igual para todas las
+  sedes); si más adelante una sede necesita horario propio, se agregará como
+  override por sede. Las sedes viven en SEDES (js/marcaje.js) y se listan a mano
+  en 3 <select> de index.html (uSede, adPerfilSede, sedeTempSede): agregar una
+  requiere tocar los 4 lugares.
 - **Vínculo de dispositivo anti-fraude**: cada empleado queda vinculado a un
   `dispositivoId` (UUID en localStorage); si marca desde otro equipo se bloquea. El admin
   puede reiniciar el vínculo.
