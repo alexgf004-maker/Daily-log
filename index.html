@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=19">
+<link rel="stylesheet" href="css/styles.css?v=20">
 </head>
 <body>
 
@@ -3804,11 +3804,12 @@ function renderArmar(){
   // Caja de un grupo
   const cajaGrupo=(g)=>{
     const idx=progGrupos.indexOf(g);
+    const vacio=!(g.empleados&&g.empleados.length); // sin nadie asignado: se ve como "espacio para llenar"
     const personas=(g.empleados||[]).map((uid,k)=>{
       const nom=(g.empleadosNombres||[])[k]||'';
       return `<span class="tbl-asig tbl-asig-pers" onclick="event.stopPropagation();progQuitarPersona(${idx},'${uid}')">${nom} <span class="tbl-x">×</span></span>`;
     }).join('');
-    return `<div class="tbl-grupo" ondragover="progDragOver(event)" ondrop="progDrop(event,${idx})" onclick="progTapCaja(${idx})">
+    return `<div class="tbl-grupo${vacio?' tbl-grupo-vacio':''}" ondragover="progDragOver(event)" ondrop="progDrop(event,${idx})" onclick="progTapCaja(${idx})">
       <div class="tbl-grupo-top">
         <span class="tbl-grupo-num">Grupo ${(g.__n||0)}</span>
         <div style="display:flex;align-items:center;gap:8px">
