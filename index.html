@@ -3759,6 +3759,17 @@ window.progCopiarElegir=(f,el)=>{
   if(el) el.classList.add('sel');
 };
 
+// Vaciar toda la programación del día — para rehacerla de cero, p.ej. si
+// se copió de otro día y no sirve. Pide confirmación (es irreversible).
+window.progVaciar=async()=>{
+  if(!progGrupos.length) return;
+  if(!confirm('Esto borrará todos los grupos de la programación del '+fmt(progFecha)+'. ¿Continuar?')) return;
+  progGrupos=[];
+  progNoDisp={personal:[],vehiculos:[]};
+  renderArmar();
+  await persistProg();
+};
+
 window.confirmarCopiarProg=async()=>{
   const fecha=$('copiarProgFecha').value;
   const al=$('moCopiarProgAlert');
@@ -3901,6 +3912,7 @@ function renderArmar(){
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <input type="date" id="progFechaInput" value="${progFecha}" onchange="progCambiarFecha(this.value)" style="padding:6px 10px;font-size:13px;border:1px solid var(--gray200);border-radius:6px">
         <button class="btn btn-gh btn-sm" onclick="abrirCopiarProg()">Copiar de...</button>
+        ${progGrupos.length?`<button class="btn btn-d btn-sm" onclick="progVaciar()">Vaciar</button>`:''}
         <button class="btn btn-g btn-sm" onclick="progGenerarImagen()">Compartir imagen</button>
       </div>
     </div>
