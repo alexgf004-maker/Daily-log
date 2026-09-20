@@ -3746,9 +3746,17 @@ window.abrirCopiarProg=async()=>{
   inp.value=anteriores[0]||'';
   const lista=$('copiarProgRecientes');
   lista.innerHTML=anteriores.length
-    ? anteriores.slice(0,8).map(f=>`<span class="tbl-chip tbl-chip-pers" style="cursor:pointer" onclick="$('copiarProgFecha').value='${f}'">${fmtLong(f).replace(/^\w/,c=>c.toUpperCase())}</span>`).join('')
+    ? anteriores.slice(0,8).map((f,i)=>`<span class="tbl-chip tbl-chip-pers${i===0?' sel':''}" style="cursor:pointer" onclick="progCopiarElegir('${f}',this)">${fmtLong(f).replace(/^\w/,c=>c.toUpperCase())}</span>`).join('')
     : '<div style="font-size:12px;color:var(--text2)">No hay programaciones guardadas antes de esta fecha.</div>';
   $('moCopiarProg').classList.add('open');
+};
+
+// El chip fija la fecha en el campo y se resalta. (Se necesita en window
+// porque los onclick del HTML corren en ámbito global, donde $ no existe.)
+window.progCopiarElegir=(f,el)=>{
+  const inp=$('copiarProgFecha'); if(inp) inp.value=f;
+  document.querySelectorAll('#copiarProgRecientes .tbl-chip').forEach(c=>c.classList.remove('sel'));
+  if(el) el.classList.add('sel');
 };
 
 window.confirmarCopiarProg=async()=>{
