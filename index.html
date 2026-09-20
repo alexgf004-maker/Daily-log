@@ -813,6 +813,22 @@ function modalsHTML(){
       </div>
     </div>
   </div>
+  <div class="mo" id="moCopiarProg">
+    <div class="modal">
+      <div class="modal-title">Copiar programación de otro día</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Útil los lunes: en vez del día anterior, puedes copiar de cualquier fecha que ya tenga programación guardada (por ejemplo, el viernes pasado).</div>
+      <div id="moCopiarProgAlert"></div>
+      <div id="copiarProgRecientes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+      <div class="fg">
+        <label class="fl">O elige otra fecha</label>
+        <input type="date" id="copiarProgFecha">
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-gh" onclick="closeModal('moCopiarProg')">Cancelar</button>
+        <button class="btn btn-p" onclick="confirmarCopiarProg()">Copiar</button>
+      </div>
+    </div>
+  </div>
   <div class="mo" id="moVehiculo">
     <div class="modal">
       <div class="modal-title" id="moVehiculoTitle">Nuevo vehículo</div>
@@ -3718,16 +3734,33 @@ async function cargarProgramacionFecha(fecha){
 
 window.progCambiarFecha=(val)=>{ if(val) cargarProgramacionFecha(val); };
 
-window.progCopiarAyer=async()=>{
-  // Buscar la programación más reciente anterior a la fecha actual
+// "Copiar de..." — antes solo ofrecía la programación anterior más reciente
+// (en la práctica, los lunes eso era el viernes, con una cuadrilla distinta
+// a la que hace falta un lunes). Ahora se puede elegir cualquier fecha con
+// programación guardada.
+window.abrirCopiarProg=async()=>{
+  $('moCopiarProgAlert').innerHTML='';
   const fechas=await obtenerFechasProgramadas(db,{ref,get});
-  const anterior=fechas.find(f=>f<progFecha);
-  if(!anterior){ alert('No hay una programación anterior para copiar.'); return; }
-  const prog=await obtenerProgramacion(db,{ref,get},anterior);
-  if(!prog||!prog.grupos||!prog.grupos.length){ alert('La programación anterior está vacía.'); return; }
-  if(progGrupos.length && !confirm('Esto reemplazará lo que tienes ahora con la programación del '+fmt(anterior)+'. ¿Continuar?')) return;
+  const anteriores=fechas.filter(f=>f<progFecha); // ya vienen de más reciente a más vieja
+  const inp=$('copiarProgFecha');
+  inp.value=anteriores[0]||'';
+  const lista=$('copiarProgRecientes');
+  lista.innerHTML=anteriores.length
+    ? anteriores.slice(0,8).map(f=>`<span class="tbl-chip tbl-chip-pers" style="cursor:pointer" onclick="$('copiarProgFecha').value='${f}'">${fmtLong(f).replace(/^\w/,c=>c.toUpperCase())}</span>`).join('')
+    : '<div style="font-size:12px;color:var(--text2)">No hay programaciones guardadas antes de esta fecha.</div>';
+  $('moCopiarProg').classList.add('open');
+};
+
+window.confirmarCopiarProg=async()=>{
+  const fecha=$('copiarProgFecha').value;
+  const al=$('moCopiarProgAlert');
+  if(!fecha){ al.innerHTML='<div class="alert ae" style="font-size:12px">Elige una fecha.</div>'; return; }
+  const prog=await obtenerProgramacion(db,{ref,get},fecha);
+  if(!prog||!prog.grupos||!prog.grupos.length){ al.innerHTML='<div class="alert ae" style="font-size:12px">Esa fecha no tiene una programación guardada.</div>'; return; }
+  if(progGrupos.length && !confirm('Esto reemplazará lo que tienes ahora con la programación del '+fmt(fecha)+'. ¿Continuar?')) return;
   progGrupos=JSON.parse(JSON.stringify(prog.grupos));
   progNoDisp=prog.noDisponibles?JSON.parse(JSON.stringify(prog.noDisponibles)):{personal:[],vehiculos:[]};
+  closeModal('moCopiarProg');
   renderArmar();
   await persistProg();
 };
@@ -3859,7 +3892,7 @@ function renderArmar(){
       <div><div class="ph-title">Programación</div><div class="ph-sub">${fmtLong(progFecha).replace(/^\w/,c=>c.toUpperCase())}</div></div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <input type="date" id="progFechaInput" value="${progFecha}" onchange="progCambiarFecha(this.value)" style="padding:6px 10px;font-size:13px;border:1px solid var(--gray200);border-radius:6px">
-        <button class="btn btn-gh btn-sm" onclick="progCopiarAyer()">Copiar de ayer</button>
+        <button class="btn btn-gh btn-sm" onclick="abrirCopiarProg()">Copiar de...</button>
         <button class="btn btn-g btn-sm" onclick="progGenerarImagen()">Compartir imagen</button>
       </div>
     </div>
