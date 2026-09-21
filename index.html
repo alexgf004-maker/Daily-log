@@ -4251,11 +4251,15 @@ window.progGenerarImagen=async()=>{
     // Agrupar por nombre de campaña, preservando orden de aparición
     const orden=[]; const porCamp={};
     grupos.forEach(g=>{ if(!porCamp[g.campania]){porCamp[g.campania]=[];orden.push(g.campania);} porCamp[g.campania].push(g); });
-    // Verificación de factibilidad siempre al final
-    orden.sort((a,b)=>{
-      const fa=/factibilidad/i.test(a)?1:0, fb=/factibilidad/i.test(b)?1:0;
-      return fa-fb;
-    });
+    // Orden fijo: AMI y Caracterización de la carga arriba; Verificación de
+    // factibilidad al final; el resto queda en su orden de aparición.
+    const rango=(n)=>{
+      if(/^ami$/i.test(n.trim())) return 0;
+      if(/caracterizaci[oó]n/i.test(n)) return 1;
+      if(/factibilidad/i.test(n)) return 3;
+      return 2;
+    };
+    orden.sort((a,b)=>rango(a)-rango(b)); // sort estable: mantiene el orden previo dentro de cada rango
     orden.forEach((nombre,ci)=>{
       const gs=porCamp[nombre];
       if(ci>0) y+=14; // aire entre campañas
