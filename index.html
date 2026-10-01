@@ -3791,15 +3791,23 @@ async function persistProg(){
   await guardarProgramacion(db,{ref,get,set}, progFecha, {grupos:progGrupos, noDisponibles:progNoDisp});
 }
 
+// Registro de ausencia que aplica a esa fecha (o null). Además del registro
+// del día exacto, reconoce vacaciones aprobadas por RANGO (vacIni–vacFin):
+// autoRegistrarDiasEspeciales solo las expande día por día hasta hoy, así que
+// para programar hoy/días futuros hay que mirar el rango directamente.
+function ausenciaEnFecha(regs, fecha){
+  const lista=Object.values(regs||{});
+  return lista.find(r=>r.fecha===fecha&&AUS_TIPOS.includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined))
+      || lista.find(r=>r.tipoDia==='vacaciones'&&r.estadoEspecial==='aprobado'&&r.vacIni&&r.vacFin&&fecha>=r.vacIni&&fecha<=r.vacFin)
+      || null;
+}
+
 // Empleados con vacaciones/incapacidad/permiso aprobado en esa fecha
 async function empleadosAusentesFecha(fecha, empleados){
   const ausentes=[];
   const todos=await getRegistrosAll();
   empleados.forEach(u=>{
-    const regs=todos[u.id];
-    if(!regs) return;
-    const hay=Object.values(regs).some(r=>r.fecha===fecha&&AUS_TIPOS.includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
-    if(hay) ausentes.push(u.id);
+    if(ausenciaEnFecha(todos[u.id], fecha)) ausentes.push(u.id);
   });
   return ausentes;
 }
@@ -4089,9 +4097,7 @@ window.progGenerarImagen=async()=>{
   const ausentes={vacaciones:[],incapacidad:[],permiso:[],bienestar:[],injustificado:[]};
   const todosRegs=await getRegistrosAll();
   empleados.forEach(u=>{
-    const regs=todosRegs[u.id];
-    if(!regs) return;
-    const reg=Object.values(regs).find(r=>r.fecha===progFecha&&AUS_TIPOS.includes(r.tipoDia)&&(r.estadoEspecial==='aprobado'||r.estadoEspecial===undefined));
+    const reg=ausenciaEnFecha(todosRegs[u.id], progFecha);
     if(reg) ausentes[reg.tipoDia].push(nombreMostrar(u));
   });
 
