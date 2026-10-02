@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=35">
+<link rel="stylesheet" href="css/styles.css?v=36">
 </head>
 <body>
 
@@ -270,52 +270,77 @@ function renderEmployee(nombre){
         <div class="page-header"><div><div class="ph-title">Registro de actividades</div><div class="ph-sub" id="empFechaLbl"></div></div></div>
         <div id="marcajeCard" style="display:none"></div>
         <div id="progEmpCard" style="display:none"></div>
-        <div class="card">
+        <!-- Día -->
+        <div class="fx-card">
+          <div class="fx-k">Día</div>
+          <div class="fx-chips" id="fxFechaChips"></div>
+          <input type="date" id="empFecha" class="fx-fecha-oculta" onchange="onFechaChange()" tabindex="-1" aria-label="Fecha">
+          <div class="fx-tipo" id="tipoDiaGrid">
+            <button type="button" class="tipo-btn active" onclick="setTipoDia('normal',this)">Normal</button>
+            <button type="button" class="tipo-btn" onclick="setTipoDia('vacaciones',this)">Vacaciones</button>
+            <button type="button" class="tipo-btn" onclick="setTipoDia('incapacidad',this)">Incapacidad</button>
+            <button type="button" class="tipo-btn" onclick="setTipoDia('permiso',this)">Permiso</button>
+          </div>
           <div id="empAlert"></div>
-          <div class="fg"><label class="fl">Fecha</label><input type="date" id="empFecha" onchange="onFechaChange()"></div>
-          <!-- Tipo de día -->
-          <div class="fg">
-            <label class="fl">Tipo de día</label>
-            <div class="tipo-grid" id="tipoDiaGrid">
-              <button type="button" class="tipo-btn active" onclick="setTipoDia('normal',this)">Día normal</button>
-              <button type="button" class="tipo-btn" onclick="setTipoDia('vacaciones',this)">Vacaciones</button>
-              <button type="button" class="tipo-btn" onclick="setTipoDia('incapacidad',this)">Incapacidad</button>
-              <button type="button" class="tipo-btn" onclick="setTipoDia('permiso',this)">Permiso</button>
+        </div>
+
+        <!-- Campos día normal -->
+        <div id="camposNormal">
+          <div class="fx-card">
+            <div class="fx-hd"><span class="fx-k">Horario</span><span id="heResumen" style="display:none"></span></div>
+            <div class="fx-hrs">
+              <label class="fx-hr" id="fxHrEnt"><small>Entrada</small><input type="time" id="empEntrada" onchange="calcHE()"></label>
+              <div class="fx-dur" id="fxDur">→</div>
+              <label class="fx-hr" id="fxHrSal"><small>Salida</small><input type="time" id="empSalida" onchange="calcHE()"></label>
+            </div>
+            <div id="heBox" style="display:none" class="fx-just">
+              <label class="fl" for="heJust">Justificación de horas extra</label>
+              <textarea id="heJust" placeholder="¿Por qué te quedaste más tiempo?"></textarea>
             </div>
           </div>
-          <!-- Campos día normal -->
-          <div id="camposNormal">
+          <div class="fx-card">
+            <label class="fx-k" for="empActs">Actividades</label>
+            <textarea id="empActs" class="fx-ta" placeholder="Describe las actividades del día..."></textarea>
+          </div>
+          <div class="fx-card">
+            <div class="fx-k">Viático</div>
+            <div class="fx-vi">
+              <button type="button" class="fx-vo no on" id="fxViatNo" onclick="setViatico(false)"><b>No</b><span>Trabajé en plantel</span></button>
+              <button type="button" class="fx-vo si" id="fxViatSi" onclick="setViatico(true)"><b>Sí, salí a campo</b><span>Lleva viático</span></button>
+            </div>
+            <div class="toggle" id="togV" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Campos día especial -->
+        <div id="camposEspecial" class="fx-card" style="display:none">
+          <!-- Vacaciones: rango de fechas -->
+          <div id="camposVacaciones" style="display:none">
             <div class="tr2">
-              <div class="fg"><label class="fl">Hora entrada</label><input type="time" id="empEntrada" onchange="calcHE()"></div>
-              <div class="fg"><label class="fl">Hora salida</label><input type="time" id="empSalida" onchange="calcHE()"></div>
+              <div class="fg"><label class="fl">Fecha inicio</label><input type="date" id="vacIni" oninput="actualizarResumenVac()"></div>
+              <div class="fg"><label class="fl">Fecha fin</label><input type="date" id="vacFin" oninput="actualizarResumenVac()"></div>
             </div>
-            <div id="heResumen" style="display:none;margin-bottom:14px"></div>
-            <div class="fg"><label class="fl">Actividades realizadas</label><textarea id="empActs" placeholder="Describe las actividades del día..."></textarea></div>
-            <div class="tog-row">
-              <div><div class="tog-lbl">Viático</div><div class="tog-sub">Activar si realizaste salida a campo</div></div>
-              <div class="toggle" id="togV" onclick="togF('v')"></div>
-            </div>
-            <div id="heBox" style="display:none;background:var(--bluelt);border-radius:var(--r);padding:14px;margin-top:12px;border:1px solid var(--bluemid)">
-              <div class="fg"><label class="fl">Justificación de horas extras</label><textarea id="heJust" placeholder="Motivo de las horas extras..."></textarea></div>
-            </div>
+            <div id="vacResumen" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
+            <div class="fg" style="margin-bottom:0"><label class="fl">Nota (opcional)</label><textarea id="empNota" placeholder="Agrega una nota..."></textarea></div>
           </div>
-          <!-- Campos día especial -->
-          <div id="camposEspecial" style="display:none">
-            <!-- Vacaciones: rango de fechas -->
-            <div id="camposVacaciones" style="display:none">
-              <div class="tr2">
-                <div class="fg"><label class="fl">Fecha inicio</label><input type="date" id="vacIni" oninput="actualizarResumenVac()"></div>
-                <div class="fg"><label class="fl">Fecha fin</label><input type="date" id="vacFin" oninput="actualizarResumenVac()"></div>
-              </div>
-              <div id="vacResumen" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
-              <div class="fg"><label class="fl">Nota (opcional)</label><textarea id="empNota" placeholder="Agrega una nota..."></textarea></div>
-            </div>
-            <!-- Otros días especiales: solo nota -->
-            <div id="camposOtroEspecial" style="display:none">
-              <div class="fg"><label class="fl">Nota (opcional)</label><textarea id="empNotaOtro" placeholder="Agrega una nota si lo deseas..."></textarea></div>
-            </div>
+          <!-- Otros días especiales: solo nota -->
+          <div id="camposOtroEspecial" style="display:none">
+            <div class="fg" style="margin-bottom:0"><label class="fl">Nota (opcional)</label><textarea id="empNotaOtro" placeholder="Agrega una nota si lo deseas..."></textarea></div>
           </div>
-          <button class="btn btn-p btn-full" style="margin-top:18px;padding:12px" onclick="guardarReg()">Guardar registro</button>
+        </div>
+
+        <div class="fx-save-wrap">
+          <div id="fxResumen" class="fx-resumen"></div>
+          <div id="empErr"></div>
+          <button class="btn btn-p btn-full fx-save" id="btnGuardarReg" onclick="guardarReg()">Guardar registro</button>
+        </div>
+
+        <!-- Confirmación animada al guardar -->
+        <div class="fx-ok" id="fxOk" onclick="cerrarGuardadoOK()">
+          <div class="fx-ok-circ"><svg viewBox="0 0 90 90"><circle class="ring" cx="45" cy="45" r="40" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" transform="rotate(-90 45 45)"/><path class="tick" d="M28 46 l11 11 l23 -24" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="fx-ok-t">¡Listo, guardado!</div>
+          <div class="fx-ok-s">Ya quedó en tu historial</div>
+          <div class="fx-ok-pills" id="fxOkPills"></div>
         </div>
       </div>
       <div id="empHist" style="display:none">
@@ -1300,7 +1325,7 @@ function showToastEmp(msg, duration=3500){
 
 window.setTipoDia=function(tipo,btn){
   tipoDia=tipo;
-  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#tipoDiaGrid .tipo-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   if(tipo==='normal'){
     show('camposNormal');hide('camposEspecial');
@@ -1332,6 +1357,7 @@ window.setTipoDia=function(tipo,btn){
       hide('camposVacaciones');show('camposOtroEspecial');
     }
   }
+  actualizarResumenForm();
 };
 
 async function mostrarResumenMesAnterior(){
@@ -1478,15 +1504,17 @@ function initForm(){
   if(hoy.getDate()<=3){
     setTimeout(()=>mostrarResumenMesAnterior(), 1500);
   }
-  document.querySelectorAll('.tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
-  const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
+  document.querySelectorAll('#tipoDiaGrid .tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
+  const firstBtn=document.querySelector('#tipoDiaGrid .tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
   show('tipoDiaGrid'); show('camposNormal'); hide('camposEspecial');
   hide('camposVacaciones'); hide('camposOtroEspecial');
   ['empActs','heJust','empNota','empNotaOtro'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
   ['vacIni','vacFin'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
   const vacRes=$('vacResumen'); if(vacRes) vacRes.textContent='';
-  const tv=$('togV'); if(tv) tv.classList.remove('on');
+  setViatico(false);
+  limpiarErrForm();
   hide('heBox'); hide('heResumen');
+  renderFechaChips();
   // Verificar extensión del usuario
   get(ref(db,`users/${me.id}`)).then(snap=>{
     let diasAtras=3;
@@ -1646,6 +1674,8 @@ window.marcarAsistenciaUI=async function(tipo){
 
 window.onFechaChange = async function(){
   const f=$('empFecha');
+  renderFechaChips();
+  limpiarErrForm();
   if(!f||!f.value) return;
   $('empFechaLbl').textContent=fmtLong(f.value);
   const empAlert=$('empAlert');
@@ -1713,8 +1743,8 @@ window.onFechaChange = async function(){
   show('tipoDiaGrid');
   if(tipoDia==='asueto'){
     tipoDia='normal';
-    document.querySelectorAll('.tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
-    const firstBtn=document.querySelector('.tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
+    document.querySelectorAll('#tipoDiaGrid .tipo-btn').forEach(b=>{b.classList.remove('active');b.style.display='';});
+    const firstBtn=document.querySelector('#tipoDiaGrid .tipo-btn'); if(firstBtn) firstBtn.classList.add('active');
     show('camposNormal');hide('camposEspecial');
   }
   const base=horarioBase(f.value);
@@ -1733,7 +1763,7 @@ window.calcHE = async function(){
   const salida=$('empSalida')?.value;
   const resEl=$('heResumen');
   const heBox=$('heBox');
-  if(!fecha||!entrada||!salida){ hide('heResumen'); hide('heBox'); return; }
+  if(!fecha||!entrada||!salida){ hide('heResumen'); hide('heBox'); const dur=$('fxDur'); if(dur) dur.textContent='→'; actualizarResumenForm(); return; }
 
   // Si es asueto, todo es HE — ignorar horario base
   const asueto=await esAsueto(fecha);
@@ -1745,49 +1775,117 @@ window.calcHE = async function(){
   const dow = d.getDay();
   const diasNombre = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
+  const durMin=Math.max(0,toMins(salida)-toMins(entrada));
+  const dur=$('fxDur'); if(dur) dur.innerHTML=durMin?`→<br>${fmtMin(durMin)}`:'→';
   if(r.he && r.minHE > 0){
-    const hrs=Math.floor(r.minHE/60), mins=r.minHE%60;
-    const tiempoStr=(hrs>0?hrs+'h ':'')+mins+'m';
     const motivo = asueto
-      ? `Día de asueto (${asueto.nombre}) — toda la jornada cuenta como HE`
+      ? `Día de asueto (${asueto.nombre}): toda la jornada cuenta como horas extra`
       : r.esFinde
-        ? `${diasNombre[dow]} — jornada completa cuenta como horas extras`
+        ? `${diasNombre[dow]}: la jornada completa cuenta como horas extra`
         : `Fuera del horario base (${horarioBase(fecha)?.ini}–${horarioBase(fecha)?.fin})`;
-    resEl.innerHTML=`<div style="background:var(--warnlt);border:1px solid #fcd34d;border-radius:var(--r);padding:12px 14px;font-size:13px">
-      <div style="font-weight:600;color:var(--warn);margin-bottom:4px">Se detectaron ${tiempoStr} de horas extras</div>
-      <div style="color:var(--text2)">${motivo}</div>
-    </div>`;
+    resEl.innerHTML=etiquetaEstado('mal',`${fmtMin(r.minHE)} extra`);
+    resEl.title=motivo;
+    const lbl=document.querySelector('#heBox .fl'); if(lbl) lbl.textContent=`Justificación de horas extra · ${motivo}`;
     show('heResumen'); show('heBox');
   } else {
-    resEl.innerHTML=`<div style="background:var(--greenlt);border:1px solid #6ee7b7;border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--green)">
-      ✓ Dentro del horario laboral — sin horas extras
-    </div>`;
+    resEl.innerHTML=etiquetaEstado('ok','Sin horas extra');
+    resEl.title='';
     show('heResumen'); hide('heBox');
   }
+  actualizarResumenForm();
 };
 
 window.togF=f=>{
-  if(f==='v') $('togV').classList.toggle('on');
+  if(f==='v') setViatico(!$('togV').classList.contains('on'));
 };
 
+// ── Formulario: fecha en botones, viático, resumen y errores junto al botón ──
+const DIAS_FX=['dom','lun','mar','mié','jue','vie','sáb'];
+const MESES_FX=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function fechaCortaFx(f){ const d=new Date(f+'T12:00:00'); return `${DIAS_FX[d.getDay()]} ${d.getDate()} ${MESES_FX[d.getMonth()]}`; }
+function hora12(hhmm){ if(!hhmm) return ''; let [h,m]=hhmm.split(':').map(Number); const ap=h>=12?'p.m.':'a.m.'; h=h%12||12; return `${h}:${String(m).padStart(2,'0')} ${ap}`; }
+function renderFechaChips(){
+  const cont=$('fxFechaChips'), f=$('empFecha'); if(!cont||!f) return;
+  const sel=f.value, min=f.min||'';
+  const dias=[['Hoy',ago(0)],['Ayer',ago(1)],['Antier',ago(2)]];
+  const esRapida=dias.some(([,v])=>v===sel);
+  cont.innerHTML=dias.map(([lbl,v])=>{
+    const d=new Date(v+'T12:00:00');
+    const off=(min&&v<min&&tipoDia!=='vacaciones')||mesCerrado(v);
+    return `<button type="button" class="fx-chip${v===sel?' on':''}"${off?' disabled':''} onclick="elegirFecha('${v}')">${lbl}<small>${DIAS_FX[d.getDay()]} ${d.getDate()}</small></button>`;
+  }).join('')+`<button type="button" class="fx-chip${sel&&!esRapida?' on':''}" onclick="abrirOtraFecha()">${sel&&!esRapida?fechaCortaFx(sel):'Otra'}<small>${sel&&!esRapida?'cambiar':'📅'}</small></button>`;
+}
+window.elegirFecha=(v)=>{ const f=$('empFecha'); if(!f) return; f.value=v; window.onFechaChange(); };
+window.abrirOtraFecha=()=>{
+  const f=$('empFecha'); if(!f) return;
+  try{ if(f.showPicker){ f.showPicker(); return; } }catch(e){}
+  f.classList.add('visible'); f.focus();
+};
+window.setViatico=(v)=>{
+  const tv=$('togV'); if(tv) tv.classList.toggle('on',!!v);
+  const no=$('fxViatNo'), si=$('fxViatSi');
+  if(no) no.classList.toggle('on',!v);
+  if(si){ si.classList.toggle('on',!!v); const b=si.querySelector('b'); if(b) b.textContent=v?'✓ Sí, salí a campo':'Sí, salí a campo'; }
+  actualizarResumenForm();
+};
+function actualizarResumenForm(){
+  const el=$('fxResumen'); if(!el) return;
+  const fecha=$('empFecha')?.value;
+  const normalVisible=$('camposNormal')&&$('camposNormal').style.display!=='none';
+  const espVisible=$('camposEspecial')&&$('camposEspecial').style.display!=='none';
+  let txt='';
+  if(fecha&&tipoDia==='normal'&&normalVisible){
+    const e=$('empEntrada')?.value, sa=$('empSalida')?.value;
+    const viat=$('togV')?.classList.contains('on');
+    txt=`${fechaCortaFx(fecha)}${e&&sa?` · ${hora12(e)} – ${hora12(sa)}`:''} · ${viat?'con viático':'sin viático'}`;
+  } else if(tipoDia==='vacaciones'&&espVisible){
+    const i=$('vacIni')?.value, fi=$('vacFin')?.value;
+    txt=i&&fi?`Vacaciones del ${fechaCortaFx(i)} al ${fechaCortaFx(fi)}`:'';
+  } else if(fecha&&espVisible){
+    txt=`${fechaCortaFx(fecha)} · ${tipoDia.charAt(0).toUpperCase()+tipoDia.slice(1)}`;
+  }
+  el.innerHTML=txt?`Se guardará: <b>${txt}</b>`:'';
+}
+function limpiarErrForm(){
+  const e=$('empErr'); if(e) e.innerHTML='';
+  document.querySelectorAll('#empReg .fx-bad').forEach(x=>x.classList.remove('fx-bad'));
+}
+// Error junto al botón + resaltar el campo que falta
+function errForm(msg, campo){
+  const e=$('empErr'); if(e) e.innerHTML=`<div class="fx-err"><b>!</b><span>${msg}</span></div>`;
+  const ids={actividades:['empActs'],horario:['fxHrEnt','fxHrSal'],he:['heJust'],fecha:['fxFechaChips'],vacaciones:['vacIni','vacFin']}[campo]||[];
+  ids.forEach(id=>{ const el=$(id); if(el) el.classList.add('fx-bad'); });
+  const primero=ids.length?$(ids[0]):null;
+  if(primero) primero.scrollIntoView({behavior:'smooth',block:'center'});
+}
+document.addEventListener('input',ev=>{ if(ev.target.closest&&ev.target.closest('#empReg')){ const c=ev.target.closest('.fx-bad')||(ev.target.classList.contains('fx-bad')?ev.target:null); if(c){ c.classList.remove('fx-bad'); if(!document.querySelector('#empReg .fx-bad')){ const e=$('empErr'); if(e) e.innerHTML=''; } } if(ev.target.id==='vacIni'||ev.target.id==='vacFin') actualizarResumenForm(); } });
+let _fxOkTimer=null;
+function mostrarGuardadoOK(pills){
+  const o=$('fxOk'); if(!o) return;
+  $('fxOkPills').innerHTML=pills.filter(Boolean).map(t=>`<span>${t}</span>`).join('');
+  o.classList.remove('on'); void o.offsetWidth; o.classList.add('on');
+  clearTimeout(_fxOkTimer); _fxOkTimer=setTimeout(cerrarGuardadoOK,3200);
+}
+window.cerrarGuardadoOK=()=>{ const o=$('fxOk'); if(o) o.classList.remove('on'); clearTimeout(_fxOkTimer); };
+
 window.guardarReg=async()=>{
-  const al=$('empAlert');al.innerHTML='';
-  const btnGuardar=document.querySelector('#empReg .btn-p');
+  limpiarErrForm();
+  const btnGuardar=$('btnGuardarReg');
   if(btnGuardar){ btnGuardar.disabled=true; btnGuardar.textContent='Guardando...'; }
   const restoreBtn=()=>{ if(btnGuardar){ btnGuardar.disabled=false; btnGuardar.textContent='Guardar registro'; } };
   const fecha=$('empFecha').value;
-  if(!fecha){al.innerHTML='<div class="alert ae">Selecciona una fecha.</div>';return;}
+  if(!fecha){restoreBtn();errForm('Elige el día que vas a registrar.','fecha');return;}
 
   // Verificar cierre de mes
   if(mesCerrado(fecha)){
-    al.innerHTML='<div class="alert ae">🔒 Este mes ya está cerrado. No se pueden agregar ni modificar registros.</div>';
+    errForm('🔒 Este mes ya está cerrado. No se pueden agregar ni modificar registros.');
     restoreBtn();return;
   }
 
   // ── VALIDACIÓN DE FECHA EN EL SERVIDOR ──────────────
   // Verificar que la fecha no sea futura (excepto vacaciones)
   if(tipoDia!=='vacaciones' && fecha>today()){
-    al.innerHTML='<div class="alert ae">No puedes registrar fechas futuras.</div>';restoreBtn();return;
+    errForm('No puedes registrar fechas futuras.');restoreBtn();return;
   }
   // Verificar rango permitido — consultar extensión real desde Firebase
   if(tipoDia==='normal'||tipoDia==='incapacidad'||tipoDia==='permiso'){
@@ -1802,7 +1900,7 @@ window.guardarReg=async()=>{
       }
       const minFecha=ago(diasPermitidos);
       if(fecha<minFecha){
-        al.innerHTML=`<div class="alert ae">Solo puedes registrar hasta ${diasPermitidos} días atrás. Esta fecha no está permitida.</div>`;restoreBtn();return;
+        errForm(`Solo puedes registrar hasta ${diasPermitidos} días atrás. Esta fecha no está permitida.`);restoreBtn();return;
       }
     }catch(e){}
   }
@@ -1812,9 +1910,9 @@ window.guardarReg=async()=>{
     const snap=await get(ref(db,`registros/${me.id}`));
     if(snap.exists()){
       const dup=Object.values(snap.val()).some(x=>x&&x.fecha===fecha);
-      if(dup){al.innerHTML='<div class="alert ae">Ya existe un registro para esta fecha.</div>';restoreBtn();return;}
+      if(dup){errForm('Ya tienes un registro para este día.','fecha');restoreBtn();return;}
     }
-  } catch(e){al.innerHTML=`<div class="alert ae">Error: ${e.message}</div>`;restoreBtn();return;}
+  } catch(e){errForm(`Error: ${e.message}`);restoreBtn();return;}
 
   let datos = { fecha, creadoEn:Date.now(), userId:me.id, userName:me.nombre, cargo:me.cargo||'', tipoDia };
 
@@ -1823,13 +1921,13 @@ window.guardarReg=async()=>{
     const salida=$('empSalida').value;
     const acts=$('empActs').value.trim();
     const viat=$('togV').classList.contains('on');
-    if(!entrada||!salida||!acts){al.innerHTML='<div class="alert ae">Completa horario y actividades.</div>';restoreBtn();return;}
-    if(toMins(salida)<=toMins(entrada)){al.innerHTML='<div class="alert ae">Hora de salida debe ser mayor a la entrada.</div>';restoreBtn();return;}
+    if(!entrada||!salida||!acts){errForm(!acts?'Escribe qué hiciste en el día.':'Completa la hora de entrada y de salida.', !acts?'actividades':'horario');restoreBtn();return;}
+    if(toMins(salida)<=toMins(entrada)){errForm('La hora de salida debe ser mayor que la de entrada.','horario');restoreBtn();return;}
     const asuetoDia=await esAsueto(fecha);
     const r = asuetoDia
       ? { he:true, minHE:toMins(salida)-toMins(entrada), heIni:entrada, heFin:salida }
       : calcularHE(fecha,entrada,salida);
-    if(r.he&&!$('heJust')?.value.trim()){al.innerHTML='<div class="alert ae">Escribe la justificación para las horas extras.</div>';restoreBtn();return;}
+    if(r.he&&!$('heJust')?.value.trim()){errForm('Escribe por qué hiciste horas extra.','he');restoreBtn();return;}
     datos={...datos, actividades:acts, viatico:viat, horaEntrada:entrada, horaSalida:salida,
       he:r.he, minHE:r.minHE, heInicio:r.heIni, heFin:r.heFin,
       heJustif:r.he?($('heJust')?.value.trim()||''):'',
@@ -1841,8 +1939,8 @@ window.guardarReg=async()=>{
     if(tipoDia==='vacaciones'){
       vacIni=$('vacIni')?.value; vacFin=$('vacFin')?.value;
       nota=$('empNota')?.value.trim()||'';
-      if(!vacIni||!vacFin){al.innerHTML='<div class="alert ae">Selecciona fecha inicio y fin de vacaciones.</div>';restoreBtn();return;}
-      if(vacFin<vacIni){al.innerHTML='<div class="alert ae">La fecha fin debe ser mayor o igual a inicio.</div>';restoreBtn();return;}
+      if(!vacIni||!vacFin){errForm('Elige la fecha de inicio y fin de tus vacaciones.','vacaciones');restoreBtn();return;}
+      if(vacFin<vacIni){errForm('La fecha fin debe ser igual o posterior al inicio.','vacaciones');restoreBtn();return;}
     } else {
       nota=$('empNotaOtro')?.value.trim()||'';
     }
@@ -1857,27 +1955,26 @@ window.guardarReg=async()=>{
 
 const timeoutTimer=setTimeout(()=>{
     restoreBtn();
-    const alEl=$('empAlert');
-    if(alEl) alEl.innerHTML='<div class="alert ae">📶 Tu señal no es buena, intenta de nuevo.</div>';
+    errForm('📶 Tu señal no es buena, intenta de nuevo.');
   }, 12000);
 
   try {
     await push(ref(db,`registros/${me.id}`), datos);
     clearTimeout(timeoutTimer);
     restoreBtn();
+    const etiquetas={vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso'};
+    const pills = datos.tipoDia==='normal'
+      ? [fechaCortaFx(datos.fecha), `${hora12(datos.horaEntrada)} – ${hora12(datos.horaSalida)}`, datos.viatico?'Con viático':'Sin viático', datos.he?`${fmtMin(datos.minHE)} extra`:'']
+      : datos.tipoDia==='vacaciones'
+        ? ['Vacaciones', `${fechaCortaFx(datos.vacIni)} – ${fechaCortaFx(datos.vacFin)}`, 'Por aprobar']
+        : [fechaCortaFx(datos.fecha), etiquetas[datos.tipoDia]||datos.tipoDia, datos.estadoEspecial==='pendiente'?'Por aprobar':''];
     initForm();
-    setTimeout(()=>{
-      const alEl=$('empAlert');
-      if(alEl){
-        alEl.innerHTML='<div class="alert as">✓ Registro guardado correctamente</div>';
-        window.scrollTo({top:0,behavior:'smooth'});
-        setTimeout(()=>{ if(alEl) alEl.innerHTML=''; }, 4000);
-      }
-    }, 600);
+    window.scrollTo({top:0,behavior:'smooth'});
+    mostrarGuardadoOK(pills);
   } catch(e){
     clearTimeout(timeoutTimer);
     restoreBtn();
-    al.innerHTML=`<div class="alert ae">Error al guardar: ${e.message}</div>`;
+    errForm(`Error al guardar: ${e.message}`);
   }
 };
 
@@ -1938,7 +2035,7 @@ async function loadHist(){
     const fechaMin=$('empFecha')?.min||ago(3);
     const cal=calendarioMes({mes, uid:me.id, todos:allItems, sabados, asuetos,
       tocarDia:f=>`histIrDia('${f}')`,
-      tocarFalta:f=>f>=fechaMin?`histRegistrar('${f}')`:''});
+      tocarFalta:f=>(f>=fechaMin&&!mesCerrado(f))?`histRegistrar('${f}')`:''});
     const hayFaltasTocables=cal.html.includes('rg-cd falta tap');
     res.innerHTML=`
       <div class="rg-mnav claro" style="margin-top:0">
