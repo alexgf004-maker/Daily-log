@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=48">
+<link rel="stylesheet" href="css/styles.css?v=49">
 </head>
 <body>
 
@@ -613,60 +613,63 @@ function renderAdmin(){
         <div class="us-sheet" id="usrSheet"></div>
       </div>
       <div id="adPerfil" style="display:none">
-        <div class="page-header"><div><div class="ph-title">Mi perfil</div><div class="ph-sub">Coordinadora del equipo</div></div></div>
-        <div class="card" style="margin-bottom:14px">
-          <div class="card-title">Mis datos</div>
-          <div class="dr"><div class="dk">Nombre</div><div class="dv" id="adPerfilNombre" style="font-size:16px;font-weight:600"></div></div>
-          <div class="dr"><div class="dk">Usuario</div><div class="dv" id="adPerfilUsername" style="font-family:var(--mono);font-size:13px"></div></div>
-          <div class="dr"><div class="dk">Rol</div><div class="dv"><span class="badge ba">Administradora</span></div></div>
-          <div class="dr">
-            <div class="dk">Sede (para marcaje)</div>
-            <div class="dv">
-              <select id="adPerfilSede" onchange="guardarSedePropiaAdmin(this.value)" style="width:auto;padding:5px 10px;font-size:13px">
-                <option value="">Sin asignar</option>
+        <div class="pf-gafete">
+          <div class="pf-gafete-top"><i></i></div>
+          <div class="pf-av" id="adPerfilAv"></div>
+          <div class="pf-gafete-b">
+            <div class="pf-nom" id="adPerfilNombre"></div>
+            <div class="pf-cargo" id="adPerfilRol"></div>
+            <div class="pf-marca">INNOVA · Servicios técnicos</div>
+          </div>
+        </div>
+        <div class="pf-card">
+          <div class="pf-k">Mi cuenta</div>
+          <div class="pf-row"><span class="pf-ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg></span><span class="pf-tx"><b>Usuario</b><span id="adPerfilUsername"></span></span></div>
+          <label class="pf-row ap-sede"><span class="pf-ic g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
+            <span class="pf-tx"><b>Sede para marcar</b>
+              <select id="adPerfilSede" onchange="guardarSedePropiaAdmin(this.value)">
+                <option value="">Sin asignar (no marco)</option>
                 <option value="plantel">Plantel Central</option>
                 <option value="gestionmedida">Plantel Central · Gestión de la medida</option>
                 <option value="cucumacayan">Subestación Cucumacayán</option>
                 <option value="zacatecoluca">Subestación Zacatecoluca</option>
               </select>
+            </span><span class="chev"></span></label>
+          <details class="pf-pin" id="adPerfilPinBox">
+            <summary class="pf-row"><span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span><span class="pf-tx"><b>Cambiar PIN</b><span>Toca para cambiarlo</span></span><span class="chev"></span></summary>
+            <div class="pf-pin-form">
+              <div id="adPerfilAlert"></div>
+              <div class="pf-inp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><input type="password" id="adPinActual" placeholder="PIN actual" maxlength="8" inputmode="numeric"><button type="button" class="pf-ver" aria-label="Mostrar PIN" onclick="pfVerPin(this)"><svg class="a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></div>
+              <div class="pf-inp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><input type="password" id="adPinNuevo" placeholder="PIN nuevo (4 a 8 dígitos)" maxlength="8" inputmode="numeric"><button type="button" class="pf-ver" aria-label="Mostrar PIN" onclick="pfVerPin(this)"><svg class="a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></div>
+              <div class="pf-inp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><input type="password" id="adPinConfirm" placeholder="Repite el PIN nuevo" maxlength="8" inputmode="numeric"><button type="button" class="pf-ver" aria-label="Mostrar PIN" onclick="pfVerPin(this)"><svg class="a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></div>
+              <button class="btn btn-p btn-full pf-btn" onclick="cambiarPinAdmin()">Actualizar PIN</button>
             </div>
-          </div>
+          </details>
         </div>
-        <div class="card" id="adPerfilMarcajeCard" style="display:none;margin-bottom:14px">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-            <div class="card-title" style="margin-bottom:0">Mi historial de marcaje</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <input type="month" id="adPerfilMarcajeMes" style="padding:5px 8px;font-size:12px;border:1px solid var(--gray200);border-radius:6px">
-              <button class="btn btn-gh btn-sm" onclick="cargarMiMarcaje()">Ver</button>
-            </div>
+
+        <div class="pf-card" id="adPerfilMarcajeCard" style="display:none">
+          <div class="ap-hd"><span class="pf-k" style="margin:0">Mi marcaje</span>
+            <div class="ap-mnav"><button onclick="miMarcajeMesNav(-1)" aria-label="Mes anterior">‹</button><span id="adPerfilMarcajeLbl"></span><button onclick="miMarcajeMesNav(1)" id="adPerfilMarcajeNext" aria-label="Mes siguiente">›</button></div>
           </div>
+          <input type="hidden" id="adPerfilMarcajeMes">
           <div id="adPerfilMarcajeList"><div class="spin"></div></div>
         </div>
+
         ${me?.role==='admin'?`
-        <div class="card" style="margin-bottom:14px">
-          <div class="card-title">Auditoría</div>
-          <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Detecta registros creados fuera del rango de días permitido.</div>
-          <button class="btn btn-gh btn-sm" onclick="toggleAuditoria()">Ver registros sospechosos</button>
-          <div id="auditoriaResult" style="display:none;margin-top:14px"></div>
-        </div>
-        <div class="card">
-          <div class="tog-row">
-            <div>
-              <div class="tog-lbl">Activar mantenimiento</div>
-              <div class="tog-sub">Solo tú podrás acceder mientras esté activo</div>
-            </div>
-            <div class="toggle" id="togMant" onclick="toggleMantenimiento()"></div>
-          </div>
-          <div id="mantStatus" style="font-size:12px;color:var(--text2);margin-top:8px"></div>
+        <div class="pf-card">
+          <div class="pf-k">Administración</div>
+          <button class="pf-row ap-mant" onclick="toggleMantenimiento()">
+            <span class="pf-ic r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.8-3.8a6 6 0 01-7.9 7.9l-6.9 6.9a2.1 2.1 0 01-3-3l6.9-6.9a6 6 0 017.9-7.9z"/></svg></span>
+            <span class="pf-tx"><b>Modo mantenimiento</b><span id="mantStatus">…</span></span>
+            <span class="fx-sw ap-sw" id="togMant" aria-hidden="true"><i></i></span>
+          </button>
+          <button class="pf-row ap-aud" onclick="toggleAuditoria()">
+            <span class="pf-ic v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span>
+            <span class="pf-tx"><b>Auditoría</b><span>Registros hechos fuera del rango de días permitido</span></span><span class="chev"></span>
+          </button>
+          <div id="auditoriaResult" style="display:none"></div>
         </div>`:''}
-        <div class="card">
-          <div class="card-title">Cambiar PIN</div>
-          <div id="adPerfilAlert"></div>
-          <div class="fg"><label class="fl">PIN actual</label><input type="password" id="adPinActual" placeholder="••••" maxlength="8" inputmode="numeric"></div>
-          <div class="fg"><label class="fl">PIN nuevo (4–8 dígitos)</label><input type="password" id="adPinNuevo" placeholder="••••" maxlength="8" inputmode="numeric"></div>
-          <div class="fg"><label class="fl">Confirmar PIN nuevo</label><input type="password" id="adPinConfirm" placeholder="••••" maxlength="8" inputmode="numeric"></div>
-          <button class="btn btn-p btn-full" style="padding:12px" onclick="cambiarPinAdmin()">Actualizar PIN</button>
-        </div>
+        <button class="pf-salir" onclick="doLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</button>
       </div>
       <div id="adAsuetos" style="display:none">
         <div class="page-header" style="justify-content:space-between">
@@ -2214,30 +2217,17 @@ window.adTab=(t,btn)=>{
   if(t==='perfil'){
     show('adPerfil');
     $('adPerfilNombre').textContent=me.nombre||'';
+    $('adPerfilAv').textContent=inicialesDe(me.nombre);
+    $('adPerfilRol').textContent=me.role==='asistente'?'Asistente':'Administradora';
     $('adPerfilUsername').textContent='@'+(me.username||'');
     if($('adPerfilSede')) $('adPerfilSede').value=me.sede||'';
-    const card=$('adPerfilMarcajeCard');
-    if(card){
-      if(me.sede){
-        card.style.display='';
-        const mesInput=$('adPerfilMarcajeMes');
-        if(mesInput&&!mesInput.value){
-          const now=new Date();
-          mesInput.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-        }
-        cargarMiMarcaje();
-      } else {
-        card.style.display='none';
-      }
-    }
     $('adPerfilAlert').innerHTML='';
-    ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';});
-    // Cargar estado de mantenimiento
-    if(isAdmin()) checkMaintenance().then(on=>{
-      const tog=$('togMant'); if(!tog) return;
-      if(on) tog.classList.add('on'); else tog.classList.remove('on');
-      $('mantStatus').textContent=on?'🔴 Activo — solo tú puedes acceder':'🟢 Inactivo — todos pueden entrar';
-    });
+    ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e){e.value='';e.type='password';}});
+    document.querySelectorAll('#adPerfil .pf-ver').forEach(b=>b.classList.remove('visible'));
+    const box=$('adPerfilPinBox'); if(box) box.open=false;
+    const aud=$('auditoriaResult'); if(aud){ aud.style.display='none'; aud.innerHTML=''; }
+    pintarMiMarcajeCard();
+    if(isAdmin()) checkMaintenance().then(on=>pintarMantenimiento(on));
   }
 };
 
@@ -2884,12 +2874,16 @@ window.cargarPerfilEmpleado=async()=>{
   }).join('')+`</div>`;
 };
 
-window.toggleMantenimiento=async()=>{  const tog=$('togMant'); if(!tog) return;
+function pintarMantenimiento(on){
+  const tog=$('togMant'); if(tog) tog.classList.toggle('on',!!on);
+  const st=$('mantStatus'); if(st){ st.textContent=on?'Activo: solo tú puedes entrar':'Apagado: todos pueden entrar'; st.className=on?'mal':''; }
+}
+window.toggleMantenimiento=async()=>{
   const actual=await checkMaintenance();
   const nuevo=!actual;
+  if(nuevo&&!confirm('¿Activar el modo mantenimiento? Nadie más podrá entrar a la app hasta que lo apagues.')) return;
   await set(ref(db,'config/mantenimiento'), nuevo);
-  if(nuevo) tog.classList.add('on'); else tog.classList.remove('on');
-  $('mantStatus').textContent=nuevo?'🔴 Activo — solo tú puedes acceder':'🟢 Inactivo — todos pueden entrar';
+  pintarMantenimiento(nuevo);
 };
 
 window.cambiarPinAdmin=async()=>{
@@ -2906,7 +2900,8 @@ window.cambiarPinAdmin=async()=>{
   await update(ref(db,`users/${me.id}`),{pin:nuevoHash});
   me.pin=nuevoHash;
   al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
-  ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e)e.value='';}); };
+  ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e){e.value='';e.type='password';}});
+  document.querySelectorAll('#adPerfil .pf-ver').forEach(b=>b.classList.remove('visible')); };
 
 let heAprobKey=null, heAprobCallback=null;
 
@@ -5020,35 +5015,65 @@ window.guardarSedePropiaAdmin=async(sede)=>{
   me.sede=sede;
   localStorage.setItem('innova_session',JSON.stringify(me));
   await renderMarcajeCard();
-  const card=$('adPerfilMarcajeCard');
-  if(card){
-    if(sede){ card.style.display=''; cargarMiMarcaje(); }
-    else card.style.display='none';
-  }
+  pintarMiMarcajeCard();
 };
 
+function pintarMiMarcajeCard(){
+  const card=$('adPerfilMarcajeCard'); if(!card) return;
+  if(!me.sede){ card.style.display='none'; return; }
+  card.style.display='';
+  const mesInput=$('adPerfilMarcajeMes');
+  if(mesInput&&!mesInput.value) mesInput.value=mesActualStr();
+  cargarMiMarcaje();
+}
+window.miMarcajeMesNav=(delta)=>{
+  const nuevo=mesSumar($('adPerfilMarcajeMes').value||mesActualStr(),delta);
+  if(nuevo>mesActualStr()) return;
+  $('adPerfilMarcajeMes').value=nuevo;
+  cargarMiMarcaje();
+};
 window.cargarMiMarcaje=async()=>{
   const l=$('adPerfilMarcajeList');
   const mes=$('adPerfilMarcajeMes')?.value;
   if(!l||!mes) return;
+  $('adPerfilMarcajeLbl').textContent=mesLabel(mes);
+  const next=$('adPerfilMarcajeNext'); if(next) next.disabled=mes>=mesActualStr();
   l.innerHTML='<div class="spin"></div>';
   try{
     const marcs=await obtenerMarcajesMes(db,{ref,get},me.id,mes);
-    if(!marcs.length){ l.innerHTML='<div class="empty" style="padding:16px"><div class="et">Sin marcajes en este mes</div></div>'; return; }
-    l.innerHTML=marcs.map(m=>{
-      const chipE=m.entrada?chipEstado(m.entrada):null;
-      const chipS=m.salida?chipEstado(m.salida):null;
-      return `<div style="padding:9px 0;border-bottom:1px solid var(--gray100);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-        <span style="font-size:13px;font-weight:600">${fmt(m.fecha)}</span>
-        <span style="display:flex;gap:14px;font-size:12px">
-          <span>Entrada ${m.entrada?`<b>${m.entrada.horaStr}</b> <span class="badge ${chipE.color}" style="font-size:9px">${chipE.texto}</span>`:'—'}</span>
-          <span>Salida ${m.salida?`<b>${m.salida.horaStr}</b> <span class="badge ${chipS.color}" style="font-size:9px">${chipS.texto}</span>`:'—'}</span>
-        </span>
-      </div>`;
+    if(($('adPerfilMarcajeMes')?.value)!==mes) return;
+    if(!marcs.length){ l.innerHTML='<div class="dt-vacio" style="padding:8px 0 4px">Sin marcajes en este mes</div>'; return; }
+    const lado=(lbl,d)=>d?`<span class="ap-m"><span class="ap-m-l">${lbl}</span><b>${d.horaStr}</b>${etiquetaChip(chipEstado(d),'sm')}</span>`:`<span class="ap-m"><span class="ap-m-l">${lbl}</span><b class="nada">—</b></span>`;
+    l.innerHTML=[...marcs].sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(m=>{
+      const d=new Date(m.fecha+'T12:00:00');
+      return `<div class="ap-mr"><div class="rg-it-d"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></div><div class="ap-mr-b">${lado('Entrada',m.entrada)}${lado('Salida',m.salida)}</div></div>`;
     }).join('');
   }catch(e){
     l.innerHTML='<div style="font-size:13px;color:var(--danger);padding:12px 0">No se pudo cargar el historial.</div>';
   }
+};
+
+// Auditoría: registros guardados más días atrás de lo permitido (3 días, o la extensión vigente)
+window.toggleAuditoria=async()=>{
+  const cont=$('auditoriaResult'); if(!cont) return;
+  if(cont.style.display!=='none'){ cont.style.display='none'; return; }
+  cont.style.display=''; cont.innerHTML='<div class="spin"></div>';
+  try{
+    const [regs,users]=await Promise.all([getAllRegs(),getUsers()]);
+    const porId=Object.fromEntries(users.map(u=>[u.id,u]));
+    const diaLocal=ts=>{ const d=new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+    const difDias=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);
+    const sosp=regs.filter(r=>!r.autoGenerado&&r.creadoEn&&r.fecha&&r.tipoDia!=='vacaciones'&&r.tipoDia!=='asueto')
+      .map(r=>({r, atras:difDias(r.fecha,diaLocal(r.creadoEn))}))
+      .filter(x=>x.atras>3)
+      .sort((a,b)=>b.r.creadoEn-a.r.creadoEn).slice(0,40);
+    if(!sosp.length){ cont.innerHTML='<div class="mk-av ok" style="margin:4px 0 12px"><span class="mk-av-ic">✓</span><div class="mk-av-tx"><b>Todo en orden</b><span>No hay registros hechos fuera del rango permitido</span></div></div>'; return; }
+    cont.innerHTML=`<div class="ap-aud-res">${sosp.map(({r,atras})=>{
+      const u=porId[r.userId]||{}; const ext=u.extension;
+      const conExt=ext&&ext.dias&&atras<=ext.dias-1;
+      return `<div class="ap-aud-r"><div class="ap-aud-tx"><b>${u.nombre||r.userName||r.userId}</b><span>Día ${fmt(r.fecha)} · guardado el ${fmt(diaLocal(r.creadoEn))}</span></div><span class="rg-pill ${conExt?'b':'r'}">${atras} días atrás${conExt?' · con extensión':''}</span></div>`;
+    }).join('')}</div>`;
+  }catch(e){ cont.innerHTML='<div style="font-size:13px;color:var(--danger);padding:8px 0 12px">No se pudo revisar la auditoría.</div>'; }
 };
 
 // ── SOLO PARA PRUEBAS: asignar/quitar sede masivamente ──
