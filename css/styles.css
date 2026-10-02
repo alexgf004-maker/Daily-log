@@ -808,3 +808,15 @@ tbody tr:hover td{background:var(--bluelt)}
 .as-it-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px}
 .as-it-nota{font-size:11.5px;color:var(--text2)}
 .rg-pill.n{color:#475569;background:#f1f5f9;border-color:#e2e8f0}
+
+/* Marcaje: animación del punto recién marcado */
+.mk3-pt.recien .mk3-dot{position:relative;animation:mkPop .55s cubic-bezier(.3,1.6,.5,1) both}
+.mk3-pt.recien .mk3-dot::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid currentColor;animation:mkOnda 1s .25s ease-out both;pointer-events:none}
+.mk3-pt.recien .mk3-dot.ok::after{border-color:#10b981}
+.mk3-pt.recien .mk3-dot.mal::after{border-color:#ef4444}
+.mk3-pt.recien .mk3-t,.mk3-pt.recien .mk3-l,.mk3-pt.recien .tg{animation:mkSube .4s .25s ease both}
+.mk3-line i{transition:width .6s cubic-bezier(.4,0,.2,1)}
+@keyframes mkPop{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes mkOnda{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.2);opacity:0}}
+@keyframes mkSube{0%{transform:translateY(6px);opacity:0}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.mk3-pt.recien *,.mk3-pt.recien .mk3-dot::after{animation:none!important}}

@@ -62,40 +62,78 @@ function calcularEstado(tipo, horaStr, fecha){
   }
 }
 
-// ── Obtener ubicación GPS actual como Promesa ──
-function obtenerUbicacion(){
+// ── Ubicación para marcar ───────────────────────────────
+// Antes se pedía UNA lectura de alta precisión sin aceptar nada guardado
+// (maximumAge:0): el celular tenía que conseguir una señal GPS nueva, que en
+// interiores o con mala señal tarda muchos segundos.
+// Ahora, apenas se muestra la tarjeta de marcaje, se empieza a seguir la
+// ubicación (watchPosition): las primeras lecturas (red/wifi o la última que
+// tenga el celular) llegan casi al instante y luego se van afinando. Al tocar
+// "Marcar" se usa la mejor lectura reciente y solo se espera si todavía no
+// alcanza para decidir.
+let _watchId=null, _mejor=null, _errGps=null, _watchHasta=0, _avisar=[];
+const SEGUIR_MS=3*60*1000;   // seguir la ubicación hasta 3 min sin marcar
+const LECTURA_VIGENTE_MS=60*1000;
+const ESPERA_MAX_MS=15000;   // espera máxima al tocar "Marcar"
+const ESPERA_AFINAR_MS=6000; // si ya hay lectura pero imprecisa, esperar un poco a que mejore
+
+function detenerSeguimiento(){
+  if(_watchId!==null&&navigator.geolocation){ try{ navigator.geolocation.clearWatch(_watchId); }catch(_){} }
+  _watchId=null;
+}
+function iniciarSeguimiento(){
+  if(!navigator.geolocation||!navigator.geolocation.watchPosition) return false;
+  _watchHasta=Date.now()+SEGUIR_MS;
+  if(_watchId!==null) return true;
+  _errGps=null;
+  _watchId=navigator.geolocation.watchPosition(pos=>{
+    const ahora=Date.now();
+    // Se queda con la más precisa; una lectura vieja se reemplaza aunque sea menos precisa
+    if(!_mejor||pos.coords.accuracy<=_mejor.pos.coords.accuracy||ahora-_mejor.at>20000) _mejor={pos,at:ahora};
+    _errGps=null;
+    _avisar.slice().forEach(f=>f());
+    if(ahora>_watchHasta) detenerSeguimiento();
+  }, err=>{
+    _errGps=err;
+    _avisar.slice().forEach(f=>f());
+    if(err.code===1) detenerSeguimiento();
+  }, { enableHighAccuracy:true, maximumAge:30000, timeout:20000 });
+  return true;
+}
+
+export function prefetchUbicacion(){ iniciarSeguimiento(); }
+
+function errorGps(err){
+  return new Error(err&&err.code===1?'PERMISO_DENEGADO':(err&&err.code===3?'GPS_TIMEOUT':'GPS_ERROR'));
+}
+
+// Devuelve una posición suficiente para decidir si está dentro del radio de la sede
+function ubicacionParaMarcar(sede){
+  if(!navigator.geolocation) return Promise.reject(new Error('SIN_GPS'));
+  if(!iniciarSeguimiento()){
+    // Navegador sin watchPosition: una lectura que acepta una posición reciente
+    return new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,e=>rej(errorGps(e)),{enableHighAccuracy:true,timeout:ESPERA_MAX_MS,maximumAge:30000}));
+  }
+  const inicio=Date.now();
   return new Promise((resolve,reject)=>{
-    if(!navigator.geolocation){ reject(new Error('SIN_GPS')); return; }
-    navigator.geolocation.getCurrentPosition(
-      pos=>resolve(pos),
-      err=>{
-        if(err.code===1) reject(new Error('PERMISO_DENEGADO'));
-        else if(err.code===3) reject(new Error('GPS_TIMEOUT'));
-        else reject(new Error('GPS_ERROR'));
-      },
-      { enableHighAccuracy:true, timeout:12000, maximumAge:0 }
-    );
+    let listo=false, timer=null;
+    const fin=(fn,v)=>{ if(listo) return; listo=true; clearInterval(timer); _avisar=_avisar.filter(f=>f!==revisar); fn(v); };
+    const revisar=()=>{
+      const espera=Date.now()-inicio;
+      if(_errGps&&_errGps.code===1) return fin(reject,errorGps(_errGps));
+      const c=_mejor&&(Date.now()-_mejor.at)<LECTURA_VIGENTE_MS?_mejor.pos:null;
+      if(c){
+        const dist=haversineMetros(c.coords.latitude,c.coords.longitude,sede.lat,sede.lng);
+        const precisa=c.coords.accuracy<=Math.max(60,sede.radio);
+        // Dentro del radio, o lectura precisa (para bien o para mal), o ya se esperó lo razonable
+        if(dist<=sede.radio||precisa||espera>=ESPERA_AFINAR_MS) return fin(resolve,c);
+      }
+      if(espera>=ESPERA_MAX_MS) return fin(reject,_errGps?errorGps(_errGps):new Error('GPS_TIMEOUT'));
+    };
+    _avisar.push(revisar);
+    timer=setInterval(revisar,500);
+    revisar();
   });
-}
-
-// ── Adelanto de GPS ─────────────────────────────────────
-// Pedir el GPS es lo que más tarda al marcar (varios segundos). Para que el
-// botón responda rápido, la pantalla dispara esta función apenas se muestra
-// la tarjeta de marcaje, antes de que el usuario toque el botón. Si al tocar
-// el botón esa misma obtención (o una reciente) sigue vigente, se reutiliza
-// en vez de pedir el GPS otra vez desde cero.
-let _posPromise=null, _posPromiseAt=0;
-const POS_PREFETCH_MS=15000; // 15 s: suficiente entre que se abre la pantalla y se toca el botón
-
-export function prefetchUbicacion(){
-  _posPromise=obtenerUbicacion();
-  _posPromiseAt=Date.now();
-  _posPromise.catch(()=>{}); // evita "unhandled rejection" si nadie llega a consumirla
-}
-
-function obtenerUbicacionRapida(){
-  if(_posPromise && (Date.now()-_posPromiseAt)<POS_PREFETCH_MS) return _posPromise;
-  return obtenerUbicacion();
 }
 
 // ── Marcar entrada o salida ──
@@ -128,7 +166,7 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
     [dispSnap, snap, pos]=await Promise.all([
       get(ref(db,`users/${user.id}/dispositivoId`)),
       get(ref(db,path)),
-      obtenerUbicacionRapida(),
+      ubicacionParaMarcar(sede),
     ]);
   }catch(err){
     if(err instanceof Error && ['PERMISO_DENEGADO','GPS_TIMEOUT','GPS_ERROR','SIN_GPS'].includes(err.message)){
@@ -176,6 +214,7 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
   const {estado,minDiff}=calcularEstado(tipo,horaStr,hoy);
 
   await update(ref(db,`${path}/${tipo}`),{ estado, horaStr, minDiff });
+  detenerSeguimiento(); // ya marcó: no hace falta seguir usando el GPS
 
   return { estado, horaStr, minDiff, sede:sede.nombre, tipo };
 }

@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=41">
+<link rel="stylesheet" href="css/styles.css?v=42">
 </head>
 <body>
 
@@ -1566,7 +1566,7 @@ function etiquetaChip(chip,extra){
   return etiquetaEstado(tono,chip.texto,extra);
 }
 
-async function renderMarcajeCard(msgHtml){
+async function renderMarcajeCard(msgHtml, recien){
   const cont=$('marcajeCard');
   if(!cont||!me||(me.role!=='empleado'&&me.role!=='admin')){ if(cont) cont.style.display='none'; return; }
 
@@ -1575,7 +1575,8 @@ async function renderMarcajeCard(msgHtml){
   if(!sede){ cont.style.display='none'; return; } // sin sede asignada: no se muestra
 
   cont.style.display='';
-  cont.innerHTML='<div class="card"><div class="spin"></div></div>';
+  // Recién marcado: no se pone el spinner para que la animación no parpadee
+  if(!recien) cont.innerHTML='<div class="card"><div class="spin"></div></div>';
 
   let marc;
   try{
@@ -1592,7 +1593,8 @@ async function renderMarcajeCard(msgHtml){
   const punto=(dato,etiqueta)=>{
     const chip=chipEstado(dato);
     const tono=chip.color==='ba'?'ok':(chip.color==='br'?'mal':'neutro');
-    return `<div class="mk3-pt">
+    const nuevo=recien&&etiqueta.toLowerCase()===recien;
+    return `<div class="mk3-pt${nuevo?' recien':''}">
       <div class="mk3-dot ${tono}">${tono==='mal'?'!':'✓'}</div>
       <div class="mk3-t">${dato.horaStr||'--:--'}</div>
       <div class="mk3-l">${etiqueta}</div>
@@ -1610,6 +1612,7 @@ async function renderMarcajeCard(msgHtml){
       <div class="mk3-l">Salida</div>
     </div>`;
   const avance=salida?100:(entrada?50:0);
+  const avanceIni=recien==='entrada'?0:(recien==='salida'?50:avance);
 
   cont.innerHTML=`
     <div class="mk3">
@@ -1620,7 +1623,7 @@ async function renderMarcajeCard(msgHtml){
       <div id="marcajeAlert">${msgHtml||''}</div>
       <div class="mk3-row">
         ${entrada?punto(entrada,'Entrada'):boton('entrada','Entrada')}
-        <div class="mk3-line"><i style="width:${avance}%"></i></div>
+        <div class="mk3-line"><i style="width:${avanceIni}%"></i></div>
         ${salida?punto(salida,'Salida'):(entrada?boton('salida','Salida'):espera)}
       </div>
     </div>`;
@@ -1628,6 +1631,11 @@ async function renderMarcajeCard(msgHtml){
   // Adelantar la obtención de GPS mientras el usuario todavía está leyendo la
   // pantalla, para que al tocar "Marcar" la ubicación ya esté lista o casi.
   // Solo si falta algo por marcar (si ya marcó salida, no hace falta GPS).
+  if(avanceIni!==avance){
+    // La línea avanza hasta el punto recién marcado
+    const barra=cont.querySelector('.mk3-line i');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(barra) barra.style.width=avance+'%'; }));
+  }
   if(!salida) prefetchUbicacion();
 }
 
@@ -1649,10 +1657,10 @@ window.marcarAsistenciaUI=async function(tipo){
   btns.forEach(b=>b.disabled=true);
   try{
     const res=await marcarAsistencia(db,{ref,get,set,update},me,tipo,today());
-    const msg=mensajeMarcaje(tipo,res.estado,res.minDiff);
-    const bien=res.estado==='a_tiempo'||res.estado==='normal';
-    // Se pasa el mensaje para que no se pierda al redibujar la tarjeta
-    await renderMarcajeCard(avisoMarcaje(bien?'ok':'lejos', bien?ICO_OK:ICO_INFO, msg, `${tipo==='entrada'?'Entrada':'Salida'} marcada a las ${res.horaStr}`));
+    // Sin aviso de texto: el punto recién marcado se anima (la tarjeta ya
+    // muestra la hora y si fue a tiempo o tarde)
+    try{ navigator.vibrate&&navigator.vibrate(35); }catch(_){}
+    await renderMarcajeCard('', tipo);
   }catch(e){
     btns.forEach(b=>b.disabled=false);
     const sede=sedeEfectiva(me,today());
