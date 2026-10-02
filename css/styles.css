@@ -902,3 +902,16 @@ tbody tr:hover td{background:var(--bluelt)}
 .rm-b1{background:var(--blue);color:#fff}
 @keyframes rmPop{from{opacity:0;transform:translate(-50%,-46%) scale(.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @keyframes rmFade{from{opacity:0}to{opacity:1}}
+
+/* Aviso de cierre de mes */
+.cm-hd{background:linear-gradient(120deg,#b45309 0%,#d97706 55%,#f59e0b 100%)}
+.cm-hd.urgente{background:linear-gradient(120deg,#991b1b 0%,#dc2626 55%,#ef4444 100%)}
+.cm-hd-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cm-dias{width:58px;height:58px;border-radius:16px;flex-shrink:0;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.cm-dias b{font-size:24px;font-weight:800}
+.cm-dias span{font-size:10.5px;font-weight:700;opacity:.9;margin-top:2px}
+.cm-hd .rm-s{margin-top:8px}
+.cm-faltan{margin-top:12px}
+.cm-faltan-k{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.cm-chips{display:flex;gap:6px;flex-wrap:wrap}
+.cm-chips button{font:700 12.5px var(--sans);padding:7px 12px;border-radius:10px;border:1.5px dashed #fca5a5;background:#fef2f2;color:#b91c1c;cursor:pointer}

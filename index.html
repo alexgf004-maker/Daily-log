@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=47">
+<link rel="stylesheet" href="css/styles.css?v=48">
 </head>
 <body>
 
@@ -1452,46 +1452,66 @@ async function mostrarResumenMesAnterior(){
   }catch(e){}
 }
 
-function mostrarCierreMes(diasRestantes){
-  const color=diasRestantes===0?'var(--danger)':'var(--warn)';
-  const emoji=diasRestantes===0?'':'⚠️';
-  const titulo=diasRestantes===0?'¡Hoy cierra el mes!':
-    diasRestantes===1?'¡Mañana cierra el mes!':
-    `Cierre de mes en ${diasRestantes} días`;
-  const msg=diasRestantes===0
-    ?'Después de hoy no podrás agregar ni modificar registros de este mes. Revisa que todo esté completo.'
-    :`Asegúrate de tener todos tus registros al día antes del cierre. Te quedan ${diasRestantes} día${diasRestantes>1?'s':''}.`;
+async function mostrarCierreMes(diasRestantes){
+  // Una sola vez por día: initForm también corre después de cada registro guardado
+  const hoyD=new Date();
+  const key=`cierreMesVisto_${me?.id||'u'}_${hoyD.getFullYear()}_${hoyD.getMonth()+1}_${hoyD.getDate()}`;
+  try{ if(sessionStorage.getItem(key)) return; sessionStorage.setItem(key,'1'); }catch(_){}
+  if(document.getElementById('cierreMesCard')) return;
+
+  const urgente=diasRestantes===0;
+  const titulo=urgente?'Hoy cierra el mes':diasRestantes===1?'Mañana cierra el mes':`El mes cierra en ${diasRestantes} días`;
+  const sub=urgente?'Después de hoy ya no podrás agregar ni cambiar registros de este mes.':'Revisa que tengas todos tus días registrados antes del cierre.';
+
+  // Cómo va el mes: días registrados y días que faltan (los que aún se pueden registrar)
+  let estado='';
+  try{
+    const mes=today().slice(0,7);
+    const [snap, sabados, asuetos]=await Promise.all([
+      get(ref(db,`registros/${me.id}`)),
+      obtenerSabadosLaborales(db,{ref,get},mes).catch(()=>({})),
+      getAllAsuetos(parseInt(mes.slice(0,4))).catch(()=>[])
+    ]);
+    const todos=snap.exists()?Object.values(snap.val()):[];
+    const fechaMin=$('empFecha')?.min||ago(3);
+    const faltan=[];
+    const cal=calendarioMes({mes, uid:me.id, todos, sabados, asuetos, tocarFalta:f=>{ faltan.push(f); return ''; }});
+    const tocables=faltan.filter(f=>f>=fechaMin&&f<today());
+    const pendientes=faltan.filter(f=>f<today()).length;
+    estado=`<div class="rg-stats" style="grid-template-columns:1fr 1fr;margin-top:0">
+        <div class="rg-st b"><div class="v">${cal.registrados}/${cal.habiles}</div><div class="l">Días registrados</div></div>
+        <div class="rg-st ${pendientes?'r':'g'}"><div class="v">${pendientes}</div><div class="l">${pendientes===1?'Día sin registrar':'Días sin registrar'}</div></div>
+      </div>
+      ${tocables.length?`<div class="cm-faltan"><div class="cm-faltan-k">Todavía puedes registrar:</div><div class="cm-chips">${tocables.map(f=>`<button onclick="cerrarCierreMes();registrarDia('${f}')">${fechaCortaFx(f)}</button>`).join('')}</div></div>`:''}
+      ${!pendientes?'<div class="mk-av ok" style="margin-top:10px"><span class="mk-av-ic">✓</span><div class="mk-av-tx"><b>¡Vas al día!</b><span>No te falta ningún día por registrar</span></div></div>':''}`;
+  }catch(e){ estado=''; }
 
   const card=document.createElement('div');
   card.id='cierreMesCard';
-  card.style.cssText=`position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);
-    background:#fff;border-radius:16px;padding:24px;width:88%;max-width:320px;
-    box-shadow:0 20px 60px rgba(0,0,0,.25);z-index:1000;
-    animation:cierrePop .35s cubic-bezier(.34,1.56,.64,1) forwards;text-align:center;`;
+  card.className='rm-card';
   card.innerHTML=`
-    <div style="font-size:44px;margin-bottom:12px">${emoji}</div>
-    <div style="font-size:16px;font-weight:800;color:${color};margin-bottom:8px">${titulo}</div>
-    <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px">${msg}</div>
-    <button onclick="document.getElementById('cierreMesCard').remove();document.getElementById('cierreMesOverlay').remove();"
-      style="width:100%;background:${color};color:#fff;border:none;border-radius:10px;
-      padding:12px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer">
-      Entendido, lo reviso
-    </button>`;
-
+    <div class="rm-hd cm-hd${urgente?' urgente':''}">
+      <div class="cm-hd-row">
+        <div><div class="rm-k">Cierre de mes</div><div class="rm-t">${titulo}</div></div>
+        <div class="cm-dias"><b>${diasRestantes}</b><span>${diasRestantes===1?'día':'días'}</span></div>
+      </div>
+      <div class="rm-s">${sub}</div>
+    </div>
+    <div class="rm-b">
+      ${estado}
+      <div class="rm-btns" style="margin-top:14px">
+        <button class="rm-b2" onclick="cerrarCierreMes()">Entendido</button>
+        <button class="rm-b1" onclick="cerrarCierreMes();empTab('h',document.querySelectorAll('#employeeScreen .tab')[1]);">Ver mi mes</button>
+      </div>
+    </div>`;
   const overlay=document.createElement('div');
   overlay.id='cierreMesOverlay';
-  overlay.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:999;`;
-  overlay.onclick=()=>{card.remove();overlay.remove();};
-
-  if(!document.getElementById('cierreMesStyle')){
-    const st=document.createElement('style');
-    st.id='cierreMesStyle';
-    st.textContent=`@keyframes cierrePop{from{opacity:0;transform:translate(-50%,-50%) scale(0.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}`;
-    document.head.appendChild(st);
-  }
+  overlay.className='rm-dim';
+  overlay.onclick=()=>cerrarCierreMes();
   document.body.appendChild(overlay);
   document.body.appendChild(card);
 }
+window.cerrarCierreMes=()=>{ document.getElementById('cierreMesCard')?.remove(); document.getElementById('cierreMesOverlay')?.remove(); };
 
 function initForm(){
   const f=$('empFecha'); f.value=today();f.max=today();
@@ -1851,6 +1871,16 @@ function renderFechaChips(){
     return `<button type="button" class="fx-chip${v===sel?' on':''}"${off?' disabled':''} onclick="elegirFecha('${v}')">${lbl}<small>${DIAS_FX[d.getDay()]} ${d.getDate()}</small></button>`;
   }).join('')+`<button type="button" class="fx-chip${sel&&!esRapida?' on':''}" onclick="abrirOtraFecha()">${sel&&!esRapida?fechaCortaFx(sel):'Otra'}<small>${sel&&!esRapida?'cambiar':'📅'}</small></button>`;
 }
+// Abrir Nuevo Registro con una fecha (desde el calendario o el aviso de cierre de mes)
+window.registrarDia=(f)=>{
+  const tab=document.querySelector('#employeeScreen .tab');
+  if(tab) empTab('r',tab);
+  const fi=$('empFecha'); if(!fi) return;
+  if(fi.min&&f<fi.min) return;
+  fi.value=f;
+  window.onFechaChange&&window.onFechaChange();
+  window.scrollTo({top:0,behavior:'smooth'});
+};
 window.elegirFecha=(v)=>{ const f=$('empFecha'); if(!f) return; f.value=v; window.onFechaChange(); };
 window.abrirOtraFecha=()=>{
   const f=$('empFecha'); if(!f) return;
