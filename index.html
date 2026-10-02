@@ -2078,11 +2078,9 @@ window.adTab=(t,btn)=>{
   }
 };
 
-async function getAllRegs(){
-  const snap=await get(ref(db,'registros'));
+async function getAllRegs(forzar=true){
+  const raw=await getRegistrosAll(forzar);
   const a=[];
-  if(!snap.exists()) return a;
-  const raw=snap.val();
   for(const [uid,regs] of Object.entries(raw)){
     if(regs && typeof regs==='object'){
       for(const [k,v] of Object.entries(regs)){
@@ -2092,42 +2090,49 @@ async function getAllRegs(){
   }
   return a;
 }
-let _usersCache=null, _usersCacheAt=0;
+let _usersCache=null, _usersCacheAt=0, _usersVuelo=null;
 const USERS_CACHE_MS=15000; // 15 s
 async function getUsers(forzar){
   const ahora=Date.now();
   if(!forzar && _usersCache && (ahora-_usersCacheAt)<USERS_CACHE_MS){
     return _usersCache;
   }
-  const snap=await get(ref(db,'users'));
-  const a=[];
-  if(snap.exists()){
-    const raw=snap.val();
-    for(const [k,v] of Object.entries(raw)){
-      if(v && typeof v==='object') a.push({id:k,...v});
+  if(_usersVuelo) return _usersVuelo;
+  _usersVuelo=get(ref(db,'users')).then(snap=>{
+    const a=[];
+    if(snap.exists()){
+      for(const [k,v] of Object.entries(snap.val())){
+        if(v && typeof v==='object') a.push({id:k,...v});
+      }
     }
-  }
-  _usersCache=a; _usersCacheAt=ahora;
-  return a;
+    _usersCache=a; _usersCacheAt=Date.now();
+    return a;
+  }).finally(()=>{ _usersVuelo=null; });
+  return _usersVuelo;
 }
-function invalidarUsersCache(){ _usersCache=null; _usersCacheAt=0; }
+function invalidarUsersCache(){ _usersCache=null; _usersCacheAt=0; _usersVuelo=null; }
 
 // Lee TODO el nodo registros de una sola vez (1 viaje en vez de 30) y lo cachea unos segundos.
 // Devuelve un objeto { uidEmpleado: { key: registro, ... }, ... }
-let _regsCache=null, _regsCacheAt=0;
+let _regsCache=null, _regsCacheAt=0, _regsVuelo=null;
 const REGS_CACHE_MS=8000; // 8 s: suficiente para reusar entre llamadas seguidas de un mismo render
 async function getRegistrosAll(forzar){
   const ahora=Date.now();
   if(!forzar && _regsCache && (ahora-_regsCacheAt)<REGS_CACHE_MS){
     return _regsCache;
   }
-  const snap=await get(ref(db,'registros'));
-  _regsCache = snap.exists()? snap.val() : {};
-  _regsCacheAt = ahora;
-  return _regsCache;
+  // Si ya hay una descarga en curso, se reutiliza (evita bajar todo dos veces)
+  if(_regsVuelo) return _regsVuelo;
+  const vuelo=get(ref(db,'registros')).then(snap=>{
+    const val=snap.exists()? snap.val() : {};
+    if(_regsVuelo===vuelo){ _regsCache=val; _regsCacheAt=Date.now(); }
+    return val;
+  }).finally(()=>{ if(_regsVuelo===vuelo) _regsVuelo=null; });
+  _regsVuelo=vuelo;
+  return vuelo;
 }
 // Invalida la caché cuando se escribe algo en registros (para no mostrar datos viejos)
-function invalidarRegsCache(){ _regsCache=null; _regsCacheAt=0; }
+function invalidarRegsCache(){ _regsCache=null; _regsCacheAt=0; _regsVuelo=null; }
 
 // ── AUTO-REGISTRO ASUETOS Y VACACIONES ────────────────
 async function autoRegistrarDiasEspeciales(regs, users){
@@ -2207,11 +2212,13 @@ async function autoRegistrarDiasEspeciales(regs, users){
     }
 
     if(promesas.length>0) await Promise.all(promesas);
-  }catch(e){ console.error('autoRegistrar error:',e); }
+    return promesas.length+borrar.length;
+  }catch(e){ console.error('autoRegistrar error:',e); return 0; }
 }
 
 let dashAsistFechaSel=null; // fecha mostrada en los bloques de asistencia del dashboard
 let dashPend=[];            // pendientes de aprobar (HE / días especiales); lo llena loadDash
+let dashPendP=null;         // promesa de dashPend mientras se calcula
 let dashTileData={};        // listas para el detalle de cada bloque
 let dashTileSel=null;       // bloque abierto (se conserva en el refresco automático)
 
@@ -2223,26 +2230,32 @@ async function loadDash(){
   const fc=ahora.toLocaleDateString('es-SV',{weekday:'short',day:'numeric',month:'short'}).replace(/\./g,'');
   $('dashDate').textContent=fc.charAt(0).toUpperCase()+fc.slice(1);
   renderMarcajeCard();
-  const[regs,users]=await Promise.all([getAllRegs(),getUsers()]);
 
-  // Auto-registrar asuetos y vacaciones aprobadas
-  if(isAdmin()) await autoRegistrarDiasEspeciales(regs, users);
-
-  const td=today();
-  const pend=regs.filter(r=>(r.he&&r.estadoHE==='pendiente')||(r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente'));
-  dashPend=pend;
-
-  // Badge pendientes
-  if(isAdmin()){
-    const badge=$('pendBadge');
-    if(badge){ if(pend.length){badge.textContent=pend.length;badge.style.display='inline';}else badge.style.display='none'; }
-  }
+  // Todo arranca a la vez: registros (una sola descarga, compartida con los
+  // bloques y la revisión), usuarios, asistencia, revisión y observaciones.
+  const regsP=getAllRegs(true), usersP=getUsers();
+  dashPendP=regsP.then(regs=>{
+    const pend=regs.filter(r=>(r.he&&r.estadoHE==='pendiente')||(r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente'));
+    dashPend=pend;
+    if(isAdmin()){
+      const badge=$('pendBadge');
+      if(badge){ if(pend.length){badge.textContent=pend.length;badge.style.display='inline';}else badge.style.display='none'; }
+    }
+    return pend;
+  }).catch(()=>[]);
 
   // ── Asistencia (marcaje GPS) ──
-  dashAsistFechaSel=td;
+  dashAsistFechaSel=today();
   dashTileSel=null;
   renderDashAsist();
   renderAlertaAyer();
+
+  // Auto-registrar asuetos y vacaciones aprobadas: en segundo plano, no
+  // retrasa el dashboard (no cambia nada de lo que se muestra aquí).
+  if(isAdmin()){
+    Promise.all([regsP,usersP]).then(([regs,users])=>autoRegistrarDiasEspeciales(regs,users))
+      .then(n=>{ if(n) invalidarRegsCache(); }).catch(()=>{});
+  }
 
   if(isAdmin()){
     try{
@@ -3360,6 +3373,7 @@ async function renderDashAsist(){
 
     // "Sin marcar entrada" excluye a quien tiene ausencia aprobada ese día (vacaciones, permiso…)
     const todosRegs=await getRegistrosAll();
+    if(dashPendP) await dashPendP;
     const sinMarcar=noLaboral?[]:res.noMarcoEntrada.filter(x=>{
       const u=emps.find(e=>e.nombre===x.nombre);
       return !(u&&ausenciaEnFecha(todosRegs[u.id],fecha));
@@ -3455,12 +3469,13 @@ async function renderAlertaAyer(){
 
     // Acumular incidencias de todos los días hábiles anteriores
     let tarde=[], salidaTemprana=[], noEntrada=[], noSalida=[];
-    for(const fecha of fechas){
-      const marcajesArr=await Promise.all(emps.map(async u=>{
-        const m=await obtenerMarcajeDia(db,{ref,get},u.id,fecha);
-        return {uid:u.id, m};
-      }));
-      const marcajesDia=Object.fromEntries(marcajesArr.map(x=>[x.uid,x.m]));
+    // Marcajes de todos los días a revisar, en paralelo (los lunes son 2+ días)
+    const marcajesPorFecha=await Promise.all(fechas.map(async fecha=>{
+      const arr=await Promise.all(emps.map(async u=>[u.id, await obtenerMarcajeDia(db,{ref,get},u.id,fecha)]));
+      return Object.fromEntries(arr);
+    }));
+    for(const [iF,fecha] of fechas.entries()){
+      const marcajesDia=marcajesPorFecha[iF];
       const res=asistenciaDia(emps, marcajesDia, fecha, sabados);
       const etiqueta=fmt(fecha);
       tarde.push(...res.tarde.map(x=>({...x,fecha:etiqueta})));
@@ -3473,7 +3488,9 @@ async function renderAlertaAyer(){
         const todos=await getRegistrosAll();
         const regs=todos[u.id];
         if(!regs) return false;
-        return Object.values(regs).some(r=>r.fecha===fecha&&AUS_TIPOS.includes(r.tipoDia));
+        // Día exacto registrado, o vacaciones aprobadas por rango (no depende de
+        // que ya se hayan generado los registros diarios de esas vacaciones)
+        return Object.values(regs).some(r=>r.fecha===fecha&&AUS_TIPOS.includes(r.tipoDia)) || !!ausenciaEnFecha(regs,fecha);
       };
 
       for(const nm of res.noMarcoEntrada){

@@ -7,12 +7,24 @@
 // ── SÁBADOS LABORALES ──────────────────────────────────
 // config/sabadosLaborales/{fecha}: { empleados: [uid, ...] }
 
-export async function obtenerSabadosLaborales(db, fns, mes){
+// Caché corta del nodo completo: el dashboard lo pide 3 veces seguidas
+// (bloques, revisión de ayer y mes anterior). Se invalida al guardar/quitar.
+let _sabCache=null, _sabAt=0, _sabVuelo=null;
+const SAB_CACHE_MS=30000;
+async function leerSabados(db, fns){
+  if(_sabCache && Date.now()-_sabAt<SAB_CACHE_MS) return _sabCache;
+  if(_sabVuelo) return _sabVuelo;
   const {ref,get}=fns;
-  const snap=await get(ref(db,'config/sabadosLaborales'));
-  if(!snap.exists()) return {};
-  const todos=snap.val();
-  if(!mes) return todos;
+  _sabVuelo=get(ref(db,'config/sabadosLaborales')).then(snap=>{
+    _sabCache=snap.exists()?snap.val():{}; _sabAt=Date.now(); return _sabCache;
+  }).finally(()=>{ _sabVuelo=null; });
+  return _sabVuelo;
+}
+export function invalidarSabadosCache(){ _sabCache=null; _sabAt=0; }
+
+export async function obtenerSabadosLaborales(db, fns, mes){
+  const todos=await leerSabados(db, fns);
+  if(!mes) return {...todos};
   // Filtrar solo los del mes pedido (YYYY-MM)
   const out={};
   Object.entries(todos).forEach(([fecha,v])=>{ if(fecha.startsWith(mes)) out[fecha]=v; });
@@ -22,11 +34,13 @@ export async function obtenerSabadosLaborales(db, fns, mes){
 export async function guardarSabadoLaboral(db, fns, fecha, empleados){
   const {ref,set}=fns;
   await set(ref(db,`config/sabadosLaborales/${fecha}`), { empleados });
+  invalidarSabadosCache();
 }
 
 export async function quitarSabadoLaboral(db, fns, fecha){
   const {ref,set}=fns;
   await set(ref(db,`config/sabadosLaborales/${fecha}`), null);
+  invalidarSabadosCache();
 }
 
 // ¿Este empleado trabaja este sábado concreto?
