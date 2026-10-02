@@ -111,30 +111,34 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=32">
+<link rel="stylesheet" href="css/styles.css?v=33">
 </head>
 <body>
 
 <!-- MANTENIMIENTO -->
-<div id="maintenanceScreen" class="screen" style="background:linear-gradient(135deg,#0f1f3d 0%,#1e3a5f 100%);align-items:center;justify-content:center;min-height:100vh">
-  <div style="text-align:center;padding:32px 24px;max-width:360px">
-    <div class="maint-ring">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M13 2 L4 14 H11 L10 22 L20 9 H13 L14 2 Z" fill="#4ade80"/>
-      </svg>
+<div id="maintenanceScreen" class="screen">
+  <div class="mt-wrap">
+    <div class="mt-ill" aria-hidden="true">
+      <div class="mt-doc"><i></i><i></i><i></i><i></i></div>
+      <svg class="mt-g1" viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.5 7.5 0 000-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 00-1.7-1L15 3.5h-4L10.7 6a7.6 7.6 0 00-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 000 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 001.7 1l.3 2.5h4l.3-2.5a7.6 7.6 0 001.7-1l2.4 1 2-3.4zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"/></svg>
+      <svg class="mt-g2" viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.5 7.5 0 000-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 00-1.7-1L15 3.5h-4L10.7 6a7.6 7.6 0 00-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 000 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 001.7 1l.3 2.5h4l.3-2.5a7.6 7.6 0 001.7-1l2.4 1 2-3.4zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"/></svg>
     </div>
-    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;margin-top:20px">En mantenimiento</div>
-    <div style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:28px">Estamos actualizando el sistema. Estará disponible de nuevo en breve.</div>
-    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px">
-      <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px">Acceso administración</div>
-      <div id="maintAlert"></div>
-      <input type="text" id="maintUser" placeholder="Usuario" autocomplete="off"
-        style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;margin-bottom:8px;placeholder-color:rgba(255,255,255,.3)">
-      <input type="password" id="maintPin" placeholder="••••" maxlength="8" inputmode="numeric"
-        style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;margin-bottom:12px;letter-spacing:4px">
-      <button onclick="maintLogin()" style="width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:10px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer">Ingresar</button>
-    </div>
-    <div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:20px">INNOVA · Servicios técnicos y comerciales</div>
+    <div class="mt-t">Ando afinando la app</div>
+    <div class="mt-s">Estoy haciendo unos ajustes para que todo funcione mejor. Dame unos minutos y vuelve a intentar.</div>
+    <div class="mt-bar"><b></b></div>
+    <div class="mt-safe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Tus registros y marcajes están a salvo</div>
+    <div class="mt-firma"><span class="mt-av">D</span><span>— David</span></div>
+    <button class="mt-retry" onclick="location.reload()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 11-2.1-9.4L23 10"/></svg>Intentar de nuevo</button>
+    <details class="mt-adm">
+      <summary>Soy administrador</summary>
+      <div class="mt-adm-box">
+        <div id="maintAlert"></div>
+        <input type="text" id="maintUser" placeholder="Usuario" autocomplete="off" autocapitalize="off">
+        <input type="password" id="maintPin" placeholder="••••" maxlength="8" inputmode="numeric">
+        <button class="mt-adm-btn" onclick="maintLogin()">Ingresar</button>
+      </div>
+    </details>
+    <div class="mt-pie">INNOVA · Registro de Planilla</div>
   </div>
 </div>
 

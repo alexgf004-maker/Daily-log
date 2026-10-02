@@ -483,3 +483,38 @@ tbody tr:hover td{background:var(--bluelt)}
 .pe-lbl{font-size:12px;color:rgba(255,255,255,.6);margin-right:2px}
 .pe-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 5px;border-radius:20px;font-size:12.5px;font-weight:600;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16)}
 .pe-chip i{font-style:normal;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;background:#fff;color:#14305a}
+
+/* ═══ MANTENIMIENTO ═══ */
+#maintenanceScreen{position:relative;overflow-x:hidden;align-items:center;justify-content:center;background:linear-gradient(160deg,#081428 0%,#12284a 45%,#1d4ed8 100%);color:#fff}
+#maintenanceScreen::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% 8%,rgba(96,165,250,.3) 0%,transparent 40%);pointer-events:none}
+.mt-wrap{position:relative;z-index:1;width:100%;max-width:380px;padding:32px 22px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.mt-ill{position:relative;width:132px;height:132px}
+.mt-doc{position:absolute;left:22px;top:10px;width:74px;height:98px;border-radius:14px;background:#eef4ff;box-shadow:0 18px 40px -14px rgba(0,0,0,.6)}
+.mt-doc i{position:absolute;left:14px;height:7px;border-radius:4px;background:#c7d7fb}
+.mt-doc i:nth-child(1){top:18px;width:46px;background:#2563eb}
+.mt-doc i:nth-child(2){top:34px;width:36px}.mt-doc i:nth-child(3){top:48px;width:42px}.mt-doc i:nth-child(4){top:62px;width:28px}
+.mt-g1{position:absolute;right:6px;bottom:8px;width:58px;height:58px;color:#60a5fa;animation:mtSpin 6s linear infinite;filter:drop-shadow(0 6px 12px rgba(0,0,0,.4))}
+.mt-g2{position:absolute;right:52px;bottom:-4px;width:32px;height:32px;color:#fff;animation:mtSpin 4s linear infinite reverse}
+.mt-t{font-size:23px;font-weight:800;letter-spacing:-.3px;margin-top:22px}
+.mt-s{font-size:14px;color:rgba(255,255,255,.68);line-height:1.6;margin-top:8px}
+.mt-bar{position:relative;width:100%;max-width:220px;height:6px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:22px}
+.mt-bar b{position:absolute;top:0;bottom:0;left:-40%;width:40%;border-radius:4px;background:linear-gradient(90deg,transparent,#60a5fa,transparent);animation:mtSlide 1.6s ease-in-out infinite}
+.mt-safe{display:inline-flex;align-items:center;gap:7px;margin-top:18px;padding:7px 13px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:12.5px;color:rgba(255,255,255,.85)}
+.mt-safe svg{width:14px;height:14px;color:#86efac;flex-shrink:0}
+.mt-firma{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13px;font-weight:600;color:rgba(255,255,255,.8)}
+.mt-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:#fff;color:#1e3a5f}
+.mt-retry{margin-top:22px;display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:14px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font:700 14px var(--sans);cursor:pointer}
+.mt-retry svg{width:16px;height:16px}
+.mt-retry:active{transform:scale(.97)}
+.mt-adm{margin-top:20px;width:100%}
+.mt-adm summary{list-style:none;cursor:pointer;display:inline-block;font-size:12.5px;color:rgba(255,255,255,.55);border-bottom:1px dashed rgba(255,255,255,.3);padding-bottom:2px}
+.mt-adm summary::-webkit-details-marker{display:none}
+.mt-adm-box{margin-top:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px;text-align:left}
+#maintenanceScreen .mt-adm-box input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;margin-bottom:8px;height:46px;border-radius:12px}
+#maintenanceScreen .mt-adm-box input::placeholder{color:rgba(255,255,255,.35)}
+#maintPin{letter-spacing:4px}
+.mt-adm-btn{width:100%;height:46px;margin-top:4px;background:var(--blue);color:#fff;border:none;border-radius:12px;font:700 14px var(--sans);cursor:pointer}
+.mt-pie{font-size:11px;color:rgba(255,255,255,.3);margin-top:22px}
+@keyframes mtSpin{to{transform:rotate(360deg)}}
+@keyframes mtSlide{0%{left:-40%}100%{left:100%}}
+@media (prefers-reduced-motion:reduce){.mt-g1,.mt-g2,.mt-bar b{animation:none}}
