@@ -710,3 +710,38 @@ tbody tr:hover td{background:var(--bluelt)}
 .mk-av-ayuda summary::-webkit-details-marker{display:none}
 .mk-av-ayuda[open] summary{text-decoration:none}
 .mk-av-ayuda div{margin-top:8px;padding-top:8px;border-top:1px dashed #fcd34d;font-size:12px;color:#92400e;line-height:1.5}
+
+/* ═══ CALCULADORA (boleta estimada) ═══ */
+.cl-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--gray100);padding:15px 16px;margin-bottom:12px}
+.cl-k{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+.cl-in{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--gray100);cursor:text}
+.cl-in:first-of-type{border-top:none}
+.cl-tx{flex:1;min-width:0}
+.cl-tx b{display:block;font-size:13.5px;color:var(--text)}
+.cl-tx span{font-size:11.5px;color:var(--text2)}
+.cl-mon{display:flex;align-items:center;gap:4px;border:1.5px solid var(--gray200);border-radius:12px;padding:0 10px;height:44px;width:124px;flex-shrink:0;background:#fff;transition:border-color .15s,box-shadow .15s}
+.cl-mon:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.cl-mon i{font-style:normal;color:var(--gray400);font-weight:700}
+#empCalc .cl-mon input{border:none;background:transparent;box-shadow:none;padding:0;height:40px;font:800 16px var(--sans);color:var(--text);width:100%;min-width:0}
+.cl-vacio{font-size:12.5px;color:var(--text2);text-align:center;line-height:1.5;padding:14px 18px;border:1.5px dashed var(--gray200);border-radius:var(--r)}
+.cl-bol{background:#fff;border-radius:16px 16px 0 0;box-shadow:var(--sh);padding:16px 16px 6px}
+.cl-bol-hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:2px dashed var(--gray200);padding-bottom:10px}
+.cl-bol-hd b{font-size:15px;font-weight:800;color:var(--text)}
+.cl-bol-hd span{font-size:11.5px;color:var(--text2)}
+.cl-bol h4{font-size:10.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;margin:12px 0 4px}
+.cl-bol h4.ing{color:#047857}.cl-bol h4.des{color:#dc2626}
+.cl-bl{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0}
+.cl-bl span{color:var(--text2)}
+.cl-bl b{color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cl-bl b.neg{color:#dc2626}
+.cl-bol-tot{margin-top:10px;border-top:2px dashed var(--gray200);padding:12px 0 8px;display:flex;justify-content:space-between;align-items:center}
+.cl-bol-tot span{font-size:13px;font-weight:700;color:var(--text2)}
+.cl-bol-tot b{font-size:26px;font-weight:800;color:#1e3a5f;font-variant-numeric:tabular-nums}
+.cl-zig{height:12px;margin-bottom:12px;background:linear-gradient(-45deg,transparent 8px,#fff 0) 0 0/16px 12px repeat-x,linear-gradient(45deg,transparent 8px,#fff 0) 0 0/16px 12px repeat-x;filter:drop-shadow(0 3px 2px rgba(16,24,40,.06))}
+.cl-renta{background:#fff;border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--gray100);margin-bottom:10px}
+.cl-renta summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-size:13.5px;font-weight:700;color:var(--blue)}
+.cl-renta summary::-webkit-details-marker{display:none}
+.cl-renta[open] summary .chev{transform:rotate(45deg)}
+.cl-renta-b{padding:0 16px 14px;font-size:13px;color:var(--text);line-height:1.6}
+.cl-formula{display:block;margin:8px 0;padding:8px 10px;border-radius:10px;background:var(--gray50);border:1px solid var(--gray100);font-size:12.5px;font-weight:700;color:#1e3a5f;font-variant-numeric:tabular-nums}
+.cl-nota{font-size:11.5px;color:var(--text2);text-align:center;line-height:1.5;padding:0 10px 6px}
