@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=23">
+<link rel="stylesheet" href="css/styles.css?v=24">
 </head>
 <body>
 
@@ -396,24 +396,20 @@ function renderAdmin(){
     </div>
     <div class="content">
       <div id="adDash">
-        <div class="page-header"><div><div class="ph-title">Panel de control</div><div class="ph-sub" id="dashDate"></div></div></div>
+        <div class="dash-hero"><div class="dash-hero-top"><div><div class="dash-hero-sal" id="dashSaludo">Hola</div><div class="dash-hero-name" id="dashNombre"></div></div><span class="dash-hero-chip" id="dashDate"></span></div></div>
         <div id="marcajeCard" style="display:none"></div>
         <div id="dashAlertaAyer"></div>
-        <div class="stat-grid" id="dashStats"><div class="spin"></div></div>
         ${me?.role==='admin'?`<div class="card" id="dashObsCard" style="display:none;border-left:3px solid var(--blue)"><div class="card-title">Observaciones de asistentes</div><div id="dashObsList"></div></div>`:''}
-        <div class="card" id="dashAsistCard" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-            <div class="card-title" style="margin-bottom:0">Asistencia</div>
-            <div style="display:flex;align-items:center;gap:8px">
+        <div id="dashAsistCard" style="display:none">
+          <div class="dt-hd">
+            <span class="dt-lbl" id="dashAsistFecha">Hoy</span>
+            <div class="dt-nav">
               <button class="hist-nav" onclick="dashAsistDia(-1)" aria-label="Día anterior">‹</button>
-              <span id="dashAsistFecha" style="font-size:13px;font-weight:700;min-width:130px;text-align:center"></span>
               <button class="hist-nav" onclick="dashAsistDia(1)" id="dashAsistNext" aria-label="Día siguiente">›</button>
             </div>
           </div>
           <div id="dashAsistList"></div>
         </div>
-        <div class="card"><div class="card-title">Registros de hoy</div><div id="dashHoy"><div class="spin"></div></div></div>
-        <div class="card"><div class="card-title">Sin registro hoy</div><div id="dashSin"><div class="spin"></div></div></div>
       </div>
       <div id="adRegs" style="display:none">
         <div class="page-header" style="justify-content:space-between">
@@ -1543,7 +1539,7 @@ async function renderProgEmpCard(){
   }catch(e){ cont.style.display='none'; }
 }
 
-async function renderMarcajeCard(){
+async function renderMarcajeCard(msgHtml){
   const cont=$('marcajeCard');
   if(!cont||!me||(me.role!=='empleado'&&me.role!=='admin')){ if(cont) cont.style.display='none'; return; }
 
@@ -1565,35 +1561,40 @@ async function renderMarcajeCard(){
   }
   const entrada=marc?.entrada, salida=marc?.salida;
 
-  const slotResultado=(dato,etiqueta)=>{
+  // Línea de tiempo: punto de entrada —— punto de salida
+  const punto=(dato,etiqueta)=>{
     const chip=chipEstado(dato);
-    return `<div class="marcaje-result">
-      <div class="marcaje-time">${dato.horaStr||'--:--'}</div>
-      <div class="marcaje-lbl">${etiqueta}</div>
+    const tono=chip.color==='ba'?'ok':(chip.color==='br'?'mal':'neutro');
+    return `<div class="mk3-pt">
+      <div class="mk3-dot ${tono}">${tono==='mal'?'!':'✓'}</div>
+      <div class="mk3-t">${dato.horaStr||'--:--'}</div>
+      <div class="mk3-l">${etiqueta}</div>
       <span class="badge ${chip.color}" style="font-size:10px">${chip.texto}</span>
     </div>`;
   };
+  const boton=(tipo,etiqueta)=>`<div class="mk3-pt">
+      <div class="mk3-dot pend">→</div>
+      <button class="mk3-btn" onclick="marcarAsistenciaUI('${tipo}')">Marcar ${tipo}</button>
+      <div class="mk3-l">${etiqueta}</div>
+    </div>`;
+  const espera=`<div class="mk3-pt">
+      <div class="mk3-dot off"></div>
+      <div class="mk3-t off">--:--</div>
+      <div class="mk3-l">Salida</div>
+    </div>`;
+  const avance=salida?100:(entrada?50:0);
 
   cont.innerHTML=`
-    <div class="marcaje-card">
-      <div class="marcaje-hd">
-        <span class="marcaje-sede-lbl">Marcaje</span>
-        <span class="marcaje-sede-val">${sede.nombre}${sede.temporal?' · temporal':''}</span>
+    <div class="mk3">
+      <div class="mk3-hd">
+        <span class="mk3-k">Mi marcaje</span>
+        <span class="mk3-sede">${sede.nombre}${sede.temporal?' · temporal':''}</span>
       </div>
-      <div id="marcajeAlert"></div>
-      <div class="marcaje-grid">
-        <div class="marcaje-slot">
-          ${entrada
-            ? slotResultado(entrada,'Entrada')
-            : `<button class="marcaje-btn" onclick="marcarAsistenciaUI('entrada')">Marcar entrada</button>`}
-        </div>
-        <div class="marcaje-slot">
-          ${salida
-            ? slotResultado(salida,'Salida')
-            : entrada
-              ? `<button class="marcaje-btn" onclick="marcarAsistenciaUI('salida')">Marcar salida</button>`
-              : `<div class="marcaje-btn-disabled">Marca entrada primero</div>`}
-        </div>
+      <div id="marcajeAlert">${msgHtml||''}</div>
+      <div class="mk3-row">
+        ${entrada?punto(entrada,'Entrada'):boton('entrada','Entrada')}
+        <div class="mk3-line"><i style="width:${avance}%"></i></div>
+        ${salida?punto(salida,'Salida'):(entrada?boton('salida','Salida'):espera)}
       </div>
     </div>`;
 
@@ -1606,12 +1607,16 @@ async function renderMarcajeCard(){
 window.marcarAsistenciaUI=async function(tipo){
   const al=$('marcajeAlert');
   if(al) al.innerHTML='<div style="font-size:12px;color:var(--text2);padding:6px 0">Obteniendo ubicación...</div>';
+  // Evita doble toque mientras se obtiene la ubicación y se guarda
+  const btns=document.querySelectorAll('#marcajeCard .mk3-btn');
+  btns.forEach(b=>b.disabled=true);
   try{
     const res=await marcarAsistencia(db,{ref,get,set,update},me,tipo,today());
     const msg=mensajeMarcaje(tipo,res.estado,res.minDiff);
-    if(al) al.innerHTML=`<div class="alert as" style="font-size:12px">${msg} — ${res.horaStr}</div>`;
-    await renderMarcajeCard();
+    // Se pasa el mensaje para que no se pierda al redibujar la tarjeta
+    await renderMarcajeCard(`<div class="alert as" style="font-size:12px">${msg} — ${res.horaStr}</div>`);
   }catch(e){
+    btns.forEach(b=>b.disabled=false);
     const mensajes={
       SIN_SEDE:'No tienes una sede asignada. Contacta a Madelyn.',
       DISPOSITIVO_NO_COINCIDE:e.message,
@@ -2180,51 +2185,37 @@ async function autoRegistrarDiasEspeciales(regs, users){
   }catch(e){ console.error('autoRegistrar error:',e); }
 }
 
-let dashAsistFechaSel=null; // fecha mostrada en la tarjeta de asistencia del dashboard
+let dashAsistFechaSel=null; // fecha mostrada en los bloques de asistencia del dashboard
+let dashPend=[];            // pendientes de aprobar (HE / días especiales); lo llena loadDash
+let dashTileData={};        // listas para el detalle de cada bloque
+let dashTileSel=null;       // bloque abierto (se conserva en el refresco automático)
 
 async function loadDash(){
-  $('dashDate').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  // Encabezado: saludo según la hora, nombre y fecha corta
+  const ahora=new Date(), hr=ahora.getHours();
+  $('dashSaludo').textContent=(hr<5||hr>=19)?'Buenas noches':(hr<12?'Buenos días':'Buenas tardes');
+  $('dashNombre').textContent=(me.nombreCorto&&me.nombreCorto.trim())||(me.nombre||'').split(' ')[0];
+  const fc=ahora.toLocaleDateString('es-SV',{weekday:'short',day:'numeric',month:'short'}).replace(/\./g,'');
+  $('dashDate').textContent=fc.charAt(0).toUpperCase()+fc.slice(1);
   renderMarcajeCard();
   const[regs,users]=await Promise.all([getAllRegs(),getUsers()]);
 
   // Auto-registrar asuetos y vacaciones aprobadas
   if(isAdmin()) await autoRegistrarDiasEspeciales(regs, users);
 
-  const now=new Date();
-  const td=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const hoy=regs.filter(r=>r.fecha===td);
+  const td=today();
   const pend=regs.filter(r=>(r.he&&r.estadoHE==='pendiente')||(r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente'));
-  const emps=users.filter(u=>u.role!=='admin'&&u.role!=='asistente'&&(u.activo===true||u.activo==='true'));
-  const conHoy=new Set(hoy.map(r=>r.userId));
+  dashPend=pend;
 
   // Badge pendientes
   if(isAdmin()){
     const badge=$('pendBadge');
     if(badge){ if(pend.length){badge.textContent=pend.length;badge.style.display='inline';}else badge.style.display='none'; }
   }
-  $('dashStats').innerHTML=`
-    <div class="stat-card"><div class="stat-val">${emps.length}</div><div class="stat-lbl">Empleados activos</div></div>
-    <div class="stat-card g"><div class="stat-val">${hoy.length}</div><div class="stat-lbl">Registros hoy</div></div>
-    <div class="stat-card w"><div class="stat-val">${pend.length}</div><div class="stat-lbl">HE pendientes</div></div>
-    <div class="stat-card d"><div class="stat-val">${emps.length-conHoy.size}</div><div class="stat-lbl">Sin registro hoy</div></div>`;
-  $('dashHoy').innerHTML=hoy.length===0
-    ?'<div class="empty" style="padding:20px"><div class="et">Nadie ha registrado hoy</div></div>'
-    :`<div class="tw"><table><thead><tr><th>Empleado</th><th>Viático</th><th>H.E.</th></tr></thead><tbody>${hoy.map(r=>{
-      const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
-      const eh=r.estadoHE||(r.he?'pendiente':'na');
-      return `<tr>
-        <td style="font-weight:500">${r.userName||r.userId}</td>
-        <td>${r.viatico?(ev==='rechazado'?'<span class="badge br">Anulado</span>':'<span class="badge ba">✓</span>'):'<span class="badge bn">No</span>'}</td>
-        <td>${r.he?(eh==='aprobado'?'<span class="badge ba">✓ Aprobada</span>':eh==='rechazado'?'<span class="badge br">Rechazada</span>':'<span class="badge bp">Pendiente</span>'):'<span class="badge bn">No</span>'}</td>
-      </tr>`;
-    }).join('')}</tbody></table></div>`;
-  const sin=emps.filter(u=>!conHoy.has(u.id));
-  $('dashSin').innerHTML=sin.length===0
-    ?'<div class="empty" style="padding:20px"><div class="et">✓ Todos registraron hoy</div></div>'
-    :sin.map(u=>`<div style="padding:8px 0;border-bottom:1px solid var(--gray100);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;flex-shrink:0"></span>${u.nombre}</div>`).join('');
 
   // ── Asistencia (marcaje GPS) ──
   dashAsistFechaSel=td;
+  dashTileSel=null;
   renderDashAsist();
   renderAlertaAyer();
 
@@ -3341,44 +3332,68 @@ async function renderDashAsist(){
 
     const dow=new Date(fecha+'T12:00:00').getDay();
     const noLaboral=(dow===0)||(dow===6&&!sabados[fecha]);
-    if(noLaboral){
-      cont.innerHTML='<div style="font-size:13px;color:var(--text2);padding:8px 0">Este día no es laboral. El marcaje no se evalúa.</div>';
-      return;
-    }
 
-    const lista=(arr,fn)=>arr.length?arr.map(fn).join(''):'<div style="font-size:12px;color:var(--text2);padding:4px 0">Ninguno</div>';
+    // "Sin marcar entrada" excluye a quien tiene ausencia aprobada ese día (vacaciones, permiso…)
+    const todosRegs=await getRegistrosAll();
+    const sinMarcar=noLaboral?[]:res.noMarcoEntrada.filter(x=>{
+      const u=emps.find(e=>e.nombre===x.nombre);
+      return !(u&&ausenciaEnFecha(todosRegs[u.id],fecha));
+    });
+
+    dashTileData={
+      ok:   noLaboral?[]:[...res.aTiempo].sort((a,b)=>(a.hora||'').localeCompare(b.hora||'')),
+      tarde:noLaboral?[]:[...res.tarde].sort((a,b)=>b.min-a.min),
+      sin:  sinMarcar,
+      temp: noLaboral?[]:[...res.salidaTemprana].sort((a,b)=>b.min-a.min),
+      pend: dashPend
+    };
+    const n=k=>noLaboral&&k!=='pend'?'—':dashTileData[k].length;
+    const go='<svg class="go" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg>';
+    const tile=(k,cls,lbl)=>`<button class="dtile ${cls}" data-k="${k}" onclick="dashTile('${k}')"><span class="v">${n(k)}</span><span class="l">${lbl}</span>${go}</button>`;
+    const nTemp=dashTileData.temp.length;
+
     cont.innerHTML=`
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-bottom:16px">
-        <div style="background:var(--greenlt);border-radius:8px;padding:10px">
-          <div style="font-size:20px;font-weight:800;color:var(--green)">${res.aTiempo.length}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">A tiempo</div>
-        </div>
-        <div style="background:var(--dangerlt);border-radius:8px;padding:10px">
-          <div style="font-size:20px;font-weight:800;color:var(--danger)">${res.tarde.length}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Tarde</div>
-        </div>
+      ${noLaboral?'<div class="dt-nota">Este día no es laboral. El marcaje no se evalúa.</div>':''}
+      <div class="dtiles">
+        ${tile('ok','t-g','A tiempo')}
+        ${tile('tarde','t-r','Llegaron tarde')}
+        ${tile('sin','t-b','Sin marcar entrada')}
+        ${tile('pend','t-a','Por aprobar')}
       </div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Ingresos del día (${res.ingresos.length})</div>
-        ${lista(res.ingresos.sort((a,b)=>(a.hora||'').localeCompare(b.hora||'')),x=>{
-          const esTarde=x.estado==='tarde'&&!x.justificado;
-          const txt=x.justificado?'Justificado':(esTarde?x.min+' min tarde':'A tiempo');
-          const color=x.justificado?'bn':(esTarde?'br':'ba');
-          return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px">
-            <span>${x.nombre}</span>
-            <span style="display:flex;align-items:center;gap:6px">
-              <span style="font-weight:600">${x.hora}</span>
-              <span class="badge ${color}" style="font-size:10px">${txt}</span>
-            </span>
-          </div>`;
-        })}
-      </div>
-      <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--warn);margin-bottom:6px">Salieron temprano</div>
-        ${lista(res.salidaTemprana.sort((a,b)=>b.min-a.min),x=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray100);font-size:13px"><span>${x.nombre}</span><span><span style="color:var(--text2)">${x.hora}</span> <span class="badge br" style="font-size:10px">${x.min} min antes</span></span></div>`)}
-      </div>
-    `;
+      ${nTemp?`<button class="dt-extra" data-k="temp" onclick="dashTile('temp')"><span>${nTemp} ${nTemp===1?'salió':'salieron'} temprano</span><span class="chev"></span></button>`:''}
+      <div id="dashTileDet"></div>`;
+    pintarDetalleTile();
   }catch(e){ cardAsist.style.display='none'; }
+}
+
+// Abrir/cerrar el detalle de un bloque (tocar el mismo bloque lo cierra)
+window.dashTile=(k)=>{
+  dashTileSel=dashTileSel===k?null:k;
+  pintarDetalleTile();
+};
+
+function pintarDetalleTile(){
+  document.querySelectorAll('#dashAsistList [data-k]').forEach(el=>el.classList.toggle('sel',el.dataset.k===dashTileSel));
+  const det=$('dashTileDet');
+  if(!det) return;
+  if(!dashTileSel){ det.innerHTML=''; return; }
+  const lista=dashTileData[dashTileSel]||[];
+  const titulos={ok:'A tiempo',tarde:'Llegaron tarde',sin:'Sin marcar entrada',temp:'Salieron temprano',pend:'Por aprobar'};
+  const tipoPend=r=>(r.he&&r.estadoHE==='pendiente')?'Horas extra':(r.tipoDia||'').replace(/^\w/,c=>c.toUpperCase());
+  const fila=x=>{
+    if(dashTileSel==='ok')    return `<div class="dt-row"><span>${x.nombre}</span><span class="dt-r"><b>${x.hora}</b><span class="badge ba" style="font-size:10px">A tiempo</span></span></div>`;
+    if(dashTileSel==='tarde') return `<div class="dt-row"><span>${x.nombre}</span><span class="dt-r"><b>${x.hora}</b><span class="badge br" style="font-size:10px">${x.min} min tarde</span></span></div>`;
+    if(dashTileSel==='temp')  return `<div class="dt-row"><span>${x.nombre}</span><span class="dt-r"><b>${x.hora}</b><span class="badge br" style="font-size:10px">${x.min} min antes</span></span></div>`;
+    if(dashTileSel==='pend')  return `<div class="dt-row"><span>${x.userName||x.userId}</span><span class="dt-r"><span class="badge bp" style="font-size:10px">${tipoPend(x)}</span><span style="font-size:12px;color:var(--text2)">${fmt(x.fecha)}</span></span></div>`;
+    return `<div class="dt-row"><span>${x.nombre}</span></div>`;
+  };
+  const irPend=(dashTileSel==='pend'&&lista.length&&$('tabPend'))
+    ?`<button class="btn btn-p btn-sm" style="margin-top:12px;width:100%" onclick="adTab('pend',document.getElementById('tabPend'))">Ir a Pendientes</button>`:'';
+  det.innerHTML=`<div class="dt-det">
+    <div class="dt-det-hd">${titulos[dashTileSel]}<span class="card-count">${lista.length}</span></div>
+    ${lista.length?lista.map(fila).join(''):'<div class="dt-vacio">Nadie por ahora</div>'}
+    ${irPend}
+  </div>`;
 }
 
 window.dashAsistDia=(delta)=>{
@@ -3444,30 +3459,47 @@ async function renderAlertaAyer(){
       }
     }
 
+    // "Revisión de ayer" si es un solo día y fue ayer; si no (p.ej. lunes: viernes y sábado), con fechas
+    const ayer=(()=>{ const d=new Date(td+'T12:00:00'); d.setDate(d.getDate()-1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+    const titulo=(fechas.length===1&&fechas[0]===ayer)?'Revisión de ayer'
+      :`Revisión ${fechas.length>1?`${fmt(fechas[0])} y ${fmt(fechas[fechas.length-1])}`:fmt(fechas[0])}`;
+
     if(!tarde.length&&!salidaTemprana.length&&!noEntrada.length&&!noSalida.length){
-      cont.innerHTML=`<div class="card" style="border-left:3px solid var(--green);margin-bottom:14px">
-        <div style="font-size:13px;color:var(--text)">Sin incidencias en ${fechas.map(f=>fmt(f)).join(' y ')}. Todos cumplieron.</div>
-      </div>`;
+      cont.innerHTML=`<div class="rban ok"><div class="rban-hd">
+        <div class="rban-ic ok">✓</div>
+        <div class="rban-tx"><div class="rban-t">${titulo} · sin incidencias</div><div class="rban-s">Todos cumplieron su marcaje</div></div>
+      </div></div>`;
       return;
     }
 
-    const rango=fechas.length>1?`${fmt(fechas[0])} y ${fmt(fechas[fechas.length-1])}`:fmt(fechas[0]);
-    const bloque=(titulo,arr,color,fn)=>arr.length?`
+    const total=tarde.length+salidaTemprana.length+noEntrada.length+noSalida.length;
+    const resumen=[
+      tarde.length&&`${tarde.length} llegaron tarde`,
+      salidaTemprana.length&&`${salidaTemprana.length} salieron temprano`,
+      noEntrada.length&&`${noEntrada.length} sin marcar entrada`,
+      noSalida.length&&`${noSalida.length} sin marcar salida`
+    ].filter(Boolean).join(' · ');
+    const bloque=(tit,arr,color,fn)=>arr.length?`
       <div style="margin-top:10px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${color};margin-bottom:4px">${titulo} (${arr.length})</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${color};margin-bottom:4px">${tit} (${arr.length})</div>
         ${arr.map(fn).join('')}
       </div>`:'';
     const filaMin=x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span><span class="badge br" style="font-size:10px">${x.min} min</span></div>`;
     const filaNombre=x=>`<div style="padding:4px 0;font-size:13px">${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></div>`;
 
-    cont.innerHTML=`<div class="card" style="border-left:3px solid var(--warn);margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:2px">Revisión — ${rango}</div>
-      <div style="font-size:12px;color:var(--text2)">Incidencias del día hábil anterior para dar seguimiento.</div>
-      ${bloque('Llegaron tarde',tarde.sort((a,b)=>b.min-a.min),'var(--danger)',filaMin)}
-      ${bloque('Salieron temprano',salidaTemprana.sort((a,b)=>b.min-a.min),'var(--warn)',filaMin)}
-      ${bloque('No marcaron entrada',noEntrada,'var(--danger)',filaNombre)}
-      ${bloque('No marcaron salida',noSalida,'var(--text2)',filaNombre)}
-    </div>`;
+    cont.innerHTML=`<details class="rban">
+      <summary class="rban-hd">
+        <div class="rban-ic">!</div>
+        <div class="rban-tx"><div class="rban-t">${titulo} · ${total} ${total===1?'incidencia':'incidencias'}</div><div class="rban-s">${resumen}</div></div>
+        <span class="chev"></span>
+      </summary>
+      <div class="rban-body">
+        ${bloque('Llegaron tarde',tarde.sort((a,b)=>b.min-a.min),'var(--danger)',filaMin)}
+        ${bloque('Salieron temprano',salidaTemprana.sort((a,b)=>b.min-a.min),'var(--warn)',filaMin)}
+        ${bloque('No marcaron entrada',noEntrada,'var(--danger)',filaNombre)}
+        ${bloque('No marcaron salida',noSalida,'var(--text2)',filaNombre)}
+      </div>
+    </details>`;
   }catch(e){ cont.innerHTML=''; }
 }
 

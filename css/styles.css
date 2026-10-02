@@ -382,3 +382,81 @@ tbody tr:hover td{background:var(--bluelt)}
 .tbl-asig-veh{background:#ecfdf5;color:var(--green)}
 .tbl-x{font-size:14px;opacity:.6}
 .tbl-asig:hover .tbl-x{opacity:1}
+
+/* ═══ DASHBOARD (encabezado, marcaje M3, revisión, bloques) ═══ */
+.dash-hero{position:relative;overflow:hidden;border-radius:var(--r);padding:20px;margin-bottom:14px;color:#fff;background:linear-gradient(120deg,#1e3a5f 0%,#2563eb 100%);box-shadow:0 10px 24px -10px rgba(37,99,235,.5)}
+.dash-hero::after{content:'';position:absolute;right:-50px;top:-60px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none}
+.dash-hero>*{position:relative}
+.dash-hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.dash-hero-sal{font-size:13px;color:rgba(255,255,255,.75)}
+.dash-hero-name{font-size:21px;font-weight:800;margin-top:2px;letter-spacing:-.3px}
+.dash-hero-chip{font-size:11.5px;font-weight:700;background:rgba(255,255,255,.16);padding:5px 11px;border-radius:20px;white-space:nowrap}
+
+/* Marcaje M3: línea de tiempo entrada → salida (dashboard admin y vista del empleado) */
+.mk3{background:#fff;border:1px solid var(--gray100);border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
+.mk3-hd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.mk3-k{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text2)}
+.mk3-sede{font-size:13px;font-weight:700;color:var(--text)}
+#marcajeAlert:not(:empty){margin-top:10px}
+#marcajeAlert .alert{margin-bottom:0}
+.mk3-row{display:flex;align-items:center;gap:8px;margin-top:14px}
+.mk3-pt{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:96px}
+.mk3-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
+.mk3-dot.ok{background:linear-gradient(135deg,#059669,#10b981)}
+.mk3-dot.mal{background:linear-gradient(135deg,#dc2626,#ef4444)}
+.mk3-dot.neutro{background:linear-gradient(135deg,#64748b,#94a3b8)}
+.mk3-dot.pend{background:var(--bluelt);color:var(--blue)}
+.mk3-dot.off{background:var(--gray100);border:2px dashed var(--gray300)}
+.mk3-t{font-size:16px;font-weight:800;color:var(--text)}
+.mk3-t.off{color:var(--gray400)}
+.mk3-l{font-size:11px;color:var(--text2)}
+.mk3-line{flex:1;height:4px;border-radius:3px;background:var(--gray200);overflow:hidden;margin-bottom:46px}
+.mk3-line i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#10b981,#2563eb);transition:width .4s ease}
+.mk3-btn{border:none;border-radius:20px;padding:8px 14px;color:#fff;font:700 12.5px var(--sans);cursor:pointer;white-space:nowrap;background:linear-gradient(135deg,#1e3a5f,#2563eb);box-shadow:0 8px 16px -8px rgba(37,99,235,.7)}
+.mk3-btn:active{transform:scale(.97)}
+.mk3-btn:disabled{opacity:.5;cursor:default}
+
+/* Revisión del día anterior: franja ámbar (verde si no hubo incidencias) */
+.chev{display:inline-block;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);flex-shrink:0;opacity:.6;transition:transform .2s}
+.rban{border-radius:var(--r);margin-bottom:14px;background:var(--warnlt);border:1px solid #fde68a;overflow:hidden}
+.rban.ok{background:var(--greenlt);border-color:#a7f3d0}
+.rban-hd{display:flex;align-items:center;gap:12px;padding:12px 14px;list-style:none;cursor:pointer;color:#b45309}
+.rban.ok .rban-hd{cursor:default;color:var(--green)}
+.rban-hd::-webkit-details-marker{display:none}
+.rban[open] .chev{transform:rotate(45deg)}
+.rban-ic{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;background:linear-gradient(135deg,#b45309,#f59e0b)}
+.rban-ic.ok{background:linear-gradient(135deg,#047857,#10b981)}
+.rban-tx{flex:1;min-width:0}
+.rban-t{font-size:13.5px;font-weight:700;color:#92400e}
+.rban.ok .rban-t{color:#065f46}
+.rban-s{font-size:12px;color:#b45309;margin-top:1px}
+.rban.ok .rban-s{color:var(--green)}
+.rban-body{background:#fff;border-top:1px solid #fde68a;padding:4px 16px 14px}
+
+/* Bloques de asistencia tocables */
+.dt-hd{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 10px}
+.dt-lbl{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text2)}
+.dt-nav{display:flex;gap:6px}
+.dt-nota{font-size:12.5px;color:var(--text2);background:#fff;border:1px dashed var(--gray300);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.dtiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dtile{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:none;border-radius:16px;padding:15px;color:#fff;cursor:pointer;font-family:var(--sans);transition:transform .1s,box-shadow .15s}
+.dtile:active{transform:scale(.98)}
+.dtile .v{font-size:30px;font-weight:800;line-height:1}
+.dtile .l{font-size:12px;font-weight:600;opacity:.9;margin-top:6px}
+.dtile .go{position:absolute;right:14px;top:16px;transition:transform .2s}
+.dtile.sel{box-shadow:0 0 0 3px #fff,0 0 0 5px currentColor}
+.dtile.sel .go{transform:rotate(90deg)}
+.dtile.t-g{background:linear-gradient(135deg,#059669,#10b981);color:#059669}
+.dtile.t-r{background:linear-gradient(135deg,#dc2626,#ef4444);color:#dc2626}
+.dtile.t-b{background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#2563eb}
+.dtile.t-a{background:linear-gradient(135deg,#d97706,#f59e0b);color:#d97706}
+.dtile .v,.dtile .l{color:#fff}
+.dt-extra{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:10px;padding:11px 14px;border-radius:12px;border:1px solid #fde68a;background:var(--warnlt);color:#b45309;font:600 13px var(--sans);cursor:pointer}
+.dt-extra.sel{border-color:var(--warn)}
+.dt-det{background:#fff;border:1px solid var(--gray100);border-radius:var(--r);padding:14px 16px;margin-top:12px;box-shadow:var(--sh);animation:fadeUp .25s ease both}
+.dt-det-hd{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin-bottom:4px}
+.card-count{margin-left:auto;font-size:11px;font-weight:700;color:#fff;background:var(--top);padding:2px 10px;border-radius:20px}
+.dt-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--gray100);font-size:13.5px}
+.dt-row:last-of-type{border-bottom:none}
+.dt-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.dt-vacio{font-size:13px;color:var(--text2);padding:8px 0}
