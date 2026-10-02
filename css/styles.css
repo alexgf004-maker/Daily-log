@@ -615,7 +615,7 @@ tbody tr:hover td{background:var(--bluelt)}
 .rc{scroll-margin:80px}
 
 /* ═══ FORMULARIO DE REGISTRO (tarjetas por sección) ═══ */
-.fx-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--gray100);padding:15px 16px;margin-bottom:12px}
+.fx-card{position:relative;background:#fff;border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--gray100);padding:15px 16px;margin-bottom:12px}
 .fx-k{display:block;font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text2);margin-bottom:10px}
 .fx-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
 .fx-hd .fx-k{margin-bottom:0}
@@ -625,8 +625,8 @@ tbody tr:hover td{background:var(--bluelt)}
 .fx-chip.on{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
 .fx-chip.on small{color:#2563eb}
 .fx-chip:disabled{opacity:.4;cursor:default}
-.fx-fecha-oculta{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-.fx-fecha-oculta.visible{position:static;width:100%;height:auto;opacity:1;pointer-events:auto;margin-top:8px}
+#empReg .fx-fecha-oculta{position:absolute;left:0;top:0;width:1px!important;height:1px!important;min-width:0;padding:0!important;border:0!important;opacity:0;pointer-events:none;overflow:hidden}
+#empReg .fx-fecha-oculta.visible{position:static;width:100%!important;height:44px!important;padding:0 12px!important;border:1.5px solid var(--gray200)!important;opacity:1;pointer-events:auto;margin-top:8px}
 .fx-tipo{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--gray100);border-radius:12px;padding:4px;margin-top:10px}
 .fx-tipo .tipo-btn{border:none;background:transparent;padding:8px 2px;border-radius:9px;font:700 11.5px var(--sans);color:var(--text2);cursor:pointer;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:none}
 .fx-tipo .tipo-btn.active{background:#fff;color:#1d4ed8;box-shadow:0 1px 3px rgba(16,24,40,.12);border:none}
@@ -674,3 +674,19 @@ tbody tr:hover td{background:var(--bluelt)}
 .fx-ok.on .fx-ok-t,.fx-ok.on .fx-ok-s,.fx-ok.on .fx-ok-pills{opacity:1;transform:none}
 .fx-ok-pills span{font-size:12px;font-weight:700;padding:6px 11px;border-radius:20px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22)}
 @media (prefers-reduced-motion:reduce){.fx-ok *{animation-duration:.01s!important;transition-duration:.01s!important}}
+
+/* Viático: selector con interruptor */
+.fx-viat-wrap{margin-bottom:12px}
+.fx-viat{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 16px;border-radius:var(--r);border:1.5px solid var(--gray100);box-shadow:var(--sh);background:#fff;cursor:pointer;font-family:var(--sans);transition:background .2s,border-color .2s}
+.fx-viat-ic{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--gray100);color:var(--text2);transition:background .2s,color .2s}
+.fx-viat-ic svg{width:22px;height:22px}
+.fx-viat-tx{flex:1;min-width:0}
+.fx-viat-tx b{display:block;font-size:14.5px;color:var(--text)}
+.fx-viat-tx span{font-size:12px;color:var(--text2)}
+.fx-sw{position:relative;width:50px;height:30px;border-radius:20px;background:var(--gray300);flex-shrink:0;transition:background .2s}
+.fx-sw i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(15,23,42,.25);transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+.fx-viat.on{border-color:#10b981;background:#ecfdf5}
+.fx-viat.on .fx-viat-ic{background:#10b981;color:#fff}
+.fx-viat.on .fx-viat-tx span{color:#047857;font-weight:600}
+.fx-viat.on .fx-sw{background:#10b981}
+.fx-viat.on .fx-sw i{transform:translateX(20px)}

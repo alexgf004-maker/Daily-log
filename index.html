@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=36">
+<link rel="stylesheet" href="css/styles.css?v=37">
 </head>
 <body>
 
@@ -302,12 +302,12 @@ function renderEmployee(nombre){
             <label class="fx-k" for="empActs">Actividades</label>
             <textarea id="empActs" class="fx-ta" placeholder="Describe las actividades del día..."></textarea>
           </div>
-          <div class="fx-card">
-            <div class="fx-k">Viático</div>
-            <div class="fx-vi">
-              <button type="button" class="fx-vo no on" id="fxViatNo" onclick="setViatico(false)"><b>No</b><span>Trabajé en plantel</span></button>
-              <button type="button" class="fx-vo si" id="fxViatSi" onclick="setViatico(true)"><b>Sí, salí a campo</b><span>Lleva viático</span></button>
-            </div>
+          <div class="fx-viat-wrap">
+            <button type="button" class="fx-viat" id="fxViat" onclick="togF('v')" aria-pressed="false">
+              <span class="fx-viat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg></span>
+              <span class="fx-viat-tx"><b>Viático</b><span id="fxViatSub">No salí a campo</span></span>
+              <span class="fx-sw" aria-hidden="true"><i></i></span>
+            </button>
             <div class="toggle" id="togV" style="display:none"></div>
           </div>
         </div>
@@ -330,7 +330,6 @@ function renderEmployee(nombre){
         </div>
 
         <div class="fx-save-wrap">
-          <div id="fxResumen" class="fx-resumen"></div>
           <div id="empErr"></div>
           <button class="btn btn-p btn-full fx-save" id="btnGuardarReg" onclick="guardarReg()">Guardar registro</button>
         </div>
@@ -1823,29 +1822,10 @@ window.abrirOtraFecha=()=>{
 };
 window.setViatico=(v)=>{
   const tv=$('togV'); if(tv) tv.classList.toggle('on',!!v);
-  const no=$('fxViatNo'), si=$('fxViatSi');
-  if(no) no.classList.toggle('on',!v);
-  if(si){ si.classList.toggle('on',!!v); const b=si.querySelector('b'); if(b) b.textContent=v?'✓ Sí, salí a campo':'Sí, salí a campo'; }
-  actualizarResumenForm();
+  const c=$('fxViat'); if(c){ c.classList.toggle('on',!!v); c.setAttribute('aria-pressed',v?'true':'false'); }
+  const sub=$('fxViatSub'); if(sub) sub.textContent=v?'Salí a campo · lleva viático':'No salí a campo';
 };
-function actualizarResumenForm(){
-  const el=$('fxResumen'); if(!el) return;
-  const fecha=$('empFecha')?.value;
-  const normalVisible=$('camposNormal')&&$('camposNormal').style.display!=='none';
-  const espVisible=$('camposEspecial')&&$('camposEspecial').style.display!=='none';
-  let txt='';
-  if(fecha&&tipoDia==='normal'&&normalVisible){
-    const e=$('empEntrada')?.value, sa=$('empSalida')?.value;
-    const viat=$('togV')?.classList.contains('on');
-    txt=`${fechaCortaFx(fecha)}${e&&sa?` · ${hora12(e)} – ${hora12(sa)}`:''} · ${viat?'con viático':'sin viático'}`;
-  } else if(tipoDia==='vacaciones'&&espVisible){
-    const i=$('vacIni')?.value, fi=$('vacFin')?.value;
-    txt=i&&fi?`Vacaciones del ${fechaCortaFx(i)} al ${fechaCortaFx(fi)}`:'';
-  } else if(fecha&&espVisible){
-    txt=`${fechaCortaFx(fecha)} · ${tipoDia.charAt(0).toUpperCase()+tipoDia.slice(1)}`;
-  }
-  el.innerHTML=txt?`Se guardará: <b>${txt}</b>`:'';
-}
+function actualizarResumenForm(){ /* sin resumen visible */ }
 function limpiarErrForm(){
   const e=$('empErr'); if(e) e.innerHTML='';
   document.querySelectorAll('#empReg .fx-bad').forEach(x=>x.classList.remove('fx-bad'));
