@@ -4489,10 +4489,10 @@ window.progGenerarImagen=async()=>{
   const campo=progGrupos.filter(g=>g.area==='campo');
   const plantel=progGrupos.filter(g=>g.area==='plantel');
 
-  // ── Dibujo en canvas (diseño "tarjetas por campaña") ──
+  // ── Dibujo en canvas (áreas con barra lateral; campañas de un grupo en 2 columnas) ──
   const W=1080, scale=2, pad=56;
   const F='"Plus Jakarta Sans", sans-serif';
-  try{ await Promise.all(['500 20px','700 20px','800 20px'].map(w=>document.fonts.load(`${w} ${F}`))); }catch(e){}
+  try{ await Promise.all(['500 20px','600 20px','700 20px','800 20px'].map(w=>document.fonts.load(`${w} ${F}`))); }catch(e){}
   const C={azul:'#1e3a5f', azul2:'#2563eb', ambar:'#f59e0b', ambarT:'#d97706', texto:'#0f172a', gris:'#64748b', borde:'#e2e8f0', linea:'#eef2f7'};
   const fechaTxt=fmtLong(progFecha).replace(/^\w/,c=>c.toUpperCase());
   const tituloFecha=fechaTxt.replace(/,/,'').replace(/ de \d{4}$/,'');
@@ -4500,160 +4500,235 @@ window.progGenerarImagen=async()=>{
   const canvas=document.createElement('canvas');
   let ctx=canvas.getContext('2d');
   const fuente=(peso,tam)=>{ ctx.font=`${peso} ${tam}px ${F}`; };
+  const esp=(v)=>{ try{ ctx.letterSpacing=v; }catch(e){} };
   const ancho=(t)=>ctx.measureText(t).width;
   const envolver=(texto,max)=>{ // parte un texto en líneas que quepan en "max"
     const palabras=texto.split(' '); const lineas=[]; let act='';
     palabras.forEach(w=>{ const c=act?act+' '+w:w; if(ancho(c)>max&&act){ lineas.push(act); act=w; } else act=c; });
     if(act) lineas.push(act); return lineas;
   };
+  const recortar=(t,max)=>{ if(ancho(t)<=max) return t; while(t.length>1&&ancho(t+'…')>max) t=t.slice(0,-1); return t+'…'; };
   const rrect=(x,y,w,h,r)=>{ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); };
+  const texto=(t,x,cy,color,align='left')=>{ ctx.fillStyle=color; ctx.textAlign=align; ctx.textBaseline='middle'; ctx.fillText(t,x,cy); ctx.textAlign='left'; ctx.textBaseline='alphabetic'; };
 
   // Orden fijo: AMI y Caracterización de la carga arriba; Verificación de factibilidad al final
   const rango=(n)=>{ if(/^ami$/i.test(n.trim())) return 0; if(/caracterizaci[oó]n/i.test(n)) return 1; if(/factibilidad/i.test(n)) return 3; return 2; };
   const campanias=(grupos)=>{ const orden=[], por={}; grupos.forEach(g=>{ if(!por[g.campania]){ por[g.campania]=[]; orden.push(g.campania); } por[g.campania].push(g); }); orden.sort((a,b)=>rango(a)-rango(b)); return orden.map(n=>({nombre:n, grupos:por[n]})); };
 
-  // ── Medidas (primera pasada) ──
-  const cardX=pad, cardW=W-pad*2, innerX=cardX+30, innerW=cardW-30-24;
-  const numW=44, gapNum=18;
-  const plano=(g)=>{ // calcula las líneas y el alto de un renglón de grupo
-    const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
-    const placa=veh?veh.nombre:(g.vehiculoNombre||'');
-    fuente(800,22); const pw=placa?ancho(placa)*1.12+30:0;
-    fuente(700,25);
-    const max=innerW-numW-gapNum-(pw?pw+18:0);
-    // Se parte entre nombres completos (nunca a la mitad de un nombre)
-    const nombres=(g.empleadosNombres||[]).filter(Boolean);
-    let lineas=[];
-    if(!nombres.length) lineas=['Sin personal asignado'];
-    else { let act=''; nombres.forEach(n=>{ const c=act?act+' · '+n:n; if(ancho(c)>max&&act){ lineas.push(act+' ·'); act=n; } else act=c; }); if(act) lineas.push(act); }
-    lineas=lineas.flatMap(l=>ancho(l)>max?envolver(l,max):[l]); // un solo nombre larguísimo
-    const h=16+lineas.length*33+(g.zona?44:0)+14;
-    return {placa,pw,lineas,h};
+  // ── Piezas pequeñas ──
+  const NUM=34, LH=30; // diámetro del número y alto de línea de nombres
+  const placaDe=(g)=>{ const v=g.vehiculo?progVehiculos.find(x=>x.id===g.vehiculo):null; return v?v.nombre:(g.vehiculoNombre||''); };
+  const anchoPlaca=(t)=>{ if(!t) return 0; fuente(800,19); esp('2px'); const w=ancho(t)+26; esp('0px'); return w; };
+  const placaDib=(t,x,cy,w)=>{
+    ctx.fillStyle='#ffffff'; rrect(x,cy-16,w,32,8); ctx.fill();
+    ctx.strokeStyle=C.azul; ctx.lineWidth=2.5; rrect(x,cy-16,w,32,8); ctx.stroke();
+    ctx.save(); rrect(x,cy-16,w,32,8); ctx.clip(); ctx.fillStyle=C.azul2; ctx.fillRect(x,cy-16,w,4); ctx.restore();
+    fuente(800,19); esp('2px'); texto(t,x+w/2+1,cy+1,'#0b1a33','center'); esp('0px');
   };
-  const secciones=[];
-  if(campo.length) secciones.push({titulo:'CAMPO', color:C.azul2, lineaC:'#bfdbfe', barra:C.azul2, camps:campanias(campo)});
-  if(plantel.length) secciones.push({titulo:'PLANTEL', color:C.ambarT, lineaC:'#fde68a', barra:C.ambar, camps:campanias(plantel)});
-  secciones.forEach(sec=>sec.camps.forEach(c=>{ c.planos=c.grupos.map(plano); c.h=20+40+c.planos.reduce((a,p)=>a+p.h,0)+8; }));
+  const anchoZona=(z)=>{ fuente(700,18); return ancho('📍 '+z)+22; };
+  const zonaDib=(z,x,cy,max)=>{
+    fuente(700,18); const t=recortar('📍 '+z,max-22); const w=ancho(t)+22;
+    ctx.fillStyle='#eff6ff'; rrect(x,cy-15,w,30,8); ctx.fill();
+    texto(t,x+11,cy+1,'#1d4ed8');
+  };
+  const numDib=(n,cx,cy,color)=>{ ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,NUM/2,0,Math.PI*2); ctx.fill(); fuente(800,17); texto(String(n),cx,cy+1,'#ffffff','center'); };
+  // Nombres partidos entre nombres completos (nunca a la mitad de un nombre)
+  const lineasNombres=(g,max)=>{
+    fuente(700,23);
+    const nombres=(g.empleadosNombres||[]).filter(Boolean);
+    if(!nombres.length) return {vacio:true, lineas:['Sin personal asignado']};
+    const lineas=[]; let act='';
+    nombres.forEach(n=>{ const c=act?act+' · '+n:n; if(ancho(c)>max&&act){ lineas.push(act+' ·'); act=n; } else act=c; });
+    if(act) lineas.push(act);
+    return {vacio:false, lineas:lineas.flatMap(l=>ancho(l)>max?envolver(l,max):[l])};
+  };
+  const nombresDib=(nl,x,y0)=>{ fuente(nl.vacio?600:700,23); nl.lineas.forEach((l,i)=>texto(l,x,y0+i*LH,nl.vacio?'#94a3b8':C.texto)); };
 
+  // Renglón de una línea: número · nombres + zona a la par · placa a la derecha
+  const fila1=(g,w,color,n)=>{
+    const placa=placaDe(g), pw=anchoPlaca(placa);
+    const tx=NUM+14, max=w-tx-(pw?pw+14:0);
+    const nl=lineasNombres(g,max);
+    fuente(700,23); const ult=ancho(nl.lineas[nl.lineas.length-1]);
+    const zw=g.zona?anchoZona(g.zona):0;
+    const zonaAbajo=g.zona&&ult+12+zw>max;
+    const alto=Math.max(nl.lineas.length*LH+(zonaAbajo?36:0),NUM);
+    const h=alto+20;
+    return {h, draw:(x,y)=>{
+      const top=y+10+(alto-(nl.lineas.length*LH+(zonaAbajo?36:0)))/2;
+      numDib(n,x+NUM/2,y+h/2,color);
+      nombresDib(nl,x+tx,top+LH/2);
+      if(g.zona){ if(zonaAbajo) zonaDib(g.zona,x+tx,top+nl.lineas.length*LH+18,max); else zonaDib(g.zona,x+tx+ult+12,top+(nl.lineas.length-1)*LH+LH/2,max-ult-12); }
+      if(placa) placaDib(placa,x+w-pw,y+h/2,pw);
+    }};
+  };
+  // Renglón de dos líneas (para columnas angostas): nombres arriba; zona y placa abajo
+  const fila2=(g,w,color,n)=>{
+    const placa=placaDe(g), pw=anchoPlaca(placa);
+    const tx=NUM+14;
+    // Sin zona, o si la zona no cabe junto a la placa, la placa sube a la línea de los nombres
+    const placaArriba=!!(placa&&(!g.zona||anchoZona(g.zona)>w-tx-pw-10));
+    const nl=lineasNombres(g,w-tx-(placaArriba?pw+10:0));
+    const sub=!!(g.zona||(placa&&!placaArriba));
+    const h=10+nl.lineas.length*LH+(sub?42:0)+8;
+    return {h, draw:(x,y)=>{
+      numDib(n,x+NUM/2,y+10+LH/2,color);
+      nombresDib(nl,x+tx,y+10+LH/2);
+      const cy=y+10+nl.lineas.length*LH+21;
+      if(placaArriba) placaDib(placa,x+w-pw,y+10+LH/2,pw);
+      else if(placa) placaDib(placa,x+w-pw,cy,pw);
+      if(g.zona) zonaDib(g.zona,x+tx,cy,w-tx-(placa&&!placaArriba?pw+10:0));
+    }};
+  };
+  // Tarjeta de campaña. "w" es el ancho total de la tarjeta.
+  const tarjeta=(c,w,area,forzarDos)=>{
+    const iw=w-30-22; // ancho interior (franja + márgenes)
+    fuente(700,18); const cnt=`${c.grupos.length} ${c.grupos.length===1?'grupo':'grupos'}`; const cw=ancho(cnt);
+    fuente(800,25); const tl=envolver(c.nombre,iw-cw-14);
+    const cab=20+tl.length*32+10;
+    const enCuadricula=c.grupos.length>3; // muchos grupos: 2 columnas por dentro
+    let filas=[], cuerpo=0;
+    if(enCuadricula){
+      const colW=(iw-28)/2;
+      for(let i=0;i<c.grupos.length;i+=2){
+        const a=fila2(c.grupos[i],colW,area.color,i+1), b=c.grupos[i+1]?fila2(c.grupos[i+1],colW,area.color,i+2):null;
+        const h=Math.max(a.h,b?b.h:0); filas.push({h,a,b,colW}); cuerpo+=h;
+      }
+    } else {
+      c.grupos.forEach((g,i)=>{ const r=(forzarDos?fila2:fila1)(g,iw,area.color,i+1); filas.push({h:r.h,a:r}); cuerpo+=r.h; });
+    }
+    const hMin=cab+cuerpo+8;
+    return {h:hMin, draw:(x,y,hh)=>{
+      const h=hh||hMin, ix=x+30;
+      ctx.fillStyle='#ffffff'; rrect(x,y,w,h,20); ctx.fill();
+      ctx.strokeStyle=C.borde; ctx.lineWidth=2; rrect(x,y,w,h,20); ctx.stroke();
+      ctx.save(); rrect(x,y,w,h,20); ctx.clip(); ctx.fillStyle=area.barra; ctx.fillRect(x,y,8,h); ctx.restore();
+      fuente(800,25); tl.forEach((l,i)=>texto(l,ix,y+20+16+i*32,C.texto));
+      fuente(700,18); texto(cnt,x+w-22,y+20+17,C.gris,'right');
+      ctx.fillStyle=C.linea; ctx.fillRect(ix,y+cab-4,iw,2);
+      let ry=y+cab;
+      filas.forEach((f,i)=>{
+        if(f.b!==undefined){ // cuadrícula
+          if(i>0){ ctx.fillStyle=C.linea; ctx.fillRect(ix,ry,f.colW,2); if(f.b) ctx.fillRect(ix+f.colW+28,ry,f.colW,2); }
+          f.a.draw(ix,ry); if(f.b) f.b.draw(ix+f.colW+28,ry);
+        } else {
+          if(i>0){ ctx.fillStyle=C.linea; ctx.fillRect(ix,ry,iw,2); }
+          f.a.draw(ix,ry);
+        }
+        ry+=f.h;
+      });
+    }};
+  };
+
+  // ── Áreas ──
+  const railX=36, railW=50, cx0=railX+railW+18, cW=W-36-cx0, gapT=16;
+  const areas=[];
+  const armarArea=(nombre,grupos,color,barra,fondo)=>{
+    const area={nombre,color,barra,fondo,bloques:[]};
+    const camps=campanias(grupos);
+    // Las campañas de un solo grupo se juntan en 2 columnas; las demás van a todo lo ancho
+    const i0=camps.findIndex(c=>c.grupos.length===1);
+    const solos=camps.filter(c=>c.grupos.length===1);
+    const multi=camps.filter(c=>c.grupos.length>1);
+    const antes=i0<0?multi:multi.filter(c=>camps.indexOf(c)<i0), despues=i0<0?[]:multi.filter(c=>camps.indexOf(c)>i0);
+    const colW=(cW-gapT)/2;
+    antes.forEach(c=>area.bloques.push({cards:[tarjeta(c,cW,area)]}));
+    for(let i=0;i<solos.length;i+=2){
+      const a=tarjeta(solos[i],colW,area,true), b=solos[i+1]?tarjeta(solos[i+1],colW,area,true):null;
+      area.bloques.push({cards:b?[a,b]:[a], colW});
+    }
+    despues.forEach(c=>area.bloques.push({cards:[tarjeta(c,cW,area)]}));
+    area.bloques.forEach(b=>{ b.h=Math.max(...b.cards.map(c=>c.h)); });
+    area.h=area.bloques.reduce((a,b)=>a+b.h,0)+gapT*(area.bloques.length-1);
+    areas.push(area);
+  };
+  if(campo.length) armarArea('CAMPO',campo,C.azul2,C.azul2,[C.azul,C.azul2]);
+  if(plantel.length) armarArea('PLANTEL',plantel,C.ambar,C.ambar,[C.ambarT,C.ambarT]);
+
+  // Ausentes: etiquetas que pasan a la siguiente línea
   const ausGrupos=[['Vacaciones','vacaciones'],['Incapacidad','incapacidad'],['Permiso','permiso'],['Día de bienestar','bienestar'],['Permiso injustificado','injustificado']].filter(([,k])=>ausentes[k].length);
-  const chipsAus=[]; let ausH=0;
+  const chipsAus=[];
   if(ausGrupos.length){
-    let x=pad, y=0;
+    let x=0, y=0;
     ausGrupos.forEach(([lbl,k])=>{
-      fuente(800,21); const lw=ancho(lbl+':')+14;
-      if(x+lw>W-pad){ x=pad; y+=52; }
+      fuente(800,21); const lw=ancho(lbl+':')+12;
+      if(x+lw>cW){ x=0; y+=48; }
       chipsAus.push({t:lbl+':', x, y, lbl:true}); x+=lw;
-      ausentes[k].forEach(n=>{ fuente(600,21); const cw=ancho(n)+32; if(x+cw>W-pad){ x=pad; y+=52; } chipsAus.push({t:n,x,y,w:cw}); x+=cw+10; });
-      x+=14;
+      ausentes[k].forEach(n=>{ fuente(600,21); const w=ancho(n)+32; if(x+w>cW){ x=0; y+=48; } chipsAus.push({t:n,x,y,w}); x+=w+10; });
+      x+=16;
     });
-    ausH=58+y+44+10;
+    areas.push({nombre:'AUSENTES', fondo:['#64748b','#64748b'], aus:true, h:y+40+24});
   }
-  const headH=236;
-  const secH=secciones.reduce((a,sec)=>a+56+sec.camps.reduce((b,c)=>b+c.h+16,0)+10,0);
-  const alto=headH+36+secH+ausH+20+70;
+  // La barra necesita espacio para el nombre escrito de lado
+  areas.forEach(a=>{ fuente(800,21); esp('6px'); a.railH=Math.max(a.h,ancho(a.nombre)+44); esp('0px'); });
+
+  // ── Encabezado (las cifras a la par de la fecha si caben; si no, debajo) ──
+  const nTec=progGrupos.reduce((a,g)=>a+(g.empleados||[]).length,0);
+  const nVeh=progGrupos.filter(g=>g.vehiculo).length;
+  const pills=[`${progGrupos.length} ${progGrupos.length===1?'grupo':'grupos'}`,`${nTec} ${nTec===1?'técnico':'técnicos'}`,nVeh?`${nVeh} ${nVeh===1?'vehículo':'vehículos'}`:null].filter(Boolean);
+  fuente(700,20); const pillW=pills.map(t=>ancho(t)+36); const pillsTot=pillW.reduce((a,b)=>a+b,0)+10*(pills.length-1);
+  fuente(800,48); const fechaW=ancho(tituloFecha);
+  const pillsAlLado=pad+fechaW+28+pillsTot<=W-pad;
+  const headH=pillsAlLado?164:224;
+
+  const cuerpoH=areas.reduce((a,ar)=>a+Math.max(ar.h,ar.railH),0)+26*(areas.length-1);
+  const alto=headH+30+cuerpoH+34+54;
 
   canvas.width=W*scale; canvas.height=Math.ceil(alto)*scale;
   ctx=canvas.getContext('2d'); ctx.scale(scale,scale);
   ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,alto);
 
-  // ── Encabezado ──
   const grad=ctx.createLinearGradient(0,0,W,headH); grad.addColorStop(0,C.azul); grad.addColorStop(1,C.azul2);
   ctx.fillStyle=grad; ctx.fillRect(0,0,W,headH);
-  ctx.fillStyle='rgba(255,255,255,.07)'; ctx.beginPath(); ctx.arc(W-30,10,200,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.75)'; fuente(800,20); try{ ctx.letterSpacing='3px'; }catch(e){}
-  ctx.fillText('PROGRAMACIÓN', pad, 72);
-  ctx.textAlign='right'; ctx.fillStyle='#ffffff'; fuente(800,22); ctx.fillText('INNOVA', W-pad, 72);
-  ctx.fillStyle='#60a5fa'; rrect(W-pad-ancho('INNOVA')-18,52,5,26,3); ctx.fill();
-  ctx.textAlign='left'; try{ ctx.letterSpacing='0px'; }catch(e){}
-  ctx.fillStyle='#ffffff'; fuente(800,52); ctx.fillText(tituloFecha, pad, 132);
-  const nTec=progGrupos.reduce((a,g)=>a+(g.empleados||[]).length,0);
-  const nVeh=progGrupos.filter(g=>g.vehiculo).length;
-  let px=pad;
-  [`${progGrupos.length} ${progGrupos.length===1?'grupo':'grupos'}`,`${nTec} ${nTec===1?'técnico':'técnicos'}`,nVeh?`${nVeh} ${nVeh===1?'vehículo':'vehículos'}`:null].filter(Boolean).forEach(t=>{
-    fuente(700,21); const w=ancho(t)+40;
-    ctx.fillStyle='rgba(255,255,255,.15)'; rrect(px,162,w,46,23); ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1.5; rrect(px,162,w,46,23); ctx.stroke();
-    ctx.fillStyle='#ffffff'; ctx.textBaseline='middle'; ctx.fillText(t,px+20,185); ctx.textBaseline='alphabetic';
-    px+=w+12;
+  ctx.fillStyle='rgba(255,255,255,.07)'; ctx.beginPath(); ctx.arc(W-30,10,190,0,Math.PI*2); ctx.fill();
+  fuente(800,19); esp('3px'); texto('PROGRAMACIÓN',pad,52,'rgba(255,255,255,.75)');
+  fuente(800,20); texto('INNOVA',W-pad,52,'#ffffff','right');
+  const innW=ancho('INNOVA'); esp('0px');
+  ctx.fillStyle='#60a5fa'; rrect(W-pad-innW-16,40,5,24,3); ctx.fill();
+  fuente(800,48); texto(tituloFecha,pad,108,'#ffffff');
+  let px=pillsAlLado?W-pad-pillsTot:pad; const py=pillsAlLado?108:174;
+  pills.forEach((t,i)=>{
+    const w=pillW[i];
+    ctx.fillStyle='rgba(255,255,255,.15)'; rrect(px,py-21,w,42,21); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.28)'; ctx.lineWidth=1.5; rrect(px,py-21,w,42,21); ctx.stroke();
+    fuente(700,20); texto(t,px+18,py+1,'#ffffff');
+    px+=w+10;
   });
 
   // ── Cuerpo ──
-  let y=headH+36;
-  const seccion=(titulo,color,lineaC)=>{
-    fuente(800,22); try{ ctx.letterSpacing='2px'; }catch(e){}
-    ctx.fillStyle=color; ctx.textBaseline='middle'; ctx.fillText(titulo,pad,y+14); ctx.textBaseline='alphabetic';
-    const tw=ancho(titulo); try{ ctx.letterSpacing='0px'; }catch(e){}
-    ctx.fillStyle=lineaC; rrect(pad+tw+18,y+12,W-pad-(pad+tw+18),3,2); ctx.fill();
-    y+=56;
-  };
-  const placaDib=(texto,x,cy,w)=>{
-    ctx.fillStyle='#ffffff'; rrect(x,cy-19,w,38,10); ctx.fill();
-    ctx.strokeStyle=C.azul; ctx.lineWidth=2.5; rrect(x,cy-19,w,38,10); ctx.stroke();
-    ctx.save(); rrect(x,cy-19,w,38,10); ctx.clip(); ctx.fillStyle=C.azul2; ctx.fillRect(x,cy-19,w,4); ctx.restore();
-    fuente(800,22); try{ ctx.letterSpacing='2px'; }catch(e){}
-    ctx.fillStyle='#0b1a33'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(texto,x+w/2,cy+1);
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic'; try{ ctx.letterSpacing='0px'; }catch(e){}
-  };
-  secciones.forEach(sec=>{
-    seccion(sec.titulo,sec.color,sec.lineaC);
-    sec.camps.forEach(c=>{
-      const top=y;
-      ctx.fillStyle='#ffffff'; rrect(cardX,top,cardW,c.h,22); ctx.fill();
-      ctx.strokeStyle=C.borde; ctx.lineWidth=1.5; rrect(cardX,top,cardW,c.h,22); ctx.stroke();
-      ctx.save(); rrect(cardX,top,cardW,c.h,22); ctx.clip(); ctx.fillStyle=sec.barra; ctx.fillRect(cardX,top,8,c.h); ctx.restore();
-      // Título de campaña + cantidad de grupos
-      fuente(800,27); ctx.fillStyle=C.texto; ctx.fillText(c.nombre,innerX,top+48);
-      fuente(700,19); ctx.fillStyle=C.gris; ctx.textAlign='right';
-      ctx.fillText(`${c.grupos.length} ${c.grupos.length===1?'grupo':'grupos'}`,cardX+cardW-24,top+46); ctx.textAlign='left';
-      let ry=top+20+40;
-      c.planos.forEach((pl,i)=>{
-        const g=c.grupos[i];
-        if(i>0){ ctx.fillStyle=C.linea; ctx.fillRect(innerX,ry,innerW,1.5); }
-        const cy=ry+pl.h/2;
-        // Número del grupo
-        ctx.fillStyle=sec.barra; ctx.beginPath(); ctx.arc(innerX+numW/2,cy,numW/2,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle='#ffffff'; fuente(800,21); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(i+1),innerX+numW/2,cy+1);
-        ctx.textAlign='left';
-        // Nombres y zona
-        const tx=innerX+numW+gapNum;
-        const bloque=pl.lineas.length*33+(g.zona?44:0);
-        let ty=cy-bloque/2+16;
-        fuente(700,25); ctx.fillStyle=C.texto;
-        pl.lineas.forEach(l=>{ ctx.fillText(l,tx,ty); ty+=33; });
-        if(g.zona){
-          fuente(700,19); const zt='📍 '+g.zona; const zw=ancho(zt)+24;
-          ctx.fillStyle='#eff6ff'; rrect(tx,ty-14,zw,34,9); ctx.fill();
-          ctx.fillStyle='#1d4ed8'; ctx.fillText(zt,tx+12,ty+3);
-        }
-        ctx.textBaseline='alphabetic';
-        if(pl.placa) placaDib(pl.placa,cardX+cardW-24-pl.pw,cy,pl.pw);
-        ry+=pl.h;
+  let y=headH+30;
+  areas.forEach(a=>{
+    const rh=a.railH;
+    // Barra lateral con el nombre del área escrito de lado
+    const rg=ctx.createLinearGradient(0,y,0,y+rh); rg.addColorStop(0,a.fondo[0]); rg.addColorStop(1,a.fondo[1]);
+    ctx.fillStyle=rg; rrect(railX,y,railW,rh,16); ctx.fill();
+    ctx.save(); ctx.translate(railX+railW/2,y+rh/2); ctx.rotate(-Math.PI/2);
+    fuente(800,21); esp('6px'); texto(a.nombre,3,1,'#ffffff','center'); esp('0px');
+    ctx.restore();
+    if(a.aus){
+      const base=y+Math.max(0,(rh-a.h)/2)+12;
+      chipsAus.forEach(ch=>{
+        const cy=base+ch.y+20;
+        if(ch.lbl){ fuente(800,21); texto(ch.t,cx0+ch.x,cy,C.texto); }
+        else { ctx.fillStyle='#f1f5f9'; rrect(cx0+ch.x,cy-20,ch.w,40,20); ctx.fill(); fuente(600,21); texto(ch.t,cx0+ch.x+16,cy+1,'#475569'); }
       });
-      y+=c.h+16;
-    });
-    y+=10;
+    } else {
+      let by=y;
+      a.bloques.forEach(b=>{
+        if(b.cards.length===1&&!b.colW) b.cards[0].draw(cx0,by);
+        else b.cards.forEach((c,i)=>c.draw(cx0+i*(b.colW+gapT),by,b.h));
+        by+=b.h+gapT;
+      });
+    }
+    y+=Math.max(a.h,rh)+26;
   });
-
-  // ── No disponibles ──
-  if(ausGrupos.length){
-    seccion('NO DISPONIBLES',C.gris,C.borde);
-    const base=y+2;
-    chipsAus.forEach(ch=>{
-      const cy=base+ch.y+20;
-      ctx.textBaseline='middle';
-      if(ch.lbl){ fuente(800,21); ctx.fillStyle=C.texto; ctx.fillText(ch.t,ch.x,cy); }
-      else { ctx.fillStyle='#f1f5f9'; rrect(ch.x,cy-20,ch.w,40,20); ctx.fill(); fuente(600,21); ctx.fillStyle='#475569'; ctx.fillText(ch.t,ch.x+16,cy+1); }
-      ctx.textBaseline='alphabetic';
-    });
-    y=base+(chipsAus.length?chipsAus[chipsAus.length-1].y:0)+40+20;
-  }
 
   // ── Pie ──
   const ahora=new Date();
-  fuente(500,19); ctx.fillStyle='#94a3b8';
-  ctx.fillText('INNOVA · Registro de Planilla',pad,alto-34);
+  fuente(500,18); ctx.fillStyle='#94a3b8';
+  ctx.fillText('INNOVA · Registro de Planilla',pad,alto-30);
   ctx.textAlign='right';
-  ctx.fillText(`Generado el ${ahora.getDate()}/${ahora.getMonth()+1} · ${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`,W-pad,alto-34);
+  ctx.fillText(`Generado el ${ahora.getDate()}/${ahora.getMonth()+1} · ${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`,W-pad,alto-30);
   ctx.textAlign='left';
 
   // ── Compartir o descargar ──
