@@ -102,7 +102,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 
 /* Tarjeta azul hielo con franja azul→verde arriba */
 .login-form{position:relative;overflow:hidden;background:#eef4ff}
-.login-form::before{content:'';position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#2563eb,#3b82f6 60%,#4ade80)}
+.login-form::before{content:'';position:absolute;left:0;right:0;top:0;height:4px;background:var(--blue)}
 .login-form input{background:#fff;border-color:#d6e3fb}
 /* Saludo según la hora + chip de fecha */
 .lg-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -110,9 +110,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 
 
 /* ═══ TOPBAR ═══ */
-.topbar{background:var(--top);height:58px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(16,24,40,.18)}
+.topbar{background:linear-gradient(110deg,#1e3a5f 0%,#1e3a5f 30%,#2563eb 100%);height:58px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(16,24,40,.18)}
 .tb-brand{display:flex;align-items:center;gap:10px}
-.tb-bar{width:3px;height:20px;background:#4ade80;border-radius:2px;flex-shrink:0}
+.tb-bar{width:3px;height:20px;background:#60a5fa;border-radius:2px;flex-shrink:0}
 .tb-name{font-size:13px;font-weight:700;color:#fff;line-height:1.25}
 .tb-name .inn{color:#60a5fa}
 .tb-sub{font-size:10px;color:rgba(255,255,255,.38);font-weight:400;margin-top:1px}
@@ -400,16 +400,16 @@ tbody tr:hover td{background:var(--bluelt)}
 .mk3-row{display:flex;align-items:center;gap:8px;margin-top:14px}
 .mk3-pt{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:96px}
 .mk3-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
-.mk3-dot.ok{background:linear-gradient(135deg,#059669,#10b981)}
-.mk3-dot.mal{background:linear-gradient(135deg,#dc2626,#ef4444)}
-.mk3-dot.neutro{background:linear-gradient(135deg,#64748b,#94a3b8)}
+.mk3-dot.ok{background:#10b981}
+.mk3-dot.mal{background:#ef4444}
+.mk3-dot.neutro{background:#94a3b8}
 .mk3-dot.pend{background:var(--bluelt);color:var(--blue)}
 .mk3-dot.off{background:var(--gray100);border:2px dashed var(--gray300)}
 .mk3-t{font-size:16px;font-weight:800;color:var(--text)}
 .mk3-t.off{color:var(--gray400)}
 .mk3-l{font-size:11px;color:var(--text2)}
 .mk3-line{flex:1;height:4px;border-radius:3px;background:var(--gray200);overflow:hidden;margin-bottom:50px}
-.mk3-line i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#10b981,#2563eb);transition:width .4s ease}
+.mk3-line i{display:block;height:100%;border-radius:3px;background:var(--blue);transition:width .4s ease}
 .mk3-btn{border:none;border-radius:20px;padding:8px 14px;color:#fff;font:700 12.5px var(--sans);cursor:pointer;white-space:nowrap;background:linear-gradient(135deg,#1e3a5f,#2563eb);box-shadow:0 8px 16px -8px rgba(37,99,235,.7)}
 .mk3-btn:active{transform:scale(.97)}
 .mk3-btn:disabled{opacity:.5;cursor:default}
@@ -422,8 +422,8 @@ tbody tr:hover td{background:var(--bluelt)}
 .rban.ok .rban-hd{cursor:default;color:var(--green)}
 .rban-hd::-webkit-details-marker{display:none}
 .rban[open] .chev{transform:rotate(45deg)}
-.rban-ic{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;background:linear-gradient(135deg,#b45309,#f59e0b)}
-.rban-ic.ok{background:linear-gradient(135deg,#047857,#10b981)}
+.rban-ic{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;background:#f59e0b}
+.rban-ic.ok{background:#10b981}
 .rban-tx{flex:1;min-width:0}
 .rban-t{font-size:13.5px;font-weight:700;color:#92400e}
 .rban.ok .rban-t{color:#065f46}
@@ -470,12 +470,12 @@ tbody tr:hover td{background:var(--bluelt)}
 .mk3-pt .tg{margin-top:4px}
 
 /* Mi programación (vista del empleado): estilo boleto azul oscuro */
-.pe{position:relative;color:#fff;background:#0f1f3d;border-radius:var(--r);margin-bottom:14px;box-shadow:0 14px 28px -14px rgba(15,31,61,.8)}
+.pe{position:relative;color:#fff;background:linear-gradient(120deg,#1e3a5f 0%,#2563eb 100%);border-radius:var(--r);margin-bottom:14px;box-shadow:0 14px 28px -14px rgba(30,58,95,.75)}
 .pe-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 16px 12px}
 .pe-tx{min-width:0}
 .pe-k{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:rgba(255,255,255,.55)}
 .pe-camp{font-size:20px;font-weight:800;line-height:1.2;margin-top:3px}
-.pe-placa{flex-shrink:0;margin-top:4px;font:800 12.5px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1px;color:#0b1a33;background:#fff;border-radius:6px;padding:4px 9px;box-shadow:inset 0 3px 0 #4ade80}
+.pe-placa{flex-shrink:0;margin-top:4px;font:800 12.5px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1px;color:#0b1a33;background:#fff;border-radius:6px;padding:4px 9px;box-shadow:inset 0 3px 0 var(--blue)}
 .pe-cut{position:relative;border-top:2px dashed rgba(255,255,255,.22);margin:0 14px}
 .pe-cut::before,.pe-cut::after{content:'';position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:var(--bg)}
 .pe-cut::before{left:-24px}.pe-cut::after{right:-24px}
