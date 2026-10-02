@@ -469,21 +469,17 @@ tbody tr:hover td{background:var(--bluelt)}
 .tg.sm svg{width:11px;height:11px}
 .mk3-pt .tg{margin-top:4px}
 
-/* Mi programación (vista del empleado): tarjeta azul oscuro */
-.pe{position:relative;overflow:hidden;color:#fff;border-radius:var(--r);padding:15px 16px 14px;margin-bottom:14px;background:linear-gradient(135deg,#0b1a33 0%,#14305a 55%,#1d4ed8 100%);box-shadow:0 14px 28px -14px rgba(15,31,61,.75)}
-.pe::after{content:'';position:absolute;right:-40px;top:-50px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.06);pointer-events:none}
-.pe>*{position:relative}
-.pe-hd{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.pe .mk3-k{color:rgba(255,255,255,.6)}
-.pe-area{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:7px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.2)}
-.pe-area.plantel{background:rgba(251,191,36,.2);color:#fde68a;border-color:rgba(251,191,36,.35)}
-.pe-main{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
-.pe-camp{font-size:18px;font-weight:800;line-height:1.2;min-width:0}
-.pe-placa{flex-shrink:0;font:800 12.5px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1px;color:#0b1a33;background:#fff;border-radius:6px;padding:4px 9px;box-shadow:inset 0 3px 0 #4ade80}
-.pe-con{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.18)}
-.pe-avs{display:flex;flex-shrink:0}
-.pe-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:#14305a;background:#fff;border:2px solid #14305a}
-.pe-av+.pe-av{margin-left:-8px}
-.pe-con-t{font-size:13px;color:rgba(255,255,255,.7);line-height:1.3}
-.pe-con-t b{color:#fff;font-weight:700}
-.pe-con-t.solo{font-weight:600}
+/* Mi programación (vista del empleado): estilo boleto azul oscuro */
+.pe{position:relative;color:#fff;background:#0f1f3d;border-radius:var(--r);margin-bottom:14px;box-shadow:0 14px 28px -14px rgba(15,31,61,.8)}
+.pe-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 16px 12px}
+.pe-tx{min-width:0}
+.pe-k{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.pe-camp{font-size:20px;font-weight:800;line-height:1.2;margin-top:3px}
+.pe-placa{flex-shrink:0;margin-top:4px;font:800 12.5px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1px;color:#0b1a33;background:#fff;border-radius:6px;padding:4px 9px;box-shadow:inset 0 3px 0 #4ade80}
+.pe-cut{position:relative;border-top:2px dashed rgba(255,255,255,.22);margin:0 14px}
+.pe-cut::before,.pe-cut::after{content:'';position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:var(--bg)}
+.pe-cut::before{left:-24px}.pe-cut::after{right:-24px}
+.pe-bot{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:11px 16px 13px}
+.pe-lbl{font-size:12px;color:rgba(255,255,255,.6);margin-right:2px}
+.pe-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 5px;border-radius:20px;font-size:12.5px;font-weight:600;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16)}
+.pe-chip i{font-style:normal;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;background:#fff;color:#14305a}

@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=29">
+<link rel="stylesheet" href="css/styles.css?v=30">
 </head>
 <body>
 
@@ -1530,21 +1530,20 @@ async function renderProgEmpCard(){
     const companeros=ids.map((id,k)=>id===me.id?null:(noms[k]||'')).filter(n=>n);
     const esCampo=grupo.area==='campo';
     const iniciales=n=>n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
-    const lista=companeros.length<=1?(companeros[0]||''):companeros.slice(0,-1).join(', ')+' y '+companeros[companeros.length-1];
     const con=companeros.length
-      ? `<div class="pe-con"><div class="pe-avs">${companeros.slice(0,3).map(n=>`<span class="pe-av">${iniciales(n)}</span>`).join('')}</div><div class="pe-con-t">Vas con <b>${lista}</b></div></div>`
-      : `<div class="pe-con"><div class="pe-con-t solo">Vas solo</div></div>`;
+      ? `<span class="pe-lbl">Vas con</span>${companeros.map(n=>`<span class="pe-chip"><i>${iniciales(n)}</i>${n}</span>`).join('')}`
+      : `<span class="pe-lbl">Vas solo</span>`;
     cont.innerHTML=`
       <div class="pe">
-        <div class="pe-hd">
-          <span class="mk3-k">Mi programación</span>
-          <span class="pe-area ${esCampo?'campo':'plantel'}">${esCampo?'Campo':'Plantel'}</span>
-        </div>
-        <div class="pe-main">
-          <div class="pe-camp">${grupo.campania}</div>
+        <div class="pe-top">
+          <div class="pe-tx">
+            <div class="pe-k">Mi programación · ${esCampo?'Campo':'Plantel'}</div>
+            <div class="pe-camp">${grupo.campania}</div>
+          </div>
           ${grupo.vehiculoNombre?`<span class="pe-placa" title="Vehículo">${grupo.vehiculoNombre}</span>`:''}
         </div>
-        ${con}
+        <div class="pe-cut"></div>
+        <div class="pe-bot">${con}</div>
       </div>`;
   }catch(e){ cont.style.display='none'; }
 }
