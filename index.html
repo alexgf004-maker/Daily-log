@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=33">
+<link rel="stylesheet" href="css/styles.css?v=34">
 </head>
 <body>
 
@@ -205,7 +205,7 @@ import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.co
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
-import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores } from "./js/asistencia.js";
+import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
 
@@ -416,56 +416,44 @@ function renderAdmin(){
         </div>
       </div>
       <div id="adRegs" style="display:none">
-        <div class="page-header" style="justify-content:space-between">
-          <div><div class="ph-title">Registros</div><div class="ph-sub" id="adRegsSubtitle">Selecciona un empleado para ver su historial</div></div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-gh btn-sm" id="btnVistaEmp" onclick="switchVistaRegs('empleado')">Por empleado</button>
-            <button class="btn btn-p btn-sm" id="btnVistaMes" onclick="switchVistaRegs('mes')">Por mes</button>
+        <!-- Lista del mes (todos los empleados) -->
+        <div id="regsLista">
+          <div class="rg-hero">
+            <div class="rg-hero-top">
+              <div class="rg-hero-t">Registros</div>
+              ${me?.role==='admin'?`<button class="rg-hero-btn" onclick="exportarMesCompleto()">Exportar mes</button>`:''}
+            </div>
+            <div class="rg-mnav">
+              <button onclick="regsMesNav(-1)" aria-label="Mes anterior">‹</button>
+              <span id="regsMesLbl"></span>
+              <button onclick="regsMesNav(1)" id="regsMesNext" aria-label="Mes siguiente">›</button>
+            </div>
+            <input type="hidden" id="mesReporteGlobal">
           </div>
-        </div>
-
-        <!-- Vista por empleado -->
-        <div id="vistaEmpleado">
-          <div style="position:relative;margin-bottom:12px">
-            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray400);font-size:15px">🔍</span>
-            <input type="text" id="empSearch" placeholder="Buscar empleado..." oninput="filtrarEmps()"
-              style="padding-left:36px;background:#fff;border:1.5px solid var(--gray200)">
+          <div id="regsStats"></div>
+          <div class="rg-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input type="text" id="empSearch" placeholder="Buscar empleado..." oninput="filtrarEmps()">
           </div>
           <div id="adEmpList"><div class="spin"></div></div>
         </div>
 
-        <!-- Vista por mes -->
-        <div id="vistaMes" style="display:none">
-          <div class="card" style="margin-bottom:14px">
-            <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-              <div class="fg" style="margin-bottom:0;flex:1;min-width:130px">
-                <label class="fl">Mes</label>
-                <input type="month" id="mesReporteGlobal">
-              </div>
-              <button class="btn btn-p btn-sm" onclick="cargarReporteMes()">Ver</button>
-              ${me?.role==='admin'?`<button class="btn btn-g btn-sm" onclick="exportarMesCompleto()">Exportar todo</button>`:''}
-            </div>
-          </div>
-          <div id="reporteMesLista"></div>
-        </div>
-
-        <!-- Perfil individual — accesible desde ambas vistas -->
+        <!-- Perfil individual -->
         <div id="adEmpPerfil" style="display:none">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-            <button class="btn btn-gh btn-sm" onclick="volverListaEmps()">← Volver</button>
-            <div id="adEmpNombre" style="font-size:16px;font-weight:700;color:var(--text)"></div>
+          <div class="rg-ph">
+            <button class="rg-back" onclick="volverListaEmps()" aria-label="Volver">‹</button>
+            <div class="rg-av lg" id="adEmpAv"></div>
+            <div class="rg-ph-tx"><div class="rg-ph-n" id="adEmpNombre"></div><div class="rg-ph-c" id="adEmpCargo"></div></div>
+            <button class="rg-xls" onclick="exportarEmpleadoIndividual()">Excel</button>
           </div>
-          <div id="adEmpResumen" style="margin-bottom:14px"></div>
-          <div class="card" style="margin-bottom:14px">
-            <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-              <div class="fg" style="margin-bottom:0;flex:1;min-width:130px">
-                <label class="fl">Mes</label>
-                <input type="month" id="adEmpMes">
-              </div>
-              <button class="btn btn-p btn-sm" onclick="cargarPerfilEmpleado()">Ver</button>
-<button class="btn btn-g btn-sm" onclick="exportarEmpleadoIndividual()">Excel</button>
-            </div>
+          <div class="rg-mnav claro">
+            <button onclick="perfilMesNav(-1)" aria-label="Mes anterior">‹</button>
+            <span id="adEmpMesLbl"></span>
+            <button onclick="perfilMesNav(1)" id="adEmpMesNext" aria-label="Mes siguiente">›</button>
           </div>
+          <input type="hidden" id="adEmpMes">
+          <div id="adEmpResumen"></div>
+          <div id="adEmpCal"></div>
           <div id="adEmpRegs"><div class="spin"></div></div>
         </div>
       </div>
@@ -2442,193 +2430,269 @@ let perfilEmpUID = null;
 
 let empListHTML = '';
 
+// ── REGISTROS: lista del mes + perfil con calendario ──
+let regsMes=null; // mes mostrado en la lista (YYYY-MM)
+const MESES_ES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_CORTOS=['dom','lun','mar','mié','jue','vie','sáb'];
+function mesActualStr(){ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
+function mesSumar(mes,delta){ const [y,m]=mes.split('-').map(Number); const d=new Date(y,m-1+delta,1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function mesLabel(mes){ const [y,m]=mes.split('-').map(Number); return `${MESES_ES[m-1]} ${y}`; }
+function inicialesDe(n){ return (n||'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function minHEde(r){ return r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0); }
+function hmCorto(min){ if(!min) return '0'; const h=Math.floor(min/60), m=min%60; return h?(m?`${h}h ${m}m`:`${h}h`):`${m}m`; }
+const esPendiente=r=>(r.he&&r.estadoHE==='pendiente')||(r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente');
+
 window.filtrarEmps=()=>{
   const q=$('empSearch')?.value.toLowerCase().trim()||'';
   const l=$('adEmpList'); if(!l||!empListHTML) return;
   if(!q){ l.innerHTML=empListHTML; return; }
-  // Filter rows inside the card
   const tmp=document.createElement('div');
   tmp.innerHTML=empListHTML;
-  const rows=tmp.querySelectorAll('[data-nombre]');
   let visible=0;
-  rows.forEach(r=>{
+  tmp.querySelectorAll('[data-nombre]').forEach(r=>{
     const match=r.dataset.nombre.toLowerCase().includes(q);
     r.style.display=match?'':'none';
     if(match) visible++;
   });
-  if(visible===0) l.innerHTML='<div class="empty"><div class="et">Sin resultados para "'+q+'"</div></div>';
-  else l.innerHTML=tmp.innerHTML;
+  l.innerHTML=visible?tmp.innerHTML:'<div class="empty"><div class="et">Sin resultados para "'+q.replace(/</g,'&lt;')+'"</div></div>';
+};
+
+window.regsMesNav=(delta)=>{
+  const nuevo=mesSumar(regsMes||mesActualStr(),delta);
+  if(nuevo>mesActualStr()) return;
+  regsMes=nuevo;
+  loadFiltEmps();
 };
 
 async function loadFiltEmps(){
-  // Ahora carga lista de empleados como perfiles
   const l=$('adEmpList'); if(!l) return;
+  if(!regsMes) regsMes=mesActualStr();
+  const mes=regsMes;
+  hide('adEmpPerfil'); show('regsLista');
+  $('regsMesLbl').textContent=mesLabel(mes);
+  $('mesReporteGlobal').value=mes;
+  const next=$('regsMesNext'); if(next) next.disabled=mes>=mesActualStr();
   l.innerHTML='<div class="spin"></div>';
-  hide('adEmpPerfil'); show('adEmpList');
+
   const [users, allRegs] = await Promise.all([getUsers(), getAllRegs()]);
+  if(regsMes!==mes) return; // cambió de mes mientras cargaba
   let emps = users.filter(u=>u.role!=='admin'&&u.role!=='asistente'&&(u.activo===true||u.activo==='true'));
-  // Asistente solo ve sus empleados asignados
   if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
     emps=emps.filter(u=>me.empleadosAsig.includes(u.id));
   }
   emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
 
-  const now=new Date();
-  const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-
-  empListHTML=`<div class="card" style="padding:0;overflow:hidden">`+emps.map((u,i)=>{
-    const regsEmp=allRegs.filter(r=>r.userId===u.id);
-    const delMes=regsEmp.filter(r=>r.fecha&&r.fecha.startsWith(mesActual));
-    const pendHE=regsEmp.filter(r=>r.he&&r.estadoHE==='pendiente').length;
+  const porEmp={};
+  allRegs.forEach(r=>{ (porEmp[r.userId]=porEmp[r.userId]||[]).push(r); });
+  let totRegs=0, totViat=0, totMin=0;
+  const filas=emps.map(u=>{
+    const regsEmp=porEmp[u.id]||[];
+    const delMes=regsEmp.filter(r=>r.fecha&&r.fecha.startsWith(mes));
     const viaticos=delMes.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
-    const totalMin=delMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
-    const hrsStr=totalMin>0?(Math.floor(totalMin/60)>0?Math.floor(totalMin/60)+'h ':'')+totalMin%60+'m':'—';
-    const border=i>0?'border-top:1px solid var(--gray100);':'';
-    return `<div data-nombre="${u.nombre}" style="${border}padding:14px 16px;cursor:pointer;transition:background .12s"
-      onclick="abrirPerfilEmp('${u.id}','${u.nombre}')"
-      onmouseover="this.style.background='var(--bluelt)'" onmouseout="this.style.background=''">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-        <div style="min-width:0;flex:1">
-          <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.nombre}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.cargo||'—'}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-          ${pendHE>0?`<span class="badge bp">HE ${pendHE}</span>`:''}
-          <div style="text-align:right;font-size:12px;color:var(--text2);line-height:1.5">
-            <span style="color:var(--text);font-weight:600">${delMes.length}</span> reg &nbsp;
-            <span style="color:var(--green);font-weight:600">${viaticos}</span> viát &nbsp;
-            <span style="color:var(--warn);font-weight:600">${hrsStr}</span>
-          </div>
-          <span style="color:var(--gray300);font-size:16px">›</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('')+`</div>`;
+    const minHE=delMes.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+minHEde(r),0);
+    const pend=regsEmp.filter(esPendiente).length; // pendientes de cualquier mes
+    totRegs+=delMes.length; totViat+=viaticos; totMin+=minHE;
+    return {u, regs:delMes.length, viaticos, minHE, pend};
+  });
+
+  $('regsStats').innerHTML=`<div class="rg-stats">
+    <div class="rg-st b"><div class="v">${totRegs}</div><div class="l">Registros</div></div>
+    <div class="rg-st g"><div class="v">${totViat}</div><div class="l">Viáticos</div></div>
+    <div class="rg-st a"><div class="v">${hmCorto(totMin)}</div><div class="l">Horas extra</div></div>
+  </div>`;
+
+  empListHTML=filas.length?filas.map(f=>`
+    <button class="rg-emp" data-nombre="${f.u.nombre}" data-uid="${f.u.id}" onclick="abrirPerfilEmp(this.dataset.uid)">
+      <span class="rg-emp-n"><b>${f.regs}</b><small>reg</small></span>
+      <span class="rg-emp-b">
+        <span class="rg-emp-top"><span class="rg-emp-nom">${f.u.nombre}</span>${f.pend?`<span class="rg-pill a">${f.pend} por aprobar</span>`:''}</span>
+        <span class="rg-emp-c">${f.u.cargo||'—'}</span>
+        <span class="rg-emp-m"><span><b class="g">${f.viaticos}</b> viáticos</span><span><b class="a">${f.minHE?hmCorto(f.minHE):'—'}</b> extra</span></span>
+      </span>
+    </button>`).join(''):'<div class="empty"><div class="et">No hay empleados activos</div></div>';
   l.innerHTML=empListHTML;
-  const s=$('empSearch'); if(s) s.value='';
+  const s=$('empSearch'); if(s&&s.value) filtrarEmps();
 }
 
 window.abrirPerfilEmp=async(uid, nombre, mesInicial)=>{
   perfilEmpUID=uid;
-  hide('vistaEmpleado'); hide('vistaMes'); hide('adEmpList');
-  show('adEmpPerfil');
-  $('adEmpNombre').textContent=nombre;
-  const now=new Date();
-  const mesInput=$('adEmpMes');
-  if(mesInput) mesInput.value=mesInicial||`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const u=(await getUsers()).find(x=>x.id===uid)||{};
+  const nom=u.nombre||nombre||'';
+  hide('regsLista'); show('adEmpPerfil');
+  $('adEmpNombre').textContent=nom;
+  $('adEmpCargo').textContent=u.cargo||'';
+  $('adEmpAv').textContent=inicialesDe(nom);
+  $('adEmpMes').value=mesInicial||regsMes||mesActualStr();
+  window.scrollTo(0,0);
   await cargarPerfilEmpleado();
 };
 
-let vistaActiva='empleado';
+window.perfilMesNav=(delta)=>{
+  const nuevo=mesSumar($('adEmpMes').value||mesActualStr(),delta);
+  if(nuevo>mesActualStr()) return;
+  $('adEmpMes').value=nuevo;
+  cargarPerfilEmpleado();
+};
+
 window.volverListaEmps=()=>{
   perfilEmpUID=null;
-  hide('adEmpPerfil');
-  if(vistaActiva==='mes'){
-    show('vistaMes');hide('vistaEmpleado');
-  } else {
-    show('vistaEmpleado');hide('vistaMes');show('adEmpList');
-  }
+  hide('adEmpPerfil'); show('regsLista');
+  loadFiltEmps(); // refleja aprobaciones hechas en el perfil
+};
+
+// Ir al día en el detalle al tocar el calendario
+window.rgIrDia=(fecha)=>{
+  const el=document.getElementById('rgd-'+fecha); if(!el) return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+};
+window.rgIrPendiente=()=>{
+  const el=document.querySelector('#adEmpRegs .rg-it.pend'); if(!el) return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
 };
 
 window.cargarPerfilEmpleado=async()=>{
+  const uid=perfilEmpUID; if(!uid) return;
+  const mes=$('adEmpMes')?.value||mesActualStr();
+  $('adEmpMesLbl').textContent=mesLabel(mes);
+  const next=$('adEmpMesNext'); if(next) next.disabled=mes>=mesActualStr();
   const l=$('adEmpRegs'); l.innerHTML='<div class="spin"></div>';
-  const mes=$('adEmpMes')?.value;
-  const snap=await get(ref(db,`registros/${perfilEmpUID}`));
+  $('adEmpCal').innerHTML='';
 
-  if(!snap.exists()){
-    l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros</div></div>';
-    $('adEmpResumen').innerHTML=''; return;
-  }
+  const anio=parseInt(mes.slice(0,4));
+  const [snap, sabados, asuetos]=await Promise.all([
+    get(ref(db,`registros/${uid}`)),
+    obtenerSabadosLaborales(db,{ref,get},mes).catch(()=>({})),
+    getAllAsuetos(anio).catch(()=>[])
+  ]);
+  if(perfilEmpUID!==uid||($('adEmpMes')?.value||mesActualStr())!==mes) return; // cambió mientras cargaba
 
-  let items=Object.entries(snap.val()).map(([k,v])=>({key:k,...v}));
-  if(mes) items=items.filter(r=>r.fecha&&r.fecha.startsWith(mes));
-  items.sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  filtRegs=items.map(r=>({...r,userId:perfilEmpUID}));
+  const todos=snap.exists()?Object.entries(snap.val()).map(([k,v])=>({key:k,...v})):[];
+  const items=todos.filter(r=>r.fecha&&r.fecha.startsWith(mes)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  filtRegs=items.map(r=>({...r,userId:uid}));
 
-  // Resumen — solo HE aprobadas
+  // ── Resumen ──
+  const hoy=today();
+  const asuetoSet=new Set(asuetos.map(a=>a.fecha));
+  const habiles=diasHabilesEmpleado(mes,uid,sabados,hoy).filter(f=>!asuetoSet.has(f));
+  const porFecha={};
+  items.forEach(r=>{ (porFecha[r.fecha]=porFecha[r.fecha]||[]).push(r); });
+  const vacRango=todos.filter(r=>r.tipoDia==='vacaciones'&&r.estadoEspecial==='aprobado'&&r.vacIni&&r.vacFin);
+  const enVacaciones=f=>vacRango.some(r=>f>=r.vacIni&&f<=r.vacFin);
+  const registrados=habiles.filter(f=>porFecha[f]||enVacaciones(f)).length;
   const viaticos=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
-  const totalMin=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
-  const hrsHE=Math.floor(totalMin/60), minsHE=totalMin%60;
+  const totalMin=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+minHEde(r),0);
   const pendHE=items.filter(r=>r.he&&r.estadoHE==='pendiente').length;
+  const pendEsp=items.filter(r=>r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente').length;
+  const partes=[pendHE&&`<b>${pendHE} ${pendHE===1?'hora extra':'horas extra'}</b>`, pendEsp&&`<b>${pendEsp} ${pendEsp===1?'solicitud':'solicitudes'}</b>`].filter(Boolean);
   $('adEmpResumen').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:4px">
-      <div class="stat-card g"><div class="stat-val">${items.length}</div><div class="stat-lbl">Registros</div></div>
-      <div class="stat-card"><div class="stat-val">${viaticos}</div><div class="stat-lbl">Viáticos</div></div>
-      <div class="stat-card w"><div class="stat-val" style="font-size:20px">${totalMin>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</div><div class="stat-lbl">Hrs extras</div></div>
+    <div class="rg-stats">
+      <div class="rg-st b"><div class="v">${registrados}/${habiles.length}</div><div class="l">Días registrados</div></div>
+      <div class="rg-st g"><div class="v">${viaticos}</div><div class="l">Viáticos</div></div>
+      <div class="rg-st a"><div class="v">${hmCorto(totalMin)}</div><div class="l">Horas extra</div></div>
     </div>
-    ${pendHE>0?`<div class="alert ae" style="margin-bottom:0">${pendHE} hora${pendHE>1?'s extra pendientes':' extra pendiente'} de aprobación</div>`:''}`;
+    ${partes.length?`<button class="rg-pend" onclick="rgIrPendiente()"><span class="rg-pend-ic">!</span><span class="rg-pend-t">${partes.join(' y ')} ${partes.length>1||pendHE+pendEsp>1?'esperan':'espera'} tu aprobación</span><span class="rg-pend-go">Ver ›</span></button>`:''}`;
+
+  // ── Calendario ──
+  const [y,m]=mes.split('-').map(Number);
+  const ultimo=new Date(y,m,0).getDate();
+  const offset=(new Date(y,m-1,1).getDay()+6)%7; // semana empieza en lunes
+  const habSet=new Set(diasHabilesEmpleado(mes,uid,sabados,`${mes}-31`));
+  let celdas='<span></span>'.repeat(offset);
+  for(let d=1; d<=ultimo; d++){
+    const f=`${mes}-${String(d).padStart(2,'0')}`;
+    const regs=porFecha[f]||[];
+    let cls='';
+    if(regs.length){
+      // La solicitud de vacaciones se guarda con la fecha en que se pidió: ese día
+      // cuenta por lo que se trabajó, no como ausencia (salvo que caiga en el rango)
+      const esp=regs.find(r=>r.tipoDia&&r.tipoDia!=='normal'&&!(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin&&(f<r.vacIni||f>r.vacFin)));
+      if(esp) cls=esp.tipoDia==='asueto'?'asu':'aus';
+      else if(regs.some(r=>r.he&&r.estadoHE!=='rechazado')) cls='he';
+      else if(regs.some(r=>r.viatico&&r.estadoViatico!=='rechazado')) cls='vi';
+      else if(regs.some(r=>!r.tipoDia||r.tipoDia==='normal')) cls='ok';
+      else cls=habSet.has(f)&&f<hoy?'falta':(habSet.has(f)?'fut':'off'); // solo la solicitud, sin trabajo registrado
+    } else if(enVacaciones(f)) cls='aus';
+    else if(asuetoSet.has(f)&&habSet.has(f)) cls='asu';
+    else if(habSet.has(f)&&f<hoy) cls='falta';
+    else if(habSet.has(f)) cls='fut';
+    else cls='off';
+    const tocable=regs.length?` onclick="rgIrDia('${f}')"`:'';
+    celdas+=`<span class="rg-cd ${cls}${f===hoy?' hoy':''}"${tocable}>${d}</span>`;
+  }
+  $('adEmpCal').innerHTML=`<div class="rg-cal">
+    <div class="rg-cal-g">${['L','M','M','J','V','S','D'].map(x=>`<span class="rg-cal-h">${x}</span>`).join('')}${celdas}</div>
+    <div class="rg-cal-ley"><span><i class="ok"></i>Registro</span><span><i class="vi"></i>Viático</span><span><i class="he"></i>Horas extra</span><span><i class="aus"></i>Ausencia</span><span><i class="asu"></i>Asueto</span><span><i class="falta"></i>Sin registro</span></div>
+  </div>`;
 
   if(!items.length){
-    l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros en este período</div></div>';
+    l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros en este mes</div></div>';
     return;
   }
 
-  l.innerHTML=`<div class="card" style="padding:0;overflow:hidden">`+items.map((r,i)=>{
+  // ── Detalle día por día ──
+  const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
+  const vistos=new Set();
+  const fechaCol=f=>{ const d=new Date(f+'T12:00:00'); return `<div class="rg-it-d"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></div>`; };
+  const idDia=f=>{ if(vistos.has(f)) return ''; vistos.add(f); return ` id="rgd-${f}"`; };
+  l.innerHTML=`<div class="rg-det"><div class="rg-det-k">Detalle del mes</div>`+items.map(r=>{
     const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
     const eh=r.estadoHE||(r.he?'pendiente':'na');
-    const horario=r.horaEntrada&&r.horaSalida?`${r.horaEntrada} – ${r.horaSalida}`:'—';
-    const heMin=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
-    const heStr=heMin>0?(Math.floor(heMin/60)>0?Math.floor(heMin/60)+'h ':'')+heMin%60+'m extra':'';
-    const border=i>0?'border-top:1px solid var(--gray100);':'';
-    const pendiente=r.he&&eh==='pendiente';
     const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
-    const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
-    const pendEspecial=esEspecial&&r.estadoEspecial==='pendiente';
 
     if(esEspecial){
       const label=tipoLabels[r.tipoDia]||r.tipoDia;
       const est=r.estadoEspecial||'aprobado';
-      const remBadge=(r.tipoDia==='permiso'&&est==='aprobado')
-        ?(r.remunerado===false?'<span class="badge br" style="font-size:10px">No remunerado</span>':'<span class="badge ba" style="font-size:10px">Remunerado</span>'):'';
+      const pendEspecial=est==='pendiente';
+      const remPill=(r.tipoDia==='permiso'&&est==='aprobado')
+        ?(r.remunerado===false?'<span class="rg-pill r">No remunerado</span>':'<span class="rg-pill g">Remunerado</span>'):'';
       const rangoVac=(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin)
-        ?`<div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:6px">Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)} · ${Math.round((new Date(r.vacFin+'T12:00:00')-new Date(r.vacIni+'T12:00:00'))/(1000*60*60*24))+1} días</div>`:'';
-      return `<div style="${border}padding:16px;border-left:3px solid ${pendEspecial?'var(--warn)':est==='aprobado'?'var(--green)':'var(--danger)'}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rangoVac||r.nota||pendEspecial?'8px':'0'}">
-          <div><div style="font-weight:700;font-size:14px">${fmt(r.fecha)}</div></div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap">
-            <span class="badge by">${label}</span>
-            <span class="badge ${est==='pendiente'?'bp':est==='aprobado'?'ba':'br'}">${est==='pendiente'?'Pendiente':est==='aprobado'?'Aprobado':'Rechazado'}</span>
-            ${remBadge}
-          </div>
+        ?`<div class="rg-it-rango">Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)} · ${Math.round((new Date(r.vacFin+'T12:00:00')-new Date(r.vacIni+'T12:00:00'))/(1000*60*60*24))+1} días</div>`:'';
+      return `<div class="rg-it${pendEspecial?' pend':''}"${idDia(r.fecha)}>
+        ${fechaCol(r.fecha)}
+        <div class="rg-it-b">
+          <div class="rg-it-top"><span class="rg-pill v">${label}</span><span class="rg-it-tags">
+            <span class="rg-pill ${est==='pendiente'?'a':est==='aprobado'?'g':'r'}">${est==='pendiente'?'Pendiente':est==='aprobado'?'Aprobado':'Rechazado'}</span>${remPill}</span></div>
+          ${rangoVac}
+          ${r.nota?`<div class="rg-it-a">${r.nota}</div>`:''}
+          ${r.motivoRechazoEspecial?`<div class="rg-it-nota r"><b>Motivo rechazo:</b> ${r.motivoRechazoEspecial}</div>`:''}
+          ${isAdmin()&&pendEspecial?`<div class="rg-it-acc">
+            ${r.tipoDia==='permiso'
+              ?`<button class="btn btn-g btn-xs" onclick="abrirAprobarPermiso('${uid}','${r.key}','${(r.userName||'').replace(/'/g,"\\'")}','${r.fecha}',cargarPerfilEmpleado)">✓ Aprobar</button>`
+              :r.tipoDia==='vacaciones'
+              ?`<button class="btn btn-g btn-xs" onclick="aprobarVacaciones('${uid}','${r.key}')">✓ Aprobar vacaciones</button>`
+              :`<button class="btn btn-g btn-xs" onclick="aprobarEspecial('${uid}','${r.key}')">✓ Aprobar</button>`}
+            <button class="btn btn-gh btn-xs" onclick="openRejEspecial('${uid}','${r.key}')">Rechazar</button>
+          </div>`:''}
         </div>
-        ${rangoVac}
-        ${r.nota?`<div style="font-size:13px;color:var(--text2);margin-bottom:${pendEspecial?'10px':'0'}">${r.nota}</div>`:''}
-        ${r.motivoRechazoEspecial?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Motivo rechazo:</b> ${r.motivoRechazoEspecial}</div>`:''}
-        ${isAdmin()&&pendEspecial?`<div style="display:flex;gap:6px;padding-top:8px;border-top:1px solid var(--gray100)">
-          ${r.tipoDia==='permiso'
-            ?`<button class="btn btn-g btn-xs" onclick="abrirAprobarPermiso('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}',cargarPerfilEmpleado)">✓ Aprobar</button>`
-            :r.tipoDia==='vacaciones'
-            ?`<button class="btn btn-g btn-xs" onclick="aprobarVacaciones('${perfilEmpUID}','${r.key}')">✓ Aprobar vacaciones</button>`
-            :`<button class="btn btn-g btn-xs" onclick="aprobarEspecial('${perfilEmpUID}','${r.key}')">✓ Aprobar</button>`}
-          <button class="btn btn-gh btn-xs" onclick="openRejEspecial('${perfilEmpUID}','${r.key}')">Rechazar</button>
-        </div>`:''}
       </div>`;
     }
-    return `<div style="${border}padding:16px;${pendiente?'border-left:3px solid var(--warn);':r.he&&eh==='aprobado'?'border-left:3px solid var(--green);':'border-left:3px solid transparent;'}">
-      <!-- Encabezado -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div>
-          <div style="font-weight:700;font-size:14px">${fmt(r.fecha)}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:1px">${horario}${heStr?` · <span style="color:var(--warn)">${heStr}</span>`:''}</div>
-        </div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
-          ${r.viatico?`<span class="badge ${ev==='rechazado'?'br':'ba'}">${ev==='rechazado'?'Viático anulado':'Viático'}</span>`:''}
-          ${r.he?`<span class="badge ${eh==='aprobado'?'ba':eh==='rechazado'?'br':'bp'}">${eh==='aprobado'?'HE aprobada':eh==='rechazado'?'HE rechazada':'HE pendiente'}</span>`:''}
-        </div>
+
+    const pendiente=r.he&&eh==='pendiente';
+    const horario=r.horaEntrada&&r.horaSalida?`${r.horaEntrada} – ${r.horaSalida}`:'—';
+    const heMin=minHEde(r);
+    const heStr=heMin>0?`${hmCorto(heMin)} extra`:'';
+    const tags=[
+      r.viatico?`<span class="rg-pill ${ev==='rechazado'?'r':'g'}">${ev==='rechazado'?'Viático anulado':'Viático'}</span>`:'',
+      r.he?`<span class="rg-pill ${eh==='aprobado'?'g':eh==='rechazado'?'r':'a'}">${eh==='aprobado'?'HE aprobada':eh==='rechazado'?'HE rechazada':'HE pendiente'}</span>`:''
+    ].join('');
+    const acciones=[
+      isAdmin()&&pendiente?`<button class="btn btn-g btn-xs" onclick="aprobarHEyRefresh('${uid}','${r.key}')">✓ Aprobar HE</button><button class="btn btn-gh btn-xs" onclick="openRej('${uid}','${r.key}','he');rejCallback=cargarPerfilEmpleado">Rechazar HE</button>`:'',
+      isAdmin()&&r.viatico&&ev!=='rechazado'?`<button class="btn btn-gh btn-xs" onclick="openRej('${uid}','${r.key}','viatico');rejCallback=cargarPerfilEmpleado">Anular viático</button>`:'',
+      !isAdmin()?`<button class="btn btn-gh btn-xs" onclick="openObs('${uid}','${r.key}','${(r.userName||'').replace(/'/g,"\\'")}','${r.fecha}')">Observación</button>`:''
+    ].join('');
+    return `<div class="rg-it${pendiente?' pend':''}"${idDia(r.fecha)}>
+      ${fechaCol(r.fecha)}
+      <div class="rg-it-b">
+        <div class="rg-it-top"><span class="rg-it-h">${horario}${heStr?` · <b>${heStr}</b>`:''}</span><span class="rg-it-tags">${tags}</span></div>
+        <div class="rg-it-a">${r.actividades||''}</div>
+        ${r.he&&r.heJustif?`<div class="rg-it-nota"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
+        ${r.notaAjusteHE?`<div class="rg-it-nota a"><b>Ajuste HE:</b> ${r.notaAjusteHE} (${hmCorto(r.minHEAprobado||0)} aprobados)</div>`:''}
+        ${r.motivoRechazoViatico?`<div class="rg-it-nota r"><b>Anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
+        ${r.motivoRechazoHE?`<div class="rg-it-nota r"><b>Rechazo HE:</b> ${r.motivoRechazoHE}</div>`:''}
+        ${acciones?`<div class="rg-it-acc">${acciones}</div>`:''}
       </div>
-      <!-- Actividades -->
-      <div style="font-size:13px;color:var(--text);line-height:1.55;margin-bottom:${r.heJustif||r.motivoRechazoViatico||r.motivoRechazoHE||pendiente?'10px':'0'}">${r.actividades}</div>
-      <!-- Notas -->
-      ${r.he&&r.heJustif?`<div style="font-size:12px;color:var(--text2);margin-bottom:8px"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
-      ${r.notaAjusteHE?`<div style="font-size:12px;color:var(--warn);margin-bottom:8px"><b>Ajuste HE:</b> ${r.notaAjusteHE} (${Math.floor((r.minHEAprobado||0)/60)>0?Math.floor((r.minHEAprobado||0)/60)+'h ':''+(r.minHEAprobado||0)%60+'m aprobados'})</div>`:''}
-      ${r.motivoRechazoViatico?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
-      ${r.motivoRechazoHE?`<div style="font-size:12px;color:var(--danger);margin-bottom:8px"><b>Rechazo HE:</b> ${r.motivoRechazoHE}</div>`:''}
-      <!-- Acciones -->
-      ${pendiente||(r.viatico&&ev!=='rechazado')?`<div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--gray100)">
-        ${isAdmin()&&pendiente?`<button class="btn btn-g btn-xs" onclick="aprobarHEyRefresh('${perfilEmpUID}','${r.key}')">✓ Aprobar HE</button><button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','he');rejCallback=cargarPerfilEmpleado">Rechazar HE</button>`:''}
-        ${isAdmin()&&r.viatico&&ev!=='rechazado'?`<button class="btn btn-gh btn-xs" onclick="openRej('${perfilEmpUID}','${r.key}','viatico');rejCallback=cargarPerfilEmpleado">Anular viático</button>`:''}
-        ${!isAdmin()?`<button class="btn btn-gh btn-xs" onclick="openObs('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}')">Observación</button>`:''}
-      </div>`:(!isAdmin()?`<div style="padding-top:8px;border-top:1px solid var(--gray100)"><button class="btn btn-gh btn-xs" onclick="openObs('${perfilEmpUID}','${r.key}','${r.userName||''}','${r.fecha}')">Observación</button></div>`:'')}
     </div>`;
   }).join('')+`</div>`;
 };
@@ -2737,100 +2801,9 @@ window.openRejEspecial=(uid,key)=>{
   $('moRej').classList.add('open');
 };
 
-window.aprobarHEyRefresh=async(uid,key)=>{
-  await cargarPerfilEmpleado();
-};
-
-window.switchVistaRegs=(vista)=>{
-  vistaActiva=vista;
-  hide('adEmpPerfil');
-  if(vista==='mes'){
-    show('vistaMes');hide('vistaEmpleado');
-    $('btnVistaMes').className='btn btn-p btn-sm';
-    $('btnVistaEmp').className='btn btn-gh btn-sm';
-    const now=new Date();
-    const mesAnterior=new Date(now.getFullYear(),now.getMonth()-1,1);
-    const mesStr=`${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth()+1).padStart(2,'0')}`;
-    $('mesReporteGlobal').value=mesStr;
-    cargarReporteMes();
-  } else {
-    vistaActiva='empleado';
-    show('vistaEmpleado');hide('vistaMes');
-    $('btnVistaEmp').className='btn btn-p btn-sm';
-    $('btnVistaMes').className='btn btn-gh btn-sm';
-    loadFiltEmps();
-  }
-};
-
-window.cargarReporteMes=async()=>{
-  const mes=$('mesReporteGlobal')?.value;
-  if(!mes) return;
-  const l=$('reporteMesLista'); l.innerHTML='<div class="spin"></div>';
-  const [users,allRegs]=await Promise.all([getUsers(),getAllRegs()]);
-  let emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
-    emps=emps.filter(u=>me.empleadosAsig.includes(u.id));
-  }
-  emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  const [y,m]=mes.split('-');
-  const nomMes=new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
-
-  // Totales generales
-  let totViat=0,totMinHE=0,totRegs=0;
-
-  const filas=emps.map(u=>{
-    const regsEmp=allRegs.filter(r=>r.userId===u.id&&r.fecha&&r.fecha.startsWith(mes));
-    const viaticos=regsEmp.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
-    const minHE=regsEmp.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
-    const pendHE=regsEmp.filter(r=>r.he&&r.estadoHE==='pendiente').length;
-    const hrs=Math.floor(minHE/60), mins=minHE%60;
-    totViat+=viaticos; totMinHE+=minHE; totRegs+=regsEmp.length;
-    return {u, regs:regsEmp.length, viaticos, minHE, hrs, mins, pendHE};
-  });
-
-  const totHrs=Math.floor(totMinHE/60), totMins=totMinHE%60;
-
-  l.innerHTML=`
-    <div class="card" style="margin-bottom:14px;border-top:3px solid var(--blue)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div style="font-weight:700;font-size:15px;color:var(--text)">Resumen — ${nomMes}</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:0">
-        <div style="background:var(--bluelt);border-radius:8px;padding:12px">
-          <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--blue)">${totRegs}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:3px">Registros</div>
-        </div>
-        <div style="background:var(--greenlt);border-radius:8px;padding:12px">
-          <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green)">${totViat}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:3px">Viáticos</div>
-        </div>
-        <div style="background:var(--warnlt);border-radius:8px;padding:12px">
-          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--warn)">${totMinHE>0?(totHrs>0?totHrs+'h ':'')+totMins+'m':'0'}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:3px">Hrs extras</div>
-        </div>
-      </div>
-    </div>
-    <div class="card" style="padding:0;overflow:hidden">
-      ${filas.map((f,i)=>`
-        <div style="${i>0?'border-top:1px solid var(--gray100);':''}padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer"
-          onclick="abrirPerfilEmp('${f.u.id}','${f.u.nombre}','${mes}')"
-          onmouseover="this.style.background='var(--bluelt)'" onmouseout="this.style.background=''">
-          <div style="min-width:0;flex:1">
-            <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.u.nombre}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:1px">${f.u.cargo||'—'}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;font-size:12px">
-            ${f.pendHE>0?`<span class="badge bp" style="font-size:10px">HE ${f.pendHE}</span>`:''}
-            <div style="text-align:right">
-              <span style="color:var(--text);font-weight:600">${f.regs}</span> reg &nbsp;
-              <span style="color:var(--green);font-weight:600">${f.viaticos}</span> viát &nbsp;
-              <span style="color:var(--warn);font-weight:600">${f.minHE>0?(f.hrs>0?f.hrs+'h ':'')+f.mins+'m':'—'}</span>
-            </div>
-            <span style="color:var(--gray300);font-size:16px">›</span>
-          </div>
-        </div>`).join('')}
-    </div>`;
-};
+// Compatibilidad: antes había dos vistas ("por empleado" y "por mes"); ahora es una sola
+window.switchVistaRegs=()=>loadFiltEmps();
+window.cargarReporteMes=()=>loadFiltEmps();
 window.exportarEmpleadoIndividual=async()=>{
   if(!perfilEmpUID){alert('Selecciona un empleado primero.');return;}
   const mes=$('adEmpMes')?.value;
