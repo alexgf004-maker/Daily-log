@@ -43,7 +43,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 
 /* ═══ LOGIN ═══ */
 #loginScreen{
-  background:linear-gradient(160deg,#0f1f3d 0%,#1e3a5f 40%,#2563eb 100%);
+  background:linear-gradient(160deg,#081428 0%,#12284a 45%,#1d4ed8 100%);
   align-items:center;justify-content:center;overflow-x:hidden;overflow-y:auto;
   min-height:100vh;
 }
