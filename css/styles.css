@@ -690,3 +690,23 @@ tbody tr:hover td{background:var(--bluelt)}
 .fx-viat.on .fx-viat-tx span{color:#047857;font-weight:600}
 .fx-viat.on .fx-sw{background:#10b981}
 .fx-viat.on .fx-sw i{transform:translateX(20px)}
+
+/* Avisos del marcaje (E1) */
+.mk-av{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:14px;border:1px solid}
+.mk-av-ic{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff}
+.mk-av-ic svg{width:18px;height:18px}
+.mk-av-tx{flex:1;min-width:0;padding-top:1px}
+.mk-av-tx b{display:block;font-size:13.5px;line-height:1.3}
+.mk-av-tx>span{display:block;font-size:12px;line-height:1.4;margin-top:1px}
+.mk-av.lejos{background:#fffbeb;border-color:#fde68a}.mk-av.lejos .mk-av-ic{background:#f59e0b}.mk-av.lejos b{color:#92400e}.mk-av.lejos .mk-av-tx>span{color:#a16207}
+.mk-av.mal{background:#fef2f2;border-color:#fecaca}.mk-av.mal .mk-av-ic{background:#ef4444}.mk-av.mal b{color:#991b1b}.mk-av.mal .mk-av-tx>span{color:#b91c1c}
+.mk-av.ok{background:#ecfdf5;border-color:#a7f3d0}.mk-av.ok .mk-av-ic{background:#10b981}.mk-av.ok b{color:#065f46}.mk-av.ok .mk-av-tx>span{color:#047857}
+.mk-av.info{background:#eff6ff;border-color:#bfdbfe}.mk-av.info .mk-av-ic{background:#2563eb}.mk-av.info b{color:#1e3a8a}
+.mk-av.espera{align-items:center;background:var(--gray50);border-color:var(--gray200);padding:9px 12px}
+.mk-av.espera .mk-av-tx>span{color:var(--text2);font-size:12.5px;margin:0}
+.mk-av-spin{width:18px;height:18px;border:2.5px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+.mk-av-ayuda{margin-top:5px}
+.mk-av-ayuda summary{list-style:none;cursor:pointer;font-size:12px;font-weight:700;color:#b45309;text-decoration:underline;text-underline-offset:2px}
+.mk-av-ayuda summary::-webkit-details-marker{display:none}
+.mk-av-ayuda[open] summary{text-decoration:none}
+.mk-av-ayuda div{margin-top:8px;padding-top:8px;border-top:1px dashed #fcd34d;font-size:12px;color:#92400e;line-height:1.5}

@@ -153,7 +153,7 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
     if(dist>500){
       msg+=' Si estás físicamente en el lugar, tu celular puede estar dando una ubicación imprecisa. En iPhone: Configuración → Privacidad y seguridad → Localización → busca esta app → activa "Ubicación exacta".';
     }
-    const e=new Error(msg); e.code='FUERA_DE_RANGO'; e.distancia=Math.round(dist); throw e;
+    const e=new Error(msg); e.code='FUERA_DE_RANGO'; e.distancia=Math.round(dist); e.sede=sede.nombre; e.radio=sede.radio; throw e;
   }
 
   const existente=snap.exists()?snap.val():{};

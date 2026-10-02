@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=37">
+<link rel="stylesheet" href="css/styles.css?v=38">
 </head>
 <body>
 
@@ -1644,30 +1644,51 @@ async function renderMarcajeCard(msgHtml){
   if(!salida) prefetchUbicacion();
 }
 
+// Aviso del marcaje (éxito, error o espera) con ícono, título y una línea
+const ICO_PIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+const ICO_CEL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>';
+const ICO_OK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17 19 7"/></svg>';
+const ICO_INFO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
+function avisoMarcaje(tono, ico, titulo, detalle, ayuda){
+  return `<div class="mk-av ${tono}"><span class="mk-av-ic">${ico}</span><div class="mk-av-tx"><b>${titulo}</b>${detalle?`<span>${detalle}</span>`:''}${ayuda?`<details class="mk-av-ayuda"><summary>¿Ya estás ahí? Ver qué hacer</summary><div>${ayuda}</div></details>`:''}</div></div>`;
+}
+function distanciaTexto(m){ return m>=1000?`${(m/1000).toFixed(1).replace(/\.0$/,'')} km`:`${m} m`; }
+
 window.marcarAsistenciaUI=async function(tipo){
   const al=$('marcajeAlert');
-  if(al) al.innerHTML='<div style="font-size:12px;color:var(--text2);padding:6px 0">Obteniendo ubicación...</div>';
+  if(al) al.innerHTML='<div class="mk-av espera"><span class="mk-av-spin"></span><div class="mk-av-tx"><span>Obteniendo tu ubicación…</span></div></div>';
   // Evita doble toque mientras se obtiene la ubicación y se guarda
   const btns=document.querySelectorAll('#marcajeCard .mk3-btn');
   btns.forEach(b=>b.disabled=true);
   try{
     const res=await marcarAsistencia(db,{ref,get,set,update},me,tipo,today());
     const msg=mensajeMarcaje(tipo,res.estado,res.minDiff);
+    const bien=res.estado==='a_tiempo'||res.estado==='normal';
     // Se pasa el mensaje para que no se pierda al redibujar la tarjeta
-    await renderMarcajeCard(`<div class="alert as" style="font-size:12px">${msg} — ${res.horaStr}</div>`);
+    await renderMarcajeCard(avisoMarcaje(bien?'ok':'lejos', bien?ICO_OK:ICO_INFO, msg, `${tipo==='entrada'?'Entrada':'Salida'} marcada a las ${res.horaStr}`));
   }catch(e){
     btns.forEach(b=>b.disabled=false);
-    const mensajes={
-      SIN_SEDE:'No tienes una sede asignada. Contacta a Madelyn.',
-      DISPOSITIVO_NO_COINCIDE:e.message,
-      SIN_GPS:'Tu navegador no soporta ubicación GPS.',
-      PERMISO_DENEGADO:'Debes permitir el acceso a tu ubicación para marcar.',
-      GPS_TIMEOUT:'No se pudo obtener tu ubicación a tiempo. Intenta de nuevo.',
-      GPS_ERROR:'Error al obtener tu ubicación. Intenta de nuevo.',
-      FUERA_DE_RANGO:e.message,
-      YA_MARCADO:e.message
-    };
-    if(al) al.innerHTML=`<div class="alert ae" style="font-size:12px">${mensajes[e.code]||e.message}</div>`;
+    const sede=sedeEfectiva(me,today());
+    const ayudaGPS='Tu celular puede estar dando una ubicación imprecisa:<br>• <strong>Android:</strong> activa la ubicación y "Precisión de ubicación de Google".<br>• <strong>iPhone:</strong> Ajustes → Privacidad → Localización → esta app → "Ubicación exacta".<br>Luego toca Marcar otra vez.';
+    let html;
+    switch(e.code){
+      case 'FUERA_DE_RANGO':
+        html=avisoMarcaje('lejos',ICO_PIN,`Estás lejos de ${e.sede||sede?.nombre||'tu sede'}`,
+          `A ${distanciaTexto(e.distancia||0)} · debes estar a menos de ${e.radio||sede?.radio||100} m`, ayudaGPS); break;
+      case 'DISPOSITIVO_NO_COINCIDE':
+        html=avisoMarcaje('mal',ICO_CEL,'Esta cuenta es de otro celular','Pide a Madelyn que la reactive en este'); break;
+      case 'SIN_SEDE':
+        html=avisoMarcaje('mal',ICO_PIN,'No tienes una sede asignada','Pide a Madelyn que te asigne una'); break;
+      case 'PERMISO_DENEGADO':
+        html=avisoMarcaje('lejos',ICO_PIN,'Activa el permiso de ubicación','La app lo necesita para marcar. Permítelo y vuelve a tocar Marcar'); break;
+      case 'SIN_GPS': case 'GPS_TIMEOUT': case 'GPS_ERROR':
+        html=avisoMarcaje('lejos',ICO_PIN,'No se pudo obtener tu ubicación','Revisa que el GPS esté activo e intenta de nuevo', ayudaGPS); break;
+      case 'YA_MARCADO':
+        html=avisoMarcaje('info',ICO_INFO,`Ya marcaste tu ${tipo} hoy`,''); break;
+      default:
+        html=avisoMarcaje('mal',ICO_INFO,'No se pudo marcar',e.message||'Intenta de nuevo');
+    }
+    if(al) al.innerHTML=html;
   }
 };
 
