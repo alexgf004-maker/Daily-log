@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=49">
+<link rel="stylesheet" href="css/styles.css?v=50">
 </head>
 <body>
 
@@ -4049,6 +4049,22 @@ let progEmpleados=[];    // empleados activos, cargados una vez por fecha (no en
 let progAusentes=[];     // uids ausentes (vacaciones/incapacidad/permiso) para progFecha
 
 window.progToggleVerMas=(area)=>{ progVerMas[area]=!progVerMas[area]; renderArmar(); };
+let progAbiertas={};     // campañas abiertas/cerradas a mano ("area|nombre" → true/false)
+let progDestino=null;    // grupo al que se agrega persona desde "+ Persona"
+window.progToggleCamp=(k,tieneGrupos)=>{
+  const abierta=tieneGrupos?progAbiertas[k]!==false:progAbiertas[k]===true;
+  progAbiertas[k]=!abierta; renderArmar();
+};
+window.progDia=(delta)=>{
+  const d=new Date(progFecha+'T12:00:00'); d.setDate(d.getDate()+delta);
+  cargarProgramacionFecha(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+};
+window.progAbrirFecha=()=>{
+  const f=$('progFechaInput'); if(!f) return;
+  try{ if(f.showPicker){ f.showPicker(); return; } }catch(e){}
+  f.classList.add('visible'); f.focus();
+};
+window.progAgregarPersona=(idx)=>{ progSel=null; progDestino=idx; abrirPanelPersonal(); };
 
 // Nombre a mostrar en programación: usa nombreCorto si existe, si no el completo
 function nombreMostrar(u){ return (u&&u.nombreCorto&&u.nombreCorto.trim())?u.nombreCorto.trim():(u?u.nombre:''); }
@@ -4199,26 +4215,21 @@ function renderArmar(){
   const conflictos=detectarConflictos(progGrupos, progVehiculos);
 
 
-  // Selector de vehículo desplegable dentro del grupo
+  // Vehículo del grupo: placa (tocar para quitar) o botón para elegir
   const vehSelector=(idx,g)=>{
     if(g.area!=='campo') return '';
     const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
-    if(veh){
-      return `<div class="tbl-grupo-veh"><span class="tbl-asig tbl-asig-veh" onclick="event.stopPropagation();progQuitarVehiculo(${idx})">${veh.nombre} <span class="tbl-x">×</span></span></div>`;
-    }
-    // Sin vehículo: botón para abrir/cerrar el selector
-    const abierto=progVehAbierto===idx;
-    if(!abierto){
-      return `<div class="tbl-grupo-veh"><button class="tbl-veh-btn" onclick="event.stopPropagation();progAbrirVeh(${idx})">+ Asignar vehículo</button></div>`;
-    }
-    // Selector abierto: pick-ups y motos disponibles + no disponibles en rojo
+    if(veh) return `<span class="pg-placa" onclick="event.stopPropagation();progQuitarVehiculo(${idx})" title="Quitar vehículo">${veh.nombre}<span class="tbl-x">×</span></span>`;
+    return `<button class="pg-vadd" onclick="event.stopPropagation();progAbrirVeh(${progVehAbierto===idx?'null':idx})">${progVehAbierto===idx?'Cerrar':'+ Vehículo'}</button>`;
+  };
+  // Panel para elegir vehículo: pick-ups y motos libres + no disponibles en gris
+  const vehPanel=(idx)=>{
     const vehAsig=vehAsignados;
     const disp=(tipo)=>progVehiculos.filter(v=>v.tipo===tipo&&v.estado==='disponible'&&(!vehAsig.has(v.id))).sort((a,b)=>a.nombre.localeCompare(b.nombre));
     const noDisp=(tipo)=>progVehiculos.filter(v=>v.tipo===tipo&&v.estado!=='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
     const opt=v=>`<span class="tbl-veh-opt" onclick="event.stopPropagation();progElegirVeh(${idx},'${v.id}')">${v.nombre}</span>`;
     const optNo=v=>`<span class="tbl-veh-opt tbl-veh-opt-no" title="${ESTADOS_VEHICULO[v.estado]?.texto||v.estado}">${v.nombre} · ${ESTADOS_VEHICULO[v.estado]?.texto||v.estado}</span>`;
-    return `<div class="tbl-veh-panel" onclick="event.stopPropagation()">
-      <div class="tbl-veh-panel-hd">Elegir vehículo <span class="tbl-veh-cerrar" onclick="progAbrirVeh(null)">cerrar</span></div>
+    return `<div class="tbl-veh-panel pg-vpanel" onclick="event.stopPropagation()">
       <div class="tbl-veh-sub2">Pick-ups</div>
       <div class="tbl-veh-opts">${disp('carro').map(opt).join('')||'<span class="tbl-bolsa-vacio">Ninguno libre</span>'}${noDisp('carro').map(optNo).join('')}</div>
       <div class="tbl-veh-sub2">Motos</div>
@@ -4226,85 +4237,91 @@ function renderArmar(){
     </div>`;
   };
 
-  // Caja de un grupo
+  // Tarjeta de un grupo (dentro de su campaña)
   const cajaGrupo=(g)=>{
     const idx=progGrupos.indexOf(g);
-    const vacio=!(g.empleados&&g.empleados.length); // sin nadie asignado: se ve como "espacio para llenar"
+    const vacio=!(g.empleados&&g.empleados.length);
     const personas=(g.empleados||[]).map((uid,k)=>{
       const nom=(g.empleadosNombres||[])[k]||'';
-      return `<span class="tbl-asig tbl-asig-pers" onclick="event.stopPropagation();progQuitarPersona(${idx},'${uid}')">${nom} <span class="tbl-x">×</span></span>`;
+      return `<span class="pg-p" onclick="event.stopPropagation();progQuitarPersona(${idx},'${uid}')"><i>${inicialesDe(nom)}</i>${nom}<span class="tbl-x">×</span></span>`;
     }).join('');
-    return `<div class="tbl-grupo${vacio?' tbl-grupo-vacio':''}" ondragover="progDragOver(event)" ondrop="progDrop(event,${idx})" onclick="progTapCaja(${idx})">
-      <div class="tbl-grupo-top">
-        <span class="tbl-grupo-num">Grupo ${(g.__n||0)}</span>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${g.area==='campo'?`<input type="text" class="tbl-zona-inp" placeholder="Zona / detalle" value="${(g.zona||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()" onchange="progSetZona(${idx},this.value)">`:''}
-          <span class="tbl-grupo-del" onclick="event.stopPropagation();progEliminarGrupo(${idx})">Quitar</span>
-        </div>
+    return `<div class="pg-g${vacio?' vacio':''}${progSel?' destino':''}" ondragover="progDragOver(event)" ondrop="progDrop(event,${idx})" onclick="progTapCaja(${idx})">
+      <div class="pg-g-hd">
+        <b>Grupo ${(g.__n||0)}</b>
+        <div class="pg-g-hd-r">${vehSelector(idx,g)}<span class="pg-g-del" onclick="event.stopPropagation();progEliminarGrupo(${idx})" title="Quitar grupo">×</span></div>
       </div>
-      <div class="tbl-grupo-personas">${personas||'<span class="tbl-drop-hint">Toca un nombre de arriba, luego esta caja</span>'}</div>
-      ${vehSelector(idx,g)}
+      ${g.area==='campo'?`<input type="text" class="pg-zona" placeholder="📍 Zona o detalle" value="${(g.zona||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()" onchange="progSetZona(${idx},this.value)">`:''}
+      ${progVehAbierto===idx?vehPanel(idx):''}
+      <div class="pg-g-pp">${personas}<button class="pg-add" onclick="event.stopPropagation();progAgregarPersona(${idx})">+ Persona</button></div>
     </div>`;
   };
 
   // Numerar grupos dentro de cada campaña (para etiqueta "Grupo N")
   const numerar=(gs)=>{ const porCamp={}; gs.forEach(g=>{ porCamp[g.campania]=(porCamp[g.campania]||0)+1; g.__n=porCamp[g.campania]; }); };
 
-  // Render de campañas de un área
+  // Campañas de un área como renglones plegables
   const bloqueArea=(area)=>{
     const todas=progCampanias.filter(c=>c.activa!==false&&c.area===area).sort((a,b)=>a.nombre.localeCompare(b.nombre));
-    // Campañas con grupos ya asignados este día (siempre visibles aunque no sean frecuentes)
     const conGrupos=new Set(progGrupos.filter(g=>g.area===area).map(g=>g.campania));
-    const visibles=todas.filter(c=>c.frecuente!==false || conGrupos.has(c.nombre));
+    // Grupos de una campaña que ya no está en el catálogo (renombrada o desactivada): se muestran igual
+    conGrupos.forEach(n=>{ if(!todas.some(c=>c.nombre===n)) todas.push({nombre:n,area,activa:true}); });
+    // Las que tienen grupos van primero
+    const orden=(a,b)=>(conGrupos.has(b.nombre)-conGrupos.has(a.nombre))||a.nombre.localeCompare(b.nombre);
+    const visibles=todas.filter(c=>c.frecuente!==false || conGrupos.has(c.nombre)).sort(orden);
     const ocultas=todas.filter(c=>c.frecuente===false && !conGrupos.has(c.nombre));
     const abierto=progVerMas[area];
 
     const render=(c)=>{
       const gs=progGrupos.filter(g=>g.campania===c.nombre&&g.area===area);
       numerar(gs);
-      return `<div class="tbl-camp">
-        <div class="tbl-camp-hd">
-          <span class="tbl-camp-nom">${c.nombre}</span>
-          <button class="tbl-camp-add" onclick="progAgregarGrupo('${c.nombre.replace(/'/g,"\\'")}','${area}')">+ grupo</button>
-        </div>
-        ${gs.length?gs.map(cajaGrupo).join(''):'<div class="tbl-camp-vacio">Sin grupos. Toca "+ grupo".</div>'}
+      const k=area+'|'+c.nombre;
+      const open=gs.length?progAbiertas[k]!==false:progAbiertas[k]===true;
+      const nPers=gs.reduce((a,g)=>a+(g.empleados||[]).length,0);
+      const info=gs.length?`${gs.length} ${gs.length===1?'grupo':'grupos'} · ${nPers} ${nPers===1?'persona':'personas'}`:'Sin grupos';
+      const kEsc=k.replace(/'/g,"\\'"), nEsc=c.nombre.replace(/'/g,"\\'");
+      return `<div class="pg-c${open?' open':''}">
+        <button class="pg-c-hd" onclick="progToggleCamp('${kEsc}',${gs.length?1:0})">
+          <span class="pg-dot${gs.length?' on':''}"></span><b>${c.nombre}</b><small>${info}</small><span class="chev"></span>
+        </button>
+        ${open?`<div class="pg-c-b">${gs.map(cajaGrupo).join('')}<button class="pg-c-add" onclick="progAgregarGrupo('${nEsc}','${area}')">+ Agregar grupo</button></div>`:''}
       </div>`;
     };
 
     let html=visibles.map(render).join('');
     if(abierto) html+=ocultas.map(render).join('');
     if(ocultas.length){
-      html+=`<button class="tbl-vermas" onclick="progToggleVerMas('${area}')">${abierto?'Ver menos':`Ver más (${ocultas.length})`}</button>`;
+      html+=`<button class="tbl-vermas" onclick="progToggleVerMas('${area}')">${abierto?'Ver menos':`Ver más campañas (${ocultas.length})`}</button>`;
     }
     return html;
   };
 
+  const fechaTxt=fmtLong(progFecha).replace(/^\w/,c=>c.toUpperCase()).replace(/ de \d{4}$/,'');
   cont.innerHTML=`
-    <div class="page-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <div><div class="ph-title">Programación</div><div class="ph-sub">${fmtLong(progFecha).replace(/^\w/,c=>c.toUpperCase())}</div></div>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <input type="date" id="progFechaInput" value="${progFecha}" onchange="progCambiarFecha(this.value)" style="padding:6px 10px;font-size:13px;border:1px solid var(--gray200);border-radius:6px">
-        <button class="btn btn-gh btn-sm" onclick="abrirCopiarProg()">Copiar de...</button>
-        ${progGrupos.length?`<button class="btn btn-d btn-sm" onclick="progVaciar()">Vaciar</button>`:''}
-        <button class="btn btn-g btn-sm" onclick="progGenerarImagen()">Compartir imagen</button>
+    <div class="pg-hero">
+      <div class="rg-mnav" style="margin-top:0">
+        <button onclick="progDia(-1)" aria-label="Día anterior">‹</button>
+        <button class="pg-fecha" onclick="progAbrirFecha()">${fechaTxt}</button>
+        <button onclick="progDia(1)" aria-label="Día siguiente">›</button>
+      </div>
+      <input type="date" id="progFechaInput" class="fx-fecha-oculta" value="${progFecha}" onchange="progCambiarFecha(this.value)" tabindex="-1" aria-label="Fecha">
+      <div class="us-cnt">
+        <span><b>${progGrupos.length}</b>Grupos</span><span><b>${persAsignadas.size}</b>Asignados</span><span><b>${persLibres.length}</b>Libres</span><span><b>${ausentesAuto.length}</b>Ausentes</span>
+      </div>
+      <div class="pg-acts">
+        <button onclick="abrirCopiarProg()">Copiar de…</button>
+        <button class="w" onclick="progGenerarImagen()">Compartir imagen</button>
+        ${progGrupos.length?`<button onclick="progVaciar()">Vaciar</button>`:''}
       </div>
     </div>
 
-    ${progSel?`<div class="tbl-selaviso">Tocando: <b>${progSel.nombre}</b> — ahora toca un grupo para asignarlo. <span onclick="progCancelSel()" style="text-decoration:underline;cursor:pointer">cancelar</span></div>`:''}
+    ${progSel?`<div class="pg-sel"><span>Asignando a <b>${progSel.nombre}</b>: toca un grupo</span><button onclick="progCancelSel()">Cancelar</button></div>`:''}
 
-    ${conflictos.length?`<div class="prog-avisos">
-      <div style="font-weight:700;font-size:12px;margin-bottom:4px">Avisos</div>
-      ${conflictos.map(a=>`<div class="prog-aviso">${a}</div>`).join('')}
-    </div>`:''}
+    ${conflictos.length?`<div class="pg-avisos">${conflictos.map(a=>`<div class="mk-av lejos"><span class="mk-av-ic">!</span><div class="mk-av-tx"><span style="margin:0">${a}</span></div></div>`).join('')}</div>`:''}
 
-    <div class="tbl-seccion">
-      <div class="tbl-seccion-hd"><span class="prog-badge-campo">Campo</span></div>
-      ${bloqueArea('campo')||'<div class="prog-vacio">No hay campañas de campo.</div>'}
-    </div>
-    <div class="tbl-seccion">
-      <div class="tbl-seccion-hd"><span class="prog-badge-plantel">Plantel</span></div>
-      ${bloqueArea('plantel')||'<div class="prog-vacio">No hay campañas de plantel.</div>'}
-    </div>
+    <div class="pg-sec"><span>Campo</span><i></i></div>
+    ${bloqueArea('campo')||'<div class="prog-vacio">No hay campañas de campo.</div>'}
+    <div class="pg-sec"><span>Plantel</span><i></i></div>
+    ${bloqueArea('plantel')||'<div class="prog-vacio">No hay campañas de plantel.</div>'}
   `;
 
   // Guardar datos para el panel flotante de personal
@@ -4324,8 +4341,9 @@ window.progCancelSel=()=>{ progSel=null; renderArmar(); };
 
 window.progTapCaja=(idx)=>{
   if(!progSel) return; // sin selección, tocar la caja no hace nada
-  asignarAGrupo(idx, progSel.tipo, progSel.id);
-  progSel=null;
+  const sel=progSel;
+  progSel=null; // antes de asignar, para que el redibujo ya no muestre la selección
+  asignarAGrupo(idx, sel.tipo, sel.id);
 };
 
 // ── Drag & drop ── (progDrag declarado arriba con las demás variables)
@@ -4406,6 +4424,7 @@ window.abrirPanelPersonal=()=>{
 };
 window.cerrarPanelPersonal=()=>{
   const p=$('panelPersonal'); if(p) p.classList.remove('open');
+  progDestino=null;
 };
 window.renderPanelPersonal=()=>{
   const cont=$('panelPersonalLista');
@@ -4416,7 +4435,8 @@ window.renderPanelPersonal=()=>{
     const full=(u.nombre||'').toLowerCase();
     return !q || n.includes(q) || full.includes(q);
   });
-  $('panelPersonalTit').textContent=`Personal libre (${progPersLibres.length})`;
+  const gDest=progDestino!==null?progGrupos[progDestino]:null;
+  $('panelPersonalTit').textContent=gDest?`Agregar a ${gDest.campania} · Grupo ${gDest.__n||''}`:`Personal libre (${progPersLibres.length})`;
   cont.innerHTML = lista.length
     ? lista.map(u=>`<div class="panel-pers-item" onclick="progPanelElegir('${u.id}','${(nombreMostrar(u)||'').replace(/'/g,"\\'")}')">${nombreMostrar(u)}</div>`).join('')
     : '<div style="font-size:13px;color:var(--text2);padding:12px;text-align:center">Sin coincidencias</div>';
@@ -4428,9 +4448,11 @@ window.renderPanelPersonal=()=>{
   }
 };
 window.progPanelElegir=(id,nombre)=>{
+  // Desde "+ Persona" de un grupo: se agrega directo a ese grupo
+  if(progDestino!==null){ const d=progDestino; cerrarPanelPersonal(); asignarAGrupo(d,'pers',id); return; }
   progSel={tipo:'pers',id,nombre};
   cerrarPanelPersonal();
-  actualizarBotonPersonal();
+  renderArmar();
 };
 
 window.progSetZona=(idx,zona)=>{
@@ -4440,6 +4462,7 @@ window.progSetZona=(idx,zona)=>{
 };
 
 window.progAgregarGrupo=(campania,area)=>{
+  progAbiertas[area+'|'+campania]=true;
   progGrupos.push({campania,area,empleados:[],empleadosNombres:[],vehiculo:'',vehiculoNombre:''});
   renderArmar(); persistProg();
 };
