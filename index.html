@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=26">
+<link rel="stylesheet" href="css/styles.css?v=27">
 </head>
 <body>
 
@@ -200,7 +200,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
-import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
+import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
@@ -1539,6 +1539,18 @@ async function renderProgEmpCard(){
   }catch(e){ cont.style.display='none'; }
 }
 
+// Etiqueta de estado (tarde / a tiempo) con ícono
+const ICO_RELOJ='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+const ICO_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17 19 7"/></svg>';
+function etiquetaEstado(tono,texto,extra=''){
+  const ico=tono==='mal'?ICO_RELOJ:(tono==='ok'?ICO_CHECK:'');
+  return `<span class="tg ${tono}${extra?' '+extra:''}">${ico}${texto}</span>`;
+}
+function etiquetaChip(chip,extra){
+  const tono=chip.color==='ba'?'ok':(chip.color==='br'?'mal':'neutro');
+  return etiquetaEstado(tono,chip.texto,extra);
+}
+
 async function renderMarcajeCard(msgHtml){
   const cont=$('marcajeCard');
   if(!cont||!me||(me.role!=='empleado'&&me.role!=='admin')){ if(cont) cont.style.display='none'; return; }
@@ -1569,7 +1581,7 @@ async function renderMarcajeCard(msgHtml){
       <div class="mk3-dot ${tono}">${tono==='mal'?'!':'✓'}</div>
       <div class="mk3-t">${dato.horaStr||'--:--'}</div>
       <div class="mk3-l">${etiqueta}</div>
-      <span class="badge ${chip.color}" style="font-size:10px">${chip.texto}</span>
+      ${etiquetaChip(chip)}
     </div>`;
   };
   const boton=(tipo,etiqueta)=>`<div class="mk3-pt">
@@ -1974,7 +1986,7 @@ async function loadHist(){
       const marcItem=(label,dato)=>{
         if(!dato) return `<div class="rc-marcaje-item"><span class="rc-marcaje-lbl">${label}</span><span class="rc-marcaje-val">—</span></div>`;
         const chip=chipEstado(dato);
-        return `<div class="rc-marcaje-item"><span class="rc-marcaje-lbl">${label}</span><span class="rc-marcaje-val">${dato.horaStr}</span>${chip.texto&&chip.texto!=='—'?`<span class="badge ${chip.color}" style="font-size:9px">${chip.texto}</span>`:''}</div>`;
+        return `<div class="rc-marcaje-item"><span class="rc-marcaje-lbl">${label}</span><span class="rc-marcaje-val">${dato.horaStr}</span>${chip.texto&&chip.texto!=='—'?etiquetaChip(chip,'sm'):''}</div>`;
       };
       const marcajeInfo=marc?`<div class="rc-marcaje">${marcItem('Entrada',marc.entrada)}${marcItem('Salida',marc.salida)}</div>`:'';
       return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
@@ -3381,9 +3393,9 @@ function pintarDetalleTile(){
   const titulos={ok:'A tiempo',tarde:'Llegaron tarde',sin:'Sin marcar entrada',temp:'Salieron temprano',pend:'Por aprobar'};
   const tipoPend=r=>(r.he&&r.estadoHE==='pendiente')?'Horas extra':(r.tipoDia||'').replace(/^\w/,c=>c.toUpperCase());
   const fila=x=>{
-    if(dashTileSel==='ok')    return `<div class="dt-row"><span>${x.nombre}</span><span class="dt-r"><b>${x.hora}</b><span class="badge ba" style="font-size:10px">A tiempo</span></span></div>`;
-    if(dashTileSel==='tarde') return `<div class="dt-row"><span>${x.nombre}</span><span class="dt-r"><b>${x.hora}</b><span class="badge br" style="font-size:10px">${x.min} min tarde</span></span></div>`;
-    if(dashTileSel==='temp')  return `<div class="dt-row"><span>${x.nombre}</span><span class="dt-r"><b>${x.hora}</b><span class="badge br" style="font-size:10px">${x.min} min antes</span></span></div>`;
+    if(dashTileSel==='ok')    return `<div class="dt-row"><span>${x.nombre}</span><span class="dt-r"><b>${x.hora}</b>${etiquetaEstado('ok','A tiempo','sm')}</span></div>`;
+    if(dashTileSel==='tarde') return `<div class="dt-row"><span>${x.nombre}</span><span class="dt-r"><b>${x.hora}</b>${etiquetaEstado('mal',fmtMin(x.min)+' tarde','sm')}</span></div>`;
+    if(dashTileSel==='temp')  return `<div class="dt-row"><span>${x.nombre}</span><span class="dt-r"><b>${x.hora}</b>${etiquetaEstado('mal',fmtMin(x.min)+' antes','sm')}</span></div>`;
     if(dashTileSel==='pend')  return `<div class="dt-row"><span>${x.userName||x.userId}</span><span class="dt-r"><span class="badge bp" style="font-size:10px">${tipoPend(x)}</span><span style="font-size:12px;color:var(--text2)">${fmt(x.fecha)}</span></span></div>`;
     return `<div class="dt-row"><span>${x.nombre}</span></div>`;
   };
@@ -3484,7 +3496,7 @@ async function renderAlertaAyer(){
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${color};margin-bottom:4px">${tit} (${arr.length})</div>
         ${arr.map(fn).join('')}
       </div>`:'';
-    const filaMin=x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span><span class="badge br" style="font-size:10px">${x.min} min</span></div>`;
+    const filaMin=x=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:13px"><span>${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span>${etiquetaEstado('mal',fmtMin(x.min),'sm')}</div>`;
     const filaNombre=x=>`<div style="padding:4px 0;font-size:13px">${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></div>`;
 
     cont.innerHTML=`<details class="rban">

@@ -200,12 +200,20 @@ export async function obtenerMarcajesMes(db, fns, uid, mes){
 
 // ── Texto y color según estado y minutos de diferencia ──
 // Formato corto para badges/chips en listas
+// Minutos en texto corto: "45 min", "2 h", "7 h 13 min"
+export function fmtMin(m){
+  m=Math.max(0,Math.round(m||0));
+  if(m<60) return `${m} min`;
+  const h=Math.floor(m/60), r=m%60;
+  return r?`${h} h ${r} min`:`${h} h`;
+}
+
 export function chipEstado(marc){
   if(!marc||!marc.estado) return {texto:'—',color:'bn'};
   if(marc.justificado) return {texto:'Justificado',color:'bn'};
   const {estado,minDiff}=marc;
-  if(estado==='tarde') return {texto:`${minDiff} min tarde`,color:'br'};
-  if(estado==='salida_temprana') return {texto:`${minDiff} min antes`,color:'br'};
+  if(estado==='tarde') return {texto:`${fmtMin(minDiff)} tarde`,color:'br'};
+  if(estado==='salida_temprana') return {texto:`${fmtMin(minDiff)} antes`,color:'br'};
   if(estado==='a_tiempo') return {texto:'A tiempo',color:'ba'};
   return {texto:'—',color:'bn'};
 }
@@ -221,8 +229,9 @@ export async function justificarMarcaje(db, fns, uid, fecha, tipo, datos){
 
 // Frase completa para el mensaje de confirmación al marcar
 export function mensajeMarcaje(tipo, estado, minDiff){
-  if(estado==='tarde') return `Entraste ${minDiff} minuto${minDiff===1?'':'s'} tarde`;
-  if(estado==='salida_temprana') return `Saliste ${minDiff} minuto${minDiff===1?'':'s'} antes de tu hora de salida`;
+  const dur=minDiff<60?`${minDiff} minuto${minDiff===1?'':'s'}`:fmtMin(minDiff);
+  if(estado==='tarde') return `Entraste ${dur} tarde`;
+  if(estado==='salida_temprana') return `Saliste ${dur} antes de tu hora de salida`;
   if(estado==='a_tiempo') return tipo==='entrada' ? 'Entraste a tiempo' : 'Cumpliste tu jornada completa';
   return tipo==='entrada' ? 'Entrada registrada' : 'Salida registrada';
 }
