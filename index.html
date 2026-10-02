@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=27">
+<link rel="stylesheet" href="css/styles.css?v=28">
 </head>
 <body>
 
@@ -1524,17 +1524,27 @@ async function renderProgEmpCard(){
     const grupo=grupoDeEmpleado(prog, me.id);
     if(!grupo){ cont.style.display='none'; return; }
     cont.style.display='';
-    const companeros=(grupo.empleadosNombres||[]).filter(n=>n!==me.nombre);
+    // Compañeros por id (no por nombre: el nombre guardado en la programación
+    // puede ser el corto y no coincidir con me.nombre)
+    const ids=grupo.empleados||[], noms=grupo.empleadosNombres||[];
+    const companeros=ids.map((id,k)=>id===me.id?null:(noms[k]||'')).filter(n=>n);
     const esCampo=grupo.area==='campo';
+    const iniciales=n=>n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const lista=companeros.length<=1?(companeros[0]||''):companeros.slice(0,-1).join(', ')+' y '+companeros[companeros.length-1];
+    const con=companeros.length
+      ? `<div class="pe-con"><div class="pe-avs">${companeros.slice(0,3).map(n=>`<span class="pe-av">${iniciales(n)}</span>`).join('')}</div><div class="pe-con-t">Vas con <b>${lista}</b></div></div>`
+      : `<div class="pe-con"><div class="pe-con-t solo">Vas solo</div></div>`;
     cont.innerHTML=`
-      <div class="card" style="border-left:3px solid ${esCampo?'var(--blue)':'var(--warn)'};margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span class="${esCampo?'prog-badge-campo':'prog-badge-plantel'}">${esCampo?'Campo':'Plantel'}</span>
-          <span style="font-size:11px;color:var(--text2)">Tu programación de hoy</span>
+      <div class="pe">
+        <div class="pe-hd">
+          <span class="mk3-k">Mi programación</span>
+          <span class="pe-area ${esCampo?'campo':'plantel'}">${esCampo?'Campo':'Plantel'}</span>
         </div>
-        <div style="font-size:17px;font-weight:800;margin-bottom:6px">${grupo.campania}</div>
-        ${grupo.vehiculoNombre?`<div style="font-size:13px;margin-bottom:4px"><span style="color:var(--text2)">Vehículo:</span> <b>${grupo.vehiculoNombre}</b></div>`:''}
-        ${companeros.length?`<div style="font-size:13px"><span style="color:var(--text2)">Con:</span> ${companeros.join(' · ')}</div>`:'<div style="font-size:13px;color:var(--text2)">Vas solo</div>'}
+        <div class="pe-main">
+          <div class="pe-camp">${grupo.campania}</div>
+          ${grupo.vehiculoNombre?`<span class="pe-placa" title="Vehículo">${grupo.vehiculoNombre}</span>`:''}
+        </div>
+        ${con}
       </div>`;
   }catch(e){ cont.style.display='none'; }
 }
