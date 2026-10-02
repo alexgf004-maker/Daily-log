@@ -44,7 +44,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 /* ═══ LOGIN ═══ */
 #loginScreen{
   background:linear-gradient(160deg,#0f1f3d 0%,#1e3a5f 40%,#2563eb 100%);
-  align-items:center;justify-content:center;overflow:hidden;
+  align-items:center;justify-content:center;overflow-x:hidden;overflow-y:auto;
   min-height:100vh;
 }
 #loginScreen::before{
@@ -54,11 +54,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     radial-gradient(circle at 5% 95%,rgba(16,185,129,.22) 0%,transparent 40%);
   pointer-events:none;
 }
-.login-panel{position:relative;z-index:1;width:100%;max-width:400px;padding:24px;animation:fadeUp .45s cubic-bezier(.22,1,.36,1)}
-@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.login-panel{position:relative;z-index:1;width:100%;max-width:400px;padding:24px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulseRing{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.18);opacity:0}}
+/* Aparición escalonada (idea tomada de STC) */
+.lg-anim{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) both}
+.lg-d1{animation-delay:.06s}.lg-d2{animation-delay:.12s}.lg-d3{animation-delay:.18s}.lg-d4{animation-delay:.24s}
 
 .login-brand{text-align:center;margin-bottom:26px}
-.login-logo{width:68px;height:68px;margin:0 auto 16px;border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px -8px rgba(0,0,0,.35);backdrop-filter:blur(6px)}
+.login-logo{position:relative;width:68px;height:68px;margin:0 auto 16px;border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px -8px rgba(0,0,0,.35);backdrop-filter:blur(6px)}
+.login-logo::before{content:'';position:absolute;inset:-7px;border-radius:26px;border:1px solid rgba(255,255,255,.3);animation:pulseRing 2.6s ease-out infinite}
 .login-logo svg{width:38px;height:38px}
 .login-brand-eyebrow{font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:8px}
 .login-brand-name{font-size:40px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1.5px}
@@ -70,14 +75,41 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .login-hola{font-size:21px;font-weight:800;color:var(--text);letter-spacing:-.4px}
 .login-hola-sub{font-size:13px;color:var(--text2);margin:4px 0 20px}
 .login-form .fl{color:var(--gray600)}
+/* Campos con ícono a la izquierda */
+.lg-wrap{position:relative}
+.lg-ico{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--gray400);pointer-events:none;transition:color .2s}
+.lg-wrap:focus-within .lg-ico{color:var(--blue)}
 .login-form input{background:var(--gray50);border:1.5px solid var(--gray200);color:var(--text);height:50px;border-radius:13px;font-size:15px}
+.login-form .lg-wrap input{padding-left:44px}
 .login-form input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12);background:#fff}
-.login-form input[type="password"]{letter-spacing:6px;font-size:18px}
+#loginPin{letter-spacing:6px;font-size:18px;padding-left:44px;padding-right:52px}
+#loginPin[type="text"]{letter-spacing:4px}
+/* Ver / ocultar PIN */
+.lg-ver{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:none;border-radius:10px;background:transparent;color:var(--gray400);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.lg-ver svg{width:18px;height:18px}
+.lg-ver .lg-ojo-c{display:none}
+.lg-ver.visible .lg-ojo-a{display:none}
+.lg-ver.visible .lg-ojo-c{display:block}
+.lg-ver:active{background:var(--gray100)}
 #loginAlert{margin-bottom:4px}
-.btn-login{width:100%;height:52px;background:linear-gradient(135deg,#1e40af 0%,#2563eb 55%,#3b82f6 100%);color:#fff;border:none;border-radius:14px;font-family:var(--sans);font-size:15.5px;font-weight:800;cursor:pointer;transition:transform .15s,box-shadow .2s;margin-top:6px;letter-spacing:.2px;box-shadow:0 12px 24px -10px rgba(37,99,235,.7)}
+.btn-login{width:100%;height:52px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#1e40af 0%,#2563eb 55%,#3b82f6 100%);color:#fff;border:none;border-radius:14px;font-family:var(--sans);font-size:15.5px;font-weight:800;cursor:pointer;transition:transform .15s,box-shadow .2s;margin-top:6px;letter-spacing:.2px;box-shadow:0 12px 24px -10px rgba(37,99,235,.7)}
+.btn-login svg{width:18px;height:18px;transition:transform .2s}
 .btn-login:hover{box-shadow:0 14px 28px -10px rgba(37,99,235,.85)}
 .btn-login:active{transform:scale(.98)}
-.login-footer{text-align:center;margin-top:20px;font-size:11px;color:rgba(255,255,255,.45)}
+.btn-login:active svg{transform:translateX(3px)}
+.login-footer{margin:22px auto 0;max-width:300px;text-align:center;font-size:12px;line-height:1.5;color:rgba(255,255,255,.55)}
+@media (prefers-reduced-motion:reduce){.lg-anim,.login-logo::before{animation:none}}
+
+/* Líneas tipo planilla, muy tenues */
+#loginScreen::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,transparent 0 31px,rgba(255,255,255,.045) 31px 32px)}
+/* Tarjeta azul hielo con franja azul→verde arriba */
+.login-form{position:relative;overflow:hidden;background:#eef4ff}
+.login-form::before{content:'';position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#2563eb,#3b82f6 60%,#4ade80)}
+.login-form input{background:#fff;border-color:#d6e3fb}
+/* Saludo según la hora + chip de fecha */
+.lg-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.lg-chip{font-size:11.5px;font-weight:700;color:var(--blue);background:#fff;padding:5px 11px;border-radius:20px;white-space:nowrap;margin-top:3px}
+
 
 /* ═══ TOPBAR ═══ */
 .topbar{background:var(--top);height:58px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(16,24,40,.18)}
