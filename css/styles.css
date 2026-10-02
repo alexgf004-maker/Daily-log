@@ -867,3 +867,10 @@ tbody tr:hover td{background:var(--bluelt)}
 .us-actx span{font-size:11.5px;color:var(--text2)}
 .us-ac.r .us-actx b{color:#dc2626}
 .us-solo{font-size:12.5px;color:var(--text2);padding:12px 0 6px}
+
+/* Avisos de error en login y acceso de mantenimiento */
+.lg-av{margin-bottom:12px;text-align:left}
+#loginAlert .lg-av{margin-bottom:10px}
+#maintAlert .lg-av{background:rgba(239,68,68,.14);border-color:rgba(248,113,113,.4)}
+#maintAlert .lg-av b{color:#fecaca}
+#maintAlert .lg-av .mk-av-tx>span{color:rgba(254,226,226,.85)}

@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=44">
+<link rel="stylesheet" href="css/styles.css?v=45">
 </head>
 <body>
 
@@ -1068,13 +1068,17 @@ async function checkMaintenance(){
   }catch(e){return false;}
 }
 
+// Aviso de error del login (mismo estilo que los avisos del marcaje)
+function avisoLogin(titulo, detalle){
+  return `<div class="mk-av mal lg-av"><span class="mk-av-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg></span><div class="mk-av-tx"><b>${titulo}</b>${detalle?`<span>${detalle}</span>`:''}</div></div>`;
+}
 window.maintLogin=async()=>{
   const u=$('maintUser').value.trim().toLowerCase();
   const p=$('maintPin').value.trim();
   const al=$('maintAlert'); al.innerHTML='';
-  if(!u||!p){al.innerHTML='<div class="alert ae">Ingresa usuario y PIN.</div>';return;}
+  if(!u||!p){al.innerHTML=avisoLogin('Faltan datos','Escribe tu usuario y tu PIN');return;}
   let snap;
-  try{snap=await get(ref(db,'users'));}catch(e){al.innerHTML='<div class="alert ae">Error de conexión.</div>';return;}
+  try{snap=await get(ref(db,'users'));}catch(e){al.innerHTML=avisoLogin('Sin conexión','Revisa tu internet e intenta de nuevo');return;}
   if(!snap.exists()) return;
   let found=null;
   for(const [k,v] of Object.entries(snap.val())){
@@ -1083,8 +1087,8 @@ window.maintLogin=async()=>{
       if(ok) found={id:k,...v};
     }
   }
-  if(!found||found.role!=='admin'){al.innerHTML='<div class="alert ae">Solo el administrador puede acceder en mantenimiento.</div>';return;}
-  if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
+  if(!found||found.role!=='admin'){al.innerHTML=avisoLogin('Acceso solo para administración','La app está en mantenimiento');return;}
+  if(!found.activo){al.innerHTML=avisoLogin('Usuario inactivo','Pide a David que lo revise');return;}
   me=found;
   localStorage.setItem('innova_session',JSON.stringify(me));
   renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
@@ -1095,10 +1099,10 @@ window.doLogin = async ()=>{
   const u=$('loginUser').value.trim().toLowerCase();
   const p=$('loginPin').value.trim();
   const al=$('loginAlert'); al.innerHTML='';
-  if(!u||!p){al.innerHTML='<div class="alert ae">Ingresa tu usuario y PIN.</div>';return;}
+  if(!u||!p){al.innerHTML=avisoLogin('Faltan datos','Escribe tu usuario y tu PIN');return;}
   let snap;
-  try{snap=await get(ref(db,'users'));}catch(e){al.innerHTML='<div class="alert ae">Error de conexión. Revisa las reglas de Firebase.</div>';return;}
-  if(!snap.exists()){al.innerHTML='<div class="alert ae">Sin usuarios registrados.</div>';return;}
+  try{snap=await get(ref(db,'users'));}catch(e){al.innerHTML=avisoLogin('Sin conexión','Revisa tu internet e intenta de nuevo');return;}
+  if(!snap.exists()){al.innerHTML=avisoLogin('Sin usuarios registrados','');return;}
   let found=null;
   const raw=snap.val();
   for(const [k,v] of Object.entries(raw)){
@@ -1107,12 +1111,12 @@ window.doLogin = async ()=>{
       if(ok) found={id:k,...v};
     }
   }
-  if(!found){al.innerHTML='<div class="alert ae">Usuario o PIN incorrecto.</div>';return;}
-  if(!found.activo){al.innerHTML='<div class="alert ae">Usuario inactivo.</div>';return;}
+  if(!found){al.innerHTML=avisoLogin('Usuario o PIN incorrecto','Revisa e intenta de nuevo');return;}
+  if(!found.activo){al.innerHTML=avisoLogin('Usuario inactivo','Pide a David que lo revise');return;}
   // Verificar mantenimiento — solo admin puede entrar
   const enMant=await checkMaintenance();
   if(enMant&&found.role!=='admin'){
-    al.innerHTML='<div class="alert ae">La aplicación está en mantenimiento. Solo el administrador puede acceder.</div>';return;
+    al.innerHTML=avisoLogin('App en mantenimiento','Por ahora solo puede entrar el administrador');return;
   }
   me=found;
   localStorage.setItem('innova_session', JSON.stringify(me));
