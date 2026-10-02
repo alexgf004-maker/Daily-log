@@ -93,7 +93,7 @@ importante — ver sección 7.**
 
 ## 5. Decisiones de diseño ya tomadas (no revertir sin consultar)
 
-- **Marcaje GPS**: sedes con radio 100 m — Plantel Central
+- **Marcaje GPS**: sedes con radio 100 m (Plantel Central: 115 m) — Plantel Central
   (13.688409755143281, -89.27993065477382), Plantel Central · Gestión de la
   medida (13.687696, -89.280831), Subestación Cucumacayán
   (13.693570433295193, -89.20564341328895), Subestación Zacatecoluca
