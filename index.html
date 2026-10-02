@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=45">
+<link rel="stylesheet" href="css/styles.css?v=46">
 </head>
 <body>
 
@@ -166,7 +166,7 @@ self.addEventListener('fetch', e => {
           <input type="text" id="loginUser" placeholder="tu.usuario" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
         </div>
       </div>
-      <div class="fg lg-anim lg-d3" style="margin-bottom:20px">
+      <div class="fg lg-anim lg-d3" style="margin-bottom:12px">
         <label class="fl" for="loginPin">PIN de acceso</label>
         <div class="lg-wrap">
           <svg class="lg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
@@ -177,6 +177,7 @@ self.addEventListener('fetch', e => {
           </button>
         </div>
       </div>
+      <label class="lg-rec lg-anim lg-d3"><input type="checkbox" id="loginRecordar" checked><span class="lg-rec-sw" aria-hidden="true"><i></i></span><span>Recordar mi usuario</span></label>
       <button class="btn-login lg-anim lg-d4" onclick="doLogin()">Ingresar<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
     </div>
     <div class="login-footer lg-anim lg-d4">¿Olvidaste tu PIN? Pide a David que lo restablezca.</div>
@@ -1095,6 +1096,7 @@ window.maintLogin=async()=>{
 };
 const _mp=$('maintPin'); if(_mp) _mp.addEventListener('keydown',e=>{if(e.key==='Enter')window.maintLogin();});
 
+const USUARIO_RECORDADO_KEY='innova_usuario_recordado';
 window.doLogin = async ()=>{
   const u=$('loginUser').value.trim().toLowerCase();
   const p=$('loginPin').value.trim();
@@ -1120,6 +1122,11 @@ window.doLogin = async ()=>{
   }
   me=found;
   localStorage.setItem('innova_session', JSON.stringify(me));
+  // Recordar (o dejar de recordar) el usuario en este celular
+  try{
+    if($('loginRecordar')?.checked) localStorage.setItem(USUARIO_RECORDADO_KEY,u);
+    else localStorage.removeItem(USUARIO_RECORDADO_KEY);
+  }catch(_){}
   if(me.role==='admin'||me.role==='asistente'){
     renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
   } else {
@@ -1135,8 +1142,16 @@ window.doLogout=()=>{
   $('loginUser').value='';
   $('loginPin').value='';
   $('loginAlert').innerHTML='';
+  aplicarUsuarioRecordado();
   screen('loginScreen');
 };
+// Usuario recordado: se rellena solo en el login (el PIN nunca se guarda)
+function aplicarUsuarioRecordado(){
+  let u=null; try{ u=localStorage.getItem(USUARIO_RECORDADO_KEY); }catch(_){}
+  const inp=$('loginUser'), chk=$('loginRecordar');
+  if(u&&inp){ inp.value=u; if(chk) chk.checked=true; }
+}
+aplicarUsuarioRecordado();
 const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
 
 // Pedir almacenamiento "persistente": en Android, Chrome puede borrar

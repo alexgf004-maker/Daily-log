@@ -874,3 +874,12 @@ tbody tr:hover td{background:var(--bluelt)}
 #maintAlert .lg-av{background:rgba(239,68,68,.14);border-color:rgba(248,113,113,.4)}
 #maintAlert .lg-av b{color:#fecaca}
 #maintAlert .lg-av .mk-av-tx>span{color:rgba(254,226,226,.85)}
+
+/* Login: recordar usuario */
+.lg-rec{display:flex;align-items:center;gap:10px;margin:0 0 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);user-select:none}
+.lg-rec input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.lg-rec-sw{position:relative;width:40px;height:24px;border-radius:20px;background:var(--gray300);flex-shrink:0;transition:background .2s}
+.lg-rec-sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(15,23,42,.25);transition:transform .22s cubic-bezier(.3,1.4,.5,1)}
+.lg-rec input:checked+.lg-rec-sw{background:var(--blue)}
+.lg-rec input:checked+.lg-rec-sw i{transform:translateX(16px)}
+.lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0 0 3px rgba(37,99,235,.25)}
