@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=40">
+<link rel="stylesheet" href="css/styles.css?v=41">
 </head>
 <body>
 
@@ -490,16 +490,24 @@ function renderAdmin(){
         </div>
       </div>
       <div id="adAsist" style="display:none">
-        <div class="page-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div><div class="ph-title">Asistencia</div><div class="ph-sub">Tardanzas, salidas tempranas y ausencias del mes</div></div>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <input type="month" id="asistMes" style="padding:6px 10px;font-size:13px;border:1px solid var(--gray200);border-radius:6px">
-            <button class="btn btn-p btn-sm" onclick="cargarAsistencia()">Ver</button>
-            <button class="btn btn-g btn-sm" onclick="exportarAsistencia()">Excel</button>
+        <div id="asistListaVista">
+          <div class="rg-hero">
+            <div class="rg-hero-top">
+              <div class="rg-hero-t">Asistencia</div>
+              <button class="rg-hero-btn" onclick="exportarAsistencia()">Excel</button>
+            </div>
+            <div class="rg-mnav">
+              <button onclick="asistMesNav(-1)" aria-label="Mes anterior">‹</button>
+              <span id="asistMesLbl"></span>
+              <button onclick="asistMesNav(1)" id="asistMesNext" aria-label="Mes siguiente">›</button>
+            </div>
+            <input type="hidden" id="asistMes">
           </div>
+          <div id="asistStats"></div>
+          ${me?.role==='admin'?`<button class="as-sab" onclick="openSabadoLaboral()"><span>Sábados laborales del mes: <b id="asistSabTxt">—</b></span><b class="go">Configurar ›</b></button>`:''}
+          <div id="asistList"><div class="spin"></div></div>
         </div>
-        ${me?.role==='admin'?`<div style="margin-bottom:12px"><button class="btn btn-gh btn-sm" onclick="openSabadoLaboral()">Configurar sábado laboral</button></div>`:''}
-        <div id="asistList"><div class="empty" style="padding:20px"><div class="et">Selecciona un mes y toca Ver</div></div></div>
+        <div id="asistDetVista" style="display:none"></div>
       </div>
       <div id="adPend" style="display:none">
         <div class="page-header"><div><div class="ph-title">Pendientes</div><div class="ph-sub">Horas extras por aprobar · Viáticos para revisar</div></div></div>
@@ -2134,6 +2142,8 @@ window.adTab=(t,btn)=>{
       const now=new Date();
       mesInput.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     }
+    asistDetUid=null; show('asistListaVista'); hide('asistDetVista');
+    cargarAsistencia();
   }
   if(t==='prog'&&isAdmin()){show('adProg');initProgramacion();}
   if(t==='pend'){show('adPend');show('pendList');hide('viatList');loadPend();}
@@ -3660,82 +3670,129 @@ async function regsEmpleadoMes(uid, mes){
 
 let asistCache=null; // guarda el último resumen para el detalle y el Excel
 
+let asistDetUid=null; // empleado abierto en el detalle de Asistencia
+window.asistMesNav=(delta)=>{
+  const nuevo=mesSumar($('asistMes').value||mesActualStr(),delta);
+  if(nuevo>mesActualStr()) return;
+  $('asistMes').value=nuevo;
+  asistDetUid=null; show('asistListaVista'); hide('asistDetVista');
+  cargarAsistencia();
+};
+const hmAsist=m=>m>=60?`${Math.floor(m/60)}h ${m%60}m`:`${m} min`;
+
 window.cargarAsistencia=async()=>{
   const cont=$('asistList');
-  const mes=$('asistMes')?.value;
-  if(!mes){ alert('Selecciona un mes.'); return; }
+  const mes=$('asistMes')?.value||mesActualStr();
+  $('asistMes').value=mes;
+  $('asistMesLbl').textContent=mesLabel(mes);
+  const next=$('asistMesNext'); if(next) next.disabled=mes>=mesActualStr();
   cont.innerHTML='<div class="spin"></div>';
   try{
     const emps=await empleadosParaAsistencia();
-    if(!emps.length){ cont.innerHTML='<div class="empty" style="padding:20px"><div class="et">No hay empleados con sede asignada</div></div>'; return; }
+    if(!emps.length){ $('asistStats').innerHTML=''; cont.innerHTML='<div class="empty" style="padding:20px"><div class="et">No hay empleados con sede asignada</div></div>'; return; }
     const sabados=await obtenerSabadosLaborales(db,{ref,get},mes);
     const filas=await resumenMesTodos(mes, emps,
       uid=>marcajesEmpleadoMes(uid,mes),
       uid=>regsEmpleadoMes(uid,mes),
       sabados, today());
-    asistCache={mes, filas};
+    if(($('asistMes')?.value)!==mes) return; // cambió de mes mientras cargaba
+    asistCache={mes, filas, sabados};
 
-    const totMin=(m)=>m>0?`${Math.floor(m/60)>0?Math.floor(m/60)+'h ':''}${m%60}m`:'—';
-    cont.innerHTML=`
-      <div class="card" style="padding:0;overflow-x:auto">
-        <table class="asist-table">
-          <thead>
-            <tr>
-              <th style="text-align:left">Empleado</th>
-              <th>Días tarde</th>
-              <th>Min. tarde</th>
-              <th>Salidas antic.</th>
-              <th>Min. antic.</th>
-              <th>No marcó</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filas.map((f,i)=>`
-              <tr class="asist-row" onclick="toggleAsistDetalle(${i})" style="cursor:pointer">
-                <td style="text-align:left;font-weight:600">${f.nombre}</td>
-                <td class="${f.diasTarde>0?'asist-bad':''}">${f.diasTarde||'—'}</td>
-                <td class="${f.minTarde>0?'asist-bad':''}">${totMin(f.minTarde)}</td>
-                <td class="${f.salidasTemp>0?'asist-bad':''}">${f.salidasTemp||'—'}</td>
-                <td class="${f.minTemp>0?'asist-bad':''}">${totMin(f.minTemp)}</td>
-                <td class="${f.noMarco>0?'asist-bad':''}">${f.noMarco||'—'}</td>
-              </tr>
-              <tr id="asistDet${i}" style="display:none"><td colspan="6" style="padding:0;background:var(--gray50)">
-                <div style="padding:12px 16px">${renderAsistDetalle(f)}</div>
-              </td></tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>`;
+    const tot=filas.reduce((a,f)=>({t:a.t+f.diasTarde,s:a.s+f.salidasTemp,n:a.n+f.noMarco}),{t:0,s:0,n:0});
+    $('asistStats').innerHTML=`<div class="rg-stats" style="margin-top:0">
+      <div class="rg-st r"><div class="v">${tot.t}</div><div class="l">Llegadas tarde</div></div>
+      <div class="rg-st a"><div class="v">${tot.s}</div><div class="l">Salidas antes</div></div>
+      <div class="rg-st b"><div class="v">${tot.n}</div><div class="l">No marcaron</div></div>
+    </div>`;
+    const sabTxt=$('asistSabTxt');
+    if(sabTxt){ const fs=Object.keys(sabados||{}).sort(); sabTxt.textContent=fs.length?fs.map(f=>'sáb '+parseInt(f.slice(8))).join(', '):'ninguno'; }
+
+    cont.innerHTML=filas.map((f,i)=>{
+      const inc=f.diasTarde+f.salidasTemp+f.noMarco;
+      const min=f.minTarde+f.minTemp;
+      return `<button class="as-emp" onclick="abrirAsistEmp('${f.uid}')">
+        <span class="as-emp-n ${inc?'mal':'ok'}"><b>${inc}</b><small>incid.</small></span>
+        <span class="as-emp-b">
+          <span class="as-emp-nom">${f.nombre}</span>
+          <span class="as-emp-m"><span><b class="r">${f.diasTarde}</b> tarde</span><span><b class="a">${f.salidasTemp}</b> salidas</span><span><b class="n">${f.noMarco}</b> sin marcar</span></span>
+          <span class="as-emp-c">${min?hmAsist(min)+' perdidos':'Sin minutos perdidos'}</span>
+        </span>
+      </button>`;
+    }).join('');
+    if(asistDetUid) abrirAsistEmp(asistDetUid,true);
   }catch(e){
     cont.innerHTML=`<div style="font-size:13px;color:var(--danger);padding:16px">Error al calcular la asistencia: ${e.message}</div>`;
   }
 };
 
-function renderAsistDetalle(fila){
-  if(!fila.detalle.length) return '<div style="font-size:12px;color:var(--text2)">Sin días hábiles en el mes.</div>';
-  // Justificar tardanzas/salidas tempranas es una decisión de admin, no de asistente.
+window.volverAsistLista=()=>{ asistDetUid=null; hide('asistDetVista'); show('asistListaVista'); };
+
+// Detalle de un empleado: totales, calendario del mes e incidencias
+window.asIrDia=(fecha)=>{
+  const el=document.getElementById('asd-'+fecha); if(!el) return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+};
+window.abrirAsistEmp=(uid,mantenerScroll)=>{
+  if(!asistCache) return;
+  const f=asistCache.filas.find(x=>x.uid===uid); if(!f) return;
+  asistDetUid=uid;
+  const mes=asistCache.mes, hoy=today();
+  const porFecha=Object.fromEntries(f.detalle.map(d=>[d.fecha,d]));
+  const [y,m]=mes.split('-').map(Number);
+  const ultimo=new Date(y,m,0).getDate();
+  const offset=(new Date(y,m-1,1).getDay()+6)%7;
+  let celdas='<span></span>'.repeat(offset);
+  for(let d=1; d<=ultimo; d++){
+    const fe=`${mes}-${String(d).padStart(2,'0')}`;
+    const it=porFecha[fe];
+    let cls='off';
+    if(it){
+      if(it.tipo==='no_marco') cls='falta';
+      else if(it.tipo==='justificado') cls=it.tipoDia==='asueto'?'asu':'aus';
+      else if(it.entrada?.estado==='tarde'&&!it.entrada.justificado) cls='tarde';
+      else if(it.salida?.estado==='salida_temprana'&&!it.salida.justificado) cls='temp';
+      else cls='ok';
+    } else if(fe>hoy){
+      const dow=new Date(fe+'T12:00:00').getDay();
+      cls=(dow===0||dow===6)?'off':'fut';
+    }
+    const tap=(cls==='tarde'||cls==='temp'||cls==='falta')?` onclick="asIrDia('${fe}')"`:'';
+    celdas+=`<span class="rg-cd ${cls==='tarde'?'as-t':cls==='temp'?'as-s':cls==='ok'?'as-ok':cls}${fe===hoy?' hoy':''}"${tap}>${d}</span>`;
+  }
   const puedeJustificar=isAdmin();
-  const btnJustificar=(tipo,marc)=>{
-    if(!puedeJustificar) return '';
-    const yaJust=!!marc.justificado;
-    return `<span class="asist-just-btn" onclick="event.stopPropagation();justificarTardanzaUI('${fila.uid}','${marc.__fecha}','${tipo}',${yaJust})">${yaJust?'Quitar justificación':'Justificar'}</span>`;
-  };
-  return fila.detalle.map(d=>{
-    if(d.tipo==='no_marco') return `<div class="asist-det-row"><span>${fmt(d.fecha)}</span><span class="badge br" style="font-size:10px">No marcó</span></div>`;
-    if(d.tipo==='justificado') return `<div class="asist-det-row"><span>${fmt(d.fecha)}</span><span class="badge bn" style="font-size:10px">${d.tipoDia||'justificado'}</span></div>`;
-    const chipE=d.entrada?chipEstado(d.entrada):null;
-    const chipS=d.salida?chipEstado(d.salida):null;
-    const mostrarJustEntrada=d.entrada?.estado==='tarde';
-    const mostrarJustSalida=d.salida?.estado==='salida_temprana';
-    return `<div class="asist-det-row">
-      <span>${fmt(d.fecha)}</span>
-      <span style="display:flex;gap:12px;font-size:12px;flex-wrap:wrap;justify-content:flex-end;align-items:center">
-        <span>Entrada ${d.entrada?`<b>${d.entrada.horaStr}</b> <span class="badge ${chipE.color}" style="font-size:9px">${chipE.texto}</span>${mostrarJustEntrada?btnJustificar('entrada',{...d.entrada,__fecha:d.fecha}):''}`:'—'}</span>
-        <span>Salida ${d.salida?`<b>${d.salida.horaStr}</b> <span class="badge ${chipS.color}" style="font-size:9px">${chipS.texto}</span>${mostrarJustSalida?btnJustificar('salida',{...d.salida,__fecha:d.fecha}):''}`:'—'}</span>
-      </span>
-    </div>`;
-  }).join('');
-}
+  const btnJ=(tipo,fecha,ya)=>puedeJustificar?`<button class="btn btn-gh btn-xs" onclick="justificarTardanzaUI('${f.uid}','${fecha}','${tipo}',${ya})">${ya?'Quitar justificación':'Justificar'}</button>`:'';
+  const fechaCol=fe=>{ const d=new Date(fe+'T12:00:00'); return `<div class="rg-it-d"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></div>`; };
+  const incid=[];
+  [...f.detalle].sort((a,b)=>b.fecha.localeCompare(a.fecha)).forEach(d=>{
+    if(d.tipo==='no_marco'){
+      incid.push(`<div class="rg-it as-it" id="asd-${d.fecha}">${fechaCol(d.fecha)}<div class="rg-it-b"><div class="rg-it-a">No marcó entrada ni salida</div><div class="as-it-tags"><span class="rg-pill n">Sin marcar</span></div></div></div>`);
+      return;
+    }
+    const partes=[];
+    if(d.entrada?.estado==='tarde') partes.push({tipo:'entrada',m:d.entrada,txt:`Entrada <b>${d.entrada.horaStr}</b>`,pill:d.entrada.justificado?etiquetaEstado('neutro','Justificado','sm'):etiquetaEstado('mal',fmtMin(d.entrada.minDiff||0)+' tarde','sm')});
+    if(d.salida?.estado==='salida_temprana') partes.push({tipo:'salida',m:d.salida,txt:`Salida <b>${d.salida.horaStr}</b>`,pill:d.salida.justificado?etiquetaEstado('neutro','Justificado','sm'):etiquetaEstado('mal',fmtMin(d.salida.minDiff||0)+' antes','sm')});
+    partes.forEach((p,k)=>incid.push(`<div class="rg-it as-it"${k===0?` id="asd-${d.fecha}"`:''}>${fechaCol(d.fecha)}<div class="rg-it-b"><div class="as-it-row"><div><div class="rg-it-a" style="margin-top:0">${p.txt}</div><div class="as-it-tags">${p.pill}${p.m.justificado?.nota?`<span class="as-it-nota">${p.m.justificado.nota}</span>`:''}</div></div>${btnJ(p.tipo,d.fecha,!!p.m.justificado)}</div></div></div>`));
+  });
+  $('asistDetVista').innerHTML=`
+    <div class="rg-ph">
+      <button class="rg-back" onclick="volverAsistLista()" aria-label="Volver">‹</button>
+      <div class="rg-av lg">${inicialesDe(f.nombre)}</div>
+      <div class="rg-ph-tx"><div class="rg-ph-n">${f.nombre}</div><div class="rg-ph-c">${mesLabel(mes)}</div></div>
+    </div>
+    <div class="rg-stats">
+      <div class="rg-st r"><div class="v">${f.diasTarde}</div><div class="l">Días tarde${f.minTarde?' · '+hmAsist(f.minTarde):''}</div></div>
+      <div class="rg-st a"><div class="v">${f.salidasTemp}</div><div class="l">Salidas antes${f.minTemp?' · '+hmAsist(f.minTemp):''}</div></div>
+      <div class="rg-st b"><div class="v">${f.noMarco}</div><div class="l">Sin marcar</div></div>
+    </div>
+    <div class="rg-cal">
+      <div class="rg-cal-g">${['L','M','M','J','V','S','D'].map(x=>`<span class="rg-cal-h">${x}</span>`).join('')}${celdas}</div>
+      <div class="rg-cal-ley"><span><i class="as-ok"></i>A tiempo</span><span><i class="as-t"></i>Tarde</span><span><i class="as-s"></i>Salió antes</span><span><i class="aus"></i>Ausencia justificada</span><span><i class="asu"></i>Asueto</span><span><i class="falta"></i>Sin marcar</span></div>
+    </div>
+    <div class="rg-det"><div class="rg-det-k">Incidencias</div>${incid.length?incid.join(''):'<div class="dt-vacio" style="padding:4px 14px 14px">Sin incidencias este mes 🎉</div>'}</div>`;
+  hide('asistListaVista'); show('asistDetVista');
+  if(!mantenerScroll) window.scrollTo(0,0);
+};
 
 window.justificarTardanzaUI=async(uid,fecha,tipo,yaJustificado)=>{
   if(yaJustificado){
@@ -3749,10 +3806,7 @@ window.justificarTardanzaUI=async(uid,fecha,tipo,yaJustificado)=>{
   cargarAsistencia();
 };
 
-window.toggleAsistDetalle=(i)=>{
-  const row=$('asistDet'+i);
-  if(row) row.style.display=row.style.display==='none'?'':'none';
-};
+window.toggleAsistDetalle=()=>{};
 
 // ── Sábado laboral ──
 window.openSabadoLaboral=async()=>{

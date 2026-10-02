@@ -79,7 +79,8 @@ function diaJustificado(regsPorFecha, fecha){
   const r=regsPorFecha[fecha];
   if(!r) return false;
   const tipo=r.tipoDia||'normal';
-  return tipo==='vacaciones'||tipo==='incapacidad'||tipo==='permiso';
+  // El asueto y el día de bienestar tampoco cuentan como "no marcó"
+  return tipo==='vacaciones'||tipo==='incapacidad'||tipo==='permiso'||tipo==='asueto'||tipo==='bienestar';
 }
 
 // ── RESUMEN MENSUAL DE UN EMPLEADO ─────────────────────
