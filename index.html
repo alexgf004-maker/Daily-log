@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=34">
+<link rel="stylesheet" href="css/styles.css?v=35">
 </head>
 <body>
 
@@ -1902,9 +1902,8 @@ async function loadHist(){
   const l=$('empHistList');l.innerHTML='<div class="spin"></div>';
   const res=$('empResumenMes');res.innerHTML='';
   const snap=await get(ref(db,`registros/${me.id}`));
-  if(!snap.exists()){l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">No tienes registros aún</div></div>';return;}
-  const raw=snap.val();
-  const allItems=Object.entries(raw).map(([k,v])=>({key:k,...v}));
+  const raw=snap.exists()?snap.val():{};
+  const allItems=Object.entries(raw).map(([k,v])=>({key:k,...v})).filter(r=>r.fecha);
   allItems.sort((a,b)=>b.fecha.localeCompare(a.fecha));
 
   // Mes seleccionado — por defecto el actual
@@ -1912,9 +1911,9 @@ async function loadHist(){
   const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
   // Selector de mes
-  const mesesDisp=[...new Set(allItems.map(r=>r.fecha?.substring(0,7)).filter(Boolean))].sort().reverse();
+  // El mes actual siempre está disponible (el calendario muestra lo que falta registrar)
+  const mesesDisp=[...new Set([mesActual,...allItems.map(r=>r.fecha.substring(0,7))])].sort().reverse();
   let mesSelec=mesActual;
-  if(!mesesDisp.includes(mesSelec)&&mesesDisp.length>0) mesSelec=mesesDisp[0];
 
   let mesEnVista=mesSelec;
 
@@ -1929,33 +1928,38 @@ async function loadHist(){
     const nomMes=nomMesRaw.charAt(0).toUpperCase()+nomMesRaw.slice(1);
 
     // Marcajes del mes, indexados por fecha
-    let marcajesPorFecha={};
-    try{
-      const marcs=await obtenerMarcajesMes(db,{ref,get},me.id,mes);
-      marcajesPorFecha=Object.fromEntries(marcs.map(m=>[m.fecha,m]));
-    }catch(e){}
+    const [marcs, sabados, asuetos]=await Promise.all([
+      obtenerMarcajesMes(db,{ref,get},me.id,mes).catch(()=>[]),
+      obtenerSabadosLaborales(db,{ref,get},mes).catch(()=>({})),
+      getAllAsuetos(parseInt(anio)).catch(()=>[])
+    ]);
+    if(mesEnVista!==mes) return; // cambió de mes mientras cargaba
+    const marcajesPorFecha=Object.fromEntries((marcs||[]).map(m=>[m.fecha,m]));
+    const fechaMin=$('empFecha')?.min||ago(3);
+    const cal=calendarioMes({mes, uid:me.id, todos:allItems, sabados, asuetos,
+      tocarDia:f=>`histIrDia('${f}')`,
+      tocarFalta:f=>f>=fechaMin?`histRegistrar('${f}')`:''});
+    const hayFaltasTocables=cal.html.includes('rg-cd falta tap');
     res.innerHTML=`
-      <div class="hist-summary">
-        <div class="hist-summary-hd">
-          <button class="hist-nav" onclick="mesAdyacente(-1)" ${mesesDisp.indexOf(mes)>=mesesDisp.length-1?'disabled':''} aria-label="Mes anterior">‹</button>
-          <button class="hist-summary-mes" onclick="toggleMesPicker()">${nomMes}</button>
-          <button class="hist-nav" onclick="mesAdyacente(1)" ${mesesDisp.indexOf(mes)<=0?'disabled':''} aria-label="Mes siguiente">›</button>
-        </div>
-        <div class="hist-mes-picker" id="histMesPicker" style="display:none">
-          ${mesesDisp.map(m=>{
-            const [my,mm]=m.split('-');
-            const abrev=new Date(parseInt(my),parseInt(mm)-1,1).toLocaleDateString('es-SV',{month:'short',year:'2-digit'});
-            return `<button class="hist-mes-chip ${m===mes?'active':''}" onclick="renderHistMes('${m}')">${abrev}</button>`;
-          }).join('')}
-        </div>
-        <div class="hist-stats">
-          <div class="hist-stat"><span class="hist-stat-val">${items.length}</span><span class="hist-stat-lbl">Registros</span></div>
-          <div class="hist-stat-div"></div>
-          <div class="hist-stat"><span class="hist-stat-val" style="color:var(--green)">${viaticos}</span><span class="hist-stat-lbl">Viáticos</span></div>
-          <div class="hist-stat-div"></div>
-          <div class="hist-stat"><span class="hist-stat-val" style="color:var(--blue)">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+minsHE+'m':'0'}</span><span class="hist-stat-lbl">Horas extra</span></div>
-        </div>
-      </div>`;
+      <div class="rg-mnav claro" style="margin-top:0">
+        <button onclick="mesAdyacente(-1)" ${mesesDisp.indexOf(mes)>=mesesDisp.length-1?'disabled':''} aria-label="Mes anterior">‹</button>
+        <button class="hist-summary-mes" onclick="toggleMesPicker()">${nomMes}</button>
+        <button onclick="mesAdyacente(1)" ${mesesDisp.indexOf(mes)<=0?'disabled':''} aria-label="Mes siguiente">›</button>
+      </div>
+      <div class="hist-mes-picker" id="histMesPicker" style="display:none">
+        ${mesesDisp.map(m=>{
+          const [my,mm]=m.split('-');
+          const abrev=new Date(parseInt(my),parseInt(mm)-1,1).toLocaleDateString('es-SV',{month:'short',year:'2-digit'});
+          return `<button class="hist-mes-chip ${m===mes?'active':''}" onclick="renderHistMes('${m}')">${abrev}</button>`;
+        }).join('')}
+      </div>
+      <div class="rg-stats">
+        <div class="rg-st b"><div class="v">${cal.registrados}/${cal.habiles}</div><div class="l">Días registrados</div></div>
+        <div class="rg-st g"><div class="v">${viaticos}</div><div class="l">Viáticos</div></div>
+        <div class="rg-st a"><div class="v">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+(minsHE?minsHE+'m':''):'0'}</div><div class="l">Horas extra</div></div>
+      </div>
+      ${cal.html}
+      ${hayFaltasTocables?'<div class="hist-cal-tip">Toca un día con borde rojo para registrarlo</div>':''}`;
 
     if(!items.length){
       l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros en este mes</div></div>';
@@ -1963,6 +1967,8 @@ async function loadHist(){
     }
 
     const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
+    const vistosH=new Set();
+    const idH=f=>{ if(vistosH.has(f)) return ''; vistosH.add(f); return ` id="hid-${f}"`; };
     l.innerHTML=items.map(r=>{
       const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
       if(esEspecial){
@@ -1970,7 +1976,7 @@ async function loadHist(){
         const est=r.estadoEspecial||'aprobado';
         const estBadge=est==='pendiente'?'<span class="badge bp">Pendiente</span>':est==='rechazado'?'<span class="badge br">Rechazado</span>':'<span class="badge ba">Aprobado</span>';
         const remBadge=(r.tipoDia==='permiso'&&est==='aprobado')?(r.remunerado===false?'<span class="badge br" style="font-size:10px">No remunerado</span>':'<span class="badge ba" style="font-size:10px">Remunerado</span>'):'';
-        return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
+        return `<div class="rc"${idH(r.fecha)} onclick="openDet('${me.id}','${r.key}',false)">
           <div class="rc-hd"><div class="rc-date">${fmt(r.fecha)}</div>
           <div class="rc-badges"><span class="badge by">${label}</span>${estBadge}${remBadge}</div></div>
           <div class="rc-desc">${r.nota||'Sin nota'}</div>
@@ -1990,7 +1996,7 @@ async function loadHist(){
         return `<div class="rc-marcaje-item"><span class="rc-marcaje-lbl">${label}</span><span class="rc-marcaje-val">${dato.horaStr}</span>${chip.texto&&chip.texto!=='—'?etiquetaChip(chip,'sm'):''}</div>`;
       };
       const marcajeInfo=marc?`<div class="rc-marcaje">${marcItem('Entrada',marc.entrada)}${marcItem('Salida',marc.salida)}</div>`:'';
-      return `<div class="rc" onclick="openDet('${me.id}','${r.key}',false)">
+      return `<div class="rc"${idH(r.fecha)} onclick="openDet('${me.id}','${r.key}',false)">
         <div class="rc-hd">
           <div><div class="rc-date">${fmt(r.fecha)}</div>${horario}</div>
           <div class="rc-badges">${viatBadge}${heBadge}</div>
@@ -2002,6 +2008,21 @@ async function loadHist(){
     }).join('');
   }
 
+  window.histIrDia=function(f){
+    const el=document.getElementById('hid-'+f); if(!el) return;
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  };
+  // Día sin registro → abrir Nuevo Registro con esa fecha
+  window.histRegistrar=function(f){
+    const tab=document.querySelector('#employeeScreen .tab');
+    empTab('r',tab);
+    const fi=$('empFecha'); if(!fi) return;
+    if(fi.min&&f<fi.min) return;
+    fi.value=f;
+    window.onFechaChange&&window.onFechaChange();
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
   window.renderHistMes=function(mes){ const p=$('histMesPicker'); if(p) p.style.display='none'; renderHist(mes); };
   window.mesAdyacente=function(delta){
     // delta=-1 → mes anterior (más viejo); delta=+1 → mes siguiente (más reciente)
@@ -2552,6 +2573,53 @@ window.rgIrPendiente=()=>{
   el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
 };
 
+// Calendario del mes por colores (perfil del admin y Mi Historial del técnico).
+// tocarDia(f) / tocarFalta(f) devuelven el código del onclick ('' = no tocable).
+function calendarioMes({mes, uid, todos, sabados, asuetos, tocarDia, tocarFalta}){
+  const hoy=today();
+  const asuetoSet=new Set((asuetos||[]).map(a=>a.fecha));
+  const habiles=diasHabilesEmpleado(mes,uid,sabados||{},hoy).filter(f=>!asuetoSet.has(f));
+  const porFecha={};
+  (todos||[]).forEach(r=>{ if(r.fecha&&r.fecha.startsWith(mes)) (porFecha[r.fecha]=porFecha[r.fecha]||[]).push(r); });
+  const vacRango=(todos||[]).filter(r=>r.tipoDia==='vacaciones'&&r.estadoEspecial==='aprobado'&&r.vacIni&&r.vacFin);
+  const enVacaciones=f=>vacRango.some(r=>f>=r.vacIni&&f<=r.vacFin);
+  const registrados=habiles.filter(f=>porFecha[f]||enVacaciones(f)).length;
+
+  const [y,m]=mes.split('-').map(Number);
+  const ultimo=new Date(y,m,0).getDate();
+  const offset=(new Date(y,m-1,1).getDay()+6)%7; // semana empieza en lunes
+  const habSet=new Set(diasHabilesEmpleado(mes,uid,sabados||{},`${mes}-31`));
+  let celdas='<span></span>'.repeat(offset);
+  for(let d=1; d<=ultimo; d++){
+    const f=`${mes}-${String(d).padStart(2,'0')}`;
+    const regs=porFecha[f]||[];
+    let cls='';
+    if(regs.length){
+      // La solicitud de vacaciones se guarda con la fecha en que se pidió: ese día
+      // cuenta por lo que se trabajó, no como ausencia (salvo que caiga en el rango)
+      const esp=regs.find(r=>r.tipoDia&&r.tipoDia!=='normal'&&!(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin&&(f<r.vacIni||f>r.vacFin)));
+      if(esp) cls=esp.tipoDia==='asueto'?'asu':'aus';
+      else if(regs.some(r=>r.he&&r.estadoHE!=='rechazado')) cls='he';
+      else if(regs.some(r=>r.viatico&&r.estadoViatico!=='rechazado')) cls='vi';
+      else if(regs.some(r=>!r.tipoDia||r.tipoDia==='normal')) cls='ok';
+      else cls=habSet.has(f)&&f<hoy?'falta':(habSet.has(f)?'fut':'off'); // solo la solicitud, sin trabajo registrado
+    } else if(enVacaciones(f)) cls='aus';
+    else if(asuetoSet.has(f)&&habSet.has(f)) cls='asu';
+    else if(habSet.has(f)&&f<=hoy) cls=f<hoy?'falta':'fut';
+    else if(habSet.has(f)) cls='fut';
+    else cls='off';
+    let accion='';
+    if(regs.length&&tocarDia) accion=tocarDia(f);
+    else if((cls==='falta'||(cls==='fut'&&f===hoy))&&tocarFalta) accion=tocarFalta(f);
+    celdas+=`<span class="rg-cd ${cls}${f===hoy?' hoy':''}${accion?' tap':''}"${accion?` onclick="${accion}"`:''}>${d}</span>`;
+  }
+  const html=`<div class="rg-cal">
+    <div class="rg-cal-g">${['L','M','M','J','V','S','D'].map(x=>`<span class="rg-cal-h">${x}</span>`).join('')}${celdas}</div>
+    <div class="rg-cal-ley"><span><i class="ok"></i>Registro</span><span><i class="vi"></i>Viático</span><span><i class="he"></i>Horas extra</span><span><i class="aus"></i>Ausencia</span><span><i class="asu"></i>Asueto</span><span><i class="falta"></i>Sin registro</span></div>
+  </div>`;
+  return {html, habiles:habiles.length, registrados};
+}
+
 window.cargarPerfilEmpleado=async()=>{
   const uid=perfilEmpUID; if(!uid) return;
   const mes=$('adEmpMes')?.value||mesActualStr();
@@ -2573,14 +2641,8 @@ window.cargarPerfilEmpleado=async()=>{
   filtRegs=items.map(r=>({...r,userId:uid}));
 
   // ── Resumen ──
-  const hoy=today();
-  const asuetoSet=new Set(asuetos.map(a=>a.fecha));
-  const habiles=diasHabilesEmpleado(mes,uid,sabados,hoy).filter(f=>!asuetoSet.has(f));
-  const porFecha={};
-  items.forEach(r=>{ (porFecha[r.fecha]=porFecha[r.fecha]||[]).push(r); });
-  const vacRango=todos.filter(r=>r.tipoDia==='vacaciones'&&r.estadoEspecial==='aprobado'&&r.vacIni&&r.vacFin);
-  const enVacaciones=f=>vacRango.some(r=>f>=r.vacIni&&f<=r.vacFin);
-  const registrados=habiles.filter(f=>porFecha[f]||enVacaciones(f)).length;
+  const cal=calendarioMes({mes, uid, todos, sabados, asuetos, tocarDia:f=>`rgIrDia('${f}')`});
+  const habiles=cal.habiles, registrados=cal.registrados;
   const viaticos=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
   const totalMin=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((a,r)=>a+minHEde(r),0);
   const pendHE=items.filter(r=>r.he&&r.estadoHE==='pendiente').length;
@@ -2588,43 +2650,14 @@ window.cargarPerfilEmpleado=async()=>{
   const partes=[pendHE&&`<b>${pendHE} ${pendHE===1?'hora extra':'horas extra'}</b>`, pendEsp&&`<b>${pendEsp} ${pendEsp===1?'solicitud':'solicitudes'}</b>`].filter(Boolean);
   $('adEmpResumen').innerHTML=`
     <div class="rg-stats">
-      <div class="rg-st b"><div class="v">${registrados}/${habiles.length}</div><div class="l">Días registrados</div></div>
+      <div class="rg-st b"><div class="v">${registrados}/${habiles}</div><div class="l">Días registrados</div></div>
       <div class="rg-st g"><div class="v">${viaticos}</div><div class="l">Viáticos</div></div>
       <div class="rg-st a"><div class="v">${hmCorto(totalMin)}</div><div class="l">Horas extra</div></div>
     </div>
     ${partes.length?`<button class="rg-pend" onclick="rgIrPendiente()"><span class="rg-pend-ic">!</span><span class="rg-pend-t">${partes.join(' y ')} ${partes.length>1||pendHE+pendEsp>1?'esperan':'espera'} tu aprobación</span><span class="rg-pend-go">Ver ›</span></button>`:''}`;
 
   // ── Calendario ──
-  const [y,m]=mes.split('-').map(Number);
-  const ultimo=new Date(y,m,0).getDate();
-  const offset=(new Date(y,m-1,1).getDay()+6)%7; // semana empieza en lunes
-  const habSet=new Set(diasHabilesEmpleado(mes,uid,sabados,`${mes}-31`));
-  let celdas='<span></span>'.repeat(offset);
-  for(let d=1; d<=ultimo; d++){
-    const f=`${mes}-${String(d).padStart(2,'0')}`;
-    const regs=porFecha[f]||[];
-    let cls='';
-    if(regs.length){
-      // La solicitud de vacaciones se guarda con la fecha en que se pidió: ese día
-      // cuenta por lo que se trabajó, no como ausencia (salvo que caiga en el rango)
-      const esp=regs.find(r=>r.tipoDia&&r.tipoDia!=='normal'&&!(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin&&(f<r.vacIni||f>r.vacFin)));
-      if(esp) cls=esp.tipoDia==='asueto'?'asu':'aus';
-      else if(regs.some(r=>r.he&&r.estadoHE!=='rechazado')) cls='he';
-      else if(regs.some(r=>r.viatico&&r.estadoViatico!=='rechazado')) cls='vi';
-      else if(regs.some(r=>!r.tipoDia||r.tipoDia==='normal')) cls='ok';
-      else cls=habSet.has(f)&&f<hoy?'falta':(habSet.has(f)?'fut':'off'); // solo la solicitud, sin trabajo registrado
-    } else if(enVacaciones(f)) cls='aus';
-    else if(asuetoSet.has(f)&&habSet.has(f)) cls='asu';
-    else if(habSet.has(f)&&f<hoy) cls='falta';
-    else if(habSet.has(f)) cls='fut';
-    else cls='off';
-    const tocable=regs.length?` onclick="rgIrDia('${f}')"`:'';
-    celdas+=`<span class="rg-cd ${cls}${f===hoy?' hoy':''}"${tocable}>${d}</span>`;
-  }
-  $('adEmpCal').innerHTML=`<div class="rg-cal">
-    <div class="rg-cal-g">${['L','M','M','J','V','S','D'].map(x=>`<span class="rg-cal-h">${x}</span>`).join('')}${celdas}</div>
-    <div class="rg-cal-ley"><span><i class="ok"></i>Registro</span><span><i class="vi"></i>Viático</span><span><i class="he"></i>Horas extra</span><span><i class="aus"></i>Ausencia</span><span><i class="asu"></i>Asueto</span><span><i class="falta"></i>Sin registro</span></div>
-  </div>`;
+  $('adEmpCal').innerHTML=cal.html;
 
   if(!items.length){
     l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros en este mes</div></div>';

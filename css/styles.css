@@ -604,3 +604,12 @@ tbody tr:hover td{background:var(--bluelt)}
 .rg-it-nota{font-size:12px;color:var(--text2);margin-top:6px}
 .rg-it-nota.a{color:#b45309}.rg-it-nota.r{color:var(--danger)}
 .rg-it-acc{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+/* Mi Historial: calendario del técnico */
+#empResumenMes{margin-bottom:12px}
+#empResumenMes .hist-summary-mes{border:none;background:none;font:700 14px var(--sans);color:var(--text);cursor:pointer;width:auto;height:auto}
+#empResumenMes .hist-mes-picker{margin-top:8px}
+.rg-cd.tap{cursor:pointer}
+.rg-cd.falta.tap{background:#fef2f2}
+.hist-cal-tip{font-size:11.5px;color:var(--text2);text-align:center;margin-top:8px}
+.rc.flash{animation:rgFlash 1.4s ease}
+.rc{scroll-margin:80px}
