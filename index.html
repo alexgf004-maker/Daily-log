@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=52">
+<link rel="stylesheet" href="css/styles.css?v=53">
 </head>
 <body>
 
@@ -512,13 +512,13 @@ function renderAdmin(){
         <div id="asistDetVista" style="display:none"></div>
       </div>
       <div id="adPend" style="display:none">
-        <div class="page-header"><div><div class="ph-title">Pendientes</div><div class="ph-sub">Horas extras por aprobar · Viáticos para revisar</div></div></div>
-        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-          <button class="btn btn-p btn-sm" onclick="verPendHE(this)">HE pendientes</button>
-          <button class="btn btn-gh btn-sm" onclick="verPendViat(this)">Viáticos aprobados</button>
+        <div class="page-header"><div><div class="ph-title">Pendientes</div><div class="ph-sub" id="pendSub">Lo que espera revisión</div></div></div>
+        <div class="pd-seg" id="pendSeg">
+          <button data-v="he" class="on" onclick="pendVista('he')">Horas extra<i id="pdCntHe"></i></button>
+          <button data-v="sol" onclick="pendVista('sol')">Solicitudes<i id="pdCntSol"></i></button>
+          <button data-v="viat" onclick="pendVista('viat')">Viáticos</button>
         </div>
         <div id="pendList"><div class="spin"></div></div>
-        <div id="viatList" style="display:none"></div>
       </div>
       <div id="adProg" style="display:none">
         <div class="prog-subtabs">
@@ -2219,7 +2219,7 @@ window.adTab=(t,btn)=>{
     cargarAsistencia();
   }
   if(t==='prog'&&isAdmin()){show('adProg');initProgramacion();}
-  if(t==='pend'){show('adPend');show('pendList');hide('viatList');loadPend();}
+  if(t==='pend'){show('adPend');loadPend();}
   if(t==='usrs'&&isAdmin()){show('adUsrs');loadUsrs();}
   if(t==='asuetos'&&isAdmin()){show('adAsuetos');loadAsuetos();}
   if(t==='obs'&&isAdmin()){show('adObs');loadObservaciones();}
@@ -2464,54 +2464,133 @@ function startDashRefresh(){
 }
 function stopDashRefresh(){ if(dashTimer){clearInterval(dashTimer);dashTimer=null;} }
 
+// Pendientes: horas extra agrupadas por técnico, solicitudes (permisos, vacaciones,
+// incapacidades) y viáticos recientes para poder anularlos.
+let pendVistaSel='he', pendDatos=null;
+const minHEPend=r=>r.minHE||(r.heInicio&&r.heFin?minutosEntre(r.heInicio,r.heFin):0);
+window.pendVista=(v)=>{
+  pendVistaSel=v;
+  document.querySelectorAll('#pendSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  pintarPend();
+};
 async function loadPend(){
-  const l=$('pendList');l.innerHTML='<div class="spin"></div>';
+  const l=$('pendList'); if(!l) return;
+  l.innerHTML='<div class="spin"></div>';
   let all=await getAllRegs();
   // Asistente solo ve registros de sus empleados asignados
   if(!isAdmin()&&me.empleadosAsig&&me.empleadosAsig.length>0){
     all=all.filter(r=>me.empleadosAsig.includes(r.userId));
   }
-  const tipoLabels={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
-  // HE pendientes + días especiales pendientes (solo incapacidad y vacaciones)
-  const pendHE=all.filter(r=>r.he&&r.estadoHE==='pendiente');
-  const pendEsp=all.filter(r=>r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente');  const pend=[...pendHE,...pendEsp].sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  if(!pend.length){l.innerHTML='<div class="empty"><div class="ei">✅</div><div class="et">Sin pendientes</div></div>';return;}
-  l.innerHTML=pend.map(r=>{
-    const esEspecial=r.tipoDia&&r.tipoDia!=='normal';
-    if(esEspecial){
-      const label=tipoLabels[r.tipoDia]||r.tipoDia;
-      return `<div class="card" style="border-left:4px solid var(--warn)">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-          <div><div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div><div style="font-size:12px;color:var(--text2)">${fmtLong(r.fecha)}</div></div>
-          <span class="badge by">${label}</span>
-        </div>
-        ${r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin?`<div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:8px">Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)} · ${Math.round((new Date(r.vacFin+'T12:00:00')-new Date(r.vacIni+'T12:00:00'))/(1000*60*60*24))+1} días</div>`:''}
-        ${r.nota?`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">${r.nota}</div>`:''}
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${isAdmin()?`<button class="btn btn-g btn-sm" onclick="${
-            r.tipoDia==='permiso'?`abrirAprobarPermiso('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')`:
-            r.tipoDia==='vacaciones'?`aprobarVacacionesPend('${r.userId}','${r.key}')`:
-            `aprobarEspecialPend('${r.userId}','${r.key}')`}">✓ Aprobar</button>
-          <button class="btn btn-gh btn-sm" onclick="openRejEspecial('${r.userId}','${r.key}');rejCallback=loadPend">Rechazar</button>`:''}
-          <button class="btn btn-gh btn-sm" onclick="openObs('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')">Observación</button>
+  const he=all.filter(r=>r.he&&r.estadoHE==='pendiente');
+  const sol=all.filter(r=>r.tipoDia&&r.tipoDia!=='normal'&&r.tipoDia!=='asueto'&&r.estadoEspecial==='pendiente');
+  const viat=all.filter(r=>r.viatico&&r.estadoViatico!=='rechazado'&&r.fecha&&r.fecha>=ago(31));
+  pendDatos={he,sol,viat};
+  const cHe=$('pdCntHe'), cSol=$('pdCntSol');
+  if(cHe) cHe.textContent=he.length||'';
+  if(cSol) cSol.textContent=sol.length||'';
+  const partes=[he.length?`${he.length} ${he.length===1?'día con horas extra':'días con horas extra'}`:'', sol.length?`${sol.length} ${sol.length===1?'solicitud':'solicitudes'}`:''].filter(Boolean);
+  const sub=$('pendSub'); if(sub) sub.textContent=partes.length?partes.join(' y ')+' por revisar':'Todo al día';
+  if(isAdmin()){
+    const badge=$('pendBadge'), n=he.length+sol.length;
+    if(badge){ if(n){badge.textContent=n;badge.style.display='inline';} else badge.style.display='none'; }
+  }
+  pintarPend();
+}
+function pintarPend(){
+  const l=$('pendList'); if(!l||!pendDatos) return;
+  const admin=isAdmin();
+  const esc=t=>String(t??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  const vacio=t=>`<div class="empty"><div class="ei">✅</div><div class="et">${t}</div></div>`;
+  const mesHoy=today().slice(0,7);
+  const diaCol=f=>{ const d=new Date(f+'T12:00:00'); return `<div class="pd-d"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}${f.slice(0,7)!==mesHoy?' '+MESES_FX[d.getMonth()]:''}</span></div>`; };
+  const fechaLarga=f=>{ const t=fmtLong(f).replace(',','').replace(/ de \d{4}$/,''); return t.charAt(0).toUpperCase()+t.slice(1); };
+
+  if(pendVistaSel==='he'){
+    const {he}=pendDatos;
+    if(!he.length){ l.innerHTML=vacio('Sin horas extra pendientes'); return; }
+    const grupos={};
+    he.forEach(r=>{ (grupos[r.userId]=grupos[r.userId]||[]).push(r); });
+    const lista=Object.values(grupos).map(rs=>rs.sort((a,b)=>b.fecha.localeCompare(a.fecha)))
+      .sort((a,b)=>(a[0].userName||'').localeCompare(b[0].userName||''));
+    l.innerHTML=lista.map(rs=>{
+      const uid=rs[0].userId, nombre=rs[0].userName||uid;
+      const tot=rs.reduce((a,r)=>a+minHEPend(r),0);
+      return `<div class="pd-gp">
+        <div class="pd-hd"><div class="pd-av">${inicialesDe(nombre)}</div>
+          <div class="pd-n"><b>${nombre}</b><span>${rs.length} ${rs.length===1?'pendiente':'pendientes'} · ${fmtMin(tot)}</span></div>
+          ${admin?`<button class="pd-all" onclick="aprobarTodasHE('${uid}')">✓ Todas</button>`:''}</div>
+        ${rs.map(r=>`<div class="pd-rw">
+          ${diaCol(r.fecha)}
+          <div class="pd-x" onclick="openDet('${uid}','${r.key}',true)">
+            <b>${minHEPend(r)?fmtMin(minHEPend(r)):'Horas extra'}<small>${minHEPend(r)?'extra':''}${r.heInicio&&r.heFin?`${minHEPend(r)?' · ':''}${r.heInicio}–${r.heFin}`:''}</small></b>
+            <div class="${r.heJustif?'':'sin'}">${r.heJustif||'Sin justificación'}</div>
+          </div>
+          ${admin
+            ?`<button class="pd-ib no" onclick="openRej('${uid}','${r.key}','he')" aria-label="Rechazar">✕</button><button class="pd-ib ok" onclick="aprobarHE('${uid}','${r.key}')" aria-label="Aprobar">✓</button>`
+            :`<button class="pd-obs" onclick="openObs('${uid}','${r.key}','${esc(nombre)}','${r.fecha}')">Observación</button>`}
+        </div>`).join('')}
+      </div>`;
+    }).join('')+`<div class="pd-tip">Toca un día para ver el detalle${admin?' · con ✓ puedes ajustar las horas':''}</div>`;
+    return;
+  }
+
+  if(pendVistaSel==='sol'){
+    const {sol}=pendDatos;
+    if(!sol.length){ l.innerHTML=vacio('Sin solicitudes pendientes'); return; }
+    const tipoLabels={vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
+    l.innerHTML=[...sol].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(r=>{
+      const uid=r.userId, nombre=r.userName||uid;
+      const dias=(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin)?Math.round((new Date(r.vacFin+'T12:00:00')-new Date(r.vacIni+'T12:00:00'))/864e5)+1:0;
+      const cuando=dias?`Del ${fechaCortaFx(r.vacIni)} al ${fechaCortaFx(r.vacFin)} · ${dias} ${dias===1?'día':'días'}`:fechaLarga(r.fecha);
+      const aprobar=r.tipoDia==='permiso'?`abrirAprobarPermiso('${uid}','${r.key}','${esc(nombre)}','${r.fecha}')`
+        :r.tipoDia==='vacaciones'?`aprobarVacacionesPend('${uid}','${r.key}')`:`aprobarEspecialPend('${uid}','${r.key}')`;
+      return `<div class="pd-gp">
+        <div class="pd-hd"><div class="pd-av v">${inicialesDe(nombre)}</div>
+          <div class="pd-n"><b>${nombre}</b><span>${cuando}</span></div>
+          <span class="rg-pill v">${tipoLabels[r.tipoDia]||r.tipoDia}</span></div>
+        <div class="pd-sol">
+          ${r.nota?`<div class="pd-cita">${r.nota}</div>`:''}
+          <div class="pd-bt">${admin
+            ?`<button class="pd-b2" onclick="openRejEspecial('${uid}','${r.key}');rejCallback=loadPend">Rechazar</button><button class="pd-b1" onclick="${aprobar}">✓ Aprobar</button>`
+            :`<button class="pd-b2" onclick="openObs('${uid}','${r.key}','${esc(nombre)}','${r.fecha}')">Observación</button>`}</div>
         </div>
       </div>`;
-    }
-    return `<div class="card" style="border-left:4px solid var(--warn)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:10px">
-        <div><div style="font-weight:700;font-size:15px">${r.userName||r.userId}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${fmtLong(r.fecha)}</div></div>
-        <span class="badge bp">HE — ${r.heInicio||''}–${r.heFin||''}</span>
-      </div>
-      <div style="font-size:12px;background:var(--bluelt);padding:9px 12px;border-radius:7px;margin-bottom:12px;color:var(--blue)"><b>Justif. HE:</b> ${r.heJustif}</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">${r.actividades}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${isAdmin()?`<button class="btn btn-g btn-sm" onclick="aprobarHE('${r.userId}','${r.key}')">✓ Aprobar HE</button>
-        <button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}','he')">✗ Rechazar HE</button>`:''}
-        <button class="btn btn-gh btn-sm" onclick="openDet('${r.userId}','${r.key}',true)">Ver detalle</button>
-        ${!isAdmin()?`<button class="btn btn-gh btn-sm" onclick="openObs('${r.userId}','${r.key}','${r.userName||''}','${r.fecha}')">Observación</button>`:''}
-      </div></div>`;
-  }).join('');
+    }).join('');
+    return;
+  }
+
+  // Viáticos del último mes, por día, para poder anular alguno
+  const {viat}=pendDatos;
+  if(!viat.length){ l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin viáticos en el último mes</div></div>'; return; }
+  const porDia={};
+  viat.forEach(r=>{ (porDia[r.fecha]=porDia[r.fecha]||[]).push(r); });
+  l.innerHTML=Object.keys(porDia).sort().reverse().map(f=>`<div class="pd-gp">
+      <div class="pd-dia"><b>${fechaLarga(f)}</b><span>${porDia[f].length} ${porDia[f].length===1?'viático':'viáticos'}</span></div>
+      ${porDia[f].sort((a,b)=>(a.userName||'').localeCompare(b.userName||'')).map(r=>`<div class="pd-rw">
+        <div class="pd-av sm">${inicialesDe(r.userName||r.userId)}</div>
+        <div class="pd-x" onclick="openDet('${r.userId}','${r.key}',true)"><b>${r.userName||r.userId}</b><div>${r.actividades||''}</div></div>
+        <button class="pd-anu" onclick="openRej('${r.userId}','${r.key}','viatico')">Anular</button>
+      </div>`).join('')}
+    </div>`).join('')+'<div class="pd-tip">Viáticos del último mes · toca uno para ver el detalle</div>';
 }
+
+// Aprueba de un solo todas las horas extra pendientes de un técnico, tal como las registró
+window.aprobarTodasHE=async(uid)=>{
+  const rs=(pendDatos?.he||[]).filter(r=>r.userId===uid);
+  if(!rs.length) return;
+  const nombre=rs[0].userName||uid, tot=rs.reduce((a,r)=>a+minHEPend(r),0);
+  const que=rs.length===1?'la hora extra':`los ${rs.length} días de horas extra`;
+  if(!confirm(`¿Aprobar ${que} de ${nombre} (${fmtMin(tot)} en total) tal como las registró?`)) return;
+  const ahora=Date.now(), upd={};
+  rs.forEach(r=>{
+    const p=`registros/${uid}/${r.key}`;
+    upd[`${p}/estadoHE`]='aprobado';
+    upd[`${p}/revisadoHEEn`]=ahora;
+    upd[`${p}/minHEAprobado`]=minHEPend(r);
+  });
+  await update(ref(db),upd);
+  loadPend();
+};
 
 window.aprobarVacacionesPend=async(uid,key)=>{
   await update(ref(db,`registros/${uid}/${key}`),{estadoEspecial:'aprobado',revisadoEspEn:Date.now()});
@@ -2549,33 +2628,6 @@ async function loadViaticos(){
   const all=await getAllRegs();
   return all.filter(r=>r.viatico&&r.estadoViatico==='aprobado');
 }
-
-window.verPendHE=btn=>{
-  show('pendList');hide('viatList');
-  loadPend();
-};
-window.verPendViat=async btn=>{
-  hide('pendList');show('viatList');
-  const l=$('viatList');l.innerHTML='<div class="spin"></div>';
-  const all=await getAllRegs();
-  const viats=all.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  if(!viats.length){l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin viáticos registrados</div></div>';return;}
-  l.innerHTML=viats.map(r=>{
-    const rechazado=r.estadoViatico==='rechazado';
-    return `<div class="card" style="border-left:4px solid ${rechazado?'var(--danger)':'var(--green)'}">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-      <div>
-        <div style="font-weight:700;font-size:14px">${r.userName||r.userId}</div>
-        <div style="font-size:12px;color:var(--text2)">${fmtLong(r.fecha)}</div>
-      </div>
-      <span class="badge ${rechazado?'br':'ba'}">${rechazado?'✗ Anulado':'✓ Aprobado'}</span>
-    </div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.5">${r.actividades}</div>
-    ${r.motivoRechazoViatico?`<div style="font-size:12px;background:var(--dangerlt);padding:8px 12px;border-radius:7px;margin-bottom:10px;color:var(--danger)"><b>Motivo anulación:</b> ${r.motivoRechazoViatico}</div>`:''}
-    ${!rechazado?`<button class="btn btn-d btn-sm" onclick="openRej('${r.userId}','${r.key}','viatico')">✗ Anular viático</button>`:''}
-  </div>`;
-  }).join('');
-};
 
 window.aprobarHE=async(uid,key)=>{
   await update(ref(db,`registros/${uid}/${key}`),{estadoHE:'aprobado',revisadoHEEn:Date.now()});
