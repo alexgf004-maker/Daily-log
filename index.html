@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=59">
+<link rel="stylesheet" href="css/styles.css?v=60">
 </head>
 <body>
 
@@ -568,35 +568,21 @@ function renderAdmin(){
 
         <!-- HISTORIAL -->
         <div id="progHist" style="display:none">
+          <div class="ps-hero"><div class="ps-hero-t"><b>Historial</b><span>Programaciones de días anteriores</span></div></div>
           <div id="progHistBody"><div class="spin"></div></div>
         </div>
 
         <!-- AUSENCIAS -->
         <div id="progAus" style="display:none">
-          <div class="page-header" style="justify-content:space-between">
-            <div><div class="ph-title">Ausencias</div><div class="ph-sub">Registra incapacidad, vacaciones o permiso</div></div>
-            <button class="btn btn-g btn-sm" onclick="openAusencia()">+ Ausencia</button>
-          </div>
+          <div class="ps-hero"><div class="ps-hero-t"><b>Ausencias</b><span>Quién no está disponible hoy y en los próximos días</span></div><button class="ps-hero-btn" onclick="openAusencia()">+ Registrar ausencia</button></div>
           <div id="ausLista"><div class="spin"></div></div>
         </div>
 
         <!-- CATÁLOGOS -->
         <div id="progCat" style="display:none">
-          <div class="page-header"><div><div class="ph-title">Catálogos</div><div class="ph-sub">Vehículos y campañas disponibles</div></div></div>
-          <div class="card" style="margin-bottom:14px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <div class="card-title" style="margin-bottom:0">Vehículos</div>
-              <button class="btn btn-g btn-sm" onclick="openVehiculo()">+ Vehículo</button>
-            </div>
-            <div id="catVehiculos"><div class="spin"></div></div>
-          </div>
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <div class="card-title" style="margin-bottom:0">Campañas</div>
-              <button class="btn btn-g btn-sm" onclick="openCampania()">+ Campaña</button>
-            </div>
-            <div id="catCampanias"><div class="spin"></div></div>
-          </div>
+          <div class="ps-hero"><div class="ps-hero-t"><b>Catálogos</b><span>Vehículos y campañas que se usan al programar</span></div></div>
+          <div id="catVehiculos"><div class="spin"></div></div>
+          <div id="catCampanias"></div>
         </div>
       </div>
       <div id="adUsrs" style="display:none">
@@ -5103,33 +5089,28 @@ async function renderCatalogos(){
   progVehiculos=await obtenerVehiculos(db,{ref,get});
 
   const cv=$('catVehiculos');
-  const carros=progVehiculos.filter(v=>v.tipo==='carro');
-  const motos=progVehiculos.filter(v=>v.tipo==='moto');
-  const filaVeh=v=>{
+  const carros=progVehiculos.filter(v=>v.tipo==='carro'), motos=progVehiculos.filter(v=>v.tipo==='moto');
+  const icV={carro:'<svg viewBox="0 0 24 24"><path d="M5 17h14v-5l-2-5H7l-2 5z"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/></svg>',
+    moto:'<svg viewBox="0 0 24 24"><circle cx="5.5" cy="16" r="3"/><circle cx="18.5" cy="16" r="3"/><path d="M5.5 16l4-6h5l4 6M12 10l-1-3h-2"/></svg>'};
+  const tonoEst={disponible:'ok',mantenimiento:'mal',prestado:'med',baja:'off'};
+  const vt=v=>{
     const est=ESTADOS_VEHICULO[v.estado]||ESTADOS_VEHICULO.disponible;
-    const restr=Array.isArray(v.campanias)&&v.campanias.length?` · solo ${v.campanias.join(', ')}`:'';
-    return `<div class="cat-row" onclick="openVehiculo('${v.id}')">
-      <div><span style="font-weight:600">${v.nombre}</span><span style="font-size:11px;color:var(--text2)">${restr}</span></div>
-      <span class="badge ${est.color}" style="font-size:10px">${est.texto}</span>
-    </div>`;
+    const restr=Array.isArray(v.campanias)&&v.campanias.length?`<div class="ct-solo">Solo ${v.campanias.join(', ')}</div>`:'';
+    return `<button class="ct-veh${v.estado==='baja'?' baja':''}" onclick="openVehiculo('${v.id}')">
+      <span class="ct-placa">${v.nombre}</span>
+      <span class="ct-r">${icV[v.tipo]||icV.carro}<span class="ct-est ${tonoEst[v.estado]||'ok'}">${est.texto}</span></span>${restr}</button>`;
   };
-  cv.innerHTML=`
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">Carros (${carros.length})</div>
-    ${carros.map(filaVeh).join('')||'<div style="font-size:12px;color:var(--text2)">Ninguno</div>'}
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 0 6px">Motos (${motos.length})</div>
-    ${motos.map(filaVeh).join('')||'<div style="font-size:12px;color:var(--text2)">Ninguno</div>'}
-  `;
+  cv.innerHTML=`<div class="ps-sec">Vehículos · ${carros.length} ${carros.length===1?'carro':'carros'} y ${motos.length} ${motos.length===1?'moto':'motos'}</div>
+    <div class="ct-grid">${[...carros,...motos].map(vt).join('')}<button class="ct-veh ct-add" onclick="openVehiculo()">+ Agregar vehículo</button></div>`;
 
   const cc=$('catCampanias');
-  const campo=progCampanias.filter(c=>c.area==='campo');
-  const plantel=progCampanias.filter(c=>c.area==='plantel');
-  const filaCamp=c=>`<div class="cat-row" onclick="openCampania('${c.id}')"><span style="font-weight:600">${c.nombre}</span>${c.activa===false?'<span class="badge bn" style="font-size:10px">inactiva</span>':''}</div>`;
-  cc.innerHTML=`
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">Campo (${campo.length})</div>
-    ${campo.map(filaCamp).join('')||'<div style="font-size:12px;color:var(--text2)">Ninguna</div>'}
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 0 6px">Plantel (${plantel.length})</div>
-    ${plantel.map(filaCamp).join('')||'<div style="font-size:12px;color:var(--text2)">Ninguna</div>'}
-  `;
+  const col=(area,titulo)=>{
+    const cs=progCampanias.filter(c=>c.area===area);
+    return `<div class="ct-col"><div class="ct-col-hd ${area}">${titulo}<span>${cs.length} ${cs.length===1?'campaña':'campañas'}</span></div>
+      ${cs.map((c,i)=>`<button class="ct-camp${c.activa===false?' off':''}" onclick="openCampania('${c.id}')"><span class="ct-n">${i+1}</span><span class="ct-cn">${c.nombre}</span>${c.activa===false?'<span class="rg-pill">Inactiva</span>':''}<span class="ct-go">›</span></button>`).join('')||'<div class="ct-vacio">Ninguna</div>'}
+      <button class="ct-camp ct-camp-add" onclick="openCampania(null,'${area}')">+ Agregar campaña de ${area}</button></div>`;
+  };
+  cc.innerHTML=`<div class="ps-sec">Campañas</div><div class="ct-cols">${col('campo','CAMPO')}${col('plantel','PLANTEL')}</div>`;
 }
 
 let vehEditId=null;
@@ -5168,13 +5149,13 @@ window.eliminarVehiculoUI=async()=>{
 };
 
 let campEditId=null;
-window.openCampania=(id)=>{
+window.openCampania=(id,area)=>{
   campEditId=id||null;
   $('moCampaniaTitle').textContent=id?'Editar campaña':'Nueva campaña';
   $('moCampaniaAlert').innerHTML='';
   const c=id?progCampanias.find(x=>x.id===id):null;
   $('campNombre').value=c?.nombre||'';
-  $('campArea').value=c?.area||'campo';
+  $('campArea').value=c?.area||area||'campo';
   if($('campFrecuente')) $('campFrecuente').checked = c ? (c.frecuente===true) : true; // nueva = frecuente por defecto
   $('campBtnEliminar').style.display=id?'':'none';
   $('moCampania').classList.add('open');
@@ -5196,42 +5177,61 @@ window.eliminarCampaniaUI=async()=>{
 };
 
 // ── HISTORIAL DE PROGRAMACIÓN ──
+// Lista de días a la izquierda (por mes) y el día elegido a la derecha. En cel se apilan.
+let phDatos={}, phSel=null;
 async function renderHistorialProg(){
   const cont=$('progHistBody');
   cont.innerHTML='<div class="spin"></div>';
-  const fechas=await obtenerFechasProgramadas(db,{ref,get});
+  const snap=await get(ref(db,'programaciones'));
+  phDatos=snap.exists()?snap.val():{};
+  const fechas=Object.keys(phDatos).filter(f=>phDatos[f]&&(phDatos[f].grupos||[]).length).sort((a,b)=>b.localeCompare(a));
   if(!fechas.length){ cont.innerHTML='<div class="empty" style="padding:20px"><div class="et">Aún no hay programaciones guardadas</div></div>'; return; }
-  cont.innerHTML=`
-    <div class="page-header"><div><div class="ph-title">Historial</div><div class="ph-sub">Programaciones guardadas</div></div></div>
-    <div class="card" style="padding:0">
-      ${fechas.map(f=>`<div class="cat-row" onclick="verHistorialDia('${f}')"><span style="font-weight:600">${fmtLong(f).replace(/^\w/,c=>c.toUpperCase())}</span><span style="color:var(--text2);font-size:18px">›</span></div>`).join('')}
-    </div>
-    <div id="histDiaDetalle" style="margin-top:14px"></div>`;
+  const resumen=f=>{ const gs=phDatos[f].grupos||[]; const n=gs.reduce((a,g)=>a+(g.empleados||[]).length,0); return `${gs.length} ${gs.length===1?'grupo':'grupos'} · ${n} ${n===1?'persona':'personas'}`; };
+  let mesAnt='', filas='';
+  fechas.forEach(f=>{
+    const d=new Date(f+'T12:00:00');
+    const mes=d.toLocaleDateString('es-SV',{month:'long',year:f.slice(0,4)===today().slice(0,4)?undefined:'numeric'});
+    if(mes!==mesAnt){ filas+=`<div class="ph-mes">${mes}</div>`; mesAnt=mes; }
+    const dia=d.toLocaleDateString('es-SV',{weekday:'long'});
+    filas+=`<button class="ph-it" data-f="${f}" onclick="verHistorialDia('${f}')"><span class="ph-dd"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></span><span class="ph-n"><b>${dia.charAt(0).toUpperCase()+dia.slice(1)} ${d.getDate()}</b><span>${resumen(f)}</span></span></button>`;
+  });
+  cont.innerHTML=`<div class="ph-lay"><div class="ph-lista">${filas}</div><div id="histDiaDetalle" class="ph-det"></div></div>`;
+  verHistorialDia(phSel&&phDatos[phSel]?phSel:fechas[0],true);
 }
 
-window.verHistorialDia=async(fecha)=>{
-  const cont=$('histDiaDetalle');
-  cont.innerHTML='<div class="spin"></div>';
-  const prog=await obtenerProgramacion(db,{ref,get},fecha);
-  if(!prog||!prog.grupos||!prog.grupos.length){ cont.innerHTML='<div style="font-size:13px;color:var(--text2);padding:12px">Sin grupos ese día.</div>'; return; }
-  const secc=(area,titulo,claseBadge)=>{
-    const gs=prog.grupos.filter(g=>g.area===area);
-    if(!gs.length) return '';
-    return `<div class="prog-seccion">
-      <div class="prog-seccion-hd"><span class="${claseBadge}">${titulo}</span></div>
-      ${gs.map(g=>{
-        const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
-        return `<div class="prog-card" style="cursor:default">
-          <div class="prog-card-hd"><span class="prog-card-camp">${g.campania}</span>${veh?`<span class="prog-card-veh">${veh.nombre}</span>`:(g.vehiculoNombre?`<span class="prog-card-veh">${g.vehiculoNombre}</span>`:'<span class="prog-card-veh prog-sinveh">Sin vehículo</span>')}</div>
-          <div class="prog-card-personas">${(g.empleadosNombres||[]).join(' · ')}</div>
-        </div>`;
-      }).join('')}
-    </div>`;
+window.verHistorialDia=(fecha,inicial)=>{
+  phSel=fecha;
+  document.querySelectorAll('.ph-it').forEach(b=>b.classList.toggle('on',b.dataset.f===fecha));
+  const cont=$('histDiaDetalle'); if(!cont) return;
+  const prog=phDatos[fecha]||{}, gs=prog.grupos||[];
+  const nPers=gs.reduce((a,g)=>a+(g.empleados||[]).length,0), nVeh=gs.filter(g=>g.vehiculo||g.vehiculoNombre).length;
+  const titulo=fmtLong(fecha).replace(',','').replace(/ de \d{4}$/,'');
+  const placa=g=>{ const v=g.vehiculo?progVehiculos.find(x=>x.id===g.vehiculo):null; return v?v.nombre:(g.vehiculoNombre||''); };
+  const secc=(area,tit)=>{
+    const ag=gs.filter(g=>g.area===area); if(!ag.length) return '';
+    return `<div class="ps-sec ${area}">${tit}</div>`+ag.map(g=>`<div class="ph-g ${area}"><span class="ph-g-bar"></span>
+      <span class="ph-g-x"><b>${g.campania}</b>${g.zona?`<span class="ph-zona">📍 ${g.zona}</span>`:''}<span class="ph-g-p">${(g.empleadosNombres||[]).filter(Boolean).join(' · ')||'Sin personal'}</span></span>
+      ${placa(g)?`<span class="ph-placa">${placa(g)}</span>`:''}</div>`).join('');
   };
-  cont.innerHTML=`<div class="card"><div class="card-title">${fmtLong(fecha).replace(/^\w/,c=>c.toUpperCase())}</div>
-    ${secc('campo','Campo','prog-badge-campo')}
-    ${secc('plantel','Plantel','prog-badge-plantel')}
-  </div>`;
+  cont.innerHTML=`<div class="ph-det-hd"><div class="ph-det-t"><b>${titulo.charAt(0).toUpperCase()+titulo.slice(1)}</b><span>${gs.length} ${gs.length===1?'grupo':'grupos'} · ${nPers} ${nPers===1?'persona':'personas'}${nVeh?` · ${nVeh} ${nVeh===1?'vehículo':'vehículos'}`:''}</span></div>
+      <button onclick="phCopiar('${fecha}')">Copiar a Programar</button><button onclick="phCompartir('${fecha}')">Compartir imagen</button></div>
+    <div class="ph-det-b">${secc('campo','Campo')}${secc('plantel','Plantel')}</div>`;
+  if(!inicial&&window.innerWidth<900) cont.scrollIntoView({behavior:'smooth',block:'start'});
+};
+// Lleva esta programación a Programar: abre "Copiar de…" con este día ya elegido
+window.phCopiar=async(fecha)=>{
+  progSub('armar');
+  await abrirCopiarProg();
+  const inp=$('copiarProgFecha'); if(inp) inp.value=fecha;
+  document.querySelectorAll('#copiarProgRecientes .tbl-chip').forEach(c=>c.classList.toggle('sel',c.getAttribute('onclick')?.includes(`'${fecha}'`)));
+};
+// Imagen para compartir de un día anterior (usa el mismo dibujo que Programar)
+window.phCompartir=async(fecha)=>{
+  const gs=(phDatos[fecha]?.grupos)||[]; if(!gs.length) return;
+  const antes={f:progFecha,g:progGrupos};
+  progFecha=fecha; progGrupos=JSON.parse(JSON.stringify(gs));
+  try{ await progGenerarImagen(); }
+  finally{ setTimeout(()=>{ if(progFecha===fecha){ progFecha=antes.f; progGrupos=antes.g; } },2000); }
 };
 
 // ── AUSENCIAS (atajo de admin) ──
@@ -5351,9 +5351,13 @@ async function renderAusencias(){
   const users=await getUsers();
   const empleados=users.filter(u=>u.role==='empleado');
   const hoy=today();
+  const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const masDias=(f,n)=>{ const d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return iso(d); };
+  // Seguido = el día siguiente, o solo hay fin de semana en medio (vie → lun)
+  const seguido=(f1,f2)=>{ let f=masDias(f1,1); while(f<f2){ const w=new Date(f+'T12:00:00').getDay(); if(w!==0&&w!==6) return false; f=masDias(f,1); } return f===f2; };
+  const regresa=f=>{ let r=masDias(f,1); while([0,6].includes(new Date(r+'T12:00:00').getDay())) r=masDias(r,1); return r; };
 
-  // Recolectar ausencias activas/futuras (registros tipo incapacidad/vacaciones/permiso con fecha >= hoy)
-  // Agrupamos por empleado+tipo+bloque contiguo para mostrar rangos
+  // Ausencias de hoy en adelante, juntando los días seguidos del mismo tipo en un bloque
   const items=[];
   const todosRegs=await getRegistrosAll();
   empleados.forEach(u=>{
@@ -5361,14 +5365,14 @@ async function renderAusencias(){
     if(!raw) return;
     const regs=Object.entries(raw)
       .map(([key,r])=>({key,...r}))
-      .filter(r=>AUS_TIPOS.includes(r.tipoDia)&&r.fecha&&r.fecha>=hoy)
-      .sort((a,b)=>a.fecha.localeCompare(b.fecha));
-    if(!regs.length) return;
-    // Agrupar días contiguos del mismo tipo en un rango
+      .filter(r=>AUS_TIPOS.includes(r.tipoDia)&&r.fecha&&r.fecha>=hoy&&r.estadoEspecial!=='rechazado')
+      .sort((a,b)=>a.tipoDia.localeCompare(b.tipoDia)||a.fecha.localeCompare(b.fecha)); // por tipo, para no cortar bloques
     let bloque=null;
     regs.forEach(r=>{
-      if(bloque && bloque.tipo===r.tipoDia && esDiaSiguiente(bloque.fin, r.fecha)){
-        bloque.fin=r.fecha; bloque.keys.push(r.key); bloque.dias++;
+      if(bloque && bloque.tipo===r.tipoDia && (r.fecha===bloque.fin||seguido(bloque.fin, r.fecha))){
+        if(r.fecha!==bloque.fin) bloque.dias++;
+        bloque.fin=r.fecha; bloque.keys.push(r.key);
+        if(!bloque.nota&&r.nota) bloque.nota=r.nota;
       } else {
         if(bloque) items.push(bloque);
         bloque={uid:u.id, nombre:u.nombre, tipo:r.tipoDia, ini:r.fecha, fin:r.fecha, dias:1, keys:[r.key], nota:r.nota||''};
@@ -5376,31 +5380,41 @@ async function renderAusencias(){
     });
     if(bloque) items.push(bloque);
   });
-
   items.sort((a,b)=>a.ini.localeCompare(b.ini)||a.nombre.localeCompare(b.nombre));
 
   if(!items.length){
-    cont.innerHTML='<div class="empty" style="padding:24px"><div class="et">No hay ausencias activas ni próximas</div><div class="es">Toca "+ Ausencia" para registrar una.</div></div>';
+    cont.innerHTML='<div class="empty" style="padding:24px"><div class="et">No hay ausencias hoy ni en los próximos días</div><div class="es">Toca "+ Registrar ausencia" para agregar una.</div></div>';
     return;
   }
-
-  const badge={incapacidad:'br',vacaciones:'ba',permiso:'by',bienestar:'ba',injustificado:'br'};
-  cont.innerHTML=`<div class="card" style="padding:0">${items.map(it=>{
-    const rango = it.ini===it.fin ? fmt(it.ini) : `${fmt(it.ini)} — ${fmt(it.fin)}`;
-    return `<div class="aus-row">
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600">${it.nombre}</div>
-        <div style="font-size:12px;color:var(--text2)">${rango} · ${it.dias} día(s)</div>
-      </div>
-      <span class="badge ${badge[it.tipo]||'bn'}" style="font-size:11px">${AUS_TIPO_LABEL[it.tipo]}</span>
-      <span class="aus-del" onclick='eliminarAusencia(${JSON.stringify(it.keys)},"${it.uid}","${(it.nombre||'').replace(/"/g,'')}")'>Quitar</span>
+  const tono={incapacidad:'r',vacaciones:'g',permiso:'v',bienestar:'v',injustificado:'v'};
+  const hoyL=items.filter(it=>it.ini<=hoy), prox=items.filter(it=>it.ini>hoy);
+  const cuenta=t=>items.filter(it=>t.includes(it.tipo)).length;
+  const fueraHoy=new Set(hoyL.map(it=>it.uid)).size;
+  const fc=f=>fechaCortaFx(f), Fc=f=>{ const t=fc(f); return t.charAt(0).toUpperCase()+t.slice(1); };
+  const fila=it=>{
+    const t=tono[it.tipo]||'v';
+    const nota=it.nota&&it.nota!==AUS_TIPO_LABEL[it.tipo]?` · ${it.nota}`:'';
+    const cuando=it.ini===it.fin
+      ?(it.ini===hoy?'Solo hoy':Fc(it.ini))+nota
+      :`${Fc(it.ini)} al ${fc(it.fin)} · ${it.dias} días · regresa el ${fc(regresa(it.fin))}`;
+    // Barra de los próximos 14 días
+    const dIni=Math.max(0,Math.round((new Date(it.ini+'T12:00:00')-new Date(hoy+'T12:00:00'))/864e5));
+    const dFin=Math.round((new Date(it.fin+'T12:00:00')-new Date(hoy+'T12:00:00'))/864e5)+1;
+    const l=Math.min(100,dIni/14*100), w=Math.max(4,Math.min(100,dFin/14*100)-l);
+    return `<div class="au-r">
+      <span class="au-av ${t}">${inicialesDe(it.nombre)}</span>
+      <span class="au-n"><b>${it.nombre}</b><span>${cuando}</span></span>
+      <span class="au-bar" title="Próximos 14 días"><i class="${t}" style="left:${l}%;width:${w}%"></i></span>
+      <span class="rg-pill ${t==='r'?'r':t==='g'?'g':'v'} au-pill">${AUS_TIPO_LABEL[it.tipo]}</span>
+      <button class="au-x" aria-label="Quitar" onclick='eliminarAusencia(${JSON.stringify(it.keys)},"${it.uid}","${(it.nombre||'').replace(/"/g,'')}")'>✕</button>
     </div>`;
-  }).join('')}</div>`;
-}
-
-function esDiaSiguiente(fecha1, fecha2){
-  const d1=new Date(fecha1+'T12:00:00'); d1.setDate(d1.getDate()+1);
-  return d1.toISOString().split('T')[0]===fecha2;
+  };
+  const hoyTxt=fmtLong(hoy).replace(',','').replace(/ de \d{4}$/,'');
+  cont.innerHTML=`
+    <div class="au-tiles"><div class="b"><b>${fueraHoy}</b><span>Fuera hoy</span></div><div class="r"><b>${cuenta(['incapacidad'])}</b><span>Incapacidad</span></div><div class="g"><b>${cuenta(['vacaciones'])}</b><span>Vacaciones</span></div><div class="v"><b>${cuenta(['permiso','bienestar','injustificado'])}</b><span>Permisos</span></div></div>
+    ${hoyL.length?`<div class="ps-sec">Hoy · ${hoyTxt}</div><div class="au-card">${hoyL.map(fila).join('')}</div>`:''}
+    ${prox.length?`<div class="ps-sec">Próximos días</div><div class="au-card">${prox.map(fila).join('')}</div>`:''}
+    <div class="au-tip">La barra muestra los próximos 14 días · los días seguidos se juntan aunque haya fin de semana en medio</div>`;
 }
 
 window.eliminarAusencia=async(keys,uid,nombre)=>{
