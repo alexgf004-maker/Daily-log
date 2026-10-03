@@ -71,8 +71,9 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
 ## 4. Estructura de datos en Firebase (nodos principales)
 
 - `users/{uid}`: `{nombre, nombreCorto?, cargo?, username, pin(SHA-256), role, activo,
-  empleadosAsig[], sede, dispositivoId?, avisosVistosEn?}`. `avisosVistosEn` = hasta cuándo
-  el técnico vio su campanita de novedades (timestamp).
+  empleadosAsig[], sede, dispositivoId?, avisosVistosEn?, tutoCampanita?}`. `avisosVistosEn` = hasta cuándo
+  el técnico vio su campanita de novedades (timestamp); `tutoCampanita` = cuándo vio el
+  tutorial de la campanita (sale una sola vez).
 - `registros/{uid}/{key}`: registro diario. Campos según tipo: `{fecha, tipoDia, actividades,
   viatico, he, estadoViatico, estadoHE, estadoEspecial, vacIni?, vacFin?, nota?, ...}`.
   `tipoDia` puede ser: `normal`, `vacaciones`, `incapacidad`, `permiso`, `bienestar`,

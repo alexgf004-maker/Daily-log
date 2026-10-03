@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=54">
+<link rel="stylesheet" href="css/styles.css?v=55">
 </head>
 <body>
 
@@ -1149,7 +1149,7 @@ window.doLogin = async ()=>{
   if(me.role==='admin'||me.role==='asistente'){
     renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
   } else {
-    renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true);
+    renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita();
   }
 };
 
@@ -1225,7 +1225,7 @@ if(navigator.storage && navigator.storage.persist){
       if(me.role==='admin'||me.role==='asistente'){
         renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
       } else {
-        renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true);
+        renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita();
       }
     } catch(e) { localStorage.removeItem('innova_session'); screen('loginScreen'); }
   } catch(e){
@@ -3261,6 +3261,59 @@ window.abrirNovedades=()=>{
 };
 window.cerrarNovedades=()=>{ $('nvPan')?.remove(); $('nvDim')?.remove(); };
 window.nvAbrir=(key)=>{ cerrarNovedades(); openDet(me.id,key,false); };
+
+// ── Tutorial de la campanita (una sola vez por técnico) ──
+// Se guarda en users/{uid}/tutoCampanita para que no se repita en otro celular.
+// Espera a que no haya otro aviso abierto (resumen o cierre de mes, etc.).
+function programarTutoCampanita(){
+  if(!me||me.role!=='empleado'||me.tutoCampanita) return;
+  let intentos=0;
+  const probar=()=>{
+    if(!me||me.role!=='empleado'||me.tutoCampanita||!$('nvBell')) return;
+    const ocupado=document.querySelector('.rm-card,.rm-dim,.mo.open,.fx-ok.on,.nv-pan,#tcCapa');
+    const rb=$('nvBell').getBoundingClientRect();
+    if(ocupado||!rb.width){ if(++intentos<150) setTimeout(probar,800); return; }
+    mostrarTutoCampanita();
+  };
+  setTimeout(probar,1500);
+}
+function mostrarTutoCampanita(){
+  const capa=document.createElement('div'); capa.id='tcCapa'; capa.className='tc-capa';
+  capa.innerHTML=`<div class="tc-hoyo" onclick="cerrarTutoCampanita(true)"></div>
+    <div class="tc-tip" role="dialog" aria-label="Tus avisos llegan aquí">
+      <div class="tc-k">NUEVO</div>
+      <div class="tc-t">Tus avisos llegan aquí 🔔</div>
+      <div class="tc-p">Cuando revisemos tus registros te va a aparecer un número rojo en la campanita. Tócala para ver qué cambió:</div>
+      <div class="tc-ej">
+        <div><i class="g">✓</i><span><b>Horas extra aprobadas</b><small>o ajustadas, con el motivo</small></span></div>
+        <div><i class="r">✕</i><span><b>Horas extra rechazadas o viático anulado</b><small>con el motivo</small></span></div>
+        <div><i class="g">✓</i><span><b>Permisos, vacaciones e incapacidades</b><small>cuando se aprueban o rechazan</small></span></div>
+      </div>
+      <button class="tc-btn" onclick="cerrarTutoCampanita(false)">Entendido</button>
+    </div>`;
+  document.body.appendChild(capa);
+  ubicarTutoCampanita();
+  window.addEventListener('resize',ubicarTutoCampanita);
+}
+function ubicarTutoCampanita(){
+  const capa=$('tcCapa'), bell=$('nvBell'); if(!capa||!bell) return;
+  const rb=bell.getBoundingClientRect(), pad=6;
+  const hoyo=capa.querySelector('.tc-hoyo'), tip=capa.querySelector('.tc-tip');
+  Object.assign(hoyo.style,{left:(rb.left-pad)+'px',top:(rb.top-pad)+'px',width:(rb.width+pad*2)+'px',height:(rb.height+pad*2)+'px'});
+  tip.style.top=(rb.bottom+pad+14)+'px';
+  const rt=tip.getBoundingClientRect();
+  tip.style.setProperty('--ax',(rb.left+rb.width/2-rt.left-8)+'px');
+}
+window.cerrarTutoCampanita=(abrir)=>{
+  $('tcCapa')?.remove();
+  window.removeEventListener('resize',ubicarTutoCampanita);
+  if(!me) return;
+  const ahora=Date.now();
+  me.tutoCampanita=ahora;
+  try{ localStorage.setItem('innova_session',JSON.stringify(me)); }catch(_){}
+  update(ref(db,`users/${me.id}`),{tutoCampanita:ahora}).catch(()=>{});
+  if(abrir) abrirNovedades();
+};
 
 // ── OBSERVACIONES ──────────────────────────────────────
 let obsRegKey=null;
