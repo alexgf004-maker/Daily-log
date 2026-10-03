@@ -71,11 +71,13 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
 ## 4. Estructura de datos en Firebase (nodos principales)
 
 - `users/{uid}`: `{nombre, nombreCorto?, cargo?, username, pin(SHA-256), role, activo,
-  empleadosAsig[], sede, dispositivoId?}`
+  empleadosAsig[], sede, dispositivoId?, avisosVistosEn?}`. `avisosVistosEn` = hasta cuándo
+  el técnico vio su campanita de novedades (timestamp).
 - `registros/{uid}/{key}`: registro diario. Campos según tipo: `{fecha, tipoDia, actividades,
   viatico, he, estadoViatico, estadoHE, estadoEspecial, vacIni?, vacFin?, nota?, ...}`.
   `tipoDia` puede ser: `normal`, `vacaciones`, `incapacidad`, `permiso`, `bienestar`,
-  `injustificado`, `asueto`.
+  `injustificado`, `asueto`. Al revisar se guarda la hora en `revisadoHEEn`, `revisadoViaticEn`
+  y `revisadoEspEn`; con eso se arman las novedades de la campanita del técnico.
 - `marcajes/{uid}/{fecha}/{entrada|salida}`: marcaje GPS con timestamp de servidor
   (`ts, lat, lng, precision, sedeUsada, estado, horaStr, minDiff`). Puede tener además
   `justificado: {por, nombre, nota, ts}` — ver sección 5, "Justificar tardanzas".

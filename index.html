@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=51">
+<link rel="stylesheet" href="css/styles.css?v=52">
 </head>
 <body>
 
@@ -257,6 +257,7 @@ function renderEmployee(nombre){
       </div>
       <div class="tb-right">
         <div class="tb-user"><span class="tb-username" id="empUsername">${nombre}</span><span class="tb-role role-e">Empleado</span></div>
+        <button class="tb-bell" id="nvBell" onclick="abrirNovedades()" aria-label="Novedades"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 003.4 0"/></svg><i id="nvBadge" style="display:none"></i></button>
         <button class="btn-out" onclick="doLogout()">Salir</button>
       </div>
     </div>
@@ -1133,7 +1134,7 @@ window.doLogin = async ()=>{
   if(me.role==='admin'||me.role==='asistente'){
     renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
   } else {
-    renderEmployee(me.nombre); screen('employeeScreen'); initForm();
+    renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true);
   }
 };
 
@@ -1209,7 +1210,7 @@ if(navigator.storage && navigator.storage.persist){
       if(me.role==='admin'||me.role==='asistente'){
         renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
       } else {
-        renderEmployee(me.nombre); screen('employeeScreen'); initForm();
+        renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true);
       }
     } catch(e) { localStorage.removeItem('innova_session'); screen('loginScreen'); }
   } catch(e){
@@ -3109,6 +3110,88 @@ window.exportarMesCompleto=async()=>{
   const nomMes=new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
   XLSX.writeFile(wb,`planilla-${nomMes.replace(' ','-')}.xlsx`);
 };
+
+// ── NOVEDADES (campanita del técnico) ─────────────────
+// Se arman con las fechas de revisión que ya guarda cada registro (revisadoHEEn,
+// revisadoViaticEn, revisadoEspEn). Hasta dónde vio el técnico se guarda en
+// users/{uid}/avisosVistosEn para que no se repita en otro celular.
+let novedades=[], novedadesCargadasEn=0;
+const NV_ESP={vacaciones:['Vacaciones aprobadas','Vacaciones rechazadas'],incapacidad:['Incapacidad aprobada','Incapacidad rechazada'],permiso:['Permiso aprobado','Permiso rechazado'],bienestar:['Día de bienestar aprobado','Día de bienestar rechazado'],injustificado:['Permiso injustificado revisado','Permiso injustificado rechazado']};
+function armarNovedades(regs){
+  const out=[];
+  Object.entries(regs||{}).forEach(([key,r])=>{
+    if(!r||!r.fecha) return;
+    const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+    const f=cap(fechaCortaFx(r.fecha));
+    if(r.he&&r.revisadoHEEn&&(r.estadoHE==='aprobado'||r.estadoHE==='rechazado')){
+      if(r.estadoHE==='rechazado') out.push({key,ts:r.revisadoHEEn,c:'r',ic:'✕',t:'Horas extra rechazadas',s:`${f} · ${fmtMin(r.minHE||0)}`,m:r.motivoRechazoHE});
+      else if(r.heAjustada) out.push({key,ts:r.revisadoHEEn,c:'a',ic:'✓',t:'Horas extra ajustadas',s:`${f} · aprobadas ${fmtMin(r.minHEAprobado||0)} de ${fmtMin(r.minHE||0)}`,m:r.notaAjusteHE});
+      else out.push({key,ts:r.revisadoHEEn,c:'g',ic:'✓',t:'Horas extra aprobadas',s:`${f} · ${fmtMin(minHEde(r))}`});
+    }
+    if(r.viatico&&r.revisadoViaticEn&&r.estadoViatico==='rechazado')
+      out.push({key,ts:r.revisadoViaticEn,c:'r',ic:'✕',t:'Viático anulado',s:f,m:r.motivoRechazoViatico});
+    if(r.tipoDia&&r.tipoDia!=='normal'&&r.revisadoEspEn&&(r.estadoEspecial==='aprobado'||r.estadoEspecial==='rechazado')){
+      const ok=r.estadoEspecial==='aprobado';
+      const rango=(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin)?`${cap(fechaCortaFx(r.vacIni))} al ${fechaCortaFx(r.vacFin)}`:f;
+      const rem=(r.tipoDia==='permiso'&&ok)?(r.remunerado===false?' · no remunerado':' · remunerado'):'';
+      out.push({key,ts:r.revisadoEspEn,c:ok?'g':'r',ic:ok?'✓':'✕',t:(NV_ESP[r.tipoDia]||['Solicitud aprobada','Solicitud rechazada'])[ok?0:1],s:rango+rem,m:ok?'':r.motivoRechazoEspecial});
+    }
+  });
+  const desde=Date.now()-45*864e5; // solo lo de las últimas semanas
+  return out.filter(n=>n.ts>=desde).sort((a,b)=>b.ts-a.ts).slice(0,20);
+}
+// Si nunca ha abierto la campanita, cuenta como nuevo lo de los últimos 3 días
+const nvVistosEn=()=>Number(me?.avisosVistosEn)||(Date.now()-3*864e5);
+
+window.cargarNovedades=async(forzar)=>{
+  if(!me||me.role!=='empleado') return;
+  if(!forzar&&Date.now()-novedadesCargadasEn<60000) return;
+  novedadesCargadasEn=Date.now();
+  try{
+    const snap=await get(ref(db,`registros/${me.id}`));
+    novedades=armarNovedades(snap.exists()?snap.val():{});
+  }catch(e){ return; }
+  pintarCampanita();
+};
+function pintarCampanita(){
+  const b=$('nvBadge'); if(!b) return;
+  const n=novedades.filter(x=>x.ts>nvVistosEn()).length;
+  b.textContent=n>9?'9+':String(n); b.style.display=n?'':'none';
+  $('nvBell')?.classList.toggle('hay',n>0);
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&$('nvBell')) cargarNovedades(); });
+
+window.abrirNovedades=()=>{
+  cerrarNovedades();
+  const vistos=nvVistosEn();
+  const fila=n=>`<button class="nv-it${n.ts>vistos?' nuevo':''}" onclick="nvAbrir('${n.key}')">
+      <span class="nv-ic ${n.c}">${n.ic}</span>
+      <span class="nv-tx"><b>${n.t}</b><span>${n.s}</span>${n.m?`<em class="${n.c==='a'?'a':''}">${n.m}</em>`:''}</span>
+      <span class="nv-go">›</span></button>`;
+  const nuevas=novedades.filter(n=>n.ts>vistos), antes=novedades.filter(n=>n.ts<=vistos);
+  const cuerpo=novedades.length
+    ?`${nuevas.map(fila).join('')}${antes.length?`${nuevas.length?'<div class="nv-sec">Antes</div>':''}${antes.map(fila).join('')}`:''}`
+    :'<div class="nv-vacio"><b>Sin novedades por ahora</b><span>Aquí verás cuando se revisen tus horas extra, viáticos o permisos.</span></div>';
+  const dim=document.createElement('div'); dim.className='nv-dim'; dim.id='nvDim'; dim.onclick=cerrarNovedades;
+  const pan=document.createElement('div'); pan.className='nv-pan'; pan.id='nvPan';
+  pan.innerHTML=`<div class="nv-h"><b>Novedades</b><button onclick="cerrarNovedades()" aria-label="Cerrar">✕</button></div><div class="nv-lista">${cuerpo}</div>`;
+  document.body.append(dim,pan);
+  // El panel sale debajo de la campanita, con la flechita apuntándole
+  const rb=$('nvBell').getBoundingClientRect();
+  pan.style.top=(rb.bottom+10)+'px';
+  const rp=pan.getBoundingClientRect();
+  pan.style.setProperty('--ax',(rb.left+rb.width/2-rp.left-7)+'px');
+  // Al abrirla, todo queda como visto
+  if(nuevas.length){
+    const ahora=Date.now();
+    me.avisosVistosEn=ahora;
+    try{ localStorage.setItem('innova_session',JSON.stringify(me)); }catch(_){}
+    update(ref(db,`users/${me.id}`),{avisosVistosEn:ahora}).catch(()=>{});
+    pintarCampanita();
+  }
+};
+window.cerrarNovedades=()=>{ $('nvPan')?.remove(); $('nvDim')?.remove(); };
+window.nvAbrir=(key)=>{ cerrarNovedades(); openDet(me.id,key,false); };
 
 // ── OBSERVACIONES ──────────────────────────────────────
 let obsRegKey=null;
