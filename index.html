@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=56">
+<link rel="stylesheet" href="css/styles.css?v=57">
 </head>
 <body>
 
@@ -3263,14 +3263,16 @@ window.cerrarNovedades=()=>{ $('nvPan')?.remove(); $('nvDim')?.remove(); };
 window.nvAbrir=(key)=>{ cerrarNovedades(); openDet(me.id,key,false); };
 
 // ── Tutorial de la campanita (una sola vez por técnico) ──
-// Se guarda en users/{uid}/tutoCampanita2 para que no se repita en otro celular
-// (el 2 es porque la primera versión se podía cerrar sin leer).
+// Se guarda en users/{uid}/tutoCampanitaV (número de versión) para que no se repita
+// en otro celular. Al mejorar el tutorial se sube TUTO_CAMPANITA_V y vuelve a salir una vez.
 // Espera a que no haya otro aviso abierto (resumen o cierre de mes, etc.).
+const TUTO_CAMPANITA_V=3;
+const tutoCampanitaVisto=()=>(Number(me?.tutoCampanitaV)||0)>=TUTO_CAMPANITA_V;
 function programarTutoCampanita(){
-  if(!me||me.role!=='empleado'||me.tutoCampanita2) return;
+  if(!me||me.role!=='empleado'||tutoCampanitaVisto()) return;
   let intentos=0;
   const probar=()=>{
-    if(!me||me.role!=='empleado'||me.tutoCampanita2||!$('nvBell')) return;
+    if(!me||me.role!=='empleado'||tutoCampanitaVisto()||!$('nvBell')) return;
     const ocupado=document.querySelector('.rm-card,.rm-dim,.mo.open,.fx-ok.on,.nv-pan,#tcCapa');
     const rb=$('nvBell').getBoundingClientRect();
     if(ocupado||!rb.width){ if(++intentos<150) setTimeout(probar,800); return; }
@@ -3280,16 +3282,21 @@ function programarTutoCampanita(){
 }
 function mostrarTutoCampanita(){
   const capa=document.createElement('div'); capa.id='tcCapa'; capa.className='tc-capa';
-  capa.innerHTML=`<div class="tc-hoyo"></div>
-    <div class="tc-tip" role="dialog" aria-label="Tus avisos llegan aquí">
-      <div class="tc-k">NUEVO</div>
-      <div class="tc-t">Tus avisos llegan aquí 🔔</div>
-      <div class="tc-p">Cuando revisemos tus registros te va a aparecer un número rojo en la campanita. Tócala para ver qué cambió:</div>
+  // El fondo se oscurece y desenfoca con 4 paneles alrededor de la campanita, que queda nítida
+  capa.innerHTML=`<div class="tc-velo"></div><div class="tc-velo"></div><div class="tc-velo"></div><div class="tc-velo"></div>
+    <div class="tc-hoyo"></div>
+    <div class="tc-tip" role="dialog" aria-label="Tu campanita de avisos">
+      <div class="tc-k">NUEVO EN LA APP</div>
+      <div class="tc-t">Tu campanita de avisos</div>
+      <div class="tc-p">Cada vez que coordinación revise tus registros, la campanita de arriba se marca con un <b>número rojo</b>. Tócala para ver qué revisaron y por qué. Te avisa cuando:</div>
       <div class="tc-ej">
-        <div><i class="g">✓</i><span><b>Horas extra aprobadas</b><small>o ajustadas, con el motivo</small></span></div>
-        <div><i class="r">✕</i><span><b>Horas extra rechazadas o viático anulado</b><small>con el motivo</small></span></div>
-        <div><i class="g">✓</i><span><b>Permisos, vacaciones e incapacidades</b><small>cuando se aprueban o rechazan</small></span></div>
+        <div><i class="g">✓</i><span><b>Te aprueban horas extra</b><small>Te dice cuánto tiempo se aprobó</small></span></div>
+        <div><i class="a">✓</i><span><b>Te ajustan horas extra</b><small>Si te aprueban menos tiempo del que registraste, con el motivo</small></span></div>
+        <div><i class="r">✕</i><span><b>Te rechazan horas extra</b><small>Con el motivo del rechazo</small></span></div>
+        <div><i class="r">✕</i><span><b>Te anulan un viático</b><small>Si el viático de un día no corresponde, con el motivo</small></span></div>
+        <div><i class="v">✓</i><span><b>Revisan tus permisos, vacaciones o incapacidades</b><small>Cuando se aprueban o se rechazan</small></span></div>
       </div>
+      <div class="tc-nota">Al tocar un aviso se abre el registro de ese día.</div>
       <button class="tc-btn" id="tcBtn" disabled onclick="cerrarTutoCampanita()">Entendido (4)</button>
     </div>`;
   document.body.appendChild(capa);
@@ -3303,9 +3310,17 @@ function mostrarTutoCampanita(){
 function ubicarTutoCampanita(){
   const capa=$('tcCapa'), bell=$('nvBell'); if(!capa||!bell) return;
   const rb=bell.getBoundingClientRect(), pad=6;
-  const hoyo=capa.querySelector('.tc-hoyo'), tip=capa.querySelector('.tc-tip');
-  Object.assign(hoyo.style,{left:(rb.left-pad)+'px',top:(rb.top-pad)+'px',width:(rb.width+pad*2)+'px',height:(rb.height+pad*2)+'px'});
-  tip.style.top=(rb.bottom+pad+14)+'px';
+  const x=rb.left-pad, y=rb.top-pad, w=rb.width+pad*2, h=rb.height+pad*2;
+  const [arr,abj,izq,der]=capa.querySelectorAll('.tc-velo');
+  const px=v=>Math.max(0,v)+'px';
+  Object.assign(arr.style,{left:'0',top:'0',right:'0',height:px(y)});
+  Object.assign(abj.style,{left:'0',top:px(y+h),right:'0',bottom:'0'});
+  Object.assign(izq.style,{left:'0',top:px(y),width:px(x),height:px(h)});
+  Object.assign(der.style,{left:px(x+w),top:px(y),right:'0',height:px(h)});
+  Object.assign(capa.querySelector('.tc-hoyo').style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'});
+  const tip=capa.querySelector('.tc-tip'), top=rb.bottom+pad+14;
+  tip.style.top=top+'px';
+  tip.style.maxHeight=`calc(100vh - ${top+12}px)`;
   const rt=tip.getBoundingClientRect();
   tip.style.setProperty('--ax',(rb.left+rb.width/2-rt.left-8)+'px');
 }
@@ -3313,10 +3328,9 @@ window.cerrarTutoCampanita=()=>{
   $('tcCapa')?.remove();
   window.removeEventListener('resize',ubicarTutoCampanita);
   if(!me) return;
-  const ahora=Date.now();
-  me.tutoCampanita2=ahora;
+  me.tutoCampanitaV=TUTO_CAMPANITA_V;
   try{ localStorage.setItem('innova_session',JSON.stringify(me)); }catch(_){}
-  update(ref(db,`users/${me.id}`),{tutoCampanita2:ahora}).catch(()=>{});
+  update(ref(db,`users/${me.id}`),{tutoCampanitaV:TUTO_CAMPANITA_V}).catch(()=>{});
 };
 
 // ── OBSERVACIONES ──────────────────────────────────────
