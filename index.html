@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=53">
+<link rel="stylesheet" href="css/styles.css?v=54">
 </head>
 <body>
 
@@ -403,6 +403,19 @@ function renderEmployee(nombre){
 
 const isAdmin=()=>me?.role==='admin';
 
+// Íconos de la navegación del admin (barra lateral en PC, botones en cel)
+const AD_ICO={
+  dash:'<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+  regs:'<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  asist:'<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  pend:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  prog:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  usrs:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14a6 6 0 013.5 6"/></svg>',
+  asu:'<svg viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>',
+  obs:'<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+  perf:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>'
+};
+
 function renderAdmin(){
   const nombreAdmin = me?.nombre || 'Administradora';
   const rolLabel = me?.role==='asistente' ? 'Asistente' : 'Admin';
@@ -419,19 +432,21 @@ function renderAdmin(){
         <button class="btn-out" onclick="doLogout()">Salir</button>
       </div>
     </div>
-    <div class="tabs">
-      <button class="tab active" onclick="adTab('dash',this)">Dashboard</button>
-      <button class="tab" onclick="adTab('regs',this)">Registros</button>
-      <button class="tab" onclick="adTab('asist',this)">Asistencia</button>
+    <nav class="tabs ad-nav">
+      <div class="ad-side-brand"><div class="tb-bar"></div><div><div class="tb-name"><span class="inn">INNOVA</span> · Registro de Planilla</div><div class="tb-sub">Servicios técnicos y comerciales</div></div></div>
+      <button class="tab active" onclick="adTab('dash',this)">${AD_ICO.dash}<span>Dashboard</span></button>
+      <button class="tab" onclick="adTab('regs',this)">${AD_ICO.regs}<span>Registros</span></button>
+      <button class="tab" onclick="adTab('asist',this)">${AD_ICO.asist}<span>Asistencia</span></button>
       ${me?.role==='admin'?`
-      <button class="tab" id="tabPend" onclick="adTab('pend',this)">Pendientes <span id="pendBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
-      <button class="tab" onclick="adTab('prog',this)">Programación</button>
-      <button class="tab" onclick="adTab('usrs',this)">Usuarios</button>
-      <button class="tab" onclick="adTab('asuetos',this)">Asuetos</button>
-      <button class="tab" id="tabObs" onclick="adTab('obs',this)">Observaciones <span id="obsBadge" style="display:none;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
+      <button class="tab" id="tabPend" onclick="adTab('pend',this)">${AD_ICO.pend}<span>Pendientes</span><i id="pendBadge" class="tab-bd" style="display:none"></i></button>
+      <button class="tab" onclick="adTab('prog',this)">${AD_ICO.prog}<span>Programación</span></button>
+      <button class="tab" onclick="adTab('usrs',this)">${AD_ICO.usrs}<span>Usuarios</span></button>
+      <button class="tab" onclick="adTab('asuetos',this)">${AD_ICO.asu}<span>Asuetos</span></button>
+      <button class="tab" id="tabObs" onclick="adTab('obs',this)">${AD_ICO.obs}<span>Observaciones</span><i id="obsBadge" class="tab-bd" style="display:none"></i></button>
       `:''}
-      <button class="tab" onclick="adTab('perfil',this)">Mi Perfil</button>
-    </div>
+      <button class="tab" onclick="adTab('perfil',this)">${AD_ICO.perf}<span>Mi Perfil</span></button>
+      <div class="ad-side-usr"><div class="ad-side-av">${inicialesDe(nombreAdmin)}</div><div class="ad-side-n"><b>${nombreAdmin}</b><span>${rolLabel}</span></div><button onclick="doLogout()">Salir</button></div>
+    </nav>
     <div class="content">
       <div id="adDash">
         <div class="dash-hero"><div class="dash-hero-top"><div><div class="dash-hero-sal" id="dashSaludo">Hola</div><div class="dash-hero-name" id="dashNombre"></div></div><span class="dash-hero-chip" id="dashDate"></span></div></div>
@@ -2205,6 +2220,8 @@ async function loadHist(){
 // ADMIN TABS
 window.adTab=(t,btn)=>{
   document.querySelectorAll('#adminScreen .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
+  // En cel los botones se deslizan: dejar visible el de la sección elegida
+  if(btn&&window.innerWidth<900) btn.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
   ['adDash','adRegs','adAsist','adProg','adPend','adUsrs','adPerfil','adAsuetos','adObs'].forEach(id=>{const e=$(id);if(e)hide(id);});
   if(t==='dash'){show('adDash');loadDash();}
   if(t==='regs'){show('adRegs');loadFiltEmps();}
@@ -2401,7 +2418,7 @@ async function loadDash(){
     dashPend=pend;
     if(isAdmin()){
       const badge=$('pendBadge');
-      if(badge){ if(pend.length){badge.textContent=pend.length;badge.style.display='inline';}else badge.style.display='none'; }
+      if(badge){ if(pend.length){badge.textContent=pend.length;badge.style.display='inline-block';}else badge.style.display='none'; }
     }
     return pend;
   }).catch(()=>[]);
@@ -2425,7 +2442,7 @@ async function loadDash(){
       if(obsSnap.exists()){
         const obsItems=Object.entries(obsSnap.val()).map(([k,v])=>({...v,obsId:k}));
         const noLeidas=obsItems.filter(o=>!o.leida&&o.detalle);
-        const badge=$('obsBadge'); if(badge){ if(noLeidas.length){badge.textContent=noLeidas.length;badge.style.display='inline';}else badge.style.display='none'; }
+        const badge=$('obsBadge'); if(badge){ if(noLeidas.length){badge.textContent=noLeidas.length;badge.style.display='inline-block';}else badge.style.display='none'; }
         const card=$('dashObsCard');
         if(card){
           if(noLeidas.length){
@@ -2492,7 +2509,7 @@ async function loadPend(){
   const sub=$('pendSub'); if(sub) sub.textContent=partes.length?partes.join(' y ')+' por revisar':'Todo al día';
   if(isAdmin()){
     const badge=$('pendBadge'), n=he.length+sol.length;
-    if(badge){ if(n){badge.textContent=n;badge.style.display='inline';} else badge.style.display='none'; }
+    if(badge){ if(n){badge.textContent=n;badge.style.display='inline-block';} else badge.style.display='none'; }
   }
   pintarPend();
 }
@@ -3306,7 +3323,7 @@ function updateObsBadge(items){
   const badge=$('obsBadge');
   if(!badge) return;
   const noLeidas=items.filter(o=>!o.leida).length;
-  if(noLeidas>0){ badge.textContent=noLeidas; badge.style.display='inline'; }
+  if(noLeidas>0){ badge.textContent=noLeidas; badge.style.display='inline-block'; }
   else badge.style.display='none';
 }
 window.verRegObs=async(uid,key)=>{
@@ -3323,7 +3340,7 @@ window.marcarLeida=async(key)=>{
     if(obsSnap.exists()){
       const obsItems=Object.entries(obsSnap.val()).map(([k,v])=>({...v,obsId:k}));
       const noLeidas=obsItems.filter(o=>!o.leida&&o.detalle);
-      if(badge){ if(noLeidas.length){badge.textContent=noLeidas.length;badge.style.display='inline';}else badge.style.display='none'; }
+      if(badge){ if(noLeidas.length){badge.textContent=noLeidas.length;badge.style.display='inline-block';}else badge.style.display='none'; }
       if(card){
         if(noLeidas.length){
           card.style.display='';
