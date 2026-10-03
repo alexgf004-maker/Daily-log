@@ -3297,12 +3297,12 @@ function mostrarTutoCampanita(){
         <div><i class="v">✓</i><span><b>Revisan tus permisos, vacaciones o incapacidades</b><small>Cuando se aprueban o se rechazan</small></span></div>
       </div>
       <div class="tc-nota">Al tocar un aviso se abre el registro de ese día.</div>
-      <button class="tc-btn" id="tcBtn" disabled onclick="cerrarTutoCampanita()">Entendido (4)</button>
+      <button class="tc-btn" id="tcBtn" disabled onclick="cerrarTutoCampanita()">Entendido (10)</button>
     </div>`;
   document.body.appendChild(capa);
   ubicarTutoCampanita();
   // Solo se cierra con el botón, y este se activa después de unos segundos para que lo lean
-  let falta=4;
+  let falta=10;
   const cuenta=setInterval(()=>{ const b=$('tcBtn'); if(!b){ clearInterval(cuenta); return; }
     falta--; if(falta>0) b.textContent=`Entendido (${falta})`; else { b.textContent='Entendido'; b.disabled=false; clearInterval(cuenta); } },1000);
   window.addEventListener('resize',ubicarTutoCampanita);
