@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=55">
+<link rel="stylesheet" href="css/styles.css?v=56">
 </head>
 <body>
 
@@ -3263,13 +3263,14 @@ window.cerrarNovedades=()=>{ $('nvPan')?.remove(); $('nvDim')?.remove(); };
 window.nvAbrir=(key)=>{ cerrarNovedades(); openDet(me.id,key,false); };
 
 // ── Tutorial de la campanita (una sola vez por técnico) ──
-// Se guarda en users/{uid}/tutoCampanita para que no se repita en otro celular.
+// Se guarda en users/{uid}/tutoCampanita2 para que no se repita en otro celular
+// (el 2 es porque la primera versión se podía cerrar sin leer).
 // Espera a que no haya otro aviso abierto (resumen o cierre de mes, etc.).
 function programarTutoCampanita(){
-  if(!me||me.role!=='empleado'||me.tutoCampanita) return;
+  if(!me||me.role!=='empleado'||me.tutoCampanita2) return;
   let intentos=0;
   const probar=()=>{
-    if(!me||me.role!=='empleado'||me.tutoCampanita||!$('nvBell')) return;
+    if(!me||me.role!=='empleado'||me.tutoCampanita2||!$('nvBell')) return;
     const ocupado=document.querySelector('.rm-card,.rm-dim,.mo.open,.fx-ok.on,.nv-pan,#tcCapa');
     const rb=$('nvBell').getBoundingClientRect();
     if(ocupado||!rb.width){ if(++intentos<150) setTimeout(probar,800); return; }
@@ -3279,7 +3280,7 @@ function programarTutoCampanita(){
 }
 function mostrarTutoCampanita(){
   const capa=document.createElement('div'); capa.id='tcCapa'; capa.className='tc-capa';
-  capa.innerHTML=`<div class="tc-hoyo" onclick="cerrarTutoCampanita(true)"></div>
+  capa.innerHTML=`<div class="tc-hoyo"></div>
     <div class="tc-tip" role="dialog" aria-label="Tus avisos llegan aquí">
       <div class="tc-k">NUEVO</div>
       <div class="tc-t">Tus avisos llegan aquí 🔔</div>
@@ -3289,10 +3290,14 @@ function mostrarTutoCampanita(){
         <div><i class="r">✕</i><span><b>Horas extra rechazadas o viático anulado</b><small>con el motivo</small></span></div>
         <div><i class="g">✓</i><span><b>Permisos, vacaciones e incapacidades</b><small>cuando se aprueban o rechazan</small></span></div>
       </div>
-      <button class="tc-btn" onclick="cerrarTutoCampanita(false)">Entendido</button>
+      <button class="tc-btn" id="tcBtn" disabled onclick="cerrarTutoCampanita()">Entendido (4)</button>
     </div>`;
   document.body.appendChild(capa);
   ubicarTutoCampanita();
+  // Solo se cierra con el botón, y este se activa después de unos segundos para que lo lean
+  let falta=4;
+  const cuenta=setInterval(()=>{ const b=$('tcBtn'); if(!b){ clearInterval(cuenta); return; }
+    falta--; if(falta>0) b.textContent=`Entendido (${falta})`; else { b.textContent='Entendido'; b.disabled=false; clearInterval(cuenta); } },1000);
   window.addEventListener('resize',ubicarTutoCampanita);
 }
 function ubicarTutoCampanita(){
@@ -3304,15 +3309,14 @@ function ubicarTutoCampanita(){
   const rt=tip.getBoundingClientRect();
   tip.style.setProperty('--ax',(rb.left+rb.width/2-rt.left-8)+'px');
 }
-window.cerrarTutoCampanita=(abrir)=>{
+window.cerrarTutoCampanita=()=>{
   $('tcCapa')?.remove();
   window.removeEventListener('resize',ubicarTutoCampanita);
   if(!me) return;
   const ahora=Date.now();
-  me.tutoCampanita=ahora;
+  me.tutoCampanita2=ahora;
   try{ localStorage.setItem('innova_session',JSON.stringify(me)); }catch(_){}
-  update(ref(db,`users/${me.id}`),{tutoCampanita:ahora}).catch(()=>{});
-  if(abrir) abrirNovedades();
+  update(ref(db,`users/${me.id}`),{tutoCampanita2:ahora}).catch(()=>{});
 };
 
 // ── OBSERVACIONES ──────────────────────────────────────
