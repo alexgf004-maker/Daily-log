@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=57">
+<link rel="stylesheet" href="css/styles.css?v=58">
 </head>
 <body>
 
@@ -3266,7 +3266,7 @@ window.nvAbrir=(key)=>{ cerrarNovedades(); openDet(me.id,key,false); };
 // Se guarda en users/{uid}/tutoCampanitaV (número de versión) para que no se repita
 // en otro celular. Al mejorar el tutorial se sube TUTO_CAMPANITA_V y vuelve a salir una vez.
 // Espera a que no haya otro aviso abierto (resumen o cierre de mes, etc.).
-const TUTO_CAMPANITA_V=3;
+const TUTO_CAMPANITA_V=4;
 const tutoCampanitaVisto=()=>(Number(me?.tutoCampanitaV)||0)>=TUTO_CAMPANITA_V;
 function programarTutoCampanita(){
   if(!me||me.role!=='empleado'||tutoCampanitaVisto()) return;
@@ -3288,7 +3288,7 @@ function mostrarTutoCampanita(){
     <div class="tc-tip" role="dialog" aria-label="Tu campanita de avisos">
       <div class="tc-k">NUEVO EN LA APP</div>
       <div class="tc-t">Tu campanita de avisos</div>
-      <div class="tc-p">Cada vez que coordinación revise tus registros, la campanita de arriba se marca con un <b>número rojo</b>. Tócala para ver qué revisaron y por qué. Te avisa cuando:</div>
+      <div class="tc-p">Cada vez que Madelyn revise tus registros, la campanita de arriba se marca con un <b>número rojo</b>. Tócala para ver qué revisaron y por qué. Te avisa cuando:</div>
       <div class="tc-ej">
         <div><i class="g">✓</i><span><b>Te aprueban horas extra</b><small>Te dice cuánto tiempo se aprobó</small></span></div>
         <div><i class="a">✓</i><span><b>Te ajustan horas extra</b><small>Si te aprueban menos tiempo del que registraste, con el motivo</small></span></div>
