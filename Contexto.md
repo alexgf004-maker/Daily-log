@@ -73,7 +73,8 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
 - `users/{uid}`: `{nombre, nombreCorto?, cargo?, username, pin(SHA-256), role, activo,
   empleadosAsig[], sede, dispositivoId?, avisosVistosEn?, tutoCampanitaV?}`. `avisosVistosEn` = hasta cuándo
   el técnico vio su campanita de novedades (timestamp); `tutoCampanitaV` = versión del
-  tutorial de la campanita que ya vio (sale una vez por versión; `tutoCampanita` y
+  recorrido de novedades que ya vio (campanita, calendario y detalle; obligatorio la
+  primera vez, sale una vez por versión; `tutoCampanita` y
   `tutoCampanita2` quedaron de versiones anteriores).
 - `registros/{uid}/{key}`: registro diario. Campos según tipo: `{fecha, tipoDia, actividades,
   viatico, he, estadoViatico, estadoHE, estadoEspecial, vacIni?, vacFin?, nota?, ...}`.

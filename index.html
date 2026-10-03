@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=58">
+<link rel="stylesheet" href="css/styles.css?v=59">
 </head>
 <body>
 
@@ -393,6 +393,10 @@ function renderEmployee(nombre){
               <button class="btn btn-p btn-full pf-btn" onclick="cambiarPin()">Actualizar PIN</button>
             </div>
           </details>
+        </div>
+        <div class="pf-card">
+          <div class="pf-k">Ayuda</div>
+          <div class="pf-row pf-tap" onclick="iniciarTour(true)"><span class="pf-ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span><span class="pf-tx"><b>Ver novedades de la app</b><span>La campanita, el calendario y el detalle de cada día</span></span><span class="chev"></span></div>
         </div>
         <button class="pf-salir" onclick="doLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</button>
       </div>
@@ -3262,75 +3266,160 @@ window.abrirNovedades=()=>{
 window.cerrarNovedades=()=>{ $('nvPan')?.remove(); $('nvDim')?.remove(); };
 window.nvAbrir=(key)=>{ cerrarNovedades(); openDet(me.id,key,false); };
 
-// ── Tutorial de la campanita (una sola vez por técnico) ──
-// Se guarda en users/{uid}/tutoCampanitaV (número de versión) para que no se repita
-// en otro celular. Al mejorar el tutorial se sube TUTO_CAMPANITA_V y vuelve a salir una vez.
-// Espera a que no haya otro aviso abierto (resumen o cierre de mes, etc.).
-const TUTO_CAMPANITA_V=4;
-const tutoCampanitaVisto=()=>(Number(me?.tutoCampanitaV)||0)>=TUTO_CAMPANITA_V;
-function programarTutoCampanita(){
-  if(!me||me.role!=='empleado'||tutoCampanitaVisto()) return;
-  let intentos=0;
-  const probar=()=>{
-    if(!me||me.role!=='empleado'||tutoCampanitaVisto()||!$('nvBell')) return;
-    const ocupado=document.querySelector('.rm-card,.rm-dim,.mo.open,.fx-ok.on,.nv-pan,#tcCapa');
-    const rb=$('nvBell').getBoundingClientRect();
-    if(ocupado||!rb.width){ if(++intentos<150) setTimeout(probar,800); return; }
-    mostrarTutoCampanita();
-  };
-  setTimeout(probar,1500);
-}
-function mostrarTutoCampanita(){
-  const capa=document.createElement('div'); capa.id='tcCapa'; capa.className='tc-capa';
-  // El fondo se oscurece y desenfoca con 4 paneles alrededor de la campanita, que queda nítida
-  capa.innerHTML=`<div class="tc-velo"></div><div class="tc-velo"></div><div class="tc-velo"></div><div class="tc-velo"></div>
-    <div class="tc-hoyo"></div>
-    <div class="tc-tip" role="dialog" aria-label="Tu campanita de avisos">
-      <div class="tc-k">NUEVO EN LA APP</div>
+// ── Recorrido de novedades (obligatorio la primera vez) ──
+// 3 pasos que señalan la parte real de la app: la campanita, el calendario de
+// Mi Historial y el detalle de un registro. La primera vez no se puede saltar:
+// cada "Siguiente" se activa después de unos segundos. Se guarda la versión vista
+// en users/{uid}/tutoCampanitaV; al cambiar el recorrido se sube TOUR_V y vuelve a
+// salir una vez. Desde Mi Perfil se puede repasar cuando quieran (sin esperas).
+const TOUR_V=5;
+const tourVisto=()=>(Number(me?.tutoCampanitaV)||0)>=TOUR_V;
+let tourPaso=0, tourManual=false, tourCuenta=null;
+const tabEmp=i=>document.querySelectorAll('#employeeScreen .tab')[i];
+const esperarEl=async(sel,ms=6000)=>{ const t0=Date.now(); while(Date.now()-t0<ms){ const e=document.querySelector(sel); if(e&&e.getBoundingClientRect().height) return e; await new Promise(r=>setTimeout(r,150)); } return null; };
+const TOUR_PASOS=[
+  { espera:10,
+    antes:async()=>{ window.scrollTo(0,0); },
+    blanco:()=>$('nvBell'),
+    html:`<div class="tc-k">1 DE 3 · NUEVO EN LA APP</div>
       <div class="tc-t">Tu campanita de avisos</div>
-      <div class="tc-p">Cada vez que Madelyn revise tus registros, la campanita de arriba se marca con un <b>número rojo</b>. Tócala para ver qué revisaron y por qué. Te avisa cuando:</div>
+      <div class="tc-p">Cada vez que Madelyn revise tus registros, la campanita de arriba se marca con un <b class="rojo">número rojo</b>. Tócala para ver qué revisó y por qué. Te avisa cuando:</div>
       <div class="tc-ej">
         <div><i class="g">✓</i><span><b>Te aprueban horas extra</b><small>Te dice cuánto tiempo se aprobó</small></span></div>
         <div><i class="a">✓</i><span><b>Te ajustan horas extra</b><small>Si te aprueban menos tiempo del que registraste, con el motivo</small></span></div>
         <div><i class="r">✕</i><span><b>Te rechazan horas extra</b><small>Con el motivo del rechazo</small></span></div>
         <div><i class="r">✕</i><span><b>Te anulan un viático</b><small>Si el viático de un día no corresponde, con el motivo</small></span></div>
         <div><i class="v">✓</i><span><b>Revisan tus permisos, vacaciones o incapacidades</b><small>Cuando se aprueban o se rechazan</small></span></div>
-      </div>
-      <div class="tc-nota">Al tocar un aviso se abre el registro de ese día.</div>
-      <button class="tc-btn" id="tcBtn" disabled onclick="cerrarTutoCampanita()">Entendido (10)</button>
+      </div>` },
+  { espera:6,
+    antes:async()=>{ const t=tabEmp(1); if(t&&!t.classList.contains('active')) empTab('h',t); await esperarEl('#empResumenMes .rg-cal'); },
+    blanco:()=>document.querySelector('#empResumenMes .rg-cal'),
+    html:`<div class="tc-k">2 DE 3 · MI HISTORIAL</div>
+      <div class="tc-t">Tu mes en calendario</div>
+      <div class="tc-p">En <b>Mi Historial</b> ves tu mes completo. El color de cada día te dice qué registraste:</div>
+      <div class="tc-ley"><span><i class="ok"></i>Registro</span><span><i class="vi"></i>Viático</span><span><i class="he"></i>Horas extra</span><span><i class="aus"></i>Ausencia</span><span><i class="falta"></i>Sin registro</span></div>
+      <div class="tc-ojo"><b>¿Ves un día con borde rojo punteado?</b> Te falta registrarlo. Tócalo y lo registras ahí mismo.</div>` },
+  { espera:6,
+    antes:async()=>{ await esperarEl('#empHist .hl-it, #empHist .empty',4000); },
+    blanco:()=>document.querySelector('#empHist .hl-it')||document.querySelector('#empResumenMes .rg-cal'),
+    html:`<div class="tc-k">3 DE 3 · DETALLE DE CADA DÍA</div>
+      <div class="tc-t">Toca un día para ver su detalle</div>
+      <div class="tc-p">Debajo del calendario están tus registros. Al tocar uno ves todo lo de ese día:</div>
+      <div class="tc-ej">
+        <div><i class="g">✓</i><span><b>Si tu viático está aprobado o anulado</b></span></div>
+        <div><i class="a">✓</i><span><b>Si tus horas extra están aprobadas, ajustadas o rechazadas</b><small>Y cuánto tiempo se aprobó</small></span></div>
+        <div><i class="b">i</i><span><b>El motivo, si Madelyn cambió algo</b><small>Así no tienes que preguntar por qué</small></span></div>
+      </div>` }
+];
+function programarTutoCampanita(){
+  if(!me||me.role!=='empleado'||tourVisto()) return;
+  let intentos=0;
+  const probar=()=>{
+    if(!me||me.role!=='empleado'||tourVisto()||!$('nvBell')) return;
+    const ocupado=document.querySelector('.rm-card,.rm-dim,.mo.open,.fx-ok.on,.nv-pan,#tcCapa');
+    const rb=$('nvBell').getBoundingClientRect();
+    if(ocupado||!rb.width){ if(++intentos<150) setTimeout(probar,800); return; }
+    iniciarTour(false);
+  };
+  setTimeout(probar,1500);
+}
+window.iniciarTour=(manual)=>{
+  if($('tcCapa')) return;
+  tourManual=!!manual; tourPaso=0;
+  const capa=document.createElement('div'); capa.id='tcCapa'; capa.className='tc-capa';
+  // El fondo se oscurece y desenfoca con 4 paneles alrededor de lo señalado, que queda nítido
+  capa.innerHTML=`<div class="tc-velo"></div><div class="tc-velo"></div><div class="tc-velo"></div><div class="tc-velo"></div>
+    <div class="tc-hoyo"></div>
+    <div class="tc-tip" role="dialog" aria-label="Novedades de la app">
+      ${tourManual?'<button class="tc-x" onclick="cerrarTour()" aria-label="Cerrar">✕</button>':''}
+      <div id="tcCuerpo"></div>
+      <div class="tc-pie"><div class="tc-dots">${TOUR_PASOS.map(()=>'<i></i>').join('')}</div>
+        <button class="tc-atras" id="tcAtras" onclick="tourIr(-1)">Atrás</button>
+        <button class="tc-btn" id="tcBtn" onclick="tourIr(1)">Siguiente</button></div>
     </div>`;
   document.body.appendChild(capa);
-  ubicarTutoCampanita();
-  // Solo se cierra con el botón, y este se activa después de unos segundos para que lo lean
-  let falta=10;
-  const cuenta=setInterval(()=>{ const b=$('tcBtn'); if(!b){ clearInterval(cuenta); return; }
-    falta--; if(falta>0) b.textContent=`Entendido (${falta})`; else { b.textContent='Entendido'; b.disabled=false; clearInterval(cuenta); } },1000);
-  window.addEventListener('resize',ubicarTutoCampanita);
+  document.body.classList.add('tc-quieto');
+  window.addEventListener('resize',ubicarTour);
+  mostrarPasoTour();
+};
+async function mostrarPasoTour(){
+  const capa=$('tcCapa'); if(!capa) return;
+  const paso=TOUR_PASOS[tourPaso], ultimo=tourPaso===TOUR_PASOS.length-1;
+  capa.classList.add('cambiando');
+  await paso.antes();
+  if(!$('tcCapa')) return;
+  // Acomodar lo señalado en la pantalla antes de enfocarlo
+  const el=paso.blanco();
+  if(el){
+    const r=el.getBoundingClientRect(), alto=window.innerHeight;
+    const y=r.height>alto*0.45 ? window.scrollY+r.top-72 : window.scrollY+r.top-(alto/2-r.height/2);
+    if(tourPaso>0) window.scrollTo(0,Math.max(0,y));
+  }
+  $('tcCuerpo').innerHTML=paso.html;
+  capa.querySelectorAll('.tc-dots i').forEach((d,i)=>d.classList.toggle('on',i===tourPaso));
+  $('tcAtras').style.visibility=tourPaso?'visible':'hidden';
+  const btn=$('tcBtn'), etiqueta=ultimo?'Entendido':'Siguiente';
+  clearInterval(tourCuenta);
+  // La primera vez cada paso espera unos segundos para que lo lean; al repasarlo no
+  if(tourManual||paso.visto){ btn.disabled=false; btn.textContent=etiqueta; }
+  else {
+    let falta=paso.espera; btn.disabled=true; btn.textContent=`${etiqueta} (${falta})`;
+    tourCuenta=setInterval(()=>{ const b=$('tcBtn'); if(!b){ clearInterval(tourCuenta); return; }
+      falta--; if(falta>0) b.textContent=`${etiqueta} (${falta})`; else { b.textContent=etiqueta; b.disabled=false; paso.visto=true; clearInterval(tourCuenta); } },1000);
+  }
+  ubicarTour();
+  capa.classList.remove('cambiando');
 }
-function ubicarTutoCampanita(){
-  const capa=$('tcCapa'), bell=$('nvBell'); if(!capa||!bell) return;
-  const rb=bell.getBoundingClientRect(), pad=6;
-  const x=rb.left-pad, y=rb.top-pad, w=rb.width+pad*2, h=rb.height+pad*2;
+function ubicarTour(){
+  const capa=$('tcCapa'); if(!capa) return;
+  const el=TOUR_PASOS[tourPaso].blanco();
   const [arr,abj,izq,der]=capa.querySelectorAll('.tc-velo');
-  const px=v=>Math.max(0,v)+'px';
-  Object.assign(arr.style,{left:'0',top:'0',right:'0',height:px(y)});
-  Object.assign(abj.style,{left:'0',top:px(y+h),right:'0',bottom:'0'});
-  Object.assign(izq.style,{left:'0',top:px(y),width:px(x),height:px(h)});
-  Object.assign(der.style,{left:px(x+w),top:px(y),right:'0',height:px(h)});
-  Object.assign(capa.querySelector('.tc-hoyo').style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'});
-  const tip=capa.querySelector('.tc-tip'), top=rb.bottom+pad+14;
+  const hoyo=capa.querySelector('.tc-hoyo'), tip=capa.querySelector('.tc-tip');
+  const W=window.innerWidth, H=window.innerHeight, px=v=>Math.max(0,v)+'px';
+  let r=null;
+  if(el){ const b=el.getBoundingClientRect(), pad=el.id==='nvBell'?6:8;
+    r={x:Math.max(4,b.left-pad), y:Math.max(4,b.top-pad)}; r.w=Math.min(W-4,b.right+pad)-r.x; r.h=Math.min(H-4,b.bottom+pad)-r.y; }
+  if(r&&r.h>0){
+    Object.assign(arr.style,{left:'0',top:'0',right:'0',height:px(r.y),width:'',bottom:''});
+    Object.assign(abj.style,{left:'0',top:px(r.y+r.h),right:'0',bottom:'0',height:'',width:''});
+    Object.assign(izq.style,{left:'0',top:px(r.y),width:px(r.x),height:px(r.h),right:'',bottom:''});
+    Object.assign(der.style,{left:px(r.x+r.w),top:px(r.y),right:'0',height:px(r.h),width:'',bottom:''});
+    Object.assign(hoyo.style,{display:'',left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px',borderRadius:el.id==='nvBell'?'14px':'18px'});
+  } else {
+    Object.assign(arr.style,{left:'0',top:'0',right:'0',bottom:'0',height:'',width:''});
+    [abj,izq,der].forEach(v=>Object.assign(v.style,{width:'0',height:'0'}));
+    hoyo.style.display='none';
+  }
+  // La tarjeta va debajo de lo señalado si cabe, si no arriba, y si tampoco, abajo de la pantalla
+  tip.style.maxHeight=(H-24)+'px'; tip.style.top='0px';
+  const th=tip.getBoundingClientRect().height;
+  let top, flecha='';
+  if(r&&H-(r.y+r.h)>=th+26){ top=r.y+r.h+14; flecha='arriba'; }
+  else if(r&&r.y>=th+26){ top=r.y-14-th; flecha='abajo'; }
+  else top=Math.max(12,H-th-12);
   tip.style.top=top+'px';
-  tip.style.maxHeight=`calc(100vh - ${top+12}px)`;
-  const rt=tip.getBoundingClientRect();
-  tip.style.setProperty('--ax',(rb.left+rb.width/2-rt.left-8)+'px');
+  tip.classList.toggle('fl-arriba',flecha==='arriba'); tip.classList.toggle('fl-abajo',flecha==='abajo');
+  if(r){ const rt=tip.getBoundingClientRect(); tip.style.setProperty('--ax',Math.min(rt.width-30,Math.max(14,r.x+r.w/2-rt.left-8))+'px'); }
 }
-window.cerrarTutoCampanita=()=>{
+window.tourIr=(d)=>{
+  const btn=$('tcBtn'); if(d>0&&btn&&btn.disabled) return;
+  if(d>0&&tourPaso===TOUR_PASOS.length-1){ cerrarTour(true); return; }
+  tourPaso=Math.max(0,Math.min(TOUR_PASOS.length-1,tourPaso+d));
+  mostrarPasoTour();
+};
+window.cerrarTour=(completo)=>{
+  clearInterval(tourCuenta);
   $('tcCapa')?.remove();
-  window.removeEventListener('resize',ubicarTutoCampanita);
-  if(!me) return;
-  me.tutoCampanitaV=TUTO_CAMPANITA_V;
+  document.body.classList.remove('tc-quieto');
+  window.removeEventListener('resize',ubicarTour);
+  TOUR_PASOS.forEach(p=>delete p.visto);
+  // De regreso a Nuevo Registro
+  const t=tabEmp(tourManual?3:0); if(t) empTab(tourManual?'p':'r',t);
+  window.scrollTo(0,0);
+  if(!me||tourManual||!completo) return;
+  me.tutoCampanitaV=TOUR_V;
   try{ localStorage.setItem('innova_session',JSON.stringify(me)); }catch(_){}
-  update(ref(db,`users/${me.id}`),{tutoCampanitaV:TUTO_CAMPANITA_V}).catch(()=>{});
+  update(ref(db,`users/${me.id}`),{tutoCampanitaV:TOUR_V}).catch(()=>{});
 };
 
 // ── OBSERVACIONES ──────────────────────────────────────
