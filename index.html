@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=60">
+<link rel="stylesheet" href="css/styles.css?v=61">
 </head>
 <body>
 
@@ -895,18 +895,19 @@ function modalsHTML(){
     </div>
   </div>
   <div class="mo" id="moCopiarProg">
-    <div class="modal">
-      <div class="modal-title">Copiar programación de otro día</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Útil los lunes: en vez del día anterior, puedes copiar de cualquier fecha que ya tenga programación guardada (por ejemplo, el viernes pasado).</div>
-      <div id="moCopiarProgAlert"></div>
-      <div id="copiarProgRecientes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
-      <div class="fg">
-        <label class="fl">O elige otra fecha</label>
-        <input type="date" id="copiarProgFecha">
+    <div class="modal ds cp-modal">
+      <div class="ds-grab"></div>
+      <div class="cp-hd">
+        <div class="cp-k">COPIAR PROGRAMACIÓN</div>
+        <div class="cp-t">¿De qué día la copio?</div>
+        <div class="cp-s">Se copiará a <b id="copiarProgDestino"></b></div>
       </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moCopiarProg')">Cancelar</button>
-        <button class="btn btn-p" onclick="confirmarCopiarProg()">Copiar</button>
+      <div id="moCopiarProgAlert"></div>
+      <div class="cp-lista" id="copiarProgRecientes"></div>
+      <label class="cp-otra"><span class="cp-otra-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span class="cp-otra-tx"><b>Otra fecha</b><span>Cualquier día anterior</span></span><input type="date" id="copiarProgFecha" onchange="progCopiarElegir(this.value)"></label>
+      <div class="cp-bt">
+        <button class="cp-b2" onclick="closeModal('moCopiarProg')">Cancelar</button>
+        <button class="cp-b1" id="copiarProgBtn" onclick="confirmarCopiarProg()">Copiar</button>
       </div>
     </div>
   </div>
@@ -4454,23 +4455,32 @@ window.progCambiarFecha=(val)=>{ if(val) cargarProgramacionFecha(val); };
 // programación guardada.
 window.abrirCopiarProg=async()=>{
   $('moCopiarProgAlert').innerHTML='';
-  const fechas=await obtenerFechasProgramadas(db,{ref,get});
-  const anteriores=fechas.filter(f=>f<progFecha); // ya vienen de más reciente a más vieja
-  const inp=$('copiarProgFecha');
-  inp.value=anteriores[0]||'';
+  const snap=await get(ref(db,'programaciones'));
+  const todas=snap.exists()?snap.val():{};
+  const anteriores=Object.keys(todas).filter(f=>f<progFecha&&(todas[f]?.grupos||[]).length).sort((a,b)=>b.localeCompare(a));
+  const largo=f=>{ const t=fmtLong(f).replace(',','').replace(/ de \d{4}$/,''); return t.charAt(0).toUpperCase()+t.slice(1); };
+  $('copiarProgDestino').textContent=largo(progFecha).toLowerCase();
   const lista=$('copiarProgRecientes');
   lista.innerHTML=anteriores.length
-    ? anteriores.slice(0,8).map((f,i)=>`<span class="tbl-chip tbl-chip-pers${i===0?' sel':''}" style="cursor:pointer" onclick="progCopiarElegir('${f}',this)">${fmtLong(f).replace(/^\w/,c=>c.toUpperCase())}</span>`).join('')
-    : '<div style="font-size:12px;color:var(--text2)">No hay programaciones guardadas antes de esta fecha.</div>';
+    ? anteriores.slice(0,8).map(f=>{
+        const d=new Date(f+'T12:00:00'), gs=todas[f].grupos, n=gs.reduce((a,g)=>a+(g.empleados||[]).length,0);
+        return `<button class="cp-it" data-f="${f}" onclick="progCopiarElegir('${f}')"><span class="ph-dd"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></span>
+          <span class="cp-it-tx"><b>${largo(f)}</b><span>${gs.length} ${gs.length===1?'grupo':'grupos'} · ${n} ${n===1?'persona':'personas'}</span></span><span class="cp-ck"></span></button>`;
+      }).join('')
+    : '<div class="cp-vacio">No hay programaciones guardadas antes de este día.</div>';
+  progCopiarElegir(anteriores[0]||'');
   $('moCopiarProg').classList.add('open');
 };
 
-// El chip fija la fecha en el campo y se resalta. (Se necesita en window
-// porque los onclick del HTML corren en ámbito global, donde $ no existe.)
-window.progCopiarElegir=(f,el)=>{
-  const inp=$('copiarProgFecha'); if(inp) inp.value=f;
-  document.querySelectorAll('#copiarProgRecientes .tbl-chip').forEach(c=>c.classList.remove('sel'));
-  if(el) el.classList.add('sel');
+// Marca el día elegido (de la lista o del calendario) y ajusta el botón.
+// (Se necesita en window porque los onclick del HTML corren en ámbito global.)
+window.progCopiarElegir=(f)=>{
+  const inp=$('copiarProgFecha'); if(inp) inp.value=f||'';
+  let enLista=false;
+  document.querySelectorAll('#copiarProgRecientes .cp-it').forEach(c=>{ const on=c.dataset.f===f; c.classList.toggle('on',on); if(on) enLista=true; });
+  document.querySelector('.cp-otra')?.classList.toggle('on',!!f&&!enLista);
+  const btn=$('copiarProgBtn');
+  if(btn){ btn.disabled=!f; btn.textContent=f?`Copiar del ${fechaCortaFx(f)}`:'Copiar'; }
 };
 
 // Vaciar toda la programación del día — para rehacerla de cero, p.ej. si
@@ -5222,8 +5232,7 @@ window.verHistorialDia=(fecha,inicial)=>{
 window.phCopiar=async(fecha)=>{
   progSub('armar');
   await abrirCopiarProg();
-  const inp=$('copiarProgFecha'); if(inp) inp.value=fecha;
-  document.querySelectorAll('#copiarProgRecientes .tbl-chip').forEach(c=>c.classList.toggle('sel',c.getAttribute('onclick')?.includes(`'${fecha}'`)));
+  progCopiarElegir(fecha);
 };
 // Imagen para compartir de un día anterior (usa el mismo dibujo que Programar)
 window.phCompartir=async(fecha)=>{
