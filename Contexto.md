@@ -169,6 +169,17 @@ dashboard (aún no optimizado) — candidato de auditoría.
 
 ---
 
+## Temas de temporada
+
+`css/temas.css` + un script corto en el `<head>` de `index.html` (lista `TEMAS`). Cada tema
+tiene fechas `desde`/`hasta` en formato mes-día y se aplica solo cada año poniendo clases en
+`<html>` (Halloween: 26 oct – 2 nov, clases `tema-halloween fuerte`). En Mi Perfil del admin,
+"Tema de temporada" cambia entre Automático / Ver ahora / Apagado, solo en ese dispositivo
+(`localStorage.innova_tema`). Para un tema nuevo: agregar la entrada en `TEMAS` y sus estilos.
+Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los temas.
+
+---
+
 ## 7. Carencias conocidas / deuda técnica (buenos objetivos de auditoría)
 
 1. **Reglas de Firebase abiertas** (`.read`/`.write: true` en todos los nodos). Cualquiera

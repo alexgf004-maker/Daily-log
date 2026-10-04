@@ -1297,3 +1297,6 @@ body.tc-quieto{overflow:hidden}
 .cp-b2{flex:0 0 auto;padding:0 18px;background:#fff;border:1.5px solid var(--gray200);color:var(--text2);font-weight:700}
 .cp-b1{flex:1;background:var(--blue);border:none;color:#fff}
 .cp-b1:disabled{background:var(--gray100);color:var(--text2);cursor:default}
+
+/* Tema de temporada (perfil admin) */
+.ap-tema{font-size:11.5px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:4px 9px;white-space:nowrap;flex-shrink:0}
