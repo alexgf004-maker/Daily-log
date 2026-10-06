@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=64">
+<link rel="stylesheet" href="css/styles.css?v=65">
 <link rel="stylesheet" href="css/temas.css?v=3">
 <script>
 // ── Temas de temporada ──
@@ -4260,7 +4260,6 @@ window.volverAsistLista=()=>{ asistDetUid=null; hide('asistDetVista'); show('asi
 
 // ── Comportamiento: gráficas del mes con los mismos datos del resumen (sin lecturas extra) ──
 let asistModo=(()=>{ try{ return localStorage.getItem('asistModo')==='graf'?'graf':'lista'; }catch(e){ return 'lista'; } })();
-let agPers='ent'; // gráfica por colaborador: entrada o salida
 window.asistVista=(modo)=>{
   asistModo=modo; try{ localStorage.setItem('asistModo',modo); }catch(e){}
   aplicarAsistModo();
@@ -4290,185 +4289,241 @@ function agClase(d){
 }
 function agDatos(){
   const {filas}=asistCache;
-  const fechas=new Set(), porDia={}, sem={}, lleg=[], sal=[];
+  const fechas=new Set(), porDiaE={}, porDiaS={}, sem={}, lleg=[];
   const k={ent:0,tarde:0,minTarde:0,sal:0,temp:0,minTemp:0,falta:0};
   const prom=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const vacio=()=>({ok:0,tarde:0,temp:0,sin:0,aus:0,asu:0});
   const personas=filas.map(f=>{
-    const dias={}, dl=[], ds=[];
-    let tarde=0, temp=0;
+    const dias={}, dl=[], ds=[], psem={}, cE=vacio(), cS=vacio();
+    let tarde=0, temp=0, minT=0, minS=0;
     f.detalle.forEach(d=>{
       fechas.add(d.fecha);
-      const c=agClase(d); dias[d.fecha]={d,c};
-      const pd=porDia[d.fecha]||(porDia[d.fecha]={ok:0,tarde:0,temp:0,falta:0,aus:0,asu:0});
-      pd[c]++;
+      const c=agClase(d), h=horarioOficial(d.fecha);
+      const it={d,c,dE:null,dS:null};
+      const aus=c==='falta'||c==='aus'||c==='asu';
+      // clase solo de la entrada y solo de la salida (para el ranking y el día por día)
+      it.ce=aus?(c==='falta'?'sin':c):!d.entrada?'sin':(d.entrada.estado==='tarde'&&!d.entrada.justificado?'tarde':'ok');
+      it.cs=aus?(c==='falta'?'sin':c):!d.salida?'sin':(d.salida.estado==='salida_temprana'&&!d.salida.justificado?'temp':'ok');
+      cE[it.ce]++; cS[it.cs]++;
+      (porDiaE[d.fecha]||(porDiaE[d.fecha]=vacio()))[it.ce]++;
+      (porDiaS[d.fecha]||(porDiaS[d.fecha]=vacio()))[it.cs]++;
       if(c==='falta') k.falta++;
-      const h=horarioOficial(d.fecha); if(!h) return;
+      dias[d.fecha]=it;
+      if(!h) return;
       const dow=new Date(d.fecha+'T12:00:00').getDay();
       const sm=sem[dow]||(sem[dow]={n:0,t:0,ns:0,s:0});
+      const pm=psem[dow]||(psem[dow]={n:0,t:0,ns:0,s:0});
       if(d.entrada?.horaStr){
-        const dif=agMin(d.entrada.horaStr)-agMin(h.entrada); lleg.push(dif); dl.push(dif); k.ent++; sm.n++;
-        if(d.entrada.estado==='tarde'&&!d.entrada.justificado){ k.tarde++; tarde++; sm.t++; k.minTarde+=d.entrada.minDiff||Math.max(0,dif); }
+        const dif=agMin(d.entrada.horaStr)-agMin(h.entrada); it.dE=dif; lleg.push(dif); dl.push(dif); k.ent++; sm.n++; pm.n++;
+        if(it.ce==='tarde'){ const m=d.entrada.minDiff||Math.max(0,dif); k.tarde++; tarde++; sm.t++; pm.t++; k.minTarde+=m; minT+=m; }
       }
       if(d.salida?.horaStr){
-        const dif=agMin(d.salida.horaStr)-agMin(h.salida); sal.push(dif); ds.push(dif); k.sal++; sm.ns++;
-        if(d.salida.estado==='salida_temprana'&&!d.salida.justificado){ k.temp++; temp++; sm.s++; k.minTemp+=d.salida.minDiff||Math.max(0,-dif); }
+        const dif=agMin(d.salida.horaStr)-agMin(h.salida); it.dS=dif; ds.push(dif); k.sal++; sm.ns++; pm.ns++;
+        if(it.cs==='temp'){ const m=d.salida.minDiff||Math.max(0,-dif); k.temp++; temp++; sm.s++; pm.s++; k.minTemp+=m; minS+=m; }
       }
     });
-    return {uid:f.uid, nombre:f.nombre, dias, dl, ds, pl:prom(dl), ps:prom(ds), tarde, temp, noMarco:f.noMarco};
+    return {uid:f.uid, nombre:f.nombre, dias, dl, ds, pl:prom(dl), ps:prom(ds), tarde, temp, minT, minS, noMarco:f.noMarco, sem:psem, cE, cS};
   });
-  return {fechas:[...fechas].sort(), porDia, sem, lleg, sal, k, personas, prom};
+  return {fechas:[...fechas].sort(), porDiaE, porDiaS, sem, lleg, k, personas, prom};
 }
 
-// Histograma de diferencias contra la hora oficial (minutos). idx() da la barra de cada marca.
-function agHist({difs, idx, b0, b1, rango, bueno, etq, ref, unidad}){
-  const n=b1-b0+1, cuenta=Array(n).fill(0);
-  difs.forEach(d=>{ cuenta[Math.min(b1,Math.max(b0,idx(d)))-b0]++; });
-  const max=Math.max(1,...cuenta), tot=difs.length||1;
-  const barras=cuenta.map((c,j)=>{
-    const b=b0+j, [de,a]=rango(b);
-    const txt=b===b0?`${a} o antes`:b===b1?`${de} o después`:`${de} – ${a}`;
-    return `<div class="ag-b${b===ref.b?' ref':''}"${agTip(txt,`${c} ${unidad}${c===1?'':'s'} · ${Math.round(c/tot*100)}%`)}><i class="${bueno(b)?'c-ok':ref.malo}" style="height:${c?Math.max(3,c/max*100):0}%"></i></div>`;
-  }).join('');
-  const marcas=etq.map(([b,t])=>`<span style="left:${(b-b0)/n*100}%">${t}</span>`).join('');
-  return `<div class="ag-hist" style="--n:${n}"><span class="ag-ref-l" style="left:${(ref.b-b0)/n*100}%">${ref.txt}</span>${barras}</div><div class="ag-hx">${marcas}</div>`;
-}
-
-function agPersonas(D){
-  const ent=agPers==='ent', lim=ent?30:60;
-  const lista=D.personas.filter(p=>(ent?p.pl:p.ps)!==null)
-    .sort((a,b)=>ent?b.pl-a.pl:a.ps-b.ps);
-  if(!lista.length) return '<div class="dt-vacio" style="padding:14px 0 4px">Sin marcas este mes</div>';
-  const x=d=>(Math.max(-lim,Math.min(lim,d))+lim)/(2*lim)*100;
-  const filas=lista.map(p=>{
-    const arr=ent?p.dl:p.ds, pr=ent?p.pl:p.ps;
-    const malo=ent?pr>0.5:pr<-0.5;
-    const r=Math.round(pr), val=ent?agHora(420+pr):(r===0?'en punto':(r<0?'−':'+')+fmtMin(Math.abs(r)));
-    const extra=ent?`${p.tarde} de ${arr.length} días tarde`:`${p.temp} de ${arr.length} días salió antes`;
-    const rango=ent?`Más temprano ${agHora(420+Math.min(...arr))} · más tarde ${agHora(420+Math.max(...arr))}`
-                   :`Más temprano ${agDifTxt(Math.min(...arr),'antes','después')} · más tarde ${agDifTxt(Math.max(...arr),'antes','después')}`;
-    const tip=agTip(p.nombre, ent?`Llegada promedio ${val} (${agDifTxt(pr,'antes','tarde')})`:`Salida promedio: ${agDifTxt(pr,'antes de su hora','después de su hora')}`, rango, extra);
-    return `<button class="ag-pr" onclick="abrirAsistEmp('${p.uid}')"${tip}>
-      <span class="ag-mn">${agEsc(agCorto(p.nombre))}</span>
-      <span class="ag-tr"><span class="z" style="left:50%"></span>${arr.map(d=>`<i class="d" style="left:${x(d)}%"></i>`).join('')}<i class="p ${malo?(ent?'c-tarde':'c-temp'):'c-ok'}" style="left:${x(pr)}%"></i></span>
-      <span class="ag-pv${malo?' mal':''}">${val}<small>${ent?(pr>0.5?Math.round(pr)+' min tarde':'a tiempo'):(malo?'antes de hora':'a tiempo')}</small></span>
-    </button>`;
-  }).join('');
-  const ejes=ent?['6:30','7:00','7:30']:['1 h antes','Hora de salida','1 h después'];
-  return `${filas}<div class="ag-pr ag-pej"><span></span><span class="ag-tr-x"><span>${ejes[0]}</span><span>${ejes[1]}</span><span>${ejes[2]}</span></span><span></span></div>`;
-}
-window.agVerPers=(m)=>{
-  agPers=m;
-  document.querySelectorAll('#agPersSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
-  const D=agDatos();
-  $('agPersSub').innerHTML=m==='ent'?'Cada punto es un día; el círculo grande es su <b>llegada promedio</b>. Ordenados del que llega más tarde al más puntual.':'Cada punto es un día; el círculo grande es su <b>salida promedio</b>. Ordenados del que sale más temprano al que se queda más.';
-  $('agPersBody').innerHTML=agPersonas(D);
+let agSel=null;    // uid elegido; null = todo el grupo
+let agFoco='ent';  // en la vista de grupo: entradas o salidas
+window.agVer=(uid)=>{
+  agSel=uid||null; pintarAsistGraf();
+  const top=$('asistSeg').getBoundingClientRect().top+window.scrollY-70;
+  if(window.scrollY>top) window.scrollTo({top,behavior:'smooth'});
 };
+window.agVerFoco=(m)=>{ agFoco=m; pintarAsistGraf(); };
+const agPct=(a,b)=>b?Math.round(a/b*100):0;
+const AG_DN=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const AG_DL=['domingos','lunes','martes','miércoles','jueves','viernes','sábados'];
+const agLunes=fe=>new Date(fe+'T12:00:00').getDay()===1;
+const agEjeX=fechas=>`<div class="ag-xl" style="--n:${fechas.length}">${fechas.map(fe=>`<i class="${agLunes(fe)?'lun':''}">${parseInt(fe.slice(8))}</i>`).join('')}</div>`;
+const agFocoSeg=()=>`<div class="ag-mini"><button class="${agFoco==='ent'?'on':''}" onclick="agVerFoco('ent')">Entradas</button><button class="${agFoco==='sal'?'on':''}" onclick="agVerFoco('sal')">Salidas</button></div>`;
 
-function pintarAsistGraf(){
-  const cont=$('asistGraf'); if(!cont||!asistCache) return;
-  const D=agDatos(), {fechas,porDia,sem,lleg,sal,k}=D;
-  if(!fechas.length||(!lleg.length&&!sal.length&&!k.falta)){
-    cont.innerHTML='<div class="ag-card"><div class="empty" style="padding:24px"><div class="et">Todavía no hay marcas este mes</div></div></div>'; return;
-  }
-  const pct=(a,b)=>b?Math.round(a/b*100):0;
-  const pl=D.prom(lleg);
-  const kpis=`<div class="ag-kpis">
-    <div class="rg-st g"><div class="v">${k.ent?pct(k.ent-k.tarde,k.ent)+'%':'—'}</div><div class="l">Entradas a tiempo</div></div>
+function agKpis(k){
+  const pl=k.pl;
+  return `<div class="ag-kpis">
+    <div class="rg-st g"><div class="v">${k.ent?agPct(k.ent-k.tarde,k.ent)+'%':'—'}</div><div class="l">Entradas a tiempo</div></div>
     <div class="rg-st b"><div class="v">${pl===null?'—':agHora(420+pl)}</div><div class="l">Llegada promedio${pl===null?'':' · '+agDifTxt(pl,'antes','tarde')}</div></div>
     <div class="rg-st r"><div class="v">${k.tarde}</div><div class="l">Llegadas tarde${k.minTarde?' · '+hmAsist(k.minTarde):''}</div></div>
     <div class="rg-st a"><div class="v">${k.temp}</div><div class="l">Salidas antes${k.minTemp?' · '+hmAsist(k.minTemp):''}</div></div>
   </div>`;
+}
 
-  // Mapa del mes: colaboradores × días
-  const lunes=fe=>new Date(fe+'T12:00:00').getDay()===1;
-  const cab=`<div class="ag-mh" style="--n:${fechas.length}"><span></span>${fechas.map(fe=>`<i class="${lunes(fe)?'lun':''}">${parseInt(fe.slice(8))}</i>`).join('')}</div>`;
-  const filasMapa=D.personas.map(p=>{
-    const celdas=fechas.map(fe=>{
-      const it=p.dias[fe]; if(!it) return '<i class="ag-c off"></i>';
-      const {d,c}=it;
-      const e=d.entrada?`Entrada ${d.entrada.horaStr}${d.entrada.estado==='tarde'?' · '+fmtMin(d.entrada.minDiff)+' tarde'+(d.entrada.justificado?' (justificado)':''):''}`:(c==='falta'||c==='aus'||c==='asu'?'':'Sin marca de entrada');
-      const s=d.salida?`Salida ${d.salida.horaStr}${d.salida.estado==='salida_temprana'?' · '+fmtMin(d.salida.minDiff)+' antes'+(d.salida.justificado?' (justificado)':''):''}`:(c==='falta'||c==='aus'||c==='asu'?'':'Sin marca de salida');
-      return `<i class="ag-c ${c}"${agTip(agCorto(p.nombre)+' · '+agFecha(fe),AG_LBL[c]+(c==='aus'&&d.tipoDia?' ('+d.tipoDia+')':''),e,s)}></i>`;
-    }).join('');
-    return `<div class="ag-mr" style="--n:${fechas.length}"><button class="ag-mn" onclick="abrirAsistEmp('${p.uid}')">${agEsc(agCorto(p.nombre))}</button>${celdas}</div>`;
-  }).join('');
-  const leyMapa=`<div class="ag-ley"><span><i class="c-ok"></i>A tiempo</span><span><i class="c-tarde"></i>Llegó tarde</span><span><i class="c-temp"></i>Salió antes</span><span><i class="c-falta"></i>Sin marcar</span><span><i class="c-aus"></i>Ausencia justificada</span><span><i class="c-asu"></i>Asueto</span></div>`;
-
-  // Día por día: cuántos llegaron a tiempo, tarde, etc.
-  const SEG=[['ok','c-ok'],['temp','c-temp'],['tarde','c-tarde'],['falta','c-falta'],['aus','c-aus'],['asu','c-asu']];
-  const maxDia=Math.max(1,...fechas.map(fe=>SEG.reduce((a,[s])=>a+porDia[fe][s],0)));
-  const cols=fechas.map(fe=>{
-    const p=porDia[fe];
-    const tip=agTip(agFecha(fe),p.ok?`${p.ok} a tiempo`:'',p.tarde?`${p.tarde} llegaron tarde`:'',p.temp?`${p.temp} salieron antes`:'',p.falta?`${p.falta} sin marcar`:'',p.aus?`${p.aus} con ausencia justificada`:'',p.asu?`${p.asu} de asueto`:'');
-    return `<div class="ag-col"${tip}>${SEG.map(([s,cl])=>p[s]?`<i class="${cl}" style="height:${p[s]/maxDia*100}%"></i>`:'').join('')}</div>`;
-  }).join('');
-  const peorDia=fechas.reduce((m,fe)=>{ const v=porDia[fe].tarde+porDia[fe].falta+porDia[fe].temp; return v>m.v?{fe,v}:m; },{fe:null,v:0});
-
-  // Histogramas
-  const nl=lleg.length, antes7=lleg.filter(d=>d<=0).length;
-  const histL=agHist({difs:lleg, idx:d=>Math.ceil(d/5), b0:-5, b1:6, unidad:'entrada',
-    rango:b=>[agHora(420+(b-1)*5+1),agHora(420+b*5)], bueno:b=>b<=0,
-    etq:[[-5,'6:30'],[-2,'6:45'],[1,'7:00'],[4,'7:15']], ref:{b:1,txt:'Hora de entrada',malo:'c-tarde'}});
-  const ns=sal.length, tempr=sal.filter(d=>d<0).length;
-  const fmtS=m=>m===0?'a la hora':m<0?`${-m} min antes`:`${m} min después`;
-  const histS=agHist({difs:sal, idx:d=>Math.floor(d/10), b0:-6, b1:5, unidad:'salida',
-    rango:b=>[fmtS(b*10),fmtS(b*10+9)], bueno:b=>b>=0,
-    etq:[[-6,'−1 h'],[-3,'−30 min'],[0,'Salida'],[3,'+30 min']], ref:{b:0,txt:'Hora de salida',malo:'c-temp'}});
-
-  // Por día de la semana
-  const DN=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+// Por día de la semana: en grupo en %, de una persona en "3 de 4"
+function agSemana(sem, individual){
   const dows=[1,2,3,4,5,6].filter(d=>sem[d]&&(sem[d].n||sem[d].ns));
-  const vals=dows.map(d=>({d,t:pct(sem[d].t,sem[d].n),s:pct(sem[d].s,sem[d].ns)}));
+  const vals=dows.map(d=>({d,t:agPct(sem[d].t,sem[d].n),s:agPct(sem[d].s,sem[d].ns)}));
   const maxP=Math.max(10,...vals.map(v=>Math.max(v.t,v.s)));
   const peor=vals.reduce((m,v)=>v.t>m.t?v:m,{t:0,d:null});
-  const filasSem=vals.map(v=>`<div class="ag-sr${v.d===peor.d?' peor':''}"${agTip(DN[v.d]==='Mié'?'Miércoles':DN[v.d]==='Sáb'?'Sábados':['','Lunes','Martes','','Jueves','Viernes'][v.d],`${sem[v.d].t} de ${sem[v.d].n} entradas tarde (${v.t}%)`,`${sem[v.d].s} de ${sem[v.d].ns} salidas antes (${v.s}%)`)}>
-      <b>${DN[v.d]}</b>
-      <div class="ag-sb"><div><i class="c-tarde" style="width:${v.t/maxP*100}%"></i>${v.t}%</div><div><i class="c-temp" style="width:${v.s/maxP*100}%"></i>${v.s}%</div></div>
+  const txt=(a,b,p)=>individual?`${a} de ${b}`:`${p}%`;
+  const filas=vals.map(v=>`<div class="ag-sr${v.d===peor.d?' peor':''}"${agTip(AG_DL[v.d][0].toUpperCase()+AG_DL[v.d].slice(1),`${sem[v.d].t} de ${sem[v.d].n} entradas tarde (${v.t}%)`,`${sem[v.d].s} de ${sem[v.d].ns} salidas antes (${v.s}%)`)}>
+      <b>${AG_DN[v.d]}</b>
+      <div class="ag-sb"><div><i class="c-tarde" style="width:${v.t/maxP*82}%"></i>${txt(sem[v.d].t,sem[v.d].n,v.t)}</div><div><i class="c-temp" style="width:${v.s/maxP*82}%"></i>${txt(sem[v.d].s,sem[v.d].ns,v.s)}</div></div>
     </div>`).join('');
-  const NOMBRE_DIA=['domingos','lunes','martes','miércoles','jueves','viernes','sábados'];
+  return `<div class="ag-card">
+    <div class="ag-t">Por día de la semana</div>
+    <div class="ag-s">${peor.d?`Los <b>${AG_DL[peor.d]}</b> es cuando más ${individual?'llega':'llegan'} tarde.`:`${individual?'No llegó':'Nadie llegó'} tarde este mes.`}</div>
+    <div class="ag-sem">${filas||'<div class="dt-vacio">Sin marcas</div>'}</div>
+    <div class="ag-ley"><span><i class="c-tarde"></i>${individual?'Días':'% de entradas'} tarde</span><span><i class="c-temp"></i>${individual?'Días':'% de salidas'} antes de hora</span></div>
+  </div>`;
+}
 
-  cont.innerHTML=`${kpis}
+// ── Vista de grupo ──
+function agRanking(D){
+  const ent=agFoco==='ent';
+  const SEGS=ent?[['tarde','c-tarde','tarde'],['sin','c-falta','sin marcar'],['ok','c-ok','a tiempo'],['aus','c-aus','ausencia justificada'],['asu','c-asu','asueto']]
+                :[['temp','c-temp','salió antes'],['sin','c-falta','sin marcar'],['ok','c-ok','a su hora'],['aus','c-aus','ausencia justificada'],['asu','c-asu','asueto']];
+  const malo=ent?'tarde':'temp';
+  const lista=[...D.personas].sort((a,b)=>{ const A=ent?a.cE:a.cS, B=ent?b.cE:b.cS; return B[malo]-A[malo]||B.sin-A.sin||a.nombre.localeCompare(b.nombre); });
+  return lista.map(p=>{
+    const c=ent?p.cE:p.cS, tot=SEGS.reduce((a,[s])=>a+c[s],0)||1;
+    const min=ent?p.minT:p.minS;
+    return `<div class="ag-rk">
+      <button class="ag-mn" onclick="agVer('${p.uid}')">${agEsc(agCorto(p.nombre))}</button>
+      <div class="ag-rb" onclick="agVer('${p.uid}')"${agTip(p.nombre,...SEGS.filter(([s])=>c[s]).map(([s,,l])=>`${c[s]} ${c[s]===1?'día':'días'} ${l}`),min?`${hmAsist(min)} ${ent?'tarde':'antes'} en total`:'')}>${SEGS.map(([s,cl])=>c[s]?`<i class="${cl}" style="flex:${c[s]}"></i>`:'').join('')}</div>
+      <span class="ag-rv"><b>${c[malo]}</b> de ${tot}</span>
+    </div>`;
+  }).join('');
+}
+function agDiaGrupo(D){
+  const ent=agFoco==='ent', pd=ent?D.porDiaE:D.porDiaS, f=D.fechas;
+  const SEG=ent?[['ok','c-ok'],['tarde','c-tarde'],['sin','c-falta'],['aus','c-aus'],['asu','c-asu']]:[['ok','c-ok'],['temp','c-temp'],['sin','c-falta'],['aus','c-aus'],['asu','c-asu']];
+  const max=Math.max(1,...f.map(fe=>SEG.reduce((a,[s])=>a+pd[fe][s],0)));
+  const malo=ent?'tarde':'temp';
+  const peor=f.reduce((m,fe)=>pd[fe][malo]>m.v?{fe,v:pd[fe][malo]}:m,{fe:null,v:0});
+  const cols=f.map(fe=>{ const p=pd[fe];
+    const tip=agTip(agFecha(fe),p.ok?`${p.ok} ${ent?'a tiempo':'a su hora'}`:'',p[malo]?`${p[malo]} ${ent?'llegaron tarde':'salieron antes'}`:'',p.sin?`${p.sin} sin marcar`:'',p.aus?`${p.aus} con ausencia justificada`:'',p.asu?`${p.asu} de asueto`:'');
+    return `<div class="ag-col"${tip}>${SEG.map(([s,cl])=>p[s]?`<i class="${cl}" style="height:${p[s]/max*100}%"></i>`:'').join('')}</div>`; }).join('');
+  return {cols, peor};
+}
+function agMapa(D){
+  const f=D.fechas;
+  const cab=`<div class="ag-mh" style="--n:${f.length}"><span></span>${f.map(fe=>`<i class="${agLunes(fe)?'lun':''}">${parseInt(fe.slice(8))}</i>`).join('')}</div>`;
+  const filas=D.personas.map(p=>`<div class="ag-mr" style="--n:${f.length}"><button class="ag-mn" onclick="agVer('${p.uid}')">${agEsc(agCorto(p.nombre))}</button>${f.map(fe=>{
+      const it=p.dias[fe]; if(!it) return '<i class="ag-c off"></i>';
+      const {d,c}=it, aus=c==='falta'||c==='aus'||c==='asu';
+      const e=d.entrada?`Entrada ${d.entrada.horaStr}${d.entrada.estado==='tarde'?' · '+fmtMin(d.entrada.minDiff)+' tarde'+(d.entrada.justificado?' (justificado)':''):''}`:(aus?'':'Sin marca de entrada');
+      const s=d.salida?`Salida ${d.salida.horaStr}${d.salida.estado==='salida_temprana'?' · '+fmtMin(d.salida.minDiff)+' antes'+(d.salida.justificado?' (justificado)':''):''}`:(aus?'':'Sin marca de salida');
+      return `<i class="ag-c ${c}"${agTip(agCorto(p.nombre)+' · '+agFecha(fe),AG_LBL[c]+(c==='aus'&&d.tipoDia?' ('+d.tipoDia+')':''),e,s)}></i>`;
+    }).join('')}</div>`).join('');
+  return cab+filas;
+}
+function agVistaGrupo(D){
+  const ent=agFoco==='ent', {cols,peor}=agDiaGrupo(D);
+  const k={...D.k, pl:D.prom(D.lleg)};
+  return `${agKpis(k)}
     <div class="ag-card">
-      <div class="ag-t">Mapa del mes</div>
-      <div class="ag-s">Cada cuadro es un día de cada colaborador. Toca un nombre para ver su detalle.</div>
-      <div class="ag-map">${cab}${filasMapa}</div>${leyMapa}
-    </div>
-    <div class="ag-grid">
-      <div class="ag-card">
-        <div class="ag-t">¿A qué hora llegan?</div>
-        <div class="ag-s">${nl?`El <b>${pct(antes7,nl)}%</b> de las entradas fue a tiempo; ${nl-antes7} después de la hora.`:'Sin entradas marcadas.'}</div>
-        ${histL}
-        <div class="ag-ley"><span><i class="c-ok"></i>A tiempo</span><span><i class="c-tarde"></i>Tarde</span></div>
-      </div>
-      <div class="ag-card">
-        <div class="ag-t">¿A qué hora salen?</div>
-        <div class="ag-s">${ns?`El <b>${pct(tempr,ns)}%</b> de las salidas fue antes de la hora (${tempr} de ${ns}).`:'Sin salidas marcadas.'}</div>
-        ${histS}
-        <div class="ag-ley"><span><i class="c-ok"></i>A su hora o después</span><span><i class="c-temp"></i>Antes de su hora</span></div>
-      </div>
+      <div class="ag-h"><div><div class="ag-t">${ent?'¿Quién llega tarde más seguido?':'¿Quién sale antes más seguido?'}</div>
+        <div class="ag-s">Cada barra son los días del mes de una persona. Toca a alguien para ver sus gráficas.</div></div>${agFocoSeg()}</div>
+      <div class="ag-rks">${agRanking(D)}</div>
+      <div class="ag-ley">${ent?'<span><i class="c-tarde"></i>Llegó tarde</span>':'<span><i class="c-temp"></i>Salió antes</span>'}<span><i class="c-falta"></i>Sin marcar</span><span><i class="c-ok"></i>${ent?'A tiempo':'A su hora'}</span><span><i class="c-aus"></i>Ausencia justificada</span><span><i class="c-asu"></i>Asueto</span></div>
     </div>
     <div class="ag-card">
-      <div class="ag-h"><div><div class="ag-t">Día por día</div>
-      <div class="ag-s">${peorDia.fe?`El día con más incidencias fue el <b>${agFecha(peorDia.fe)}</b> (${peorDia.v}).`:'Sin incidencias en el mes.'}</div></div></div>
-      <div class="ag-cols" style="--n:${fechas.length}">${cols}</div>
-      <div class="ag-xl" style="--n:${fechas.length}">${fechas.map(fe=>`<i class="${lunes(fe)?'lun':''}">${parseInt(fe.slice(8))}</i>`).join('')}</div>
-      <div class="ag-ley"><span><i class="c-ok"></i>A tiempo</span><span><i class="c-tarde"></i>Llegó tarde</span><span><i class="c-temp"></i>Salió antes</span><span><i class="c-falta"></i>Sin marcar</span><span><i class="c-aus"></i>Ausencia justificada</span><span><i class="c-asu"></i>Asueto</span></div>
+      <div class="ag-h"><div><div class="ag-t">${ent?'Entradas del grupo, día por día':'Salidas del grupo, día por día'}</div>
+        <div class="ag-s">${peor.fe?`El día con más ${ent?'llegadas tarde':'salidas antes'} fue el <b>${agFecha(peor.fe)}</b> (${peor.v} ${peor.v===1?'persona':'personas'}).`:`Nadie ${ent?'llegó tarde':'salió antes'} este mes.`}</div></div>${agFocoSeg()}</div>
+      <div class="ag-cols" style="--n:${D.fechas.length}">${cols}</div>${agEjeX(D.fechas)}
+      <div class="ag-ley"><span><i class="c-ok"></i>${ent?'A tiempo':'A su hora'}</span>${ent?'<span><i class="c-tarde"></i>Llegó tarde</span>':'<span><i class="c-temp"></i>Salió antes</span>'}<span><i class="c-falta"></i>Sin marcar</span><span><i class="c-aus"></i>Ausencia justificada</span><span><i class="c-asu"></i>Asueto</span></div>
     </div>
     <div class="ag-grid ag-grid2">
-      <div class="ag-card">
-        <div class="ag-t">Por día de la semana</div>
-        <div class="ag-s">${peor.d?`Los <b>${NOMBRE_DIA[peor.d]}</b> es cuando más llegan tarde (${peor.t}%).`:'Nadie llegó tarde este mes.'}</div>
-        <div class="ag-sem">${filasSem}</div>
-        <div class="ag-ley"><span><i class="c-tarde"></i>% de entradas tarde</span><span><i class="c-temp"></i>% de salidas antes</span></div>
+      <div class="ag-card" style="margin-top:0">
+        <div class="ag-t">Mapa del mes</div>
+        <div class="ag-s">Cada cuadro es un día de cada persona.</div>
+        <div class="ag-map">${agMapa(D)}</div>
+        <div class="ag-ley"><span><i class="c-ok"></i>A tiempo</span><span><i class="c-tarde"></i>Llegó tarde</span><span><i class="c-temp"></i>Salió antes</span><span><i class="c-falta"></i>Sin marcar</span><span><i class="c-aus"></i>Ausencia justificada</span><span><i class="c-asu"></i>Asueto</span></div>
       </div>
-      <div class="ag-card">
-        <div class="ag-h"><div class="ag-t">Por colaborador</div>
-          <div class="ag-mini" id="agPersSeg"><button data-m="ent" class="${agPers==='ent'?'on':''}" onclick="agVerPers('ent')">Entrada</button><button data-m="sal" class="${agPers==='sal'?'on':''}" onclick="agVerPers('sal')">Salida</button></div></div>
-        <div class="ag-s" id="agPersSub"></div>
-        <div class="ag-pers" id="agPersBody"></div>
-      </div>
+      ${agSemana(D.sem,false).replace('class="ag-card"','class="ag-card" style="margin-top:0"')}
     </div>`;
-  agVerPers(agPers);
+}
+
+// ── Vista de una persona ──
+// Hora de cada día contra la línea de la hora oficial. Arriba = más tarde.
+function agDiaPersona(p, fechas, tipo){
+  const ent=tipo==='ent', key=ent?'dE':'dS';
+  const difs=fechas.map(fe=>p.dias[fe]?.[key]).filter(v=>v!=null);
+  const lim=Math.min(ent?60:90,Math.max(30,Math.ceil(Math.max(0,...difs.map(Math.abs))/15)*15));
+  const y=d=>(Math.max(-lim,Math.min(lim,d))+lim)/(2*lim)*100;
+  const n=fechas.length;
+  const paso=lim<=30?15:30;
+  const marcas=[]; for(let m=-lim; m<=lim; m+=paso) marcas.push(m);
+  const etq=m=>ent?agHora(420+m):m===0?'Hora':(m<0?'−':'+')+(Math.abs(m)>=60?(Math.abs(m)/60)+' h':Math.abs(m)+' min');
+  const grid=marcas.map(m=>`<div class="ag-yl${m===0?' cero':''}" style="bottom:${y(m)}%"><span>${etq(m)}</span></div>`).join('');
+  // peor día para rotularlo
+  let peor=null;
+  fechas.forEach(fe=>{ const v=p.dias[fe]?.[key]; if(v==null) return; if(ent?(v>0&&(!peor||v>peor.v)):(v<0&&(!peor||v<peor.v))) peor={fe,v}; });
+  const pts=[], puntos=fechas.map((fe,i)=>{
+    const it=p.dias[fe]; const x=(i+.5)/n*100;
+    if(!it) return '';
+    if(it[key]==null){
+      pts.push(null);
+      const cl=it.c==='aus'?'c-aus':it.c==='asu'?'c-asu':'c-falta';
+      const lbl=it.c==='aus'?'Ausencia justificada'+(it.d.tipoDia?' ('+it.d.tipoDia+')':''):it.c==='asu'?'Asueto':ent?'No marcó entrada':'No marcó salida';
+      return `<i class="ag-px ${cl}" style="left:${x}%"${agTip(agFecha(fe),lbl)}></i>`;
+    }
+    const v=it[key], m=ent?it.d.entrada:it.d.salida, h=horarioOficial(fe);
+    pts.push([x,100-y(v)]);
+    const mal=ent?v>0:v<0, just=mal&&m.justificado;
+    const cl=!mal?'c-ok':just?'just':(ent?'c-tarde':'c-temp');
+    const det=ent?agDifTxt(v,'antes','tarde'):agDifTxt(v,'antes de su hora','después de su hora');
+    const rot=peor&&peor.fe===fe?`<em class="${y(v)>78?'abajo':''}">${m.horaStr}</em>`:'';
+    return `<i class="ag-pt ${cl}" style="left:${x}%;bottom:${y(v)}%"${agTip(agFecha(fe),`${ent?'Entrada':'Salida'} ${m.horaStr} · ${det}`,`Hora oficial ${ent?h.entrada:h.salida}`,just?`Justificado${m.justificado.nombre?' por '+m.justificado.nombre:''}`:'')}>${rot}</i>`;
+  }).join('');
+  // línea que une los días seguidos con marca
+  let tramos='', tr=[];
+  pts.concat([null]).forEach(q=>{ if(q) tr.push(q.join(',')); else { if(tr.length>1) tramos+=`<polyline points="${tr.join(' ')}"/>`; tr=[]; } });
+  const malos=ent?p.tarde:p.temp, conMarca=difs.length;
+  const sabs=fechas.some(fe=>new Date(fe+'T12:00:00').getDay()===6&&p.dias[fe]?.[key]!=null);
+  return `<div class="ag-card">
+    <div class="ag-t">${ent?'Hora de entrada cada día':'Hora de salida cada día'}</div>
+    <div class="ag-s">${conMarca?(ent?`Llegó tarde <b>${malos} de ${conMarca}</b> días${peor?`; lo más tarde fue <b>${it2(peor)}</b>`:''}.`:`Salió antes de su hora <b>${malos} de ${conMarca}</b> días${peor?`; lo más temprano fue <b>${it2(peor)}</b>`:''}.`):'Sin marcas este mes.'}</div>
+    <div class="ag-dp ${ent?'ent':'sal'}">
+      <div class="ag-zona arriba">${ent?'Tarde':'Después de su hora'}</div><div class="ag-zona abajo">${ent?'A tiempo':'Antes de su hora'}</div>
+      ${grid}
+      <div class="ag-dp-in"><svg viewBox="0 0 100 100" preserveAspectRatio="none">${tramos}</svg>${puntos}</div>
+    </div>
+    <div class="ag-dp-x">${agEjeX(fechas)}</div>
+    <div class="ag-ley"><span><i class="c-ok r"></i>${ent?'A tiempo':'A su hora o después'}</span><span><i class="${ent?'c-tarde':'c-temp'} r"></i>${ent?'Tarde':'Antes de su hora'}</span><span><i class="just r"></i>Justificado</span><span><i class="c-falta"></i>Sin marcar</span>${sabs?`<span>Sábados: contra su hora (${ent?'6:00':'14:00'})</span>`:''}</div>
+  </div>`;
+  function it2(q){ const m=p.dias[q.fe].d[ent?'entrada':'salida']; return `${m.horaStr} el ${agFecha(q.fe)}`; }
+}
+function agVistaPersona(D,p){
+  const pl=p.pl, nE=p.dl.length;
+  const frase=[
+    pl===null?'No tiene entradas marcadas este mes.':`Llega en promedio a las <b>${agHora(420+pl)}</b> (${agDifTxt(pl,'antes de la hora','tarde')}).`,
+    nE?`Llegó tarde <b>${p.tarde} de ${nE}</b> días${p.minT?` (${hmAsist(p.minT)} en total)`:''}.`:'',
+    p.ds.length?(p.temp?`Salió antes de su hora <b>${p.temp}</b> ${p.temp===1?'vez':'veces'}${p.minS?` (${hmAsist(p.minS)})`:''}.`:'Nunca salió antes de su hora.'):'',
+    p.noMarco?`No marcó <b>${p.noMarco}</b> ${p.noMarco===1?'día':'días'}.`:''
+  ].filter(Boolean).join(' ');
+  const fechas=Object.keys(p.dias).sort();
+  const k={ent:nE,tarde:p.tarde,minTarde:p.minT,temp:p.temp,minTemp:p.minS,pl};
+  return `<div class="ag-per">
+      <div class="rg-av lg">${inicialesDe(p.nombre)}</div>
+      <div class="ag-per-b"><div class="ag-per-n">${agEsc(p.nombre)}</div><div class="ag-per-f">${frase}</div></div>
+      <button class="btn btn-gh btn-xs" onclick="abrirAsistEmp('${p.uid}')">Ver marcas</button>
+    </div>
+    ${agKpis(k)}
+    <div class="ag-grid">${agDiaPersona(p,fechas,'ent').replace('class="ag-card"','class="ag-card" style="margin-top:0"')}${agDiaPersona(p,fechas,'sal').replace('class="ag-card"','class="ag-card" style="margin-top:0"')}</div>
+    ${agSemana(p.sem,true)}`;
+}
+
+function pintarAsistGraf(){
+  const cont=$('asistGraf'); if(!cont||!asistCache) return;
+  const D=agDatos();
+  if(!D.fechas.length||(!D.lleg.length&&!D.k.sal&&!D.k.falta)){
+    cont.innerHTML='<div class="ag-card"><div class="empty" style="padding:24px"><div class="et">Todavía no hay marcas este mes</div></div></div>'; return;
+  }
+  const p=agSel&&D.personas.find(x=>x.uid===agSel);
+  if(!p) agSel=null;
+  const orden=[...D.personas].sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const sel=`<div class="ag-sel">
+    <button class="ag-chip${!p?' on':''}" onclick="agVer(null)"><span class="ag-av g"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14a6 6 0 013.5 6"/></svg></span>Todo el grupo</button>
+    ${orden.map(x=>`<button class="ag-chip${p&&p.uid===x.uid?' on':''}" onclick="agVer('${x.uid}')"><span class="ag-av">${inicialesDe(x.nombre)}</span>${agEsc(agCorto(x.nombre))}</button>`).join('')}
+  </div>`;
+  document.querySelector('.ag-tip')?.classList.remove('on');
+  cont.innerHTML=sel+(p?agVistaPersona(D,p):agVistaGrupo(D));
+  const on=cont.querySelector('.ag-chip.on'); if(on&&p){ const s=on.parentElement; s.scrollLeft=on.offsetLeft-s.clientWidth/2+on.offsetWidth/2; }
   agTipInit();
 }
 

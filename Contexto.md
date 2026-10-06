@@ -151,14 +151,15 @@ importante — ver sección 7.**
   sigue mostrándose en el detalle y en el Excel exportado con el badge "Justificado", en
   vez de ocultarse — es trazabilidad, no borrado.
 - **Asistencia · Comportamiento** (pestaña junto a "Por colaborador"): gráficas del mes
-  hechas solo con `asistCache` (no hace lecturas extra a Firebase). Tiene mapa del mes
-  (colaboradores × días), histogramas de hora de entrada y de salida contra
-  `horarioOficial` (exportado de marcaje.js), día por día, por día de la semana y
-  "por colaborador" (cada punto es un día y el círculo es el promedio). Usa los mismos
-  colores del calendario de Asistencia (verde a tiempo, rojo tarde, ámbar salió antes).
-  Las marcas justificadas cuentan como a tiempo en los porcentajes, pero los
-  histogramas usan la hora real. La pestaña elegida se recuerda en
-  `localStorage.asistModo`.
+  hechas solo con `asistCache` (no hace lecturas extra a Firebase). Arriba hay un selector
+  "Todo el grupo / persona" (`agSel`).
+  - Grupo: ranking "¿quién llega tarde / sale antes más seguido?" (con selector
+    Entradas/Salidas, `agFoco`), día por día, mapa del mes y por día de la semana.
+  - Persona: frase de resumen, totales, "hora de entrada / salida cada día" contra la
+    línea de `horarioOficial` (exportado de marcaje.js) y por día de la semana.
+  Usa los mismos colores del calendario de Asistencia (verde a tiempo, rojo tarde, ámbar
+  salió antes). Las marcas justificadas cuentan como a tiempo en los totales y se
+  dibujan como círculo hueco. La pestaña elegida se recuerda en `localStorage.asistModo`.
 
 ---
 
