@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=63">
+<link rel="stylesheet" href="css/styles.css?v=64">
 <link rel="stylesheet" href="css/temas.css?v=3">
 <script>
 // ── Temas de temporada ──
@@ -242,7 +242,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
-import { SEDES, NOMBRE_SEDES, sedeEfectiva, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
+import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
@@ -561,9 +561,11 @@ function renderAdmin(){
             </div>
             <input type="hidden" id="asistMes">
           </div>
+          <div class="pd-seg as-seg" id="asistSeg"><button data-m="lista" onclick="asistVista('lista')">Por colaborador</button><button data-m="graf" onclick="asistVista('graf')">Comportamiento</button></div>
           <div id="asistStats"></div>
           ${me?.role==='admin'?`<button class="as-sab" onclick="openSabadoLaboral()"><span>Sábados laborales del mes: <b id="asistSabTxt">—</b></span><b class="go">Configurar ›</b></button>`:''}
           <div id="asistList"><div class="spin"></div></div>
+          <div id="asistGraf" style="display:none"></div>
         </div>
         <div id="asistDetVista" style="display:none"></div>
       </div>
@@ -4214,6 +4216,7 @@ window.cargarAsistencia=async()=>{
   $('asistMesLbl').textContent=mesLabel(mes);
   const next=$('asistMesNext'); if(next) next.disabled=mes>=mesActualStr();
   cont.innerHTML='<div class="spin"></div>';
+  aplicarAsistModo(false); if(asistModo==='graf') $('asistGraf').innerHTML='<div class="spin"></div>';
   try{
     const emps=await empleadosParaAsistencia();
     if(!emps.length){ $('asistStats').innerHTML=''; cont.innerHTML='<div class="empty" style="padding:20px"><div class="et">No hay empleados con sede asignada</div></div>'; return; }
@@ -4246,6 +4249,7 @@ window.cargarAsistencia=async()=>{
         </span>
       </button>`;
     }).join('');
+    aplicarAsistModo();
     if(asistDetUid) abrirAsistEmp(asistDetUid,true);
   }catch(e){
     cont.innerHTML=`<div style="font-size:13px;color:var(--danger);padding:16px">Error al calcular la asistencia: ${e.message}</div>`;
@@ -4253,6 +4257,245 @@ window.cargarAsistencia=async()=>{
 };
 
 window.volverAsistLista=()=>{ asistDetUid=null; hide('asistDetVista'); show('asistListaVista'); };
+
+// ── Comportamiento: gráficas del mes con los mismos datos del resumen (sin lecturas extra) ──
+let asistModo=(()=>{ try{ return localStorage.getItem('asistModo')==='graf'?'graf':'lista'; }catch(e){ return 'lista'; } })();
+let agPers='ent'; // gráfica por colaborador: entrada o salida
+window.asistVista=(modo)=>{
+  asistModo=modo; try{ localStorage.setItem('asistModo',modo); }catch(e){}
+  aplicarAsistModo();
+};
+function aplicarAsistModo(pintar=true){
+  const g=asistModo==='graf';
+  document.querySelectorAll('#asistSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===asistModo));
+  ['asistStats','asistList'].forEach(id=>{ const e=$(id); if(e) e.style.display=g?'none':''; });
+  const sab=document.querySelector('#asistListaVista .as-sab'); if(sab) sab.style.display=g?'none':'';
+  $('asistGraf').style.display=g?'':'none';
+  if(g&&pintar) pintarAsistGraf();
+}
+const agMin=h=>{ const [a,b]=String(h||'0:0').split(':').map(Number); return a*60+(b||0); };
+const agHora=m=>{ m=Math.round(m); const h=Math.floor(m/60), mm=((m%60)+60)%60; return `${h>12?h-12:h}:${String(mm).padStart(2,'0')}`; };
+const agDifTxt=(d,ant,des)=>{ d=Math.round(d); return d===0?'en punto':d<0?`${fmtMin(-d)} ${ant}`:`${fmtMin(d)} ${des}`; };
+const agEsc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const agTip=(...lineas)=>` data-tip="${agEsc(lineas.filter(Boolean).join('|'))}"`;
+const agCorto=n=>String(n||'').trim().split(/\s+/).slice(0,2).join(' ');
+const agFecha=fe=>{ const d=new Date(fe+'T12:00:00'); return `${DIAS_CORTOS[d.getDay()]} ${d.getDate()}`; };
+const AG_LBL={ok:'A tiempo',tarde:'Llegó tarde',temp:'Salió antes',falta:'Sin marcar',aus:'Ausencia justificada',asu:'Asueto'};
+function agClase(d){
+  if(d.tipo==='no_marco') return 'falta';
+  if(d.tipo==='justificado') return d.tipoDia==='asueto'?'asu':'aus';
+  if(d.entrada?.estado==='tarde'&&!d.entrada.justificado) return 'tarde';
+  if(d.salida?.estado==='salida_temprana'&&!d.salida.justificado) return 'temp';
+  return 'ok';
+}
+function agDatos(){
+  const {filas}=asistCache;
+  const fechas=new Set(), porDia={}, sem={}, lleg=[], sal=[];
+  const k={ent:0,tarde:0,minTarde:0,sal:0,temp:0,minTemp:0,falta:0};
+  const prom=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const personas=filas.map(f=>{
+    const dias={}, dl=[], ds=[];
+    let tarde=0, temp=0;
+    f.detalle.forEach(d=>{
+      fechas.add(d.fecha);
+      const c=agClase(d); dias[d.fecha]={d,c};
+      const pd=porDia[d.fecha]||(porDia[d.fecha]={ok:0,tarde:0,temp:0,falta:0,aus:0,asu:0});
+      pd[c]++;
+      if(c==='falta') k.falta++;
+      const h=horarioOficial(d.fecha); if(!h) return;
+      const dow=new Date(d.fecha+'T12:00:00').getDay();
+      const sm=sem[dow]||(sem[dow]={n:0,t:0,ns:0,s:0});
+      if(d.entrada?.horaStr){
+        const dif=agMin(d.entrada.horaStr)-agMin(h.entrada); lleg.push(dif); dl.push(dif); k.ent++; sm.n++;
+        if(d.entrada.estado==='tarde'&&!d.entrada.justificado){ k.tarde++; tarde++; sm.t++; k.minTarde+=d.entrada.minDiff||Math.max(0,dif); }
+      }
+      if(d.salida?.horaStr){
+        const dif=agMin(d.salida.horaStr)-agMin(h.salida); sal.push(dif); ds.push(dif); k.sal++; sm.ns++;
+        if(d.salida.estado==='salida_temprana'&&!d.salida.justificado){ k.temp++; temp++; sm.s++; k.minTemp+=d.salida.minDiff||Math.max(0,-dif); }
+      }
+    });
+    return {uid:f.uid, nombre:f.nombre, dias, dl, ds, pl:prom(dl), ps:prom(ds), tarde, temp, noMarco:f.noMarco};
+  });
+  return {fechas:[...fechas].sort(), porDia, sem, lleg, sal, k, personas, prom};
+}
+
+// Histograma de diferencias contra la hora oficial (minutos). idx() da la barra de cada marca.
+function agHist({difs, idx, b0, b1, rango, bueno, etq, ref, unidad}){
+  const n=b1-b0+1, cuenta=Array(n).fill(0);
+  difs.forEach(d=>{ cuenta[Math.min(b1,Math.max(b0,idx(d)))-b0]++; });
+  const max=Math.max(1,...cuenta), tot=difs.length||1;
+  const barras=cuenta.map((c,j)=>{
+    const b=b0+j, [de,a]=rango(b);
+    const txt=b===b0?`${a} o antes`:b===b1?`${de} o después`:`${de} – ${a}`;
+    return `<div class="ag-b${b===ref.b?' ref':''}"${agTip(txt,`${c} ${unidad}${c===1?'':'s'} · ${Math.round(c/tot*100)}%`)}><i class="${bueno(b)?'c-ok':ref.malo}" style="height:${c?Math.max(3,c/max*100):0}%"></i></div>`;
+  }).join('');
+  const marcas=etq.map(([b,t])=>`<span style="left:${(b-b0)/n*100}%">${t}</span>`).join('');
+  return `<div class="ag-hist" style="--n:${n}"><span class="ag-ref-l" style="left:${(ref.b-b0)/n*100}%">${ref.txt}</span>${barras}</div><div class="ag-hx">${marcas}</div>`;
+}
+
+function agPersonas(D){
+  const ent=agPers==='ent', lim=ent?30:60;
+  const lista=D.personas.filter(p=>(ent?p.pl:p.ps)!==null)
+    .sort((a,b)=>ent?b.pl-a.pl:a.ps-b.ps);
+  if(!lista.length) return '<div class="dt-vacio" style="padding:14px 0 4px">Sin marcas este mes</div>';
+  const x=d=>(Math.max(-lim,Math.min(lim,d))+lim)/(2*lim)*100;
+  const filas=lista.map(p=>{
+    const arr=ent?p.dl:p.ds, pr=ent?p.pl:p.ps;
+    const malo=ent?pr>0.5:pr<-0.5;
+    const r=Math.round(pr), val=ent?agHora(420+pr):(r===0?'en punto':(r<0?'−':'+')+fmtMin(Math.abs(r)));
+    const extra=ent?`${p.tarde} de ${arr.length} días tarde`:`${p.temp} de ${arr.length} días salió antes`;
+    const rango=ent?`Más temprano ${agHora(420+Math.min(...arr))} · más tarde ${agHora(420+Math.max(...arr))}`
+                   :`Más temprano ${agDifTxt(Math.min(...arr),'antes','después')} · más tarde ${agDifTxt(Math.max(...arr),'antes','después')}`;
+    const tip=agTip(p.nombre, ent?`Llegada promedio ${val} (${agDifTxt(pr,'antes','tarde')})`:`Salida promedio: ${agDifTxt(pr,'antes de su hora','después de su hora')}`, rango, extra);
+    return `<button class="ag-pr" onclick="abrirAsistEmp('${p.uid}')"${tip}>
+      <span class="ag-mn">${agEsc(agCorto(p.nombre))}</span>
+      <span class="ag-tr"><span class="z" style="left:50%"></span>${arr.map(d=>`<i class="d" style="left:${x(d)}%"></i>`).join('')}<i class="p ${malo?(ent?'c-tarde':'c-temp'):'c-ok'}" style="left:${x(pr)}%"></i></span>
+      <span class="ag-pv${malo?' mal':''}">${val}<small>${ent?(pr>0.5?Math.round(pr)+' min tarde':'a tiempo'):(malo?'antes de hora':'a tiempo')}</small></span>
+    </button>`;
+  }).join('');
+  const ejes=ent?['6:30','7:00','7:30']:['1 h antes','Hora de salida','1 h después'];
+  return `${filas}<div class="ag-pr ag-pej"><span></span><span class="ag-tr-x"><span>${ejes[0]}</span><span>${ejes[1]}</span><span>${ejes[2]}</span></span><span></span></div>`;
+}
+window.agVerPers=(m)=>{
+  agPers=m;
+  document.querySelectorAll('#agPersSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  const D=agDatos();
+  $('agPersSub').innerHTML=m==='ent'?'Cada punto es un día; el círculo grande es su <b>llegada promedio</b>. Ordenados del que llega más tarde al más puntual.':'Cada punto es un día; el círculo grande es su <b>salida promedio</b>. Ordenados del que sale más temprano al que se queda más.';
+  $('agPersBody').innerHTML=agPersonas(D);
+};
+
+function pintarAsistGraf(){
+  const cont=$('asistGraf'); if(!cont||!asistCache) return;
+  const D=agDatos(), {fechas,porDia,sem,lleg,sal,k}=D;
+  if(!fechas.length||(!lleg.length&&!sal.length&&!k.falta)){
+    cont.innerHTML='<div class="ag-card"><div class="empty" style="padding:24px"><div class="et">Todavía no hay marcas este mes</div></div></div>'; return;
+  }
+  const pct=(a,b)=>b?Math.round(a/b*100):0;
+  const pl=D.prom(lleg);
+  const kpis=`<div class="ag-kpis">
+    <div class="rg-st g"><div class="v">${k.ent?pct(k.ent-k.tarde,k.ent)+'%':'—'}</div><div class="l">Entradas a tiempo</div></div>
+    <div class="rg-st b"><div class="v">${pl===null?'—':agHora(420+pl)}</div><div class="l">Llegada promedio${pl===null?'':' · '+agDifTxt(pl,'antes','tarde')}</div></div>
+    <div class="rg-st r"><div class="v">${k.tarde}</div><div class="l">Llegadas tarde${k.minTarde?' · '+hmAsist(k.minTarde):''}</div></div>
+    <div class="rg-st a"><div class="v">${k.temp}</div><div class="l">Salidas antes${k.minTemp?' · '+hmAsist(k.minTemp):''}</div></div>
+  </div>`;
+
+  // Mapa del mes: colaboradores × días
+  const lunes=fe=>new Date(fe+'T12:00:00').getDay()===1;
+  const cab=`<div class="ag-mh" style="--n:${fechas.length}"><span></span>${fechas.map(fe=>`<i class="${lunes(fe)?'lun':''}">${parseInt(fe.slice(8))}</i>`).join('')}</div>`;
+  const filasMapa=D.personas.map(p=>{
+    const celdas=fechas.map(fe=>{
+      const it=p.dias[fe]; if(!it) return '<i class="ag-c off"></i>';
+      const {d,c}=it;
+      const e=d.entrada?`Entrada ${d.entrada.horaStr}${d.entrada.estado==='tarde'?' · '+fmtMin(d.entrada.minDiff)+' tarde'+(d.entrada.justificado?' (justificado)':''):''}`:(c==='falta'||c==='aus'||c==='asu'?'':'Sin marca de entrada');
+      const s=d.salida?`Salida ${d.salida.horaStr}${d.salida.estado==='salida_temprana'?' · '+fmtMin(d.salida.minDiff)+' antes'+(d.salida.justificado?' (justificado)':''):''}`:(c==='falta'||c==='aus'||c==='asu'?'':'Sin marca de salida');
+      return `<i class="ag-c ${c}"${agTip(agCorto(p.nombre)+' · '+agFecha(fe),AG_LBL[c]+(c==='aus'&&d.tipoDia?' ('+d.tipoDia+')':''),e,s)}></i>`;
+    }).join('');
+    return `<div class="ag-mr" style="--n:${fechas.length}"><button class="ag-mn" onclick="abrirAsistEmp('${p.uid}')">${agEsc(agCorto(p.nombre))}</button>${celdas}</div>`;
+  }).join('');
+  const leyMapa=`<div class="ag-ley"><span><i class="c-ok"></i>A tiempo</span><span><i class="c-tarde"></i>Llegó tarde</span><span><i class="c-temp"></i>Salió antes</span><span><i class="c-falta"></i>Sin marcar</span><span><i class="c-aus"></i>Ausencia justificada</span><span><i class="c-asu"></i>Asueto</span></div>`;
+
+  // Día por día: cuántos llegaron a tiempo, tarde, etc.
+  const SEG=[['ok','c-ok'],['temp','c-temp'],['tarde','c-tarde'],['falta','c-falta'],['aus','c-aus'],['asu','c-asu']];
+  const maxDia=Math.max(1,...fechas.map(fe=>SEG.reduce((a,[s])=>a+porDia[fe][s],0)));
+  const cols=fechas.map(fe=>{
+    const p=porDia[fe];
+    const tip=agTip(agFecha(fe),p.ok?`${p.ok} a tiempo`:'',p.tarde?`${p.tarde} llegaron tarde`:'',p.temp?`${p.temp} salieron antes`:'',p.falta?`${p.falta} sin marcar`:'',p.aus?`${p.aus} con ausencia justificada`:'',p.asu?`${p.asu} de asueto`:'');
+    return `<div class="ag-col"${tip}>${SEG.map(([s,cl])=>p[s]?`<i class="${cl}" style="height:${p[s]/maxDia*100}%"></i>`:'').join('')}</div>`;
+  }).join('');
+  const peorDia=fechas.reduce((m,fe)=>{ const v=porDia[fe].tarde+porDia[fe].falta+porDia[fe].temp; return v>m.v?{fe,v}:m; },{fe:null,v:0});
+
+  // Histogramas
+  const nl=lleg.length, antes7=lleg.filter(d=>d<=0).length;
+  const histL=agHist({difs:lleg, idx:d=>Math.ceil(d/5), b0:-5, b1:6, unidad:'entrada',
+    rango:b=>[agHora(420+(b-1)*5+1),agHora(420+b*5)], bueno:b=>b<=0,
+    etq:[[-5,'6:30'],[-2,'6:45'],[1,'7:00'],[4,'7:15']], ref:{b:1,txt:'Hora de entrada',malo:'c-tarde'}});
+  const ns=sal.length, tempr=sal.filter(d=>d<0).length;
+  const fmtS=m=>m===0?'a la hora':m<0?`${-m} min antes`:`${m} min después`;
+  const histS=agHist({difs:sal, idx:d=>Math.floor(d/10), b0:-6, b1:5, unidad:'salida',
+    rango:b=>[fmtS(b*10),fmtS(b*10+9)], bueno:b=>b>=0,
+    etq:[[-6,'−1 h'],[-3,'−30 min'],[0,'Salida'],[3,'+30 min']], ref:{b:0,txt:'Hora de salida',malo:'c-temp'}});
+
+  // Por día de la semana
+  const DN=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const dows=[1,2,3,4,5,6].filter(d=>sem[d]&&(sem[d].n||sem[d].ns));
+  const vals=dows.map(d=>({d,t:pct(sem[d].t,sem[d].n),s:pct(sem[d].s,sem[d].ns)}));
+  const maxP=Math.max(10,...vals.map(v=>Math.max(v.t,v.s)));
+  const peor=vals.reduce((m,v)=>v.t>m.t?v:m,{t:0,d:null});
+  const filasSem=vals.map(v=>`<div class="ag-sr${v.d===peor.d?' peor':''}"${agTip(DN[v.d]==='Mié'?'Miércoles':DN[v.d]==='Sáb'?'Sábados':['','Lunes','Martes','','Jueves','Viernes'][v.d],`${sem[v.d].t} de ${sem[v.d].n} entradas tarde (${v.t}%)`,`${sem[v.d].s} de ${sem[v.d].ns} salidas antes (${v.s}%)`)}>
+      <b>${DN[v.d]}</b>
+      <div class="ag-sb"><div><i class="c-tarde" style="width:${v.t/maxP*100}%"></i>${v.t}%</div><div><i class="c-temp" style="width:${v.s/maxP*100}%"></i>${v.s}%</div></div>
+    </div>`).join('');
+  const NOMBRE_DIA=['domingos','lunes','martes','miércoles','jueves','viernes','sábados'];
+
+  cont.innerHTML=`${kpis}
+    <div class="ag-card">
+      <div class="ag-t">Mapa del mes</div>
+      <div class="ag-s">Cada cuadro es un día de cada colaborador. Toca un nombre para ver su detalle.</div>
+      <div class="ag-map">${cab}${filasMapa}</div>${leyMapa}
+    </div>
+    <div class="ag-grid">
+      <div class="ag-card">
+        <div class="ag-t">¿A qué hora llegan?</div>
+        <div class="ag-s">${nl?`El <b>${pct(antes7,nl)}%</b> de las entradas fue a tiempo; ${nl-antes7} después de la hora.`:'Sin entradas marcadas.'}</div>
+        ${histL}
+        <div class="ag-ley"><span><i class="c-ok"></i>A tiempo</span><span><i class="c-tarde"></i>Tarde</span></div>
+      </div>
+      <div class="ag-card">
+        <div class="ag-t">¿A qué hora salen?</div>
+        <div class="ag-s">${ns?`El <b>${pct(tempr,ns)}%</b> de las salidas fue antes de la hora (${tempr} de ${ns}).`:'Sin salidas marcadas.'}</div>
+        ${histS}
+        <div class="ag-ley"><span><i class="c-ok"></i>A su hora o después</span><span><i class="c-temp"></i>Antes de su hora</span></div>
+      </div>
+    </div>
+    <div class="ag-card">
+      <div class="ag-h"><div><div class="ag-t">Día por día</div>
+      <div class="ag-s">${peorDia.fe?`El día con más incidencias fue el <b>${agFecha(peorDia.fe)}</b> (${peorDia.v}).`:'Sin incidencias en el mes.'}</div></div></div>
+      <div class="ag-cols" style="--n:${fechas.length}">${cols}</div>
+      <div class="ag-xl" style="--n:${fechas.length}">${fechas.map(fe=>`<i class="${lunes(fe)?'lun':''}">${parseInt(fe.slice(8))}</i>`).join('')}</div>
+      <div class="ag-ley"><span><i class="c-ok"></i>A tiempo</span><span><i class="c-tarde"></i>Llegó tarde</span><span><i class="c-temp"></i>Salió antes</span><span><i class="c-falta"></i>Sin marcar</span><span><i class="c-aus"></i>Ausencia justificada</span><span><i class="c-asu"></i>Asueto</span></div>
+    </div>
+    <div class="ag-grid ag-grid2">
+      <div class="ag-card">
+        <div class="ag-t">Por día de la semana</div>
+        <div class="ag-s">${peor.d?`Los <b>${NOMBRE_DIA[peor.d]}</b> es cuando más llegan tarde (${peor.t}%).`:'Nadie llegó tarde este mes.'}</div>
+        <div class="ag-sem">${filasSem}</div>
+        <div class="ag-ley"><span><i class="c-tarde"></i>% de entradas tarde</span><span><i class="c-temp"></i>% de salidas antes</span></div>
+      </div>
+      <div class="ag-card">
+        <div class="ag-h"><div class="ag-t">Por colaborador</div>
+          <div class="ag-mini" id="agPersSeg"><button data-m="ent" class="${agPers==='ent'?'on':''}" onclick="agVerPers('ent')">Entrada</button><button data-m="sal" class="${agPers==='sal'?'on':''}" onclick="agVerPers('sal')">Salida</button></div></div>
+        <div class="ag-s" id="agPersSub"></div>
+        <div class="ag-pers" id="agPersBody"></div>
+      </div>
+    </div>`;
+  agVerPers(agPers);
+  agTipInit();
+}
+
+// Tooltip único: hover en PC, toque en el celular
+function agTipInit(){
+  if(window.__agTip) return; window.__agTip=true;
+  const tip=document.createElement('div'); tip.className='ag-tip'; document.body.appendChild(tip);
+  const cont=$('asistGraf');
+  let actual=null, desde=0, toque=0;
+  const mostrar=el=>{
+    actual=el; desde=Date.now();
+    const [t,...r]=el.dataset.tip.split('|');
+    tip.innerHTML=`<b>${agEsc(t)}</b>${r.map(x=>`<div>${agEsc(x)}</div>`).join('')}`;
+    tip.classList.add('on');
+    const rc=el.getBoundingClientRect(), tw=tip.offsetWidth, th=tip.offsetHeight;
+    let x=rc.left+rc.width/2-tw/2; x=Math.max(8,Math.min(window.innerWidth-tw-8,x));
+    let y=rc.top-th-8; if(y<8) y=rc.bottom+8;
+    tip.style.left=x+'px'; tip.style.top=y+'px';
+  };
+  const ocultar=()=>{ actual=null; tip.classList.remove('on'); };
+  cont.addEventListener('touchstart',()=>{ toque=Date.now(); },{passive:true});
+  cont.addEventListener('mouseover',e=>{ if(Date.now()-toque<800) return; const el=e.target.closest('[data-tip]'); if(el&&el!==actual) mostrar(el); else if(!el) ocultar(); });
+  cont.addEventListener('mouseleave',()=>{ if(Date.now()-toque>800) ocultar(); });
+  cont.addEventListener('click',e=>{ const el=e.target.closest('[data-tip]'); if(!el||el.matches('button')){ ocultar(); return; } mostrar(el); });
+  window.addEventListener('scroll',()=>{ if(Date.now()-desde>400) ocultar(); },{passive:true});
+  document.addEventListener('touchstart',e=>{ if(!e.target.closest('#asistGraf [data-tip]')) ocultar(); },{passive:true});
+}
 
 // Detalle de un empleado: totales, calendario del mes e incidencias
 window.asIrDia=(fecha)=>{

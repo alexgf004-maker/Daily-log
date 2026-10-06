@@ -31,7 +31,7 @@ export function sedeEfectiva(user, hoy){
 }
 
 // ── Horario oficial de entrada/salida por día ──
-function horarioOficial(fecha){
+export function horarioOficial(fecha){
   const d=new Date(fecha+'T12:00:00');
   const dow=d.getDay();
   if(dow===0) return null; // domingo: sin horario oficial de marcaje
