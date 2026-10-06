@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=62">
+<link rel="stylesheet" href="css/styles.css?v=63">
 <link rel="stylesheet" href="css/temas.css?v=3">
 <script>
 // ── Temas de temporada ──
@@ -1059,32 +1059,27 @@ function modalsHTML(){
     </div>
   </div>
   <div class="mo" id="moAprobarHE">
-    <div class="modal">
-      <div class="modal-title" id="moHETitulo">Aprobar horas extras</div>
-      <div style="background:var(--gray50);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:13px">
-        <div id="moHEInfo" style="color:var(--text2)"></div>
-      </div>
-      <div class="fg">
-        <label class="fl">Horas extras a aprobar</label>
-        <div class="tr2">
-          <div>
-            <label class="fl" style="font-size:10px">Horas</label>
-            <input type="number" id="heAprobHoras" min="0" max="23" placeholder="0">
-          </div>
-          <div>
-            <label class="fl" style="font-size:10px">Minutos</label>
-            <input type="number" id="heAprobMins" min="0" max="59" placeholder="0">
-          </div>
+    <div class="modal ds he-sh">
+      <div class="ds-grab"></div>
+      <div class="he-k" id="moHEKicker">HORAS EXTRA</div>
+      <div class="ds-t" id="moHETitulo">Aprobar horas extra</div>
+      <div id="moHEInfo"></div>
+      <div class="he-k2">Horas a aprobar</div>
+      <div class="he-step">
+        <button type="button" class="he-bt" onclick="heMover(-15)" aria-label="Quitar 15 minutos">−</button>
+        <div class="he-val">
+          <label><input type="number" id="heAprobHoras" min="0" max="23" inputmode="numeric" oninput="hePintar()"><span>h</span></label>
+          <label><input type="number" id="heAprobMins" min="0" max="59" step="5" inputmode="numeric" oninput="hePintar()"><span>min</span></label>
         </div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">Modifica si las horas no son correctas</div>
+        <button type="button" class="he-bt" onclick="heMover(15)" aria-label="Sumar 15 minutos">+</button>
       </div>
-      <div class="fg">
-        <label class="fl">Nota (opcional si no modificas)</label>
-        <textarea id="heAprobNota" placeholder="Motivo del ajuste si modificaste las horas..."></textarea>
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moAprobarHE')">Cancelar</button>
-        <button class="btn btn-g" onclick="confirmarAprobarHE()">✓ Aprobar</button>
+      <div class="he-chips" id="heChips"></div>
+      <div class="he-dif" id="heDif"></div>
+      <div class="he-k2" id="heNotaK">Motivo del ajuste</div>
+      <textarea id="heAprobNota" class="he-nota" placeholder="Ej.: solo se autorizó hasta las 4:00 p.m." oninput="hePintar()"></textarea>
+      <div class="he-acts">
+        <button class="he-b2" onclick="closeModal('moAprobarHE')">Cancelar</button>
+        <button class="he-b1" id="heBtnOk" onclick="confirmarAprobarHE()">✓ Aprobar</button>
       </div>
     </div>
   </div>`;
@@ -3039,40 +3034,47 @@ window.cambiarPinAdmin=async()=>{
 
 let heAprobKey=null, heAprobCallback=null;
 
-window.aprobarHE=async(uid,key)=>{
-  // Cargar datos del registro
+// Ventana para aprobar (o ajustar ya aprobadas) horas extra
+let heOriginal=0, heYaAprobada=false;
+async function abrirAprobarHE(uid,key,cb){
   const snap=await get(ref(db,`registros/${uid}/${key}`));
   if(!snap.exists()) return;
   const r=snap.val();
-  heAprobKey={uid,key}; heAprobCallback=loadPend;
-  const minHE=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
-  const hrs=Math.floor(minHE/60), mins=minHE%60;
-  $('heAprobHoras').value=hrs;
-  $('heAprobMins').value=mins;
-  $('heAprobNota').value='';
-  $('moHEInfo').innerHTML=`<b>${r.userName||uid}</b> · ${fmtLong(r.fecha)}<br>
-    Registró: ${r.horaEntrada||''}–${r.horaSalida||''} · <b>${hrs>0?hrs+'h ':''+(mins)+'m'} extras</b><br>
-    <span style="color:var(--text2)">${r.heJustif||''}</span>`;
-  if($('moHETitulo')) $('moHETitulo').textContent=r.estadoHE==='aprobado'?'Ajustar horas extras ya aprobadas':'Aprobar horas extras';
+  heAprobKey={uid,key}; heAprobCallback=cb;
+  heOriginal=r.minHE||(r.heInicio&&r.heFin?minutosEntre(r.heInicio,r.heFin):0);
+  heYaAprobada=r.estadoHE==='aprobado';
+  const actual=r.minHEAprobado!==undefined?r.minHEAprobado:heOriginal;
+  $('heAprobHoras').value=Math.floor(actual/60);
+  $('heAprobMins').value=actual%60;
+  $('heAprobNota').value=heYaAprobada&&r.heAjustada?(r.notaAjusteHE||''):'';
+  const nombre=r.userName||uid, f=fmtLong(r.fecha).replace(',','').replace(/ de \d{4}$/,'');
+  $('moHEKicker').textContent=heYaAprobada?'YA APROBADAS · AJUSTE':'HORAS EXTRA';
+  $('moHETitulo').textContent=heYaAprobada?'Ajustar horas extra':'Aprobar horas extra';
+  $('moHEInfo').innerHTML=`<div class="he-per"><span class="pd-av">${inicialesDe(nombre)}</span>
+      <span class="he-per-tx"><b>${nombre}</b><span>${f.charAt(0).toUpperCase()+f.slice(1)} · ${r.horaEntrada||''}–${r.horaSalida||''}</span></span>
+      <span class="he-reg"><small>Registró</small><b>${fmtMin(heOriginal)}</b></span></div>
+    ${r.heJustif?`<div class="ds-just" style="margin:12px 0 4px">${r.heJustif}</div>`:''}`;
+  const chips=[heOriginal,heOriginal-30,heOriginal-60,120,60].filter((v,i,a)=>v>0&&a.indexOf(v)===i).slice(0,4);
+  $('heChips').innerHTML=chips.map(v=>`<button type="button" onclick="heFijar(${v})">${v===heOriginal?'Lo registrado · ':''}${fmtMin(v)}</button>`).join('');
+  hePintar();
   $('moAprobarHE').classList.add('open');
+}
+const heValor=()=>(parseInt($('heAprobHoras').value)||0)*60+(parseInt($('heAprobMins').value)||0);
+window.heFijar=(m)=>{ m=Math.max(0,Math.min(23*60+59,m)); $('heAprobHoras').value=Math.floor(m/60); $('heAprobMins').value=m%60; hePintar(); };
+window.heMover=(d)=>heFijar(heValor()+d);
+window.hePintar=()=>{
+  const v=heValor(), dif=v-heOriginal, el=$('heDif');
+  document.querySelectorAll('#heChips button').forEach(b=>b.classList.toggle('on',b.getAttribute('onclick')===`heFijar(${v})`));
+  const ajuste=dif!==0, falta=ajuste&&!$('heAprobNota').value.trim();
+  el.className='he-dif '+(ajuste?'a':'g');
+  el.textContent=ajuste?`${dif<0?'Se aprueban':'Se aprueban'} ${fmtMin(Math.abs(dif))} ${dif<0?'menos':'más'} de lo registrado`:'Igual a lo que registró el técnico';
+  $('heNotaK').textContent=ajuste?'Motivo del ajuste (obligatorio)':'Nota (opcional)';
+  $('heAprobNota').classList.toggle('falta',falta);
+  const b=$('heBtnOk'); b.disabled=falta||v<=0;
+  b.textContent=v<=0?'Indica las horas':falta?'Escribe el motivo':heYaAprobada?`Guardar ${fmtMin(v)}`:`✓ Aprobar ${fmtMin(v)}`;
 };
-
-window.aprobarHEyRefresh=async(uid,key)=>{
-  const snap=await get(ref(db,`registros/${uid}/${key}`));
-  if(!snap.exists()) return;
-  const r=snap.val();
-  heAprobKey={uid,key}; heAprobCallback=cargarPerfilEmpleado;
-  const minHE=r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0);
-  const hrs=Math.floor(minHE/60), mins=minHE%60;
-  $('heAprobHoras').value=hrs;
-  $('heAprobMins').value=mins;
-  $('heAprobNota').value='';
-  $('moHEInfo').innerHTML=`<b>${r.userName||uid}</b> · ${fmtLong(r.fecha)}<br>
-    Registró: ${r.horaEntrada||''}–${r.horaSalida||''} · <b>${hrs>0?hrs+'h ':''+(mins)+'m'} extras</b><br>
-    <span style="color:var(--text2)">${r.heJustif||''}</span>`;
-  if($('moHETitulo')) $('moHETitulo').textContent=r.estadoHE==='aprobado'?'Ajustar horas extras ya aprobadas':'Aprobar horas extras';
-  $('moAprobarHE').classList.add('open');
-};
+window.aprobarHE=(uid,key)=>abrirAprobarHE(uid,key,loadPend);
+window.aprobarHEyRefresh=(uid,key)=>abrirAprobarHE(uid,key,cargarPerfilEmpleado);
 
 window.confirmarAprobarHE=async()=>{
   if(!heAprobKey) return;
