@@ -160,6 +160,10 @@ importante — ver sección 7.**
   Usa los mismos colores del calendario de Asistencia (verde a tiempo, rojo tarde, ámbar
   salió antes). Las marcas justificadas cuentan como a tiempo en los totales y se
   dibujan como círculo hueco. La pestaña elegida se recuerda en `localStorage.asistModo`.
+- **Excel de Asistencia** (`exportarAsistencia`): usa ExcelJS + html2canvas (cdnjs, se cargan solo al
+  exportar; el resto de exports sigue con SheetJS). Hojas: Gráficas (capturas de las tarjetas del
+  grupo con `agCapturar`), Mapa del mes (celdas de colores con letra T/S/X/J/F y nota con las horas),
+  Por persona (frase + gráficas de entrada/salida), Resumen y Detalle.
 
 ---
 

@@ -1444,3 +1444,9 @@ button.ag-mn:hover{color:var(--blue)}
   .ag-dp{margin-left:42px;height:160px}
   .ag-dp-x{margin:16px 0 0 42px}
 }
+/* captura para el Excel: sin controles de la app */
+.ag-export .ag-mini,.ag-export .ag-app{display:none!important}
+.ag-export .ag-card{box-shadow:none}
+.rg-hero-btn:disabled{opacity:.75;cursor:wait}
+.ag-pt em.der{left:auto;right:-4px;transform:none}
+.ag-pt em.izq{left:-4px;transform:none}

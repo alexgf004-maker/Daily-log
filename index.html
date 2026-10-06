@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=65">
+<link rel="stylesheet" href="css/styles.css?v=66">
 <link rel="stylesheet" href="css/temas.css?v=3">
 <script>
 // ── Temas de temporada ──
@@ -4417,7 +4417,7 @@ function agVistaGrupo(D){
   return `${agKpis(k)}
     <div class="ag-card">
       <div class="ag-h"><div><div class="ag-t">${ent?'¿Quién llega tarde más seguido?':'¿Quién sale antes más seguido?'}</div>
-        <div class="ag-s">Cada barra son los días del mes de una persona. Toca a alguien para ver sus gráficas.</div></div>${agFocoSeg()}</div>
+        <div class="ag-s">Cada barra son los días del mes de una persona.<span class="ag-app"> Toca a alguien para ver sus gráficas.</span></div></div>${agFocoSeg()}</div>
       <div class="ag-rks">${agRanking(D)}</div>
       <div class="ag-ley">${ent?'<span><i class="c-tarde"></i>Llegó tarde</span>':'<span><i class="c-temp"></i>Salió antes</span>'}<span><i class="c-falta"></i>Sin marcar</span><span><i class="c-ok"></i>${ent?'A tiempo':'A su hora'}</span><span><i class="c-aus"></i>Ausencia justificada</span><span><i class="c-asu"></i>Asueto</span></div>
     </div>
@@ -4443,11 +4443,13 @@ function agVistaGrupo(D){
 function agDiaPersona(p, fechas, tipo){
   const ent=tipo==='ent', key=ent?'dE':'dS';
   const difs=fechas.map(fe=>p.dias[fe]?.[key]).filter(v=>v!=null);
-  const lim=Math.min(ent?60:90,Math.max(30,Math.ceil(Math.max(0,...difs.map(Math.abs))/15)*15));
+  let lim=Math.max(30,Math.ceil(Math.max(0,...difs.map(Math.abs))/15)*15);
+  if(lim>45) lim=Math.ceil(lim/30)*30;
+  lim=Math.min(ent?60:90,lim);
   const y=d=>(Math.max(-lim,Math.min(lim,d))+lim)/(2*lim)*100;
   const n=fechas.length;
-  const paso=lim<=30?15:30;
-  const marcas=[]; for(let m=-lim; m<=lim; m+=paso) marcas.push(m);
+  const paso=lim<=45?15:30;
+  const marcas=[0]; for(let m=paso; m<=lim; m+=paso) marcas.push(m,-m);
   const etq=m=>ent?agHora(420+m):m===0?'Hora':(m<0?'−':'+')+(Math.abs(m)>=60?(Math.abs(m)/60)+' h':Math.abs(m)+' min');
   const grid=marcas.map(m=>`<div class="ag-yl${m===0?' cero':''}" style="bottom:${y(m)}%"><span>${etq(m)}</span></div>`).join('');
   // peor día para rotularlo
@@ -4467,7 +4469,7 @@ function agDiaPersona(p, fechas, tipo){
     const mal=ent?v>0:v<0, just=mal&&m.justificado;
     const cl=!mal?'c-ok':just?'just':(ent?'c-tarde':'c-temp');
     const det=ent?agDifTxt(v,'antes','tarde'):agDifTxt(v,'antes de su hora','después de su hora');
-    const rot=peor&&peor.fe===fe?`<em class="${y(v)>78?'abajo':''}">${m.horaStr}</em>`:'';
+    const rot=peor&&peor.fe===fe?`<em class="${y(v)>78?'abajo':''}${x>88?' der':x<12?' izq':''}">${m.horaStr}</em>`:'';
     return `<i class="ag-pt ${cl}" style="left:${x}%;bottom:${y(v)}%"${agTip(agFecha(fe),`${ent?'Entrada':'Salida'} ${m.horaStr} · ${det}`,`Hora oficial ${ent?h.entrada:h.salida}`,just?`Justificado${m.justificado.nombre?' por '+m.justificado.nombre:''}`:'')}>${rot}</i>`;
   }).join('');
   // línea que une los días seguidos con marca
@@ -4488,14 +4490,17 @@ function agDiaPersona(p, fechas, tipo){
   </div>`;
   function it2(q){ const m=p.dias[q.fe].d[ent?'entrada':'salida']; return `${m.horaStr} el ${agFecha(q.fe)}`; }
 }
-function agVistaPersona(D,p){
+function agFrase(p){
   const pl=p.pl, nE=p.dl.length;
-  const frase=[
+  return [
     pl===null?'No tiene entradas marcadas este mes.':`Llega en promedio a las <b>${agHora(420+pl)}</b> (${agDifTxt(pl,'antes de la hora','tarde')}).`,
     nE?`Llegó tarde <b>${p.tarde} de ${nE}</b> días${p.minT?` (${hmAsist(p.minT)} en total)`:''}.`:'',
     p.ds.length?(p.temp?`Salió antes de su hora <b>${p.temp}</b> ${p.temp===1?'vez':'veces'}${p.minS?` (${hmAsist(p.minS)})`:''}.`:'Nunca salió antes de su hora.'):'',
     p.noMarco?`No marcó <b>${p.noMarco}</b> ${p.noMarco===1?'día':'días'}.`:''
   ].filter(Boolean).join(' ');
+}
+function agVistaPersona(D,p){
+  const pl=p.pl, nE=p.dl.length, frase=agFrase(p);
   const fechas=Object.keys(p.dias).sort();
   const k={ent:nE,tarde:p.tarde,minTarde:p.minT,temp:p.temp,minTemp:p.minS,pl};
   return `<div class="ag-per">
@@ -4690,48 +4695,177 @@ window.quitarSabado=async()=>{
 };
 
 // ── Exportar asistencia a Excel ──
+// Excel de asistencia: gráficas (como imagen, igual que en la app), mapa del mes con colores,
+// una hoja por persona con sus gráficas, resumen y detalle. Librerías solo al exportar.
+const cargarScript=(src,global)=>window[global]?Promise.resolve():new Promise((res,rej)=>{
+  const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('No se pudo cargar '+src)); document.head.appendChild(s);
+});
+async function agCapturar(html, ancho, selectores){
+  const box=document.createElement('div');
+  box.className='ag-export';
+  box.style.cssText=`position:absolute;left:0;top:0;width:${ancho}px;padding:10px;background:#f4f6fb;z-index:-1;pointer-events:none`;
+  box.innerHTML=html; document.body.appendChild(box);
+  try{
+    if(document.fonts?.ready) await document.fonts.ready;
+    const out=[];
+    for(const sel of selectores){
+      const el=box.querySelector(sel); if(!el){ out.push(null); continue; }
+      const r=el.getBoundingClientRect();
+      const c=await html2canvas(el,{scale:2,backgroundColor:'#f4f6fb',logging:false,useCORS:true});
+      out.push({png:c.toDataURL('image/png'),w:Math.round(r.width),h:Math.round(r.height)});
+    }
+    return out;
+  } finally { box.remove(); }
+}
+const xlTexto=h=>String(h||'').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+const XL_AZUL='FF1E3A5F';
+function xlCabecera(row){
+  row.eachCell(c=>{ c.font={bold:true,color:{argb:'FFFFFFFF'}}; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL_AZUL}}; c.alignment={vertical:'middle',horizontal:'center',wrapText:true}; });
+  row.height=30;
+}
+function xlTitulo(ws,txt,sub,cols){
+  ws.mergeCells(1,1,1,cols); ws.mergeCells(2,1,2,cols);
+  const t=ws.getCell(1,1); t.value=txt; t.font={bold:true,size:16,color:{argb:'FFFFFFFF'}}; t.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL_AZUL}}; t.alignment={vertical:'middle',indent:1};
+  const s=ws.getCell(2,1); s.value=sub; s.font={size:10,color:{argb:'FF475569'}}; s.alignment={indent:1};
+  ws.getRow(1).height=30;
+}
+// Pone una imagen y devuelve la fila siguiente libre (filas de 20 px)
+function xlImagen(wb,ws,img,fila,col=0){
+  if(!img) return fila;
+  const id=wb.addImage({base64:img.png,extension:'png'});
+  ws.addImage(id,{tl:{col,row:fila},ext:{width:img.w,height:img.h},editAs:'oneCell'});
+  return fila+Math.ceil(img.h/20)+2;
+}
+
 window.exportarAsistencia=async()=>{
   if(!asistCache||!asistCache.filas.length){ alert('Primero carga la asistencia de un mes.'); return; }
-  if(!window.XLSX){
-    await new Promise((res,rej)=>{
-      const s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-      s.onload=res;s.onerror=rej;document.head.appendChild(s);
+  const btn=document.querySelector('#asistListaVista .rg-hero-btn'), txtBtn=btn?.textContent;
+  if(btn){ btn.disabled=true; btn.textContent='Generando…'; }
+  const focoAntes=agFoco;
+  try{
+    await Promise.all([
+      cargarScript('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js','ExcelJS'),
+      cargarScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js','html2canvas')
+    ]);
+    const {mes,filas}=asistCache;
+    const [y,mo]=mes.split('-');
+    const nomMes=new Date(parseInt(y),parseInt(mo)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
+    const D=agDatos();
+    const wb=new ExcelJS.Workbook(); wb.creator='INNOVA · Registro de Planilla'; wb.created=new Date();
+    const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—';
+    const plG=D.prom(D.lleg);
+    const kTxt=`Entradas a tiempo: ${pct(D.k.ent-D.k.tarde,D.k.ent)} · Llegada promedio: ${plG===null?'—':agHora(420+plG)} · Llegadas tarde: ${D.k.tarde} · Salidas antes: ${D.k.temp} · Sin marcar: ${D.k.falta}`;
+
+    // ── Hoja: Gráficas del grupo ──
+    const hayDatos=D.fechas.length&&(D.lleg.length||D.k.sal||D.k.falta);
+    const wsG=wb.addWorksheet('Gráficas',{views:[{showGridLines:false}]});
+    wsG.columns=Array.from({length:14},()=>({width:10}));
+    xlTitulo(wsG,`Asistencia · ${nomMes}`,kTxt,14);
+    if(hayDatos){
+      if(btn) btn.textContent='Gráficas…';
+      agFoco='ent';
+      const [kp,rkE,diaE,sem]=await agCapturar(agVistaGrupo(D),900,[':scope>.ag-kpis',':scope>.ag-card:nth-of-type(2)',':scope>.ag-card:nth-of-type(3)',':scope>.ag-grid2>.ag-card:last-child']);
+      agFoco='sal';
+      const [,rkS,diaS]=await agCapturar(agVistaGrupo(D),900,[':scope>.ag-kpis',':scope>.ag-card:nth-of-type(2)',':scope>.ag-card:nth-of-type(3)']);
+      let f=3;
+      for(const img of [kp,rkE,rkS,diaE,diaS,sem]) f=xlImagen(wb,wsG,img,f);
+    }
+
+    // ── Hoja: Mapa del mes (celdas de colores) ──
+    const wsM=wb.addWorksheet('Mapa del mes',{views:[{state:'frozen',xSplit:1,ySplit:4}]});
+    const F=D.fechas, nc=F.length+4;
+    xlTitulo(wsM,`Mapa del mes · ${nomMes}`,'T = llegó tarde · S = salió antes · X = sin marcar · J = ausencia justificada · F = asueto · vacío = a tiempo',nc);
+    wsM.getColumn(1).width=28;
+    F.forEach((_,i)=>{ wsM.getColumn(i+2).width=4.3; });
+    ['Tarde','Salió antes','Sin marcar'].forEach((_,i)=>{ wsM.getColumn(F.length+2+i).width=11; });
+    const r3=wsM.getRow(3), r4=wsM.getRow(4);
+    r3.getCell(1).value='Colaborador'; r4.getCell(1).value='';
+    F.forEach((fe,i)=>{ r3.getCell(i+2).value=parseInt(fe.slice(8)); r4.getCell(i+2).value=['D','L','M','M','J','V','S'][new Date(fe+'T12:00:00').getDay()]; });
+    ['Tarde','Salió antes','Sin marcar'].forEach((t,i)=>{ r3.getCell(F.length+2+i).value=t; });
+    xlCabecera(r3); r3.height=22;
+    for(let c=1;c<=nc;c++){ const x=r4.getCell(c); x.font={bold:true,size:9,color:{argb:'FF475569'}}; x.alignment={horizontal:'center'}; x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE9EEF6'}}; }
+    const XL_C={ok:['FF10B981',''],tarde:['FFEF4444','T'],temp:['FFF59E0B','S'],aus:['FF8B5CF6','J'],asu:['FF94A3B8','F'],falta:['FFFFFFFF','X']};
+    D.personas.forEach((p,k)=>{
+      const row=wsM.getRow(5+k); row.height=18;
+      row.getCell(1).value=p.nombre; row.getCell(1).font={bold:true};
+      F.forEach((fe,i)=>{
+        const it=p.dias[fe], cell=row.getCell(i+2);
+        cell.alignment={horizontal:'center',vertical:'middle'};
+        if(!it){ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8FAFC'}}; return; }
+        const [color,letra]=XL_C[it.c];
+        cell.value=letra||null;
+        cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:color}};
+        cell.font={bold:true,size:9,color:{argb:it.c==='falta'?'FF64748B':'FFFFFFFF'}};
+        const b={style:'thin',color:{argb:'FFFFFFFF'}};
+        cell.border=it.c==='falta'?{top:{style:'dashed',color:{argb:'FF94A3B8'}},bottom:{style:'dashed',color:{argb:'FF94A3B8'}},left:{style:'dashed',color:{argb:'FF94A3B8'}},right:{style:'dashed',color:{argb:'FF94A3B8'}}}:{top:b,bottom:b,left:b,right:b};
+        const d=it.d, notas=[];
+        if(d.entrada) notas.push(`Entrada ${d.entrada.horaStr}`+(d.entrada.estado==='tarde'?` (${fmtMin(d.entrada.minDiff)} tarde${d.entrada.justificado?', justificado':''})`:''));
+        if(d.salida) notas.push(`Salida ${d.salida.horaStr}`+(d.salida.estado==='salida_temprana'?` (${fmtMin(d.salida.minDiff)} antes${d.salida.justificado?', justificado':''})`:''));
+        if(it.c==='aus'&&d.tipoDia) notas.push(d.tipoDia);
+        if(notas.length) cell.note=notas.join('\n');
+      });
+      [p.tarde,p.temp,p.noMarco].forEach((v,i)=>{ const c=row.getCell(F.length+2+i); c.value=v; c.alignment={horizontal:'center'}; if(v) c.font={bold:true}; });
     });
+
+    // ── Hoja: Por persona ──
+    const wsP=wb.addWorksheet('Por persona',{views:[{showGridLines:false}]});
+    wsP.columns=Array.from({length:15},()=>({width:10}));
+    xlTitulo(wsP,`Asistencia por persona · ${nomMes}`,'Hora de entrada y de salida de cada día contra la hora oficial (línea punteada).',15);
+    let fp=3;
+    const orden=[...D.personas].sort((a,b)=>a.nombre.localeCompare(b.nombre));
+    for(let i=0;i<orden.length;i++){
+      const p=orden[i];
+      if(btn) btn.textContent=`Persona ${i+1} de ${orden.length}…`;
+      wsP.mergeCells(fp+1,1,fp+1,15); wsP.mergeCells(fp+2,1,fp+2,15);
+      const n=wsP.getCell(fp+1,1); n.value=p.nombre; n.font={bold:true,size:13,color:{argb:XL_AZUL}};
+      wsP.getRow(fp+1).height=22;
+      const fr=wsP.getCell(fp+2,1); fr.value=xlTexto(agFrase(p)); fr.font={size:10,color:{argb:'FF334155'}}; fr.alignment={wrapText:true,vertical:'top'};
+      wsP.getRow(fp+2).height=30;
+      fp+=3;
+      if(p.dl.length||p.ds.length||p.noMarco){
+        const fechas=Object.keys(p.dias).sort();
+        const [img]=await agCapturar(`<div class="ag-grid">${agDiaPersona(p,fechas,'ent')}${agDiaPersona(p,fechas,'sal')}</div>`,1000,[':scope>.ag-grid']);
+        fp=xlImagen(wb,wsP,img,fp);
+      } else fp+=1;
+    }
+
+    // ── Hoja: Resumen ──
+    const wsR=wb.addWorksheet('Resumen',{views:[{state:'frozen',ySplit:1}]});
+    wsR.columns=[{header:'Empleado',width:30},{header:'Días tarde',width:11},{header:'Min. tarde',width:11},{header:'Salidas anticipadas',width:13},{header:'Min. anticipados',width:13},{header:'No marcó',width:10},{header:'% entradas a tiempo',width:13},{header:'Llegada promedio',width:12}];
+    filas.forEach(f=>{
+      const p=D.personas.find(x=>x.uid===f.uid);
+      wsR.addRow([f.nombre,f.diasTarde,f.minTarde,f.salidasTemp,f.minTemp,f.noMarco,p&&p.dl.length?Math.round((p.dl.length-p.tarde)/p.dl.length*100)/100:null,p&&p.pl!==null?agHora(420+p.pl):'—']);
+    });
+    xlCabecera(wsR.getRow(1)); wsR.getColumn(7).numFmt='0%';
+    wsR.autoFilter={from:'A1',to:'H1'};
+
+    // ── Hoja: Detalle día por día ──
+    const wsD=wb.addWorksheet('Detalle',{views:[{state:'frozen',ySplit:1}]});
+    wsD.columns=[{header:'Empleado',width:30},{header:'Fecha',width:12},{header:'Entrada',width:9},{header:'Estado entrada',width:14},{header:'Min. tarde',width:10},{header:'Salida',width:9},{header:'Estado salida',width:14},{header:'Min. antic.',width:10},{header:'Observación',width:16}];
+    filas.forEach(f=>{
+      f.detalle.forEach(d=>{
+        if(d.tipo==='no_marco'){ wsD.addRow([f.nombre,d.fecha,'—','','','—','','','No marcó']); return; }
+        if(d.tipo==='justificado'){ wsD.addRow([f.nombre,d.fecha,'—','','','—','','',d.tipoDia||'Justificado']); return; }
+        const eTarde=d.entrada?.estado==='tarde'?(d.entrada.minDiff||0):'';
+        const sTemp=d.salida?.estado==='salida_temprana'?(d.salida.minDiff||0):'';
+        wsD.addRow([f.nombre, d.fecha, d.entrada?.horaStr||'—', d.entrada?(chipEstado(d.entrada).texto):'', eTarde,
+          d.salida?.horaStr||'—', d.salida?(chipEstado(d.salida).texto):'', sTemp, '']);
+      });
+    });
+    xlCabecera(wsD.getRow(1)); wsD.autoFilter={from:'A1',to:'I1'};
+
+    const buf=await wb.xlsx.writeBuffer();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    a.download=`Asistencia-${nomMes}.xlsx`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }catch(e){
+    alert('No se pudo generar el Excel: '+e.message);
+  }finally{
+    agFoco=focoAntes;
+    if(btn){ btn.disabled=false; btn.textContent=txtBtn; }
   }
-  const {mes,filas}=asistCache;
-  const [y,mo]=mes.split('-');
-  const nomMes=new Date(parseInt(y),parseInt(mo)-1,1).toLocaleDateString('es-SV',{month:'long',year:'numeric'});
-  const wb=XLSX.utils.book_new();
-
-  // Hoja 1: Resumen
-  const resHeaders=['Empleado','Días tarde','Min. tarde','Salidas anticipadas','Min. anticipados','No marcó'];
-  const resRows=filas.map(f=>[f.nombre,f.diasTarde,f.minTarde,f.salidasTemp,f.minTemp,f.noMarco]);
-  const ws1=XLSX.utils.aoa_to_sheet([resHeaders,...resRows]);
-  ws1['!cols']=[{wch:30},{wch:12},{wch:12},{wch:18},{wch:16},{wch:10}];
-  XLSX.utils.book_append_sheet(wb,ws1,'Resumen');
-
-  // Hoja 2: Detalle día por día
-  const detHeaders=['Empleado','Fecha','Entrada','Estado entrada','Min. tarde','Salida','Estado salida','Min. antic.','Observación'];
-  const detRows=[];
-  filas.forEach(f=>{
-    f.detalle.forEach(d=>{
-      if(d.tipo==='no_marco'){ detRows.push([f.nombre,d.fecha,'—','','','—','','','No marcó']); return; }
-      if(d.tipo==='justificado'){ detRows.push([f.nombre,d.fecha,'—','','','—','','',d.tipoDia||'Justificado']); return; }
-      const eTarde=d.entrada?.estado==='tarde'?(d.entrada.minDiff||0):'';
-      const sTemp=d.salida?.estado==='salida_temprana'?(d.salida.minDiff||0):'';
-      detRows.push([
-        f.nombre, d.fecha,
-        d.entrada?.horaStr||'—', d.entrada?(chipEstado(d.entrada).texto):'', eTarde,
-        d.salida?.horaStr||'—', d.salida?(chipEstado(d.salida).texto):'', sTemp, ''
-      ]);
-    });
-  });
-  const ws2=XLSX.utils.aoa_to_sheet([detHeaders,...detRows]);
-  ws2['!cols']=[{wch:30},{wch:12},{wch:9},{wch:14},{wch:10},{wch:9},{wch:14},{wch:10},{wch:14}];
-  XLSX.utils.book_append_sheet(wb,ws2,'Detalle');
-
-  XLSX.writeFile(wb,`Asistencia-${nomMes}.xlsx`);
 };
 
 // ── PROGRAMACIÓN ───────────────────────────────────────
