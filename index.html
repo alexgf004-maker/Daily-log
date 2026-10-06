@@ -1060,7 +1060,7 @@ function modalsHTML(){
   </div>
   <div class="mo" id="moAprobarHE">
     <div class="modal">
-      <div class="modal-title">Aprobar horas extras</div>
+      <div class="modal-title" id="moHETitulo">Aprobar horas extras</div>
       <div style="background:var(--gray50);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:13px">
         <div id="moHEInfo" style="color:var(--text2)"></div>
       </div>
@@ -2968,6 +2968,7 @@ window.cargarPerfilEmpleado=async()=>{
     ].join('');
     const acciones=[
       isAdmin()&&pendiente?`<button class="btn btn-g btn-xs" onclick="aprobarHEyRefresh('${uid}','${r.key}')">✓ Aprobar HE</button><button class="btn btn-gh btn-xs" onclick="openRej('${uid}','${r.key}','he');rejCallback=cargarPerfilEmpleado">Rechazar HE</button>`:'',
+      isAdmin()&&r.he&&eh==='aprobado'?`<button class="btn btn-gh btn-xs" onclick="aprobarHEyRefresh('${uid}','${r.key}')">Ajustar horas</button>`:'',
       isAdmin()&&r.viatico&&ev!=='rechazado'?`<button class="btn btn-gh btn-xs" onclick="openRej('${uid}','${r.key}','viatico');rejCallback=cargarPerfilEmpleado">Anular viático</button>`:'',
       !isAdmin()?`<button class="btn btn-gh btn-xs" onclick="openObs('${uid}','${r.key}','${(r.userName||'').replace(/'/g,"\\'")}','${r.fecha}')">Observación</button>`:''
     ].join('');
@@ -3052,6 +3053,7 @@ window.aprobarHE=async(uid,key)=>{
   $('moHEInfo').innerHTML=`<b>${r.userName||uid}</b> · ${fmtLong(r.fecha)}<br>
     Registró: ${r.horaEntrada||''}–${r.horaSalida||''} · <b>${hrs>0?hrs+'h ':''+(mins)+'m'} extras</b><br>
     <span style="color:var(--text2)">${r.heJustif||''}</span>`;
+  if($('moHETitulo')) $('moHETitulo').textContent=r.estadoHE==='aprobado'?'Ajustar horas extras ya aprobadas':'Aprobar horas extras';
   $('moAprobarHE').classList.add('open');
 };
 
@@ -3068,6 +3070,7 @@ window.aprobarHEyRefresh=async(uid,key)=>{
   $('moHEInfo').innerHTML=`<b>${r.userName||uid}</b> · ${fmtLong(r.fecha)}<br>
     Registró: ${r.horaEntrada||''}–${r.horaSalida||''} · <b>${hrs>0?hrs+'h ':''+(mins)+'m'} extras</b><br>
     <span style="color:var(--text2)">${r.heJustif||''}</span>`;
+  if($('moHETitulo')) $('moHETitulo').textContent=r.estadoHE==='aprobado'?'Ajustar horas extras ya aprobadas':'Aprobar horas extras';
   $('moAprobarHE').classList.add('open');
 };
 
@@ -3087,12 +3090,15 @@ window.confirmarAprobarHE=async()=>{
     alert('Agrega una nota explicando por qué modificaste las horas.');
     return;
   }
+  const fechaReg=snap.exists()?snap.val().fecha:'';
+  if(snap.exists()&&snap.val().estadoHE==='aprobado'&&fechaReg&&mesCerrado(fechaReg)
+     &&!confirm('Ese día es de un mes que ya se cerró. ¿Cambiar de todas formas las horas aprobadas?')) return;
 
   await update(ref(db,`registros/${heAprobKey.uid}/${heAprobKey.key}`),{
     estadoHE:'aprobado',
     revisadoHEEn:Date.now(),
     minHEAprobado:minAprobados,
-    ...(modificado?{notaAjusteHE:nota,heAjustada:true}:{})
+    ...(modificado?{notaAjusteHE:nota,heAjustada:true}:{notaAjusteHE:null,heAjustada:null})
   });
   closeModal('moAprobarHE');
   if(heAprobCallback) await heAprobCallback();
