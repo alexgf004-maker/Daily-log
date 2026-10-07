@@ -112,7 +112,7 @@ self.addEventListener('fetch', e => {
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=70">
-<link rel="stylesheet" href="css/temas.css?v=9">
+<link rel="stylesheet" href="css/temas.css?v=10">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -143,10 +143,16 @@ self.addEventListener('fetch', e => {
     var flash=capa.querySelector('.hw-flash');
     var pin=document.getElementById('loginPin');
     function caja(e){ var b=e&&e.getBoundingClientRect(), o=ls.getBoundingClientRect(); return b&&{l:b.left-o.left,r:b.right-o.left,t:b.top-o.top,b:b.bottom-o.top}; }
-    function libre(x,y){ var z=[caja(ls.querySelector('.login-form')),caja(ls.querySelector('.login-brand'))];
-      for(var i=0;i<z.length;i++){ var b=z[i]; if(b&&x>b.l-50*s&&x<b.r+50*s&&y>b.t-50*s&&y<b.b+60*s) return false; } return true; }
-    function destino(){ for(var i=0;i<40;i++){ var x=50*s+Math.random()*(W-100*s), y=60*s+Math.random()*(H-200*s); if(libre(x,y)){ g.tx=x; g.ty=y; return; } } g.tx=W*.18; g.ty=90*s; }
-    function medir(){ W=ls.clientWidth; H=ls.clientHeight; s=Math.max(.8,Math.min(1.15,W/440)); el.style.width=(58*s).toFixed(1)+'px'; }
+    // ¿cabe el fantasma con centro en (x,y) sin tapar la tarjeta, el logo ni los textos?
+    // En pantallas angostas solo pasea por el cielo, arriba de la tarjeta, para que no se esconda detrás.
+    function libre(x,y){ var f=caja(ls.querySelector('.login-form')), z=[f], q=['.login-logo','.login-brand-eyebrow','.login-brand-name','.login-brand-sub'];
+      for(var j=0;j<q.length;j++) z.push(caja(ls.querySelector(q[j])));
+      var gl=x-30*s, gr=x+30*s, gt=y-40*s, gb=y+46*s, m=10*s;
+      if(gt<6||gl<4||gr>W-4) return false;
+      if(W<700&&f&&gb>f.t-14*s) return false;
+      for(var i=0;i<z.length;i++){ var b=z[i]; if(b&&gr>b.l-m&&gl<b.r+m&&gb>b.t-m&&gt<b.b+m) return false; } return true; }
+    function destino(){ for(var i=0;i<60;i++){ var x=34*s+Math.random()*(W-68*s), y=44*s+Math.random()*(H-160*s); if(libre(x,y)){ g.tx=x; g.ty=y; return; } } g.tx=W*.16; g.ty=70*s; }
+    function medir(){ W=ls.clientWidth; H=ls.clientHeight; s=Math.max(1,Math.min(1.2,W/420)); el.style.width=(60*s).toFixed(1)+'px'; }
     medir(); destino(); g.x=g.tx; g.y=g.ty; destino();
     window.addEventListener('resize',function(){ medir(); if(!libre(g.tx,g.ty)) destino(); });
     function punto(e){ var o=ls.getBoundingClientRect(); return {x:e.clientX-o.left,y:e.clientY-o.top}; }
@@ -191,7 +197,7 @@ self.addEventListener('fetch', e => {
       if(g.susto>0){ bob=-6*s+Math.sin(t/18)*2.5*s; inc=Math.sin(t/22)*7; g.x+=Math.sin(t/15)*1.2; }
       el.style.opacity=g.ver.toFixed(3);
       el.style.filter=g.fuera?'blur('+((1-g.ver)*6).toFixed(1)+'px)':'';
-      el.style.transform='translate('+(g.x-29*s).toFixed(1)+'px,'+(g.y-36*s+bob).toFixed(1)+'px) rotate('+inc.toFixed(1)+'deg) scale('+esc.toFixed(3)+')';
+      el.style.transform='translate('+(g.x-30*s).toFixed(1)+'px,'+(g.y-38*s+bob).toFixed(1)+'px) rotate('+inc.toFixed(1)+'deg) scale('+esc.toFixed(3)+')';
     }
     requestAnimationFrame(cuadro);
   }
@@ -796,6 +802,10 @@ function renderAdmin(){
           <button class="pf-row ap-aud" onclick="cicloTema()">
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></span>
             <span class="pf-tx"><b>Tema de temporada</b><span id="temaStatus">…</span></span><span class="ap-tema" id="temaModo"></span>
+          </button>
+          <button class="pf-row ap-aud" id="temaProbar" onclick="probarMarcajeTema()" style="display:none">
+            <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2 14 22"/><path d="M18.5 2.5C13 .5 6 1.5 1.5 6.5 6 4.5 12 4 17 6Z"/></svg></span>
+            <span class="pf-tx"><b>Probar animación de marcaje</b><span>Sin marcar de verdad</span></span>
           </button>
           <button class="pf-row ap-aud" onclick="toggleAuditoria()">
             <span class="pf-ic v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span>
@@ -3167,6 +3177,7 @@ function pintarTema(){
     :T.activo?`${T.activo.nombre} activo${T.modo==='ver'&&!T.porFecha?' (vista previa)':''}`
     :`${sig.nombre}: del ${fc(sig.desde)} al ${fc(sig.hasta)}`;
   if(md) md.textContent={auto:'Automático',ver:'Ver ahora',off:'Apagado'}[T.modo];
+  const pr=$('temaProbar'); if(pr) pr.style.display=T.activo?'':'none';
 }
 window.cicloTema=()=>{
   const T=window.__temas; if(!T) return;
@@ -3178,6 +3189,26 @@ window.cicloTema=()=>{
   if(T.activo) T.activo.clases.forEach(c=>html.classList.add(c));
   if(T.activo) window.__escenaHalloween&&window.__escenaHalloween();
   pintarTema();
+  renderMarcajeCard();   // la tarjeta de marcaje cambia de figuras con el tema
+};
+// Vista previa de la escena del marcaje con datos de ejemplo: no guarda nada ni pide ubicación
+window.probarMarcajeTema=function(){
+  if(!hwTema()) return;
+  document.getElementById('hwPrueba')?.remove();
+  const w=document.createElement('div'); w.id='hwPrueba'; w.className='hw-prueba';
+  w.innerHTML=`<div class="hw-prueba-in" role="dialog" aria-label="Probar animación de marcaje"><div class="hw-prueba-k">Vista previa · no se guarda</div><div id="hwPruebaCard"></div>
+    <div class="hw-prueba-bt"><button type="button" class="ok" data-c="ok">Llegar a tiempo</button><button type="button" class="mal" data-c="mal">Llegar tarde</button><button type="button" class="x" data-c="x">Cerrar</button></div></div>`;
+  const pintar=c=>{
+    const mal=c==='mal', hora=mal?'07:12':'06:52';
+    $('hwPruebaCard').innerHTML=`<div class="mk3"><div class="mk3-hd"><span class="mk3-k">Mi marcaje</span><span class="mk3-sede">Ejemplo</span></div><div class="mk3-row">
+      <div class="mk3-pt recien"><div class="mk3-dot hw ${mal?'mal':'ok'}">${parcaMini(mal)}</div>${mal?horaPartida(hora):`<div class="mk3-t">${hora}</div>`}<div class="mk3-l">Entrada</div>
+      ${etiquetaEstado(mal?'mal':'ok',mal?'12 min tarde':'A tiempo').replace(mal?ICO_RELOJ:ICO_CHECK,mal?ICO_CORTE_HW:ICO_GUADANA_HW)}</div>
+      <div class="mk3-line"><i style="width:50%"></i></div>
+      <div class="mk3-pt"><div class="mk3-dot off"></div><div class="mk3-t off">--:--</div><div class="mk3-l">Salida</div></div></div></div>`;
+    requestAnimationFrame(()=>tajoHalloween($('hwPruebaCard').querySelector('.mk3'),$('hwPruebaCard').querySelector('.mk3-pt.recien')));
+  };
+  w.addEventListener('click',e=>{ const c=e.target.closest('button')?.dataset.c; if(e.target===w||c==='x'){ w.remove(); return; } if(c) pintar(c); });
+  document.body.appendChild(w); pintar('ok');
 };
 function pintarMantenimiento(on){
   const tog=$('togMant'); if(tog) tog.classList.toggle('on',!!on);
