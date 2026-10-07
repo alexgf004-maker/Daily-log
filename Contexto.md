@@ -199,6 +199,10 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
 
 ---
 
+- **Halloween, login y fondo**: el login conserva su escena (luna roja con murciélagos, telaraña con araña,
+  árbol enraizado en el cementerio, figura encapuchada, relámpago). La sangre de la tarjeta es un SVG con
+  filtro de líquido y brillo que arma `__escenaHalloween` (`.hw-sangre`). Dentro de la app el fondo es negro
+  ("Penumbra") y las tarjetas siguen claras.
 - **Colores del tema sobre lo nuevo**: `herramientas/tema-colores.py` lee `css/styles.css`, toma cada
   regla que usa los azules de la app y escribe su versión en tonos del tema entre las marcas
   `AUTO-COLORES` de `css/temas.css` (con `:where(.tema-halloween)` para no subir especificidad).
