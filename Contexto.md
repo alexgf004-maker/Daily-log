@@ -200,7 +200,7 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
 ---
 
 - **Halloween, login y fondo**: el login conserva su escena (luna roja con murciélagos, árbol enraizado en el
-  cementerio, figura encapuchada, relámpago) y un fantasma de humo en canvas (`fantasma()` en el script del
+  cementerio, figura encapuchada, relámpago) y un fantasma de sábana como el de la opción "La mansión" (`fantasma()` en el script del
   head, `.hw-fantasma`) que pasea por el cielo sin pasar por la tarjeta ni el título; se acerca a donde tocas o
   pasas el mouse, cierra los ojos mientras el PIN tiene el foco y, si lo tocas, se deshace y reaparece en otro
   lado. Se apaga con `prefers-reduced-motion` y no dibuja si el login no está activo. Ya no hay telaraña ni araña. La sangre de la tarjeta es un SVG con
