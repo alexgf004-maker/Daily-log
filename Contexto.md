@@ -212,7 +212,7 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   herida (`horaPartida`). Al marcar, `tajoHalloween` oscurece la tarjeta y cruza una guadaña a la altura de la
   hora: a tiempo la hora se agacha; tarde la parte y la tarjeta tiembla. Estilos `.hw-tajo`, `.hw-parca`,
   `.hw-partida` en `css/temas.css`. Fuera del tema todo sigue igual (cheque verde / signo de alerta).
-  Para verla sin marcar: Perfil → "Probar animación de marcaje" (`probarMarcajeTema`, solo con el tema activo;
+  Para verla sin marcar: Perfil (técnico o admin) → "Probar animación de marcaje" (`probarMarcajeTema`, `.tema-probar` solo se ve con el tema activo;
   usa datos de ejemplo y no guarda nada). Al cambiar el tema se vuelve a dibujar la tarjeta de marcaje.
 - **Colores del tema sobre lo nuevo**: `herramientas/tema-colores.py` lee `css/styles.css`, toma cada
   regla que usa los azules de la app y escribe su versión en tonos del tema entre las marcas

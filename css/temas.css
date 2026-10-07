@@ -161,6 +161,8 @@
 @media (prefers-reduced-motion:reduce){.hw-tajo{display:none}.hw-escena,.hw-escena *{animation:none!important}}
 
 /* vista previa de la escena del marcaje (Perfil → Probar animación de marcaje) */
+.tema-probar{display:none!important}
+.tema-halloween .tema-probar{display:flex!important}
 .hw-prueba{position:fixed;inset:0;z-index:2000;background:rgba(4,2,3,.9);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px}
 .hw-prueba-in{width:100%;max-width:440px;display:flex;flex-direction:column;gap:12px}
 .hw-prueba-k{color:#d9c9cb;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:center}

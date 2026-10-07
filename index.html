@@ -112,7 +112,7 @@ self.addEventListener('fetch', e => {
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=70">
-<link rel="stylesheet" href="css/temas.css?v=10">
+<link rel="stylesheet" href="css/temas.css?v=11">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -525,6 +525,7 @@ function renderEmployee(nombre){
         <div class="pf-card">
           <div class="pf-k">Ayuda</div>
           <div class="pf-row pf-tap" onclick="iniciarTour(true)"><span class="pf-ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span><span class="pf-tx"><b>Ver novedades de la app</b><span>La campanita, el calendario y el detalle de cada día</span></span><span class="chev"></span></div>
+          <div class="pf-row pf-tap tema-probar" onclick="probarMarcajeTema()"><span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2 14 22"/><path d="M18.5 2.5C13 .5 6 1.5 1.5 6.5 6 4.5 12 4 17 6Z"/></svg></span><span class="pf-tx"><b>Probar animación de marcaje</b><span>Sin marcar de verdad</span></span></div>
         </div>
         <button class="pf-salir" onclick="doLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</button>
       </div>
@@ -803,7 +804,7 @@ function renderAdmin(){
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></span>
             <span class="pf-tx"><b>Tema de temporada</b><span id="temaStatus">…</span></span><span class="ap-tema" id="temaModo"></span>
           </button>
-          <button class="pf-row ap-aud" id="temaProbar" onclick="probarMarcajeTema()" style="display:none">
+          <button class="pf-row ap-aud tema-probar" id="temaProbar" onclick="probarMarcajeTema()">
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2 14 22"/><path d="M18.5 2.5C13 .5 6 1.5 1.5 6.5 6 4.5 12 4 17 6Z"/></svg></span>
             <span class="pf-tx"><b>Probar animación de marcaje</b><span>Sin marcar de verdad</span></span>
           </button>
@@ -3177,7 +3178,6 @@ function pintarTema(){
     :T.activo?`${T.activo.nombre} activo${T.modo==='ver'&&!T.porFecha?' (vista previa)':''}`
     :`${sig.nombre}: del ${fc(sig.desde)} al ${fc(sig.hasta)}`;
   if(md) md.textContent={auto:'Automático',ver:'Ver ahora',off:'Apagado'}[T.modo];
-  const pr=$('temaProbar'); if(pr) pr.style.display=T.activo?'':'none';
 }
 window.cicloTema=()=>{
   const T=window.__temas; if(!T) return;
