@@ -112,7 +112,7 @@ self.addEventListener('fetch', e => {
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=71">
-<link rel="stylesheet" href="css/temas.css?v=15">
+<link rel="stylesheet" href="css/temas.css?v=16">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -2120,10 +2120,55 @@ document.addEventListener('input',ev=>{ if(ev.target.closest&&ev.target.closest(
 let _fxOkTimer=null;
 function mostrarGuardadoOK(pills){
   const o=$('fxOk'); if(!o) return;
+  if(o.parentNode!==document.body) document.body.appendChild(o);   // fuera de .content: así cubre la barra y la niebla del tema
   $('fxOkPills').innerHTML=pills.filter(Boolean).map(t=>`<span>${t}</span>`).join('');
+  // Halloween: la Muerte firma el registro con un tajo de guadaña
+  const hw=hwTema(); o.classList.toggle('hw',hw);
+  const sub=o.querySelector('.fx-ok-s'); if(sub) sub.textContent=hw?'La Muerte ya tomó nota':'Ya quedó en tu historial';
+  if(hw&&!o.querySelector('.fxh')) o.insertAdjacentHTML('afterbegin',ESCENA_GUARDADO_HW);
   o.classList.remove('on'); void o.offsetWidth; o.classList.add('on');
-  clearTimeout(_fxOkTimer); _fxOkTimer=setTimeout(cerrarGuardadoOK,3200);
+  clearTimeout(_fxOkTimer); _fxOkTimer=setTimeout(cerrarGuardadoOK,hw?4400:3200);
 }
+// Escena de Halloween para "¡Listo, guardado!": latido rojo, la Muerte (calavera bajo la capucha) da un tajo
+// que abre una herida en forma de cheque, salpica y gotea; la pantalla también sangra desde arriba.
+const SANGRE_TOP_HW=`<svg viewBox="0 0 400 100" preserveAspectRatio="none"><defs><linearGradient id="fxhS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a0003"/><stop offset=".5" stop-color="#5c0006"/><stop offset="1" stop-color="#8a0b10"/></linearGradient></defs>
+    <path d="M0 0H400V10C340 16 300 8 250 13S150 9 100 14 30 10 0 13Z" fill="url(#fxhS)"/>
+    <g fill="url(#fxhS)">${[[22,7,46],[58,5,26],[96,9,70],[141,6,34],[187,8,88],[226,5,30],[262,10,58],[305,6,40],[343,8,76],[381,5,28]].map(([x,w,l],i)=>`<path class="fxh-chorro" style="animation-delay:${(1.35+i%4*.12).toFixed(2)}s" d="M${x-w/2} 8V${l}a${w/2} ${w/2} 0 0 0 ${w} 0V8Z"/>`).join('')}</g></svg>`;
+const ESCENA_GUARDADO_HW=`<div class="fxh" aria-hidden="true">
+  <div class="fxh-sangre">${SANGRE_TOP_HW.repeat(5)}</div>
+  <svg class="fxh-esc" viewBox="0 0 400 560" preserveAspectRatio="xMidYMid meet"><defs>
+    <linearGradient id="fxhR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a0a0d"/><stop offset=".35" stop-color="#070204"/><stop offset="1" stop-color="#020102"/></linearGradient>
+    <radialGradient id="fxhH" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#d8c8aa"/><stop offset=".55" stop-color="#9a8466"/><stop offset="1" stop-color="#3a2c1e"/></radialGradient>
+    <radialGradient id="fxhC" cx="50%" cy="58%" r="55%"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000"/></radialGradient>
+    <linearGradient id="fxhF" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f3f4f6"/><stop offset=".5" stop-color="#9ca3af"/><stop offset="1" stop-color="#4b5563"/></linearGradient></defs>
+    <g class="fxh-parca">
+      <g transform="translate(86 40) scale(1.9)">
+        <path fill="url(#fxhR)" stroke="#6b1a1a" stroke-opacity=".7" stroke-width=".8" d="M62 6C44 6 32 20 30 40c-2 18-6 40-16 64-6 14-12 34-14 60 14-6 26-2 36-6 10 4 22 2 32 6 10-4 20-2 30-6 8 4 16 2 24 6-2-30-10-52-18-70-8-20-12-38-14-54C88 20 80 6 62 6Z"/>
+        <path d="M62 16c-12.5 0-21 10-21 25 0 11.5 8.5 19 21 19s21-7.5 21-19c0-15-8.5-25-21-25Z" fill="#000"/>
+        <g class="fxh-craneo"><path d="M62 25c-7.6 0-12.6 5.6-12.6 12.8 0 4.6 2 7.6 4.6 9.4v4.4c0 1.4 1.2 2.4 2.6 2.4h10.8c1.4 0 2.6-1 2.6-2.4v-4.4c2.6-1.8 4.6-4.8 4.6-9.4C74.6 30.6 69.6 25 62 25Z" fill="url(#fxhH)"/>
+          <g fill="#0a0204"><ellipse cx="57.4" cy="38.4" rx="3.3" ry="3.8"/><ellipse cx="66.6" cy="38.4" rx="3.3" ry="3.8"/><path d="M62 42.5l-1.8 3.6h3.6Z"/></g>
+          <path d="M57 49.5v3.4M59.6 49.5v3.4M62 49.5v3.4M64.4 49.5v3.4M67 49.5v3.4" stroke="#3a2c1e" stroke-width=".7"/>
+          <g class="fxh-brasas" fill="#ff2a1a" style="filter:drop-shadow(0 0 2px #ff2a1a)"><circle cx="57.6" cy="38.8" r="1.3"/><circle cx="66.4" cy="38.8" r="1.3"/></g></g>
+        <path d="M62 16c-12.5 0-21 10-21 25 0 11.5 8.5 19 21 19s21-7.5 21-19c0-15-8.5-25-21-25Z" fill="url(#fxhC)"/>
+        <path d="M84 70c6 2 10 4 14 7l-2 6c-4-3-8-4-13-5Z" fill="#050203" stroke="#6b1a1a" stroke-opacity=".5" stroke-width=".6"/>
+      </g>
+    </g>
+    <g class="fxh-guadana">
+      <path d="M272 70L250 420" stroke="#2a1a12" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M272 70C238 46 172 40 120 70c44-14 98-14 140 4l12-4Z" fill="url(#fxhF)" stroke="#1f2937" stroke-width="1.2"/>
+      <path d="M126 69c40-18 92-18 132 2" fill="none" stroke="#fff" stroke-width="1.6" opacity=".9"/>
+      <path d="M124 70c1 6 0 12 1.6 15a1.8 1.8 0 0 0 3.2-.4c.6-4-1-9-2.4-14.6Z" fill="#8a0b10"/>
+      <g fill="#efe4cf" stroke="#5b4a36" stroke-width=".8"><rect x="250" y="194" width="20" height="6" rx="3"/><rect x="249" y="202" width="21" height="6" rx="3"/><rect x="250" y="210" width="19" height="5.5" rx="2.7"/><rect x="251" y="217" width="16" height="5" rx="2.5"/></g>
+    </g>
+    <g class="fxh-herida" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path class="fxh-h1" d="M104 330L176 402 322 246" stroke="#1c0002"/>
+      <path class="fxh-h2" d="M104 330L176 402 322 246" stroke="#b3121a" stroke-width="7"/>
+      <path class="fxh-h3" d="M104 330L176 402 322 246" stroke="#ffb4b4" stroke-width="1.6" opacity=".8"/></g>
+    <g class="fxh-spray" fill="#8a0b10">${[[140,366,-16,10,3.4],[176,402,-6,22,4],[200,376,18,-6,2.6],[236,338,24,10,3.6],[262,310,-14,-16,2.4],[290,280,26,-4,3],[312,258,10,-20,2.2],[122,348,-22,-6,2.2],[214,358,-20,22,2.8],[300,268,-26,-8,2]].map(([x,y,dx,dy,r])=>`<circle cx="${x}" cy="${y}" r="${r}" style="--dx:${dx}px;--dy:${dy}px"/>`).join('')}</g>
+    <g class="fxh-gotas" fill="#8a0b10">${[[138,366,46],[176,402,92],[222,352,64],[262,310,118],[300,268,52]].map(([x,y,l],i)=>`<path style="animation-delay:${(1.25+i*.11).toFixed(2)}s" d="M${x-2.4} ${y}c0 ${l*.6} -1 ${l*.9} 0 ${l}a2.6 2.6 0 0 0 5 0c.6-${l*.15} 0-${l*.5} -2.6-${l}Z"/>`).join('')}</g>
+  </svg>
+  <div class="fxh-flash"></div>
+</div>`;
 window.cerrarGuardadoOK=()=>{ const o=$('fxOk'); if(o) o.classList.remove('on'); clearTimeout(_fxOkTimer); };
 
 window.guardarReg=async()=>{

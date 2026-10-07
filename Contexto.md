@@ -210,6 +210,10 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
 - **Programación, vehículo del grupo**: "+ Vehículo" abre una hoja (`progAbrirVeh`, `#moVehGrupo`, estilo sx) con
   tarjetas por pick-up y moto: libres primero, luego los restringidos a otra campaña ("Solo …"), los que ya van en
   otro grupo ("En CPT MT · Grupo 1") y al final los no disponibles con su estado; los de baja no se muestran.
+- **Halloween, "¡Listo, guardado!"**: con el tema, `mostrarGuardadoOK` pone la escena `ESCENA_GUARDADO_HW` en
+  `#fxOk` (clase `hw`): latido rojo, la Muerte con calavera bajo la capucha da un tajo que abre una herida en forma
+  de cheque, salpica y gotea, y la pantalla sangra desde arriba (`SANGRE_TOP_HW`). Dura ~4.4 s. `#fxOk` se mueve a
+  `body` al mostrarse para quedar encima de la barra y la niebla del tema. Estilos `.fxh-*` en `css/temas.css`.
 - **Halloween, rendimiento del login**: evitar lo que repinta en cada cuadro. Las brasas se mueven con
   `transform` (no `background-position`), la sangre es estática (su filtro de líquido se calcula una vez), los
   murciélagos no llevan `filter` y aletean con CSS (los lejanos no aletean), y el brillo del fantasma es un
