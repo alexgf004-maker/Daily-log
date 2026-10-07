@@ -112,7 +112,7 @@ self.addEventListener('fetch', e => {
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=70">
-<link rel="stylesheet" href="css/temas.css?v=11">
+<link rel="stylesheet" href="css/temas.css?v=13">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -138,7 +138,7 @@ self.addEventListener('fetch', e => {
     el.innerHTML='<svg viewBox="0 0 64 80" aria-hidden="true"><path fill="#f6eeee" fill-opacity=".92" d="'+cuerpo+'"><animate attributeName="d" dur="1.6s" repeatCount="indefinite" values="'+cuerpo+';'+cuerpo2+';'+cuerpo+'"/></path>'+
       '<g class="hw-cara"><ellipse cx="23" cy="30" rx="4.5" ry="7" fill="#1d0a0e"/><ellipse cx="41" cy="30" rx="4.5" ry="7" fill="#1d0a0e"/><ellipse cx="32" cy="48" rx="5" ry="7" fill="#1d0a0e"/></g></svg>';
     capa.appendChild(el);
-    var cara=el.querySelectorAll('ellipse'), W=0, H=0, s=1, ult=0;
+    var cara=el.querySelectorAll('ellipse'), W=0, H=0, s=1, ult=0, prev={};
     var g={x:0,y:0,tx:0,ty:0,ver:0,ojo:1,parpa:0,curioso:0,pausa:0,fuera:0,vx:0,mx:null,my:null,susto:0,huye:0,fase:0};
     var flash=capa.querySelector('.hw-flash');
     var pin=document.getElementById('loginPin');
@@ -189,14 +189,16 @@ self.addEventListener('fetch', e => {
       var mx=g.curioso>0&&g.mx!=null?g.mx:g.tx, my=g.curioso>0&&g.my!=null?g.my:g.ty, a=Math.atan2(my-g.y,mx-g.x), ox=(Math.cos(a)*2.6).toFixed(2), oy=(Math.sin(a)*1.8).toFixed(2);
       var asust=g.susto>0||g.huye===1;
       if(asust){ ox=0; oy=-1; }
-      cara[0].setAttribute('ry',asust?'9.5':(7*g.ojo).toFixed(2)); cara[1].setAttribute('ry',asust?'9.5':(7*g.ojo).toFixed(2));
-      cara[0].setAttribute('rx',asust?'5.8':'4.5'); cara[1].setAttribute('rx',asust?'5.8':'4.5');
-      cara[2].setAttribute('ry',asust?'10':(g.ojo<.5?3.5:7)); cara[2].setAttribute('rx',asust?'6.5':'5');
-      cara[0].parentNode.setAttribute('transform','translate('+ox+' '+oy+')');
+      var ry=asust?'9.5':(7*g.ojo).toFixed(1), rx=asust?'5.8':'4.5', bry=asust?'10':(g.ojo<.5?'3.5':'7'), brx=asust?'6.5':'5', tr='translate('+(+ox).toFixed(1)+' '+(+oy).toFixed(1)+')';
+      if(ry!==prev.ry){ cara[0].setAttribute('ry',ry); cara[1].setAttribute('ry',ry); prev.ry=ry; }
+      if(rx!==prev.rx){ cara[0].setAttribute('rx',rx); cara[1].setAttribute('rx',rx); prev.rx=rx; }
+      if(bry+brx!==prev.b){ cara[2].setAttribute('ry',bry); cara[2].setAttribute('rx',brx); prev.b=bry+brx; }
+      if(tr!==prev.tr){ cara[0].parentNode.setAttribute('transform',tr); prev.tr=tr; }
       var bob=Math.sin(t/700)*5*s, inc=Math.max(-12,Math.min(12,g.vx*10));
       if(g.susto>0){ bob=-6*s+Math.sin(t/18)*2.5*s; inc=Math.sin(t/22)*7; g.x+=Math.sin(t/15)*1.2; }
-      el.style.opacity=g.ver.toFixed(3);
-      el.style.filter=g.fuera?'blur('+((1-g.ver)*6).toFixed(1)+'px)':'';
+      var op=g.ver.toFixed(2), fl=g.fuera?'blur('+((1-g.ver)*6).toFixed(1)+'px)':'';
+      if(op!==prev.op){ el.style.opacity=op; prev.op=op; }
+      if(fl!==prev.fl){ el.style.filter=fl; prev.fl=fl; }
       el.style.transform='translate('+(g.x-30*s).toFixed(1)+'px,'+(g.y-38*s+bob).toFixed(1)+'px) rotate('+inc.toFixed(1)+'deg) scale('+esc.toFixed(3)+')';
     }
     requestAnimationFrame(cuadro);
@@ -206,13 +208,14 @@ self.addEventListener('fetch', e => {
     if(!ls||!document.documentElement.classList.contains('tema-halloween')||document.querySelector('.hw-capa')) return;
     var up='M50 30C42 14 24 6 4 12C11 15 13 19 13 24C19 20 25 22 27 28C32 24 38 25 43 31Z',
         dn='M50 31C42 38 24 46 5 52C11 47 13 43 13 38C19 40 25 38 28 34C33 38 39 37 44 34Z';
-    function bat(v){ var a='<animate attributeName="d" values="'+up+';'+dn+';'+up+'" dur="'+v+'s" repeatCount="indefinite"/>';
-      return '<svg viewBox="0 0 100 60"><g fill="#0a0204"><path d="'+up+'">'+a+'</path><g transform="translate(100 0) scale(-1 1)"><path d="'+up+'">'+a+'</path></g>'+
+    // alas con animación CSS (transform) en vez de SMIL: el SMIL obligaba a recalcular el SVG en cada cuadro
+    function bat(v){ var a=v?' class="ala" style="animation-duration:'+(v/2).toFixed(3)+'s"':'';   // v=0: lejano, sin aleteo
+      return '<svg viewBox="0 0 100 60"><g fill="#0a0204"><path d="'+up+'"'+a+'/><g transform="translate(100 0) scale(-1 1)"><path d="'+up+'"'+a+'/></g>'+
         '<ellipse cx="50" cy="33" rx="6.5" ry="9"/><path d="M45 26l1.5-8 3 5h1l3-5 1.5 8z"/></g><circle cx="47.8" cy="27.5" r="1.1" fill="#ff3b1f"/><circle cx="52.2" cy="27.5" r="1.1" fill="#ff3b1f"/></svg>'; }
     var h='<div class="hw-flash"></div><div class="hw-rayo"><svg viewBox="0 0 70 300" fill="none" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"><path d="M44 0L30 70 46 76 22 160 38 166 12 300"/><path d="M30 70L12 110M22 160L40 200" stroke-width="1.4"/></svg></div>';
-    var vuelos=[[-300,160,5.5,0,2.6,-70,-10],[-140,560,6.5,1.4,3.2,30,8],[-380,-30,5,2.8,2,-40,-14],[-90,330,6,4.1,2.8,-90,12],[-260,660,7,5.4,3.4,50,-6],[-420,280,5.5,2.1,2.3,-30,10],[40,420,6.5,3.5,2.6,-60,6]];
+    var vuelos=[[-300,160,5.5,0,2.6,-70,-10],[-140,560,6.5,1.4,3.2,30,8],[-380,-30,5,2.8,2,-40,-14],[-90,330,6,4.1,2.8,-90,12],[-260,660,7,5.4,3.4,50,-6]];
     vuelos.forEach(function(v){ h+='<div class="hw-bat" style="--tx:'+v[0]+'px;--ty:'+v[1]+'px;--dur:'+v[2]+'s;--del:'+v[3]+'s;--esc:'+v[4]+';--arco:'+v[5]+'px;--rot:'+v[6]+'deg">'+bat((0.18+Math.random()*0.1).toFixed(2))+'</div>'; });
-    [[8,'9%',230,11,0],[30,'3%',170,8,2.5],[58,'16%',300,13,5]].forEach(function(r){ h+='<div class="hw-ronda" style="left:'+r[0]+'%;top:'+r[1]+';--dur:'+r[3]+'s;--del:-'+r[4]+'s">'+bat('0.22')+'</div>'; });
+    [[8,'9%',230,11,0],[30,'3%',170,8,2.5],[58,'16%',300,13,5]].forEach(function(r){ h+='<div class="hw-ronda" style="left:'+r[0]+'%;top:'+r[1]+';--dur:'+r[3]+'s;--del:-'+r[4]+'s">'+bat(0)+'</div>'; });
 
     var capa=document.createElement('div'); capa.className='hw-capa'; capa.innerHTML=h; ls.insertBefore(capa,ls.firstChild);
     if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)) fantasma(ls,capa);
@@ -221,7 +224,7 @@ self.addEventListener('fetch', e => {
     if(f&&!f.querySelector('.hw-sangre')){
       var semilla=7, rnd=function(){ semilla=(semilla*16807)%2147483647; return semilla/2147483647; }, A=400, H=60, n=8, g='';
       for(var i=0;i<n;i++){ var x=(i+.5)*A/n+(rnd()-.5)*A/n*.7, w=4+rnd()*9, lar=8+Math.pow(rnd(),1.5)*H*.36;
-        g+='<rect x="'+(x-w/2).toFixed(1)+'" y="0" width="'+w.toFixed(1)+'" height="'+lar.toFixed(1)+'" rx="'+(w/2).toFixed(1)+'" style="transform-origin:'+x.toFixed(1)+'px 0;animation:hwEstira '+(6+rnd()*7).toFixed(2)+'s ease-in-out '+(-rnd()*8).toFixed(2)+'s infinite alternate"/>'+
+        g+='<rect x="'+(x-w/2).toFixed(1)+'" y="0" width="'+w.toFixed(1)+'" height="'+lar.toFixed(1)+'" rx="'+(w/2).toFixed(1)+'"/>'+
            '<circle cx="'+x.toFixed(1)+'" cy="'+(lar-1).toFixed(1)+'" r="'+(w*.62).toFixed(1)+'"/>';
         if(rnd()<.5){ var x2=x+(rnd()-.5)*20, w2=2+rnd()*4; g+='<rect x="'+(x2-w2/2).toFixed(1)+'" y="0" width="'+w2.toFixed(1)+'" height="'+(6+rnd()*10).toFixed(1)+'" rx="'+(w2/2).toFixed(1)+'"/>'; } }
       var s=document.createElement('div'); s.className='hw-sangre';

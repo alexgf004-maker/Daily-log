@@ -207,6 +207,10 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   al rato regresa. Se apaga con `prefers-reduced-motion` y no dibuja si el login no está activo. Ya no hay telaraña ni araña. La sangre de la tarjeta es un SVG con
   filtro de líquido y brillo que arma `__escenaHalloween` (`.hw-sangre`). Dentro de la app el fondo es negro
   ("Penumbra") y las tarjetas siguen claras.
+- **Halloween, rendimiento del login**: evitar lo que repinta en cada cuadro. Las brasas se mueven con
+  `transform` (no `background-position`), la sangre es estática (su filtro de líquido se calcula una vez), los
+  murciélagos no llevan `filter` y aletean con CSS (los lejanos no aletean), y el brillo del fantasma es un
+  degradado detrás, no `drop-shadow`. El bucle del fantasma solo toca el DOM cuando algo cambia.
 - **Halloween, marcaje**: en la tarjeta "Mi marcaje" el punto es una Muerte con guadaña (`parcaMini`, ojos
   pálidos a tiempo y rojos si es tarde o salida antes) y, si fue tarde, la hora queda partida en dos con una
   herida (`horaPartida`). Al marcar, `tajoHalloween` oscurece la tarjeta y cruza una guadaña a la altura de la
