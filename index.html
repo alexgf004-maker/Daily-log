@@ -112,7 +112,7 @@ self.addEventListener('fetch', e => {
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=71">
-<link rel="stylesheet" href="css/temas.css?v=14">
+<link rel="stylesheet" href="css/temas.css?v=15">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -131,7 +131,7 @@ self.addEventListener('fetch', e => {
   // Fantasma de sábana (como el de la mansión) que pasea por el cielo, detrás de la tarjeta.
   // Se acerca curioso a donde tocas o pasas el mouse, cierra los ojos mientras escribes el PIN
   // y, si lo tocas, se desvanece y vuelve a aparecer en otro lado. Con cada relámpago se asusta:
-  // abre los ojos, tiembla y sale disparado a esconderse fuera de la pantalla; al rato regresa.
+  // abre los ojos, tiembla y se esconde detrás del logo; al rato se asoma y sigue paseando.
   function fantasma(ls,capa){
     var el=document.createElement('div'); el.className='hw-fantasma';
     var cuerpo='M32 2C15 2 5 16 5 34V76l9-7 9 8 9-8 9 8 9-8 9 7V34C59 16 49 2 32 2Z', cuerpo2='M32 2C15 2 5 16 5 34V72l9 6 9-8 9 8 9-8 9 8 9-6V34C59 16 49 2 32 2Z';
@@ -143,15 +143,22 @@ self.addEventListener('fetch', e => {
     var flash=capa.querySelector('.hw-flash');
     var pin=document.getElementById('loginPin');
     function caja(e){ var b=e&&e.getBoundingClientRect(), o=ls.getBoundingClientRect(); return b&&{l:b.left-o.left,r:b.right-o.left,t:b.top-o.top,b:b.bottom-o.top}; }
-    // ¿cabe el fantasma con centro en (x,y) sin tapar la tarjeta, el logo ni los textos?
-    // En pantallas angostas solo pasea por el cielo, arriba de la tarjeta, para que no se esconda detrás.
-    function libre(x,y){ var f=caja(ls.querySelector('.login-form')), z=[f], q=['.login-logo','.login-brand-eyebrow','.login-brand-name','.login-brand-sub'];
+    // ¿puede quedarse el fantasma con centro en (x,y)? No tapa la tarjeta ni los textos y deja aire en las
+    // orillas; detrás del logo sí puede pasar (se asoma), pero no quedarse escondido ahí.
+    // En pantallas angostas solo pasea por el cielo, arriba de los textos, para que no se esconda detrás de la tarjeta.
+    function libre(x,y){ var f=caja(ls.querySelector('.login-form')), lg=caja(ls.querySelector('.login-logo')), z=[f], q=['.login-brand-eyebrow','.login-brand-name','.login-brand-sub'];
       for(var j=0;j<q.length;j++) z.push(caja(ls.querySelector(q[j])));
-      var gl=x-30*s, gr=x+30*s, gt=y-40*s, gb=y+46*s, m=10*s;
-      if(gt<6||gl<4||gr>W-4) return false;
+      var gl=x-30*s, gr=x+30*s, gt=y-40*s, gb=y+46*s, m=8*s, orilla=Math.max(24,W*.09);
+      if(gt<6||gl<orilla||gr>W-orilla) return false;
       if(W<700&&f&&gb>f.t-14*s) return false;
+      if(lg&&x>lg.l-12*s&&x<lg.r+12*s&&y>lg.t-10*s&&y<lg.b+10*s) return false;
       for(var i=0;i<z.length;i++){ var b=z[i]; if(b&&gr>b.l-m&&gl<b.r+m&&gb>b.t-m&&gt<b.b+m) return false; } return true; }
-    function destino(){ for(var i=0;i<60;i++){ var x=34*s+Math.random()*(W-68*s), y=44*s+Math.random()*(H-160*s); if(libre(x,y)){ g.tx=x; g.ty=y; return; } } g.tx=W*.16; g.ty=70*s; }
+    // destinos repartidos: no repite el mismo lado y prefiere quedar a cierta distancia de donde está
+    function destino(){ var mejor=null, pm=-1;
+      for(var i=0;i<60;i++){ var x=34*s+Math.random()*(W-68*s), y=44*s+Math.random()*(H-160*s); if(!libre(x,y)) continue;
+        var dd=Math.hypot(x-g.x,y-g.y), pc=Math.abs(x-W/2)/(W/2), pts=Math.min(dd,W*.5)-pc*W*.25+Math.random()*30;
+        if(pts>pm){ pm=pts; mejor=[x,y]; } }
+      if(mejor){ g.tx=mejor[0]; g.ty=mejor[1]; } else { g.tx=W*.3; g.ty=70*s; } }
     function medir(){ W=ls.clientWidth; H=ls.clientHeight; s=Math.max(1,Math.min(1.2,W/420)); el.style.width=(60*s).toFixed(1)+'px'; }
     medir(); destino(); g.x=g.tx; g.y=g.ty; destino();
     window.addEventListener('resize',function(){ medir(); if(!libre(g.tx,g.ty)) destino(); });
@@ -170,7 +177,8 @@ self.addEventListener('fetch', e => {
       var an=flash&&flash.getAnimations&&flash.getAnimations()[0], fase=an&&an.currentTime!=null?(an.currentTime%11000)/11000:0;
       if(fase>=.925&&g.fase<.925&&!g.fuera&&g.ver>.5&&!g.huye){ g.susto=26; g.curioso=0; g.pausa=0; }
       g.fase=fase;
-      if(g.susto>0){ g.susto-=f; if(g.susto<=0){ g.huye=1; g.tx=g.x<W/2?-90*s:W+90*s; g.ty=Math.max(30*s,g.y-60*s); } }
+      if(g.susto>0){ g.susto-=f; if(g.susto<=0){ var lg=caja(ls.querySelector('.login-logo')); g.huye=1;
+        if(lg){ g.tx=(lg.l+lg.r)/2; g.ty=(lg.t+lg.b)/2-4*s; } else { g.tx=g.x<W/2?-90*s:W+90*s; g.ty=Math.max(30*s,g.y-60*s); } } }
       // pasea despacio entre puntos libres del cielo y se detiene un rato en cada uno
       if(g.curioso>0) g.curioso-=f;
       var dx=g.tx-g.x, dy=g.ty-g.y, d=Math.hypot(dx,dy), v=g.susto>0?0:g.huye===1?Math.min(d,7*s)*f:Math.min(d*.02,(g.curioso>0?1.6:.8)*s)*f, px=g.x;
