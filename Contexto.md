@@ -199,6 +199,12 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
 
 ---
 
+- **Colores del tema sobre lo nuevo**: `herramientas/tema-colores.py` lee `css/styles.css`, toma cada
+  regla que usa los azules de la app y escribe su versión en tonos del tema entre las marcas
+  `AUTO-COLORES` de `css/temas.css` (con `:where(.tema-halloween)` para no subir especificidad).
+  **Correrlo después de cambiar styles.css** (`python3 herramientas/tema-colores.py`) y subir `temas.css?v=`.
+  Lo decorativo hecho a mano (login, sangre en encabezados, barra, cementerio) va arriba en temas.css.
+
 ## 7. Carencias conocidas / deuda técnica (buenos objetivos de auditoría)
 
 1. **Reglas de Firebase abiertas** (`.read`/`.write: true` en todos los nodos). Cualquiera

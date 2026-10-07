@@ -111,8 +111,8 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=68">
-<link rel="stylesheet" href="css/temas.css?v=3">
+<link rel="stylesheet" href="css/styles.css?v=70">
+<link rel="stylesheet" href="css/temas.css?v=4">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -4550,7 +4550,7 @@ function agDiaPersona(p, fechas, tipo){
     const mal=ent?v>0:v<0, just=mal&&m.justificado;
     const cl=!mal?'c-ok':just?'just':(ent?'c-tarde':'c-temp');
     const det=ent?agDifTxt(v,'antes','tarde'):agDifTxt(v,'antes de su hora','después de su hora');
-    const rot=peor&&peor.fe===fe?`<em class="${y(v)>78?'abajo':''}${x>88?' der':x<12?' izq':''}">${m.horaStr}</em>`:'';
+    const rot=peor&&peor.fe===fe?`<em class="${y(v)>78?'bajo':''}${x>88?' der':x<12?' izq':''}">${m.horaStr}</em>`:'';
     return `<i class="ag-pt ${cl}" style="left:${x}%;bottom:${y(v)}%"${agTip(agFecha(fe),`${ent?'Entrada':'Salida'} ${m.horaStr} · ${det}`,`Hora oficial ${ent?h.entrada:h.salida}`,just?`Justificado${m.justificado.nombre?' por '+m.justificado.nombre:''}`:'')}>${rot}</i>`;
   }).join('');
   // línea que une los días seguidos con marca
@@ -4561,8 +4561,9 @@ function agDiaPersona(p, fechas, tipo){
   return `<div class="ag-card">
     <div class="ag-t">${ent?'Hora de entrada cada día':'Hora de salida cada día'}</div>
     <div class="ag-s">${conMarca?(ent?`Llegó tarde <b>${malos} de ${conMarca}</b> días${peor?`; lo más tarde fue <b>${it2(peor)}</b>`:''}.`:`Salió antes de su hora <b>${malos} de ${conMarca}</b> días${peor?`; lo más temprano fue <b>${it2(peor)}</b>`:''}.`):'Sin marcas este mes.'}</div>
+    <div class="ag-zl ${ent?'ent':'sal'}"><span class="up">▲ ${ent?'Tarde':'Después de su hora'}</span><span class="dn">▼ ${ent?'A tiempo':'Antes de su hora'}</span></div>
     <div class="ag-dp ${ent?'ent':'sal'}">
-      <div class="ag-zona arriba">${ent?'Tarde':'Después de su hora'}</div><div class="ag-zona abajo">${ent?'A tiempo':'Antes de su hora'}</div>
+      <div class="ag-zona arriba"></div><div class="ag-zona abajo"></div>
       ${grid}
       <div class="ag-dp-in"><svg viewBox="0 0 100 100" preserveAspectRatio="none">${tramos}</svg>${puntos}</div>
     </div>

@@ -1,5 +1,5 @@
 /* ── Tema Halloween (versión terror) ── */
-.tema-halloween{--blue:#b91c1c}
+.tema-halloween{--blue:#b91c1c;--blue2:#dc2626;--bluedk:#991b1b;--bluelt:#fef2f2;--bluemid:#fecaca}
 .tema-halloween :is(.topbar,.pf-gafete-top,.fx-ok,.rg-st.b,.dtile.t-b,.au-tiles .b,.ct-col-hd.campo,.mk3-btn,.pf-av,.pd-av,.us-av){background:linear-gradient(125deg,#050307 0%,#1a0509 55%,#3b0a10 100%)!important}
 .tema-halloween :is(.dash-hero,.rg-hero,.pg-hero,.ps-hero,.page-header,.pe,.ph-det-hd,.rm-hd){background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40' preserveAspectRatio='none'%3E%3Cpath fill='%237f1d1d' d='M0 0H120V6C114 6 113 9 112 14 111 22 107 22 106 14 105 8 100 7 96 8 92 9 92 12 91 26 90 34 85 34 84 26 83 14 80 7 72 7 64 7 63 10 62 16 61 21 57 21 56 16 55 9 50 6 40 6 34 6 33 9 32 18 31 30 26 30 25 18 24 10 20 6 12 6 6 6 5 8 4 11 3 14 0 14 0 10Z'/%3E%3Cpath fill='%23b91c1c' opacity='.55' d='M0 0H120V3H0Z'/%3E%3C/svg%3E") top left/240px 26px repeat-x,linear-gradient(125deg,#050307 0%,#1a0509 55%,#3b0a10 100%)!important;box-shadow:0 18px 34px -16px rgba(127,29,29,.75)!important}
 .tema-halloween :is(.dash-hero,.rg-hero,.pg-hero,.ps-hero,.page-header,.pe,.ph-det-hd,.rm-hd) > *{position:relative;z-index:1}
@@ -99,3 +99,134 @@
 @keyframes hwGota{0%{opacity:0;transform:translateY(-14px) scaleY(.4)}12%{opacity:1;transform:translateY(-10px) scaleY(1.1)}70%{opacity:1;transform:translateY(118px) scaleY(1.35)}74%,100%{opacity:0;transform:translateY(124px) scale(2.2,.15)}}
 /* murciélagos más grandes */
 .hw-bat{width:84px;height:52px;right:48px;top:66px}
+
+/* AUTO-COLORES:INICIO (no editar a mano: herramientas/tema-colores.py) */
+:where(.tema-halloween) #loginScreen{background:linear-gradient(160deg,#050307 0%,#1a0509 45%,#2a070b 100%)}
+:where(.tema-halloween) .login-form input:focus{box-shadow:0 0 0 4px rgba(185,28,28,.12)}
+:where(.tema-halloween) .btn-login{background:linear-gradient(135deg,#1a0509 0%,#3b0a10 55%,#5c0d14 100%);box-shadow:0 12px 24px -10px rgba(185,28,28,.7)}
+:where(.tema-halloween) .btn-login:hover{box-shadow:0 14px 28px -10px rgba(185,28,28,.85)}
+:where(.tema-halloween) .topbar{background:linear-gradient(110deg,#050307 0%,#050307 30%,#3b0a10 100%)}
+:where(.tema-halloween) .tb-bar{background:#f87171}
+:where(.tema-halloween) .tb-name .inn{color:#f87171}
+:where(.tema-halloween) .role-a{color:#f87171}
+:where(.tema-halloween) .page-header{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%);box-shadow:0 10px 24px -10px rgba(185,28,28,.5)}
+:where(.tema-halloween) .stat-card{box-shadow:0 6px 16px -8px rgba(185,28,28,.5)}
+:where(.tema-halloween) input:focus,:where(.tema-halloween) textarea:focus,:where(.tema-halloween) select:focus{box-shadow:0 0 0 3px rgba(185,28,28,.1)}
+:where(.tema-halloween) .btn-p:hover{box-shadow:0 3px 10px rgba(185,28,28,.3)}
+:where(.tema-halloween) .btn-personal-flot{box-shadow:0 6px 20px -4px rgba(185,28,28,.55)}
+:where(.tema-halloween) .dash-hero{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%);box-shadow:0 10px 24px -10px rgba(185,28,28,.5)}
+:where(.tema-halloween) .mk3-btn{background:linear-gradient(135deg,#050307,#3b0a10);box-shadow:0 8px 16px -8px rgba(185,28,28,.7)}
+:where(.tema-halloween) .dtile.t-b{background:linear-gradient(135deg,#050307,#3b0a10);color:#b91c1c}
+:where(.tema-halloween) .pe{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%)}
+:where(.tema-halloween) #maintenanceScreen{background:linear-gradient(160deg,#050307 0%,#1a0509 45%,#2a070b 100%)}
+:where(.tema-halloween) .mt-doc i:nth-child(1){background:#b91c1c}
+:where(.tema-halloween) .mt-g1{color:#f87171}
+:where(.tema-halloween) .mt-bar b{background:linear-gradient(90deg,transparent,#7f1d1d,transparent)}
+:where(.tema-halloween) .mt-av{color:#450a0a}
+:where(.tema-halloween) .rg-hero{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%);box-shadow:0 10px 24px -12px rgba(185,28,28,.5)}
+:where(.tema-halloween) .rg-st.b{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .rg-emp-n{background:linear-gradient(160deg,#050307,#3b0a10)}
+:where(.tema-halloween) .rg-pill.b{color:#991b1b;background:#fef2f2;border-color:#fecaca}
+:where(.tema-halloween) .rg-av{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .rg-cd.ok{background:#3f0d12}
+:where(.tema-halloween) .rg-cd.hoy{box-shadow:0 0 0 2px #fff,0 0 0 4px #450a0a}
+:where(.tema-halloween) .rg-cal-ley i.ok{background:#3f0d12}
+:where(.tema-halloween) .fx-chip.on{border-color:#b91c1c;background:#fef2f2;color:#991b1b}
+:where(.tema-halloween) .fx-chip.on small{color:#b91c1c}
+:where(.tema-halloween) .fx-tipo .tipo-btn.active{color:#991b1b}
+:where(.tema-halloween) .fx-vo.no.on{border-color:#b91c1c;background:#fef2f2}
+:where(.tema-halloween) .fx-vo.no.on b{color:#991b1b}
+:where(.tema-halloween) .fx-save{box-shadow:0 10px 20px -10px rgba(185,28,28,.8)}
+:where(.tema-halloween) .fx-ok{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .mk-av.info{background:#fef2f2;border-color:#fecaca}
+:where(.tema-halloween) .mk-av.info .mk-av-ic{background:#b91c1c}
+:where(.tema-halloween) .mk-av.info b{color:#7f1d1d}
+:where(.tema-halloween) .mk-av-spin{border:2.5px solid #fecaca;border-top-color:#b91c1c}
+:where(.tema-halloween) .cl-mon:focus-within{box-shadow:0 0 0 3px rgba(185,28,28,.15)}
+:where(.tema-halloween) .cl-bol-tot b{color:#450a0a}
+:where(.tema-halloween) .cl-formula{color:#450a0a}
+:where(.tema-halloween) .pf-gafete-top{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%)}
+:where(.tema-halloween) .pf-av{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .pf-marca{color:#b91c1c}
+:where(.tema-halloween) .pf-ic.b{background:#fef2f2;color:#b91c1c}
+:where(.tema-halloween) .pf-inp:focus-within{box-shadow:0 0 0 3px rgba(185,28,28,.15)}
+:where(.tema-halloween) .us-nuevo{color:#991b1b}
+:where(.tema-halloween) .us-fil button.on{border-color:#b91c1c;background:#fef2f2;color:#991b1b}
+:where(.tema-halloween) .us-av{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .us-t.b{color:#991b1b;background:#fef2f2;border-color:#fecaca}
+:where(.tema-halloween) .us-aic.b{background:#fef2f2;color:#b91c1c}
+:where(.tema-halloween) .lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0 0 3px rgba(185,28,28,.25)}
+:where(.tema-halloween) .rm-hd{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%)}
+:where(.tema-halloween) .prog-subtab.active{color:#991b1b}
+:where(.tema-halloween) .pg-hero{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%);box-shadow:0 10px 24px -12px rgba(185,28,28,.5)}
+:where(.tema-halloween) .pg-acts button.w{color:#991b1b}
+:where(.tema-halloween) .pg-sel{background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
+:where(.tema-halloween) .pg-sel button{color:#991b1b}
+:where(.tema-halloween) .pg-c-add{color:#b91c1c}
+:where(.tema-halloween) .pg-g.destino{border-color:#fca5a5;box-shadow:0 0 0 3px rgba(185,28,28,.12)}
+:where(.tema-halloween) .pg-placa{border:1.5px solid #450a0a;box-shadow:inset 0 2px 0 #b91c1c}
+:where(.tema-halloween) .pg-vadd{color:#b91c1c;border:1.5px dashed #fca5a5}
+:where(.tema-halloween) .pg-p{background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
+:where(.tema-halloween) .pg-p i{background:#450a0a}
+:where(.tema-halloween) .pg-add{border:1.5px dashed #fca5a5;color:#b91c1c}
+:where(.tema-halloween) .hl-it:before{background:#b91c1c}
+:where(.tema-halloween) .hl-f{color:#450a0a}
+:where(.tema-halloween) .ds-emp{color:#b91c1c}
+:where(.tema-halloween) .tb-bell i{border:2px solid #450a0a}
+:where(.tema-halloween) .pd-seg button.on{color:#450a0a}
+:where(.tema-halloween) .pd-av{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .pd-dia b{color:#450a0a}
+@media(max-width:899px){:where(.tema-halloween) #adminScreen .tab.active{background:linear-gradient(120deg,#050307,#3b0a10);box-shadow:0 4px 10px rgba(185,28,28,.28)}}
+@media(min-width:900px){:where(.tema-halloween) #adminScreen .tabs{background:linear-gradient(180deg,#050307 0%,#1a0509 60%,#3b0a10 140%)}:where(.tema-halloween) #adminScreen .tab.active{color:#450a0a}}
+:where(.tema-halloween) .tc-k{color:#b91c1c}
+:where(.tema-halloween) .tc-ej i.b{background:#b91c1c}
+:where(.tema-halloween) .tc-ley i.ok{background:#b91c1c}
+:where(.tema-halloween) .tc-dots i.on{background:#b91c1c}
+:where(.tema-halloween) .ps-hero{background:linear-gradient(120deg,#050307,#3b0a10)}
+:where(.tema-halloween) .ps-hero-btn{color:#450a0a}
+:where(.tema-halloween) .ps-sec.campo{color:#b91c1c}
+:where(.tema-halloween) .ps-sec.campo:after{background:#fecaca}
+:where(.tema-halloween) .au-tiles .b{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .ph-it.on{background:#fef2f2;box-shadow:inset 3px 0 0 #b91c1c}
+:where(.tema-halloween) .ph-it.on .ph-dd{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .ph-it.on .ph-dd span{color:#fecaca}
+:where(.tema-halloween) .ph-det-hd{background:linear-gradient(120deg,#050307,#3b0a10)}
+:where(.tema-halloween) .ph-g-bar{background:#b91c1c}
+:where(.tema-halloween) .ph-zona{color:#991b1b;background:#fef2f2}
+:where(.tema-halloween) .ph-placa{border:1.5px solid #450a0a;border-top:3px solid #b91c1c}
+:where(.tema-halloween) .ct-placa{border:2px solid #450a0a;border-top:5px solid #b91c1c}
+:where(.tema-halloween) .ct-add{color:#b91c1c}
+:where(.tema-halloween) .ct-col-hd.campo{background:linear-gradient(120deg,#050307,#3b0a10)}
+:where(.tema-halloween) .ct-camp-add{color:#b91c1c}
+:where(.tema-halloween) .cp-k{color:#b91c1c}
+:where(.tema-halloween) .cp-it.on{background:#fef2f2;box-shadow:inset 3px 0 0 #b91c1c}
+:where(.tema-halloween) .cp-it.on .ph-dd{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .cp-it.on .ph-dd span{color:#fecaca}
+:where(.tema-halloween) .on>.cp-ck{border-color:#b91c1c;background:#b91c1c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L19 7'/%3E%3C/svg%3E") center/13px no-repeat}
+:where(.tema-halloween) .cp-otra.on{border-color:#b91c1c;background:#fef2f2}
+:where(.tema-halloween) .cp-otra-ic{color:#b91c1c}
+:where(.tema-halloween) .he-k{color:#b91c1c}
+:where(.tema-halloween) .he-bt{color:#450a0a}
+:where(.tema-halloween) .he-val{background:linear-gradient(120deg,#050307,#3b0a10)}
+:where(.tema-halloween) .he-chips button.on{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+:where(.tema-halloween) .ag-c:not(.off):hover{outline:2px solid #450a0a}
+:where(.tema-halloween) .ag-mini button.on{color:#450a0a}
+:where(.tema-halloween) .ag-chip:hover{border-color:#fca5a5}
+:where(.tema-halloween) .ag-av{color:#450a0a}
+:where(.tema-halloween) .ag-chip.on{background:linear-gradient(120deg,#050307,#3b0a10);box-shadow:0 4px 10px rgba(185,28,28,.25)}
+:where(.tema-halloween) .ag-yl.cero{border-top:2px dashed #450a0a}
+:where(.tema-halloween) .ag-yl.cero span{color:#450a0a}
+:where(.tema-halloween) .he-b1.b{background:#b91c1c}
+:where(.tema-halloween) .sx-op:hover{border-color:#fca5a5}
+:where(.tema-halloween) .sx-op.on,:where(.tema-halloween) .sx-op.active{border-color:#b91c1c;background:#fef2f2;color:#450a0a}
+:where(.tema-halloween) .sx-op.on i,:where(.tema-halloween) .sx-op.active i{background:linear-gradient(120deg,#050307,#3b0a10)}
+:where(.tema-halloween) .sx-op i.dot.b,:where(.tema-halloween) .sx-op.on i.dot.b{background:#3f0d12}
+:where(.tema-halloween) .sx-res{background:#fef2f2;color:#450a0a}
+:where(.tema-halloween) .sx-res svg,:where(.tema-halloween) .sx-aviso svg{stroke:#b91c1c}
+:where(.tema-halloween) .sx-mini button{color:#450a0a}
+:where(.tema-halloween) .sx-mini:focus-within{box-shadow:0 0 0 3px rgba(185,28,28,.1)}
+:where(.tema-halloween) .sx-chk input:checked{background:#b91c1c;border-color:#b91c1c}
+:where(.tema-halloween) .sx-chk:has(input:checked){background:#fef2f2}
+:where(.tema-halloween) .sx-k2r .he-k2 span{color:#b91c1c}
+:where(.tema-halloween) .sx-sw input:checked~i{background:#b91c1c}
+/* AUTO-COLORES:FIN */
