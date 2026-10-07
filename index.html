@@ -111,7 +111,7 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=67">
+<link rel="stylesheet" href="css/styles.css?v=68">
 <link rel="stylesheet" href="css/temas.css?v=3">
 <script>
 // ── Temas de temporada ──
@@ -766,175 +766,192 @@ function modalsHTML(){
       <button class="btn btn-gh ds-cerrar" onclick="closeModal('moDet')">Cerrar</button>
     </div>
   </div>
-  <div class="mo" id="moObs">
-    <div class="modal">
-      <div class="modal-title">Enviar observación a coordinación</div>
-      <div id="moObsInfo" style="font-size:13px;color:var(--text2);margin-bottom:14px"></div>
-      <div class="fg">
-        <label class="fl">Tipo de observación</label>
-        <select id="obsTipo">
-          <option value="viatico">Viático no corresponde</option>
-          <option value="he">Horas extras no corresponden</option>
-          <option value="general">Observación general</option>
-        </select>
-      </div>
-      <div class="fg"><label class="fl">Detalle</label><textarea id="obsDetalle" placeholder="Describe tu observación..."></textarea></div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moObs')">Cancelar</button>
-        <button class="btn btn-p" onclick="enviarObservacion()">Enviar observación</button>
-      </div>
-    </div>
-  </div>
-  <div class="mo" id="moAprobarPermiso">
-    <div class="modal">
-      <div class="modal-title">Aprobar permiso</div>
-      <div id="moPermisoInfo" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
-      <div class="fg">
-        <label class="fl">¿El permiso es remunerado?</label>
-        <div style="display:flex;gap:10px;margin-top:4px">
-          <button type="button" id="btnRemSi" class="tipo-btn active" onclick="selRemun(true)">✓ Sí, se paga</button>
-          <button type="button" id="btnRemNo" class="tipo-btn" onclick="selRemun(false)">✗ No se paga</button>
-        </div>
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moAprobarPermiso')">Cancelar</button>
-        <button class="btn btn-g" onclick="confirmarAprobarPermiso()">✓ Aprobar</button>
+  <div class="mo sx-mo" id="moObs">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k">OBSERVACIÓN</div>
+      <div class="ds-t">Enviar a coordinación</div>
+      <div id="moObsInfo"></div>
+      <div class="he-k2">¿Qué no corresponde?</div>
+      <select id="obsTipo" class="sx-oculto">
+        <option value="viatico" data-ic="bill">Viático</option>
+        <option value="he" data-ic="reloj">Horas extra</option>
+        <option value="general" data-ic="msg">Otra cosa</option>
+      </select>
+      <div class="sx-ops c3" data-for="obsTipo"></div>
+      <div class="he-k2">Detalle</div>
+      <textarea id="obsDetalle" class="he-nota" placeholder="Describe tu observación..."></textarea>
+      <div class="sx-aviso"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 003.4 0"/></svg><span>Madelyn la verá en Observaciones.</span></div>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moObs')">Cancelar</button>
+        <button type="button" class="he-b1 b" onclick="enviarObservacion()">Enviar observación</button>
       </div>
     </div>
   </div>
-  <div class="mo" id="moSusp">
-    <div class="modal">
-      <div class="modal-title">Registrar suspensión</div>
+  <div class="mo sx-mo" id="moAprobarPermiso">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k">PERMISO</div>
+      <div class="ds-t">Aprobar permiso</div>
+      <div id="moPermisoInfo"></div>
+      <div class="he-k2">¿El permiso es remunerado?</div>
+      <div class="sx-ops c2">
+        <button type="button" id="btnRemSi" class="sx-op active" onclick="selRemun(true)"><i class="g">✓</i><b>Sí, se paga</b><small>Con goce de sueldo</small></button>
+        <button type="button" id="btnRemNo" class="sx-op" onclick="selRemun(false)"><i class="r">✕</i><b>No se paga</b><small>Sin goce de sueldo</small></button>
+      </div>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moAprobarPermiso')">Cancelar</button>
+        <button type="button" class="he-b1 " onclick="confirmarAprobarPermiso()">✓ Aprobar permiso</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo sx-mo" id="moSusp">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k r">SUSPENSIÓN</div>
+      <div class="ds-t">Registrar suspensión</div>
       <div id="moSuspAlert"></div>
-      <div id="moSuspNombre" style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px"></div>
-      <div class="fg"><label class="fl">Fecha de suspensión</label><input type="date" id="suspFecha"></div>
-      <div class="fg"><label class="fl">Motivo</label><textarea id="suspMotivo" placeholder="Describe el motivo de la suspensión..."></textarea></div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moSusp')">Cancelar</button>
-        <button class="btn btn-d" onclick="guardarSuspension()">Registrar suspensión</button>
+      <div id="moSuspNombre"></div>
+      <div class="he-k2">Fecha</div>
+      <input type="date" id="suspFecha">
+      <div class="he-chips" data-fecha="suspFecha"><button type="button" data-x="0" onclick="sxFecha('suspFecha','0')">Hoy</button><button type="button" data-x="1" onclick="sxFecha('suspFecha','1')">Mañana</button></div>
+      <div class="he-k2">Motivo</div>
+      <textarea id="suspMotivo" class="he-nota" placeholder="Describe el motivo de la suspensión..."></textarea>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moSusp')">Cancelar</button>
+        <button type="button" class="he-b1 r" onclick="guardarSuspension()">Registrar suspensión</button>
       </div>
     </div>
   </div>
-  <div class="mo" id="moUsr">
-    <div class="modal">
-      <div class="modal-title" id="moUsrTitle">Nuevo empleado</div>
+  <div class="mo sx-mo" id="moUsr">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k">USUARIOS</div>
+      <div class="ds-t" id="moUsrTitle">Nuevo usuario</div>
       <div id="moUsrAlert"></div>
-      <div class="fg"><label class="fl">Nombre completo</label><input type="text" id="uNom" placeholder="Juan Pérez"></div>
-      <div class="fg"><label class="fl">Nombre corto (opcional)</label><input type="text" id="uNomCorto" placeholder="Juan Pérez" autocomplete="off"><div style="font-size:11px;color:var(--text2);margin-top:4px">Se usa en la programación para ahorrar espacio. Si lo dejas vacío, se usa el nombre completo.</div></div>
-      <div class="fg"><label class="fl">Cargo / puesto</label><input type="text" id="uCargo" placeholder="Técnico en medidores" autocomplete="off"></div>
-      <div class="fg"><label class="fl">Usuario de acceso</label><input type="text" id="uUsr" placeholder="juan.perez" autocomplete="off"></div>
-      <div class="fg">
-        <label class="fl">PIN (4–8 dígitos)</label>
-        <input type="password" id="uPin" placeholder="••••" maxlength="8" inputmode="numeric">
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">Al editar, dejar vacío para no cambiar el PIN</div>
+      <div class="he-k2" style="margin-top:4px">Nombre completo</div>
+      <input type="text" id="uNom" placeholder="Juan Pérez">
+      <div class="he-k2">Nombre corto (opcional)</div>
+      <input type="text" id="uNomCorto" placeholder="Juan Pérez" autocomplete="off">
+      <div class="sx-hint">Se usa en la programación para ahorrar espacio. Si lo dejas vacío, se usa el nombre completo.</div>
+      <div class="he-k2">Cargo / puesto</div>
+      <input type="text" id="uCargo" placeholder="Técnico en medidores" autocomplete="off">
+      <div class="sx-row">
+        <div><div class="he-k2">Usuario</div><input type="text" id="uUsr" placeholder="juan.perez" autocomplete="off"></div>
+        <div><div class="he-k2">PIN (4–8 dígitos)</div><input type="password" id="uPin" placeholder="••••" maxlength="8" inputmode="numeric"></div>
       </div>
-      <div class="fg">
-        <label class="fl">Rol</label>
-        <select id="uRol" onchange="onRolChange(this.value)">
-          <option value="empleado">Empleado</option>
-          <option value="asistente">Asistente</option>
-        </select>
-      </div>
-      <!-- Solo visible para asistentes -->
+      <div class="sx-hint">Al editar, deja el PIN vacío para no cambiarlo.</div>
+      <div class="he-k2">Rol</div>
+      <select id="uRol" class="sx-oculto" onchange="onRolChange(this.value)">
+        <option value="empleado" data-ic="casco" data-sub="Registra su planilla y marca asistencia">Empleado</option>
+        <option value="asistente" data-ic="equipo" data-sub="Revisa los registros de su equipo">Asistente</option>
+      </select>
+      <div class="sx-ops c2" data-for="uRol"></div>
       <div id="secEmpleadosAsig" style="display:none">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text2);margin-bottom:8px">Empleados que puede ver</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Si no seleccionas ninguno, verá todos.</div>
-        <div id="listaEmpleadosAsig" style="max-height:200px;overflow-y:auto;border:1px solid var(--gray200);border-radius:var(--r);padding:8px"></div>
+        <div class="he-k2">Empleados que puede ver</div>
+        <div class="sx-hint" style="margin:0 0 8px">Si no seleccionas ninguno, verá todos.</div>
+        <div id="listaEmpleadosAsig" class="sx-lista"></div>
       </div>
-      <!-- Solo visible para empleados -->
       <div id="secSede" style="display:none">
-        <div class="fg">
-          <label class="fl">Sede (para marcaje de asistencia)</label>
-          <select id="uSede">
-            <option value="">Sin asignar</option>
-            <option value="plantel">Plantel Central</option>
-            <option value="gestionmedida">Plantel Central · Gestión de la medida</option>
-            <option value="cucumacayan">Subestación Cucumacayán</option>
-            <option value="zacatecoluca">Subestación Zacatecoluca</option>
-            <option value="prueba">⚠️ Prueba — no usar</option>
-          </select>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px">Sin sede asignada, el empleado no verá el marcaje.</div>
-        </div>
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moUsr')">Cancelar</button>
-        <button class="btn btn-p" onclick="saveUser()">Guardar</button>
-      </div>
-    </div>
-  </div>
-  <div class="mo" id="moRej">
-    <div class="modal">
-      <div class="modal-title">Rechazar registro</div>
-      <div class="fg"><label class="fl">Motivo del rechazo</label><textarea id="rejMotivo" placeholder="Describe el motivo..."></textarea></div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moRej')">Cancelar</button>
-        <button class="btn btn-d" onclick="confirmRej()">Confirmar rechazo</button>
-      </div>
-    </div>
-  </div>
-  <div class="mo" id="moExt">
-    <div class="modal">
-      <div class="modal-title" id="moExtTitle">Permiso de extensión</div>
-      <div id="moExtInfo" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
-      <div class="fg">
-        <label class="fl">Días atrás permitidos</label>
-        <input type="number" id="extDias" min="4" max="60" placeholder="Ej: 15">
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">Mínimo 4 — el empleado podrá registrar desde esa cantidad de días atrás</div>
-      </div>
-      <div class="fg">
-        <label class="fl">Válido hasta</label>
-        <input type="date" id="extHasta">
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moExt')">Cancelar</button>
-        <button class="btn btn-d btn-sm" id="extBtnQuitar" onclick="quitarExtension()" style="display:none">Quitar extensión</button>
-        <button class="btn btn-p" onclick="guardarExtension()">Guardar</button>
-      </div>
-    </div>
-  </div>
-  <div class="mo" id="moSedeTemp">
-    <div class="modal">
-      <div class="modal-title" id="moSedeTempTitle">Cambiar sede temporalmente</div>
-      <div id="moSedeTempInfo" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
-      <div class="fg">
-        <label class="fl">Sede alterna</label>
-        <select id="sedeTempSede">
+        <div class="he-k2">Sede para marcar asistencia</div>
+        <select id="uSede">
+          <option value="">Sin asignar</option>
           <option value="plantel">Plantel Central</option>
           <option value="gestionmedida">Plantel Central · Gestión de la medida</option>
           <option value="cucumacayan">Subestación Cucumacayán</option>
           <option value="zacatecoluca">Subestación Zacatecoluca</option>
           <option value="prueba">⚠️ Prueba — no usar</option>
         </select>
+        <div class="sx-hint">Sin sede asignada, el empleado no verá el marcaje.</div>
       </div>
-      <div class="fg">
-        <label class="fl">Válido hasta</label>
-        <input type="date" id="sedeTempHasta">
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moSedeTemp')">Cancelar</button>
-        <button class="btn btn-d btn-sm" id="sedeTempBtnQuitar" onclick="quitarSedeTemp()" style="display:none">Quitar</button>
-        <button class="btn btn-p" onclick="guardarSedeTemp()">Guardar</button>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moUsr')">Cancelar</button>
+        <button type="button" class="he-b1 b" onclick="saveUser()">Guardar</button>
       </div>
     </div>
   </div>
-  <div class="mo" id="moSabado">
-    <div class="modal">
-      <div class="modal-title">Configurar sábado laboral</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Elige la fecha del sábado y marca qué empleados trabajarán. Solo ellos contarán para tardanzas y ausencias ese día.</div>
+  <div class="mo sx-mo" id="moRej">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k r" id="rejKicker">RECHAZAR REGISTRO</div>
+      <div class="ds-t" id="rejTitulo">¿Por qué se rechaza?</div>
+      <div id="rejInfo"></div>
+      <div class="he-k2">Motivo</div>
+      <div class="he-chips" id="rejChips" style="margin:0 0 10px"></div>
+      <textarea id="rejMotivo" class="he-nota" placeholder="Explica el motivo..." oninput="rejPintar()"></textarea>
+      <div class="sx-aviso" id="rejAviso"></div>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moRej')">Cancelar</button>
+        <button type="button" class="he-b1 r" id="rejBtn" onclick="confirmRej()">Rechazar</button>
+      </div>
+    </div>
+  </div>
+  <div class="mo sx-mo" id="moExt">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k">EXTENSIÓN DE REGISTRO</div>
+      <div class="ds-t" id="moExtTitle">Registrar días anteriores</div>
+      <div id="moExtInfo"></div>
+      <div class="he-k2">¿Cuántos días atrás podrá registrar?</div>
+      <div class="he-step">
+        <button type="button" class="he-bt" onclick="extMover(-1)" aria-label="Un día menos">−</button>
+        <div class="he-val"><label><input type="number" id="extDias" min="4" max="60" inputmode="numeric" oninput="extPintar()"><span>días</span></label></div>
+        <button type="button" class="he-bt" onclick="extMover(1)" aria-label="Un día más">+</button>
+      </div>
+      <div class="he-chips" id="extChipsDias"><button type="button" data-n="7" onclick="extDiasFijar(7)">7 días</button><button type="button" data-n="15" onclick="extDiasFijar(15)">15 días</button><button type="button" data-n="20" onclick="extDiasFijar(20)">20 días</button><button type="button" data-n="30" onclick="extDiasFijar(30)">30 días</button></div>
+      <div class="he-k2">Válido hasta</div>
+      <input type="date" id="extHasta" onchange="extPintar()">
+      <div class="he-chips" data-fecha="extHasta"><button type="button" data-x="0" onclick="sxFecha('extHasta','0')">Hoy</button><button type="button" data-x="7" onclick="sxFecha('extHasta','7')">1 semana</button><button type="button" data-x="14" onclick="sxFecha('extHasta','14')">2 semanas</button><button type="button" data-x="fin" onclick="sxFecha('extHasta','fin')">Fin de mes</button></div>
+      <div class="sx-res" id="extRes"></div>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moExt')">Cancelar</button>
+        <button type="button" class="he-b1 b" onclick="guardarExtension()">Guardar extensión</button>
+      </div>
+      <button type="button" class="sx-quitar" id="extBtnQuitar" onclick="quitarExtension()" style="display:none">Quitar extensión</button>
+    </div>
+  </div>
+  <div class="mo sx-mo" id="moSedeTemp">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k">SEDE TEMPORAL</div>
+      <div class="ds-t" id="moSedeTempTitle">Cambiar sede por unos días</div>
+      <div id="moSedeTempInfo"></div>
+      <div class="he-k2">Sede alterna</div>
+      <select id="sedeTempSede" class="sx-oculto">
+        <option value="plantel" data-ic="pin">Plantel Central</option>
+        <option value="gestionmedida" data-ic="pin">Plantel Central · Gestión de la medida</option>
+        <option value="cucumacayan" data-ic="pin">Subestación Cucumacayán</option>
+        <option value="zacatecoluca" data-ic="pin">Subestación Zacatecoluca</option>
+        <option value="prueba" data-ic="pin">Prueba — no usar</option>
+      </select>
+      <div class="sx-ops lista" data-for="sedeTempSede"></div>
+      <div class="he-k2">Válido hasta</div>
+      <input type="date" id="sedeTempHasta">
+      <div class="he-chips" data-fecha="sedeTempHasta"><button type="button" data-x="0" onclick="sxFecha('sedeTempHasta','0')">Hoy</button><button type="button" data-x="7" onclick="sxFecha('sedeTempHasta','7')">1 semana</button><button type="button" data-x="14" onclick="sxFecha('sedeTempHasta','14')">2 semanas</button><button type="button" data-x="fin" onclick="sxFecha('sedeTempHasta','fin')">Fin de mes</button></div>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moSedeTemp')">Cancelar</button>
+        <button type="button" class="he-b1 b" onclick="guardarSedeTemp()">Guardar</button>
+      </div>
+      <button type="button" class="sx-quitar" id="sedeTempBtnQuitar" onclick="quitarSedeTemp()" style="display:none">Quitar sede temporal</button>
+    </div>
+  </div>
+  <div class="mo sx-mo" id="moSabado">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k">ASISTENCIA</div>
+      <div class="ds-t">Sábado laboral</div>
+      <div class="ds-s" style="margin-top:-6px">Marca quién trabaja ese sábado. Solo ellos contarán para tardanzas y ausencias ese día.</div>
       <div id="moSabadoAlert"></div>
-      <div class="fg">
-        <label class="fl">Fecha del sábado</label>
-        <input type="date" id="sabadoFecha" onchange="onSabadoFechaChange()">
+      <div class="he-k2">Fecha del sábado</div>
+      <div class="he-chips" id="sabChips" style="margin:0 0 8px"></div>
+      <input type="date" id="sabadoFecha" onchange="onSabadoFechaChange()">
+      <div class="sx-k2r"><div class="he-k2">Quién trabaja <span id="sabCuenta"></span></div><span><button type="button" onclick="sxTodos('sabadoEmpleados',true)">Todos</button><button type="button" onclick="sxTodos('sabadoEmpleados',false)">Ninguno</button></span></div>
+      <div id="sabadoEmpleados" class="sx-lista" onchange="sxCuenta('sabadoEmpleados','sabCuenta')"><div class="sx-vacio">Elige primero el sábado.</div></div>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moSabado')">Cancelar</button>
+        <button type="button" class="he-b1 b" onclick="guardarSabado()">Guardar sábado</button>
       </div>
-      <div class="fg">
-        <label class="fl">Empleados que trabajan</label>
-        <div id="sabadoEmpleados" style="max-height:240px;overflow-y:auto;border:1px solid var(--gray200);border-radius:var(--r);padding:8px"><div style="font-size:12px;color:var(--text2)">Selecciona una fecha primero.</div></div>
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moSabado')">Cancelar</button>
-        <button class="btn btn-d btn-sm" id="sabadoBtnQuitar" onclick="quitarSabado()" style="display:none">Quitar sábado</button>
-        <button class="btn btn-p" onclick="guardarSabado()">Guardar</button>
-      </div>
+      <button type="button" class="sx-quitar" id="sabadoBtnQuitar" onclick="quitarSabado()" style="display:none">Quitar este sábado laboral</button>
     </div>
   </div>
   <div class="mo" id="moCopiarProg">
@@ -954,109 +971,88 @@ function modalsHTML(){
       </div>
     </div>
   </div>
-  <div class="mo" id="moVehiculo">
-    <div class="modal">
-      <div class="modal-title" id="moVehiculoTitle">Nuevo vehículo</div>
+  <div class="mo sx-mo" id="moVehiculo">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k">CATÁLOGO</div>
+      <div class="ds-t" id="moVehiculoTitle">Nuevo vehículo</div>
       <div id="moVehiculoAlert"></div>
-      <div class="fg">
-        <label class="fl">Nombre / placa</label>
-        <input type="text" id="vehNombre" placeholder="Ej: CPT-160" autocomplete="off">
+      <div class="he-k2" style="margin-top:4px">Nombre / placa</div>
+      <input type="text" id="vehNombre" placeholder="Ej: CPT-160" autocomplete="off">
+      <div class="he-k2">Tipo</div>
+      <select id="vehTipo" class="sx-oculto">
+        <option value="carro" data-ic="carro">Carro</option>
+        <option value="moto" data-ic="moto">Moto</option>
+      </select>
+      <div class="sx-ops c2" data-for="vehTipo"></div>
+      <div class="he-k2">Estado</div>
+      <select id="vehEstado" class="sx-oculto">
+        <option value="disponible" data-dot="g">Disponible</option>
+        <option value="mantenimiento" data-dot="a">En mantenimiento</option>
+        <option value="prestado" data-dot="b">Prestado</option>
+        <option value="baja" data-dot="r">De baja</option>
+      </select>
+      <div class="sx-ops c2 fila" data-for="vehEstado"></div>
+      <div class="he-k2">Solo para estas campañas (opcional)</div>
+      <div class="sx-hint" style="margin:0 0 8px">Si no marcas ninguna, el vehículo puede usarse en cualquier campaña.</div>
+      <div id="vehCampanias" class="sx-lista"><div class="sx-vacio">Cargando…</div></div>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moVehiculo')">Cancelar</button>
+        <button type="button" class="he-b1 b" onclick="guardarVehiculoUI()">Guardar</button>
       </div>
-      <div class="fg">
-        <label class="fl">Tipo</label>
-        <select id="vehTipo">
-          <option value="carro">Carro</option>
-          <option value="moto">Moto</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label class="fl">Estado</label>
-        <select id="vehEstado">
-          <option value="disponible">Disponible</option>
-          <option value="mantenimiento">En mantenimiento</option>
-          <option value="prestado">Prestado</option>
-          <option value="baja">De baja</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label class="fl">Restringir a campañas (opcional)</label>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Si no marcas ninguna, el vehículo puede usarse en cualquier campaña.</div>
-        <div id="vehCampanias" style="max-height:180px;overflow-y:auto;border:1px solid var(--gray200);border-radius:var(--r);padding:8px"><div style="font-size:12px;color:var(--text2)">Cargando…</div></div>
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moVehiculo')">Cancelar</button>
-        <button class="btn btn-d btn-sm" id="vehBtnEliminar" onclick="eliminarVehiculoUI()" style="display:none">Eliminar</button>
-        <button class="btn btn-p" onclick="guardarVehiculoUI()">Guardar</button>
-      </div>
+      <button type="button" class="sx-quitar" id="vehBtnEliminar" onclick="eliminarVehiculoUI()" style="display:none">Eliminar vehículo</button>
     </div>
   </div>
-  <div class="mo" id="moCampania">
-    <div class="modal">
-      <div class="modal-title" id="moCampaniaTitle">Nueva campaña</div>
+  <div class="mo sx-mo" id="moCampania">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k">CATÁLOGO</div>
+      <div class="ds-t" id="moCampaniaTitle">Nueva campaña</div>
       <div id="moCampaniaAlert"></div>
-      <div class="fg">
-        <label class="fl">Nombre</label>
-        <input type="text" id="campNombre" placeholder="Ej: Inspección de acometidas" autocomplete="off">
+      <div class="he-k2" style="margin-top:4px">Nombre</div>
+      <input type="text" id="campNombre" placeholder="Ej: Inspección de acometidas" autocomplete="off">
+      <div class="he-k2">Área</div>
+      <select id="campArea" class="sx-oculto">
+        <option value="campo" data-ic="ruta">Campo</option>
+        <option value="plantel" data-ic="edif">Plantel</option>
+      </select>
+      <div class="sx-ops c2" data-for="campArea"></div>
+      <label class="sx-sw"><input type="checkbox" id="campFrecuente"><span class="sx-sw-t"><b>Frecuente</b><small>Se muestra siempre en el tablero. Las demás quedan bajo "Ver más".</small></span><i></i></label>
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moCampania')">Cancelar</button>
+        <button type="button" class="he-b1 b" onclick="guardarCampaniaUI()">Guardar</button>
       </div>
-      <div class="fg">
-        <label class="fl">Área</label>
-        <select id="campArea">
-          <option value="campo">Campo</option>
-          <option value="plantel">Plantel</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px">
-          <input type="checkbox" id="campFrecuente" style="width:auto;margin:0">
-          Mostrar siempre en el tablero (frecuente)
-        </label>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">Las que no marques quedan bajo "Ver más".</div>
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moCampania')">Cancelar</button>
-        <button class="btn btn-d btn-sm" id="campBtnEliminar" onclick="eliminarCampaniaUI()" style="display:none">Eliminar</button>
-        <button class="btn btn-p" onclick="guardarCampaniaUI()">Guardar</button>
-      </div>
+      <button type="button" class="sx-quitar" id="campBtnEliminar" onclick="eliminarCampaniaUI()" style="display:none">Eliminar campaña</button>
     </div>
   </div>
-  <div class="mo" id="moAusencia">
-    <div class="modal">
-      <div class="modal-title">Registrar ausencia</div>
+  <div class="mo sx-mo" id="moAusencia">
+    <div class="modal ds sx">
+      <div class="ds-grab"></div>
+      <div class="he-k">AUSENCIAS</div>
+      <div class="ds-t">Registrar ausencia</div>
       <div id="moAusenciaAlert"></div>
-      <div class="fg">
-        <label class="fl">Empleado</label>
-        <select id="ausEmpleado"></select>
+      <div class="he-k2" style="margin-top:4px">Empleado</div>
+      <select id="ausEmpleado"></select>
+      <div class="he-k2">Tipo</div>
+      <select id="ausTipo" class="sx-oculto" onchange="onAusTipoChange()">
+        <option value="incapacidad" data-ic="cruz">Incapacidad</option>
+        <option value="vacaciones" data-ic="sol">Vacaciones</option>
+        <option value="permiso" data-ic="reloj">Permiso</option>
+        <option value="bienestar" data-ic="corazon">Bienestar</option>
+        <option value="injustificado" data-ic="x">Injustificado</option>
+      </select>
+      <div class="sx-ops c3" data-for="ausTipo"></div>
+      <div class="sx-row">
+        <div><div class="he-k2" id="ausIniLbl">Desde</div><input type="date" id="ausIni" onchange="ausPintar()"></div>
+        <div id="ausDiasWrap"><div class="he-k2">Días</div><div class="sx-mini"><button type="button" onclick="ausMover(-1)" aria-label="Un día menos">−</button><input type="number" id="ausDias" min="1" value="1" inputmode="numeric" oninput="ausPintar()"><button type="button" onclick="ausMover(1)" aria-label="Un día más">+</button></div></div>
+        <div id="ausFinWrap" style="display:none"><div class="he-k2">Hasta</div><input type="date" id="ausFin" onchange="ausPintar()"></div>
       </div>
-      <div class="fg">
-        <label class="fl">Tipo</label>
-        <select id="ausTipo" onchange="onAusTipoChange()">
-          <option value="incapacidad">Incapacidad</option>
-          <option value="vacaciones">Vacaciones</option>
-          <option value="permiso">Permiso (un día)</option>
-          <option value="bienestar">Día de bienestar (un día)</option>
-          <option value="injustificado">Permiso injustificado (un día)</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label class="fl" id="ausIniLbl">Fecha de inicio</label>
-        <input type="date" id="ausIni">
-      </div>
-      <div class="fg" id="ausDiasWrap">
-        <label class="fl">Número de días</label>
-        <input type="number" id="ausDias" min="1" value="1" inputmode="numeric">
-        <div style="font-size:11px;color:var(--text2);margin-top:4px" id="ausDiasHint"></div>
-      </div>
-      <div class="fg" id="ausFinWrap" style="display:none">
-        <label class="fl">Fecha de fin</label>
-        <input type="date" id="ausFin">
-      </div>
-      <div class="fg">
-        <label class="fl">Nota (opcional)</label>
-        <input type="text" id="ausNota" placeholder="Ej: Incapacidad ISSS" autocomplete="off">
-      </div>
-      <div class="modal-acts">
-        <button class="btn btn-gh" onclick="closeModal('moAusencia')">Cancelar</button>
-        <button class="btn btn-p" onclick="guardarAusenciaUI()">Registrar</button>
+      <div class="sx-res" id="ausRes"></div>
+      <div class="he-k2">Nota (opcional)</div>
+      <input type="text" id="ausNota" placeholder="Ej: Incapacidad ISSS" autocomplete="off">
+      <div class="he-acts">
+        <button type="button" class="he-b2" onclick="closeModal('moAusencia')">Cancelar</button>
+        <button type="button" class="he-b1 b" onclick="guardarAusenciaUI()">Registrar ausencia</button>
       </div>
     </div>
   </div>
@@ -2652,7 +2648,7 @@ window.aprobarEspecialPend=async(uid,key)=>{
 let permisoKey=null, permisoRemunerado=true, permisoCallback=null;
 window.abrirAprobarPermiso=(uid,key,nombre,fecha,cb)=>{
   permisoKey={uid,key}; permisoRemunerado=true; permisoCallback=cb||loadPend;
-  $('moPermisoInfo').textContent=`${nombre} · ${fmtLong(fecha)}`;
+  $('moPermisoInfo').innerHTML=sxPersona(nombre,sxFechaLarga(fecha));
   selRemun(true);
   $('moAprobarPermiso').classList.add('open');
 };
@@ -2684,9 +2680,42 @@ let rejCallback = null;
 window.openRej=(uid,key,tipo)=>{
   rejKey={uid,key,tipo};
   rejCallback=null;
-  $('rejMotivo').value='';
-  $('moRej').classList.add('open');
+  rejPreparar();
 };
+// Ventana de rechazo: textos y motivos rápidos según lo que se rechaza; el registro se carga aparte
+const REJ_CFG={
+  he:{k:'RECHAZAR HORAS EXTRA',t:'¿Por qué se rechazan?',b:'Rechazar horas extra',chips:['No fueron autorizadas','Falta justificación','Las horas no coinciden','Registro duplicado']},
+  viatico:{k:'ANULAR VIÁTICO',t:'¿Por qué se anula?',b:'Anular viático',chips:['No corresponde viático','No salió de la sede','Registro duplicado','Fecha equivocada']},
+  especial:{k:'RECHAZAR SOLICITUD',t:'¿Por qué se rechaza?',b:'Rechazar solicitud',chips:['Falta comprobante','No fue autorizado','Fecha equivocada','Registro duplicado']}
+};
+function rejPreparar(){
+  const c=REJ_CFG[rejKey.tipo]||REJ_CFG.especial, k=rejKey;
+  $('rejKicker').textContent=c.k; $('rejTitulo').textContent=c.t; $('rejBtn').textContent=c.b;
+  $('rejChips').innerHTML=c.chips.map(t=>`<button type="button" onclick="rejChip(this)">${t}</button>`).join('');
+  $('rejMotivo').value=''; $('rejInfo').innerHTML=''; $('rejAviso').innerHTML='';
+  rejPintar();
+  $('moRej').classList.add('open');
+  get(ref(db,`registros/${k.uid}/${k.key}`)).then(snap=>{
+    if(rejKey!==k||!snap.exists()) return;
+    const r=snap.val(), nombre=r.userName||k.uid, d=new Date(r.fecha+'T12:00:00');
+    const minHE=r.minHE||(r.heInicio&&r.heFin?minutosEntre(r.heInicio,r.heFin):0);
+    const det=k.tipo==='he'?[r.heInicio&&r.heFin?`${r.heInicio}–${r.heFin}`:(r.horaEntrada&&r.horaSalida?`${r.horaEntrada}–${r.horaSalida}`:''),minHE?fmtMin(minHE)+' extra':'Horas extra'].filter(Boolean).join(' · ')
+      :k.tipo==='viatico'?(r.actividades||'Viático')
+      :(AUS_TIPO_LABEL[r.tipoDia]||r.tipoDia||'Solicitud')+(r.vacIni&&r.vacFin?` · del ${fechaCortaFx(r.vacIni)} al ${fechaCortaFx(r.vacFin)}`:'');
+    $('rejInfo').innerHTML=`<div class="sx-reg"><div class="sx-dia"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></div><div class="sx-reg-t"><b>${nombre}</b><span>${det}</span></div></div>`;
+    $('rejAviso').innerHTML=`${SX_BELL}<span>${nombre.split(' ')[0]} verá este motivo en su campanita.</span>`;
+  }).catch(()=>{});
+}
+window.rejChip=(btn)=>{
+  const ta=$('rejMotivo'), chips=[...btn.parentElement.children].map(b=>b.textContent);
+  let resto=ta.value.trim();
+  chips.forEach(t=>{ if(resto.startsWith(t)) resto=resto.slice(t.length).replace(/^[.\s]+/,''); });
+  ta.value=btn.textContent+'. '+resto;
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===btn));
+  ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length);
+  rejPintar();
+};
+window.rejPintar=()=>{ $('rejBtn').disabled=!$('rejMotivo').value.trim(); };
 window.confirmRej=async()=>{
   const m=$('rejMotivo').value.trim();if(!m)return;
   let updates;
@@ -3122,8 +3151,7 @@ window.aprobarEspecial=async(uid,key)=>{
 };
 window.openRejEspecial=(uid,key)=>{
   rejKey={uid,key,tipo:'especial'};
-  $('rejMotivo').value='';
-  $('moRej').classList.add('open');
+  rejPreparar();
 };
 
 // Compatibilidad: antes había dos vistas ("por empleado" y "por mes"); ahora es una sola
@@ -3482,11 +3510,53 @@ window.cerrarTour=(completo)=>{
   update(ref(db,`users/${me.id}`),{tutoCampanitaV:TOUR_V}).catch(()=>{});
 };
 
+
+// ── Ventanas tipo hoja (mismo estilo que "aprobar horas extra") ──
+const SX_IC={
+  bill:'<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v5M18 9.5v5"/>',
+  reloj:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  msg:'<path d="M4 5h16v11H9l-5 4z"/>',
+  cruz:'<path d="M12 5v14M5 12h14"/>',
+  sol:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  corazon:'<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>',
+  x:'<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>',
+  pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  casco:'<path d="M4 16a8 8 0 0116 0"/><path d="M2 16h20v3H2z"/><path d="M10 8V5h4v3"/>',
+  equipo:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14a6 6 0 013.5 6"/>',
+  carro:'<path d="M3 13l2-5a2 2 0 012-1.4h10A2 2 0 0119 8l2 5v4H3z"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/>',
+  moto:'<circle cx="5.5" cy="16.5" r="3"/><circle cx="18.5" cy="16.5" r="3"/><path d="M5.5 16.5L9 9h5l4.5 7.5M14 9l-1-3h-3"/>',
+  ruta:'<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h7a3 3 0 000-6H9a3 3 0 010-6h7"/>',
+  edif:'<path d="M4 21V5l8-3v19M12 8l8 3v10M8 8v.01M8 12v.01M8 16v.01M16 14v.01M16 18v.01"/><path d="M2 21h20"/>'
+};
+const sxSvg=k=>SX_IC[k]?`<svg viewBox="0 0 24 24">${SX_IC[k]}</svg>`:'';
+const SX_BELL='<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 003.4 0"/></svg>';
+const SX_INFO='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
+const SX_CAL='<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+const sxPersona=(nombre,sub)=>`<div class="he-per"><span class="pd-av">${inicialesDe(nombre)}</span><span class="he-per-tx"><b>${nombre}</b><span>${sub||''}</span></span></div>`;
+const sxFechaLarga=f=>{ const t=fmtLong(f).replace(/ de \d{4}$/,''); return t.charAt(0).toUpperCase()+t.slice(1); };
+// Las opciones de un <select class="sx-oculto"> se muestran como tarjetas en su .sx-ops[data-for]
+function sxPintarOps(raiz){
+  (raiz||document).querySelectorAll('.sx-ops[data-for]').forEach(box=>{
+    const sel=$(box.dataset.for); if(!sel) return;
+    box.innerHTML=[...sel.options].map(o=>`<button type="button" class="sx-op${o.value===sel.value?' on':''}" onclick="sxElegir('${sel.id}','${o.value}')">${o.dataset.ic?`<i>${sxSvg(o.dataset.ic)}</i>`:o.dataset.dot?`<i class="dot ${o.dataset.dot}"></i>`:''}<b>${o.textContent}</b>${o.dataset.sub?`<small>${o.dataset.sub}</small>`:''}</button>`).join('');
+  });
+}
+window.sxElegir=(id,v)=>{ const s=$(id); s.value=v; s.dispatchEvent(new Event('change')); sxPintarOps(s.closest('.modal')); };
+// Atajos de fecha: Hoy, Mañana, 1 semana, 2 semanas, Fin de mes
+const sxFechaDe=x=>{ const d=new Date(today()+'T12:00:00'); if(x==='fin') d.setMonth(d.getMonth()+1,0); else d.setDate(d.getDate()+parseInt(x)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+window.sxFecha=(id,x)=>{ const inp=$(id); inp.value=sxFechaDe(x); inp.dispatchEvent(new Event('change',{bubbles:true})); };
+function sxMarcarFecha(id){
+  const v=$(id)?.value;
+  document.querySelectorAll(`.he-chips[data-fecha="${id}"] button`).forEach(b=>b.classList.toggle('on',!!v&&sxFechaDe(b.dataset.x)===v));
+}
+window.sxTodos=(id,on)=>{ $(id).querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=on); $(id).dispatchEvent(new Event('change')); };
+window.sxCuenta=(id,lbl)=>{ const n=$(id).querySelectorAll('input:checked').length; $(lbl).textContent=n?`· ${n}`:''; };
+
 // ── OBSERVACIONES ──────────────────────────────────────
 let obsRegKey=null;
 window.openObs=(uid,key,empleado,fecha)=>{
   obsRegKey={uid,key};
-  $('moObsInfo').textContent=`${empleado} · ${fmtLong(fecha)}`;
+  $('moObsInfo').innerHTML=sxPersona(empleado,sxFechaLarga(fecha));
   $('obsDetalle').value='';
   $('obsTipo').value='viatico';
   $('moObs').classList.add('open');
@@ -3882,7 +3952,7 @@ window.togActivo=async(uid,a)=>{await update(ref(db,`users/${uid}`),{activo:!a})
 let suspUID=null;
 window.openSuspension=(uid,nombre)=>{
   suspUID=uid;
-  $('moSuspNombre').textContent=nombre;
+  $('moSuspNombre').innerHTML=sxPersona(nombre,'Quedará en su historial');
   $('moSuspAlert').innerHTML='';
   $('suspFecha').value=today();
   $('suspMotivo').value='';
@@ -3912,18 +3982,30 @@ async function esSuspension(uid,fecha){
 let extUID=null;
 window.openExtension=async(uid,nombre)=>{
   extUID=uid;
-  $('moExtTitle').textContent=`Extensión — ${nombre}`;
   const snap=await get(ref(db,`users/${uid}`));
   const u=snap.exists()?snap.val():{};
   const ext=u.extension;
   const extActiva=ext&&ext.hasta&&ext.hasta>=today();
-  $('moExtInfo').textContent=extActiva
-    ?`Extensión activa: ${ext.dias} días atrás, válida hasta ${fmt(ext.hasta)}.`
-    :'Sin extensión activa.';
-  $('extDias').value=ext?.dias||'';
-  $('extHasta').value=ext?.hasta||'';
+  $('moExtInfo').innerHTML=sxPersona(nombre,extActiva
+    ?`<span class="sx-est g"><i></i>Activa: ${ext.dias} días, hasta el ${fechaCortaFx(ext.hasta)}</span>`
+    :'<span class="sx-est"><i></i>Sin extensión activa</span>');
+  $('extDias').value=extActiva?ext.dias:15;
+  $('extHasta').value=extActiva?ext.hasta:'';
   $('extBtnQuitar').style.display=extActiva?'':'none';
+  extPintar();
   $('moExt').classList.add('open');
+};
+window.extDiasFijar=n=>{ $('extDias').value=Math.max(4,Math.min(60,n)); extPintar(); };
+window.extMover=d=>extDiasFijar((parseInt($('extDias').value)||0)+d);
+window.extPintar=()=>{
+  const n=parseInt($('extDias').value)||0, h=$('extHasta').value, res=$('extRes');
+  document.querySelectorAll('#extChipsDias button').forEach(b=>b.classList.toggle('on',+b.dataset.n===n));
+  if(n<4){ res.className='sx-res a'; res.innerHTML=`${SX_INFO}<div>El mínimo es <b>4 días</b>.</div>`; return; }
+  const d=new Date(today()+'T12:00:00'); d.setDate(d.getDate()-n);
+  const desde=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const venc=!h?' Elige hasta cuándo vale.':h<today()?' <b>La fecha ya pasó</b>, elige hoy o una futura.':` La extensión vence el <b>${fechaCortaFx(h)}</b>.`;
+  res.className='sx-res'+(h&&h<today()?' a':'');
+  res.innerHTML=`${SX_INFO}<div>Hoy podría registrar desde el <b>${fechaCortaFx(desde)}</b>.${venc}</div>`;
 };
 window.guardarExtension=async()=>{
   const dias=parseInt($('extDias').value);
@@ -3941,14 +4023,13 @@ window.quitarExtension=async()=>{
 let sedeTempUID=null;
 window.openSedeTemp=async(uid,nombre)=>{
   sedeTempUID=uid;
-  $('moSedeTempTitle').textContent=`Sede temporal — ${nombre}`;
   const snap=await get(ref(db,`users/${uid}`));
   const u=snap.exists()?snap.val():{};
   const st=u.sedeTemporal;
   const activa=st&&st.hasta&&st.hasta>=today();
-  $('moSedeTempInfo').textContent=activa
-    ?`Sede temporal activa: ${NOMBRE_SEDES[st.sede]||st.sede}, válida hasta ${fmt(st.hasta)}.`
-    :`Sede permanente: ${u.sede?NOMBRE_SEDES[u.sede]:'sin asignar'}.`;
+  $('moSedeTempInfo').innerHTML=sxPersona(nombre,activa
+    ?`<span class="sx-est g"><i></i>En ${NOMBRE_SEDES[st.sede]||st.sede} hasta el ${fechaCortaFx(st.hasta)}</span>`
+    :`Sede fija: ${u.sede?NOMBRE_SEDES[u.sede]:'sin asignar'}`);
   $('sedeTempSede').value=st?.sede||'plantel';
   $('sedeTempHasta').value=st?.hasta||'';
   $('sedeTempBtnQuitar').style.display=activa?'':'none';
@@ -4642,13 +4723,21 @@ window.toggleAsistDetalle=()=>{};
 window.openSabadoLaboral=async()=>{
   $('moSabadoAlert').innerHTML='';
   $('sabadoFecha').value='';
-  $('sabadoEmpleados').innerHTML='<div style="font-size:12px;color:var(--text2)">Selecciona una fecha primero.</div>';
+  $('sabadoEmpleados').innerHTML='<div class="sx-vacio">Elige primero el sábado.</div>';
   $('sabadoBtnQuitar').style.display='none';
+  $('sabCuenta').textContent='';
+  // Atajos: los próximos cuatro sábados
+  const d=new Date(today()+'T12:00:00'); d.setDate(d.getDate()+((6-d.getDay()+7)%7));
+  const sabs=[]; for(let i=0;i<4;i++){ sabs.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`); d.setDate(d.getDate()+7); }
+  $('sabChips').innerHTML=sabs.map(f=>`<button type="button" data-f="${f}" onclick="sabElegir('${f}')">${fechaCortaFx(f)}</button>`).join('');
   $('moSabado').classList.add('open');
 };
 
+window.sabElegir=f=>{ $('sabadoFecha').value=f; onSabadoFechaChange(); };
 window.onSabadoFechaChange=async()=>{
   const fecha=$('sabadoFecha').value;
+  document.querySelectorAll('#sabChips button').forEach(b=>b.classList.toggle('on',b.dataset.f===fecha));
+  $('sabCuenta').textContent='';
   const cont=$('sabadoEmpleados');
   const alert=$('moSabadoAlert');
   alert.innerHTML='';
@@ -4664,12 +4753,9 @@ window.onSabadoFechaChange=async()=>{
   const snap=await get(ref(db,`config/sabadosLaborales/${fecha}`));
   const yaAsignados=snap.exists()&&Array.isArray(snap.val().empleados)?snap.val().empleados:[];
   $('sabadoBtnQuitar').style.display=snap.exists()?'':'none';
-  if(!emps.length){ cont.innerHTML='<div style="font-size:12px;color:var(--text2)">No hay empleados con sede asignada.</div>'; return; }
-  cont.innerHTML=emps.map(u=>`
-    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px">
-      <input type="checkbox" value="${u.id}" ${yaAsignados.includes(u.id)?'checked':''} style="width:auto;margin:0">
-      ${u.nombre}
-    </label>`).join('');
+  if(!emps.length){ cont.innerHTML='<div class="sx-vacio">No hay empleados con sede asignada.</div>'; return; }
+  cont.innerHTML=emps.map(u=>`<label class="sx-chk"><input type="checkbox" value="${u.id}" ${yaAsignados.includes(u.id)?'checked':''}>${u.nombre}</label>`).join('');
+  sxCuenta('sabadoEmpleados','sabCuenta');
 };
 
 window.guardarSabado=async()=>{
@@ -5639,10 +5725,7 @@ window.openVehiculo=(id)=>{
   // Campañas de campo para restricción
   const campo=progCampanias.filter(c=>c.area==='campo'&&c.activa!==false);
   const marcadas=v?.campanias||[];
-  $('vehCampanias').innerHTML=campo.map(c=>`
-    <label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:13px">
-      <input type="checkbox" value="${c.nombre}" ${marcadas.includes(c.nombre)?'checked':''} style="width:auto;margin:0">${c.nombre}
-    </label>`).join('')||'<div style="font-size:12px;color:var(--text2)">No hay campañas de campo.</div>';
+  $('vehCampanias').innerHTML=campo.map(c=>`<label class="sx-chk"><input type="checkbox" value="${c.nombre}" ${marcadas.includes(c.nombre)?'checked':''}>${c.nombre}</label>`).join('')||'<div class="sx-vacio">No hay campañas de campo.</div>';
   $('moVehiculo').classList.add('open');
 };
 window.guardarVehiculoUI=async()=>{
@@ -5765,20 +5848,30 @@ window.openAusencia=async()=>{
 
 window.onAusTipoChange=()=>{
   const tipo=$('ausTipo').value;
-  const diasWrap=$('ausDiasWrap'), finWrap=$('ausFinWrap'), iniLbl=$('ausIniLbl'), hint=$('ausDiasHint');
-  if(tipo==='incapacidad'){
-    diasWrap.style.display=''; finWrap.style.display='';
-    // incapacidad: inicio + número de días (fin se calcula)
-    finWrap.style.display='none';
-    iniLbl.textContent='Fecha de inicio';
-    if(hint) hint.textContent='Se registran los días corridos a partir del inicio.';
-  } else if(tipo==='vacaciones'){
-    diasWrap.style.display='none'; finWrap.style.display='';
-    iniLbl.textContent='Fecha de inicio';
-  } else { // permiso, bienestar, injustificado: un solo día
-    diasWrap.style.display='none'; finWrap.style.display='none';
-    iniLbl.textContent='Fecha';
+  const diasWrap=$('ausDiasWrap'), finWrap=$('ausFinWrap'), iniLbl=$('ausIniLbl');
+  // incapacidad: inicio + número de días corridos · vacaciones: rango · el resto: un solo día
+  diasWrap.style.display=tipo==='incapacidad'?'':'none';
+  finWrap.style.display=tipo==='vacaciones'?'':'none';
+  iniLbl.textContent=(tipo==='incapacidad'||tipo==='vacaciones')?'Desde':'Fecha';
+  sxPintarOps($('moAusencia'));
+  ausPintar();
+};
+window.ausMover=d=>{ $('ausDias').value=Math.max(1,(parseInt($('ausDias').value)||0)+d); ausPintar(); };
+window.ausPintar=()=>{
+  const tipo=$('ausTipo').value, ini=$('ausIni').value, fin=$('ausFin').value, n=parseInt($('ausDias').value)||0, res=$('ausRes');
+  let txt='';
+  if(!ini) txt='Elige la fecha.';
+  else if(tipo==='vacaciones'&&!fin) txt=`Desde el <b>${fechaCortaFx(ini)}</b>. Elige hasta qué día.`;
+  else if(tipo==='vacaciones'&&fin<ini) txt='La fecha <b>hasta</b> debe ser igual o posterior a <b>desde</b>.';
+  else if(tipo==='incapacidad'&&n<1) txt='Indica cuántos días.';
+  else {
+    const fs=ausenciaFechas(tipo,ini,n,fin);
+    txt=fs.length===1?`Solo el <b>${fechaCortaFx(fs[0])}</b>.`
+      :`Del <b>${fechaCortaFx(fs[0])}</b> al <b>${fechaCortaFx(fs[fs.length-1])}</b> · ${fs.length} días${tipo==='incapacidad'?' corridos':''}.`;
+    const cerr=fs.filter(f=>mesCerrado(f)).length;
+    if(cerr) txt+=` ${cerr} ${cerr===1?'cae':'caen'} en un mes cerrado y no se registrará${cerr===1?'':'n'}.`;
   }
+  res.innerHTML=`${SX_CAL}<div>${txt}</div>`;
 };
 
 // Calcula el arreglo de fechas (YYYY-MM-DD) según tipo
@@ -6042,11 +6135,7 @@ async function cargarListaEmpleadosAsig(seleccionados=[]){
   const users=await getUsers();
   const emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
   emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  l.innerHTML=emps.map(u=>`
-    <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--gray100)">
-      <input type="checkbox" value="${u.id}" ${seleccionados.includes(u.id)?'checked':''} style="width:16px;height:16px;accent-color:var(--blue)">
-      <span>${u.nombre}</span>
-    </label>`).join('');
+  l.innerHTML=emps.map(u=>`<label class="sx-chk"><input type="checkbox" value="${u.id}" ${seleccionados.includes(u.id)?'checked':''}>${u.nombre}</label>`).join('');
 }
 
 window.openModalUser=async(uid)=>{
@@ -6107,6 +6196,15 @@ window.saveUser=async()=>{
 
 window.closeModal=id=>$(id).classList.remove('open');
 document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+// Al abrir una ventana tipo hoja: dibuja las opciones en tarjetas y marca los atajos de fecha
+// (las ventanas se crean al iniciar sesión, por eso se observa todo el documento)
+new MutationObserver(cambios=>cambios.forEach(c=>{
+  const m=c.target;
+  if(!m.classList?.contains('sx-mo')||!m.classList.contains('open')||/\bopen\b/.test(c.oldValue||'')) return;
+  sxPintarOps(m);
+  m.querySelectorAll('.he-chips[data-fecha]').forEach(x=>sxMarcarFecha(x.dataset.fecha));
+})).observe(document.body,{attributes:true,subtree:true,attributeFilter:['class'],attributeOldValue:true});
+document.addEventListener('change',e=>{ if(e.target.type==='date'&&e.target.id) sxMarcarFecha(e.target.id); });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.mo.open').forEach(m=>m.classList.remove('open'));});
 
 // Lock scroll on login screen at startup

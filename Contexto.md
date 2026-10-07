@@ -160,6 +160,11 @@ importante — ver sección 7.**
   Usa los mismos colores del calendario de Asistencia (verde a tiempo, rojo tarde, ámbar
   salió antes). Las marcas justificadas cuentan como a tiempo en los totales y se
   dibujan como círculo hueco. La pestaña elegida se recuerda en `localStorage.asistModo`.
+- **Ventanas (modales)**: todas usan el estilo de hoja de "aprobar horas extra" (`.mo.sx-mo` +
+  `.modal.ds.sx`, clases `he-*` y `sx-*`). En celular suben desde abajo y en PC quedan centradas.
+  Un `<select class="sx-oculto">` se muestra como tarjetas en su `.sx-ops[data-for]` (`sxPintarOps`,
+  se redibuja solo al abrir la ventana). Los atajos de fecha son `.he-chips[data-fecha]` + `sxFecha`.
+  Si agregas una ventana nueva, usa ese mismo patrón.
 - **Excel de Asistencia** (`exportarAsistencia`): usa ExcelJS + html2canvas (cdnjs, se cargan solo al
   exportar; el resto de exports sigue con SheetJS). Hojas: Gráficas (capturas de las tarjetas del
   grupo con `agCapturar`), Mapa del mes (celdas de colores con letra T/S/X/J/F y nota con las horas),
