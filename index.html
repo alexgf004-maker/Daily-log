@@ -130,7 +130,8 @@ self.addEventListener('fetch', e => {
   // fantasma, ojos en la oscuridad y sangre). Solo se arma si el tema está activo.
   // Fantasma de sábana (como el de la mansión) que pasea por el cielo, detrás de la tarjeta.
   // Se acerca curioso a donde tocas o pasas el mouse, cierra los ojos mientras escribes el PIN
-  // y, si lo tocas, se desvanece y vuelve a aparecer en otro lado.
+  // y, si lo tocas, se desvanece y vuelve a aparecer en otro lado. Con cada relámpago se asusta:
+  // abre los ojos, tiembla y sale disparado a esconderse fuera de la pantalla; al rato regresa.
   function fantasma(ls,capa){
     var el=document.createElement('div'); el.className='hw-fantasma';
     var cuerpo='M32 2C15 2 5 16 5 34V76l9-7 9 8 9-8 9 8 9-8 9 7V34C59 16 49 2 32 2Z', cuerpo2='M32 2C15 2 5 16 5 34V72l9 6 9-8 9 8 9-8 9 8 9-6V34C59 16 49 2 32 2Z';
@@ -138,7 +139,8 @@ self.addEventListener('fetch', e => {
       '<g class="hw-cara"><ellipse cx="23" cy="30" rx="4.5" ry="7" fill="#1d0a0e"/><ellipse cx="41" cy="30" rx="4.5" ry="7" fill="#1d0a0e"/><ellipse cx="32" cy="48" rx="5" ry="7" fill="#1d0a0e"/></g></svg>';
     capa.appendChild(el);
     var cara=el.querySelectorAll('ellipse'), W=0, H=0, s=1, ult=0;
-    var g={x:0,y:0,tx:0,ty:0,ver:0,ojo:1,parpa:0,curioso:0,pausa:0,fuera:0,vx:0,mx:null,my:null};
+    var g={x:0,y:0,tx:0,ty:0,ver:0,ojo:1,parpa:0,curioso:0,pausa:0,fuera:0,vx:0,mx:null,my:null,susto:0,huye:0,fase:0};
+    var flash=capa.querySelector('.hw-flash');
     var pin=document.getElementById('loginPin');
     function caja(e){ var b=e&&e.getBoundingClientRect(), o=ls.getBoundingClientRect(); return b&&{l:b.left-o.left,r:b.right-o.left,t:b.top-o.top,b:b.bottom-o.top}; }
     function libre(x,y){ var z=[caja(ls.querySelector('.login-form')),caja(ls.querySelector('.login-brand'))];
@@ -158,12 +160,18 @@ self.addEventListener('fetch', e => {
       requestAnimationFrame(cuadro);
       var f=Math.max(.2,Math.min(3,(t-(ult||t))/16.7)); ult=t;
       if(!ls.classList.contains('active')||document.hidden) return;
+      // relámpago: se lee la misma animación CSS del destello (ciclo de 11 s, destello al 92.6 %)
+      var an=flash&&flash.getAnimations&&flash.getAnimations()[0], fase=an&&an.currentTime!=null?(an.currentTime%11000)/11000:0;
+      if(fase>=.925&&g.fase<.925&&!g.fuera&&g.ver>.5&&!g.huye){ g.susto=26; g.curioso=0; g.pausa=0; }
+      g.fase=fase;
+      if(g.susto>0){ g.susto-=f; if(g.susto<=0){ g.huye=1; g.tx=g.x<W/2?-90*s:W+90*s; g.ty=Math.max(30*s,g.y-60*s); } }
       // pasea despacio entre puntos libres del cielo y se detiene un rato en cada uno
       if(g.curioso>0) g.curioso-=f;
-      var dx=g.tx-g.x, dy=g.ty-g.y, d=Math.hypot(dx,dy), v=Math.min(d*.02,(g.curioso>0?1.6:.8)*s)*f, px=g.x;
+      var dx=g.tx-g.x, dy=g.ty-g.y, d=Math.hypot(dx,dy), v=g.susto>0?0:g.huye===1?Math.min(d,7*s)*f:Math.min(d*.02,(g.curioso>0?1.6:.8)*s)*f, px=g.x;
       if(d>1){ g.x+=dx/d*v; g.y+=dy/d*v; }
       g.x+=Math.sin(t/900)*.25*f; g.vx+=((g.x-px)/f-g.vx)*.08;
-      if(d<12*s&&g.curioso<=0){ if(g.pausa<=0) g.pausa=90+Math.random()*200; g.pausa-=f; if(g.pausa<=0) destino(); }
+      if(g.huye){ if(g.huye===1&&d<12*s){ g.huye=2; g.pausa=110+Math.random()*60; } if(g.huye===2&&(g.pausa-=f)<=0){ g.huye=0; destino(); } }
+      else if(d<12*s&&g.curioso<=0){ if(g.pausa<=0) g.pausa=90+Math.random()*200; g.pausa-=f; if(g.pausa<=0) destino(); }
       // aparecer / desvanecerse al tocarlo
       var esc=1;
       if(g.fuera){ g.ver=Math.max(0,g.ver-.035*f); esc=1+(1-g.ver)*.35;
@@ -173,9 +181,14 @@ self.addEventListener('fetch', e => {
       if(g.parpa>0) g.parpa-=f; else if(Math.random()<.004*f) g.parpa=9;
       g.ojo+=((document.activeElement===pin||g.parpa>0?.12:1)-g.ojo)*.2*f;
       var mx=g.curioso>0&&g.mx!=null?g.mx:g.tx, my=g.curioso>0&&g.my!=null?g.my:g.ty, a=Math.atan2(my-g.y,mx-g.x), ox=(Math.cos(a)*2.6).toFixed(2), oy=(Math.sin(a)*1.8).toFixed(2);
-      cara[0].setAttribute('ry',(7*g.ojo).toFixed(2)); cara[1].setAttribute('ry',(7*g.ojo).toFixed(2));
-      cara[2].setAttribute('ry',(g.ojo<.5?3.5:7)); cara[0].parentNode.setAttribute('transform','translate('+ox+' '+oy+')');
+      var asust=g.susto>0||g.huye===1;
+      if(asust){ ox=0; oy=-1; }
+      cara[0].setAttribute('ry',asust?'9.5':(7*g.ojo).toFixed(2)); cara[1].setAttribute('ry',asust?'9.5':(7*g.ojo).toFixed(2));
+      cara[0].setAttribute('rx',asust?'5.8':'4.5'); cara[1].setAttribute('rx',asust?'5.8':'4.5');
+      cara[2].setAttribute('ry',asust?'10':(g.ojo<.5?3.5:7)); cara[2].setAttribute('rx',asust?'6.5':'5');
+      cara[0].parentNode.setAttribute('transform','translate('+ox+' '+oy+')');
       var bob=Math.sin(t/700)*5*s, inc=Math.max(-12,Math.min(12,g.vx*10));
+      if(g.susto>0){ bob=-6*s+Math.sin(t/18)*2.5*s; inc=Math.sin(t/22)*7; g.x+=Math.sin(t/15)*1.2; }
       el.style.opacity=g.ver.toFixed(3);
       el.style.filter=g.fuera?'blur('+((1-g.ver)*6).toFixed(1)+'px)':'';
       el.style.transform='translate('+(g.x-29*s).toFixed(1)+'px,'+(g.y-36*s+bob).toFixed(1)+'px) rotate('+inc.toFixed(1)+'deg) scale('+esc.toFixed(3)+')';

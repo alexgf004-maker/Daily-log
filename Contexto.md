@@ -203,7 +203,8 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   cementerio, figura encapuchada, relámpago) y un fantasma de sábana como el de la opción "La mansión" (`fantasma()` en el script del
   head, `.hw-fantasma`) que pasea por el cielo sin pasar por la tarjeta ni el título; se acerca a donde tocas o
   pasas el mouse, cierra los ojos mientras el PIN tiene el foco y, si lo tocas, se deshace y reaparece en otro
-  lado. Se apaga con `prefers-reduced-motion` y no dibuja si el login no está activo. Ya no hay telaraña ni araña. La sangre de la tarjeta es un SVG con
+  lado. Con cada relámpago (lee la animación de `.hw-flash`) se asusta, tiembla y huye fuera de la pantalla;
+  al rato regresa. Se apaga con `prefers-reduced-motion` y no dibuja si el login no está activo. Ya no hay telaraña ni araña. La sangre de la tarjeta es un SVG con
   filtro de líquido y brillo que arma `__escenaHalloween` (`.hw-sangre`). Dentro de la app el fondo es negro
   ("Penumbra") y las tarjetas siguen claras.
 - **Colores del tema sobre lo nuevo**: `herramientas/tema-colores.py` lee `css/styles.css`, toma cada
