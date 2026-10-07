@@ -111,8 +111,8 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=70">
-<link rel="stylesheet" href="css/temas.css?v=13">
+<link rel="stylesheet" href="css/styles.css?v=71">
+<link rel="stylesheet" href="css/temas.css?v=14">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -5332,23 +5332,8 @@ function renderArmar(){
     if(g.area!=='campo') return '';
     const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
     if(veh) return `<span class="pg-placa" onclick="event.stopPropagation();progQuitarVehiculo(${idx})" title="Quitar vehículo">${veh.nombre}<span class="tbl-x">×</span></span>`;
-    return `<button class="pg-vadd" onclick="event.stopPropagation();progAbrirVeh(${progVehAbierto===idx?'null':idx})">${progVehAbierto===idx?'Cerrar':'+ Vehículo'}</button>`;
+    return `<button class="pg-vadd" onclick="event.stopPropagation();progAbrirVeh(${idx})">+ Vehículo</button>`;
   };
-  // Panel para elegir vehículo: pick-ups y motos libres + no disponibles en gris
-  const vehPanel=(idx)=>{
-    const vehAsig=vehAsignados;
-    const disp=(tipo)=>progVehiculos.filter(v=>v.tipo===tipo&&v.estado==='disponible'&&(!vehAsig.has(v.id))).sort((a,b)=>a.nombre.localeCompare(b.nombre));
-    const noDisp=(tipo)=>progVehiculos.filter(v=>v.tipo===tipo&&v.estado!=='disponible').sort((a,b)=>a.nombre.localeCompare(b.nombre));
-    const opt=v=>`<span class="tbl-veh-opt" onclick="event.stopPropagation();progElegirVeh(${idx},'${v.id}')">${v.nombre}</span>`;
-    const optNo=v=>`<span class="tbl-veh-opt tbl-veh-opt-no" title="${ESTADOS_VEHICULO[v.estado]?.texto||v.estado}">${v.nombre} · ${ESTADOS_VEHICULO[v.estado]?.texto||v.estado}</span>`;
-    return `<div class="tbl-veh-panel pg-vpanel" onclick="event.stopPropagation()">
-      <div class="tbl-veh-sub2">Pick-ups</div>
-      <div class="tbl-veh-opts">${disp('carro').map(opt).join('')||'<span class="tbl-bolsa-vacio">Ninguno libre</span>'}${noDisp('carro').map(optNo).join('')}</div>
-      <div class="tbl-veh-sub2">Motos</div>
-      <div class="tbl-veh-opts">${disp('moto').map(opt).join('')||'<span class="tbl-bolsa-vacio">Ninguna libre</span>'}${noDisp('moto').map(optNo).join('')}</div>
-    </div>`;
-  };
-
   // Tarjeta de un grupo (dentro de su campaña)
   const cajaGrupo=(g)=>{
     const idx=progGrupos.indexOf(g);
@@ -5363,7 +5348,6 @@ function renderArmar(){
         <div class="pg-g-hd-r">${vehSelector(idx,g)}<span class="pg-g-del" onclick="event.stopPropagation();progEliminarGrupo(${idx})" title="Quitar grupo">×</span></div>
       </div>
       ${g.area==='campo'?`<input type="text" class="pg-zona" placeholder="📍 Zona o detalle" value="${(g.zona||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()" onchange="progSetZona(${idx},this.value)">`:''}
-      ${progVehAbierto===idx?vehPanel(idx):''}
       <div class="pg-g-pp">${personas}<button class="pg-add" onclick="event.stopPropagation();progAgregarPersona(${idx})">+ Persona</button></div>
     </div>`;
   };
@@ -5502,13 +5486,44 @@ window.progQuitarVehiculo=(idx)=>{
   renderArmar(); persistProg();
 };
 
-window.progAbrirVeh=(idx)=>{ progVehAbierto=idx; renderArmar(); };
+// Hoja para elegir el vehículo de un grupo: libres primero; los que ya van en otro grupo dicen
+// en cuál, y los que no están disponibles salen apagados con su estado.
+const ICO_PICKUP='<svg viewBox="0 0 24 24"><path d="M2.5 15.5V9.5h9.5v6M12 11.5h4.5l3 3v1H12"/><circle cx="6.5" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg>';
+const ICO_MOTO='<svg viewBox="0 0 24 24"><circle cx="5.5" cy="16" r="3"/><circle cx="18.5" cy="16" r="3"/><path d="M5.5 16 9 10h5l4.5 6M12 10l-1.5-3H8M14 10l2-3h2.5"/></svg>';
+window.progAbrirVeh=(idx)=>{
+  const g=progGrupos[idx]; if(!g) return;
+  let mo=$('moVehGrupo');
+  if(!mo){
+    mo=document.createElement('div'); mo.className='mo sx-mo'; mo.id='moVehGrupo';
+    mo.innerHTML='<div class="modal ds sx"><div class="ds-grab"></div><div class="he-k">VEHÍCULO DEL GRUPO</div><div class="ds-t" id="moVehGrupoTit"></div><div id="moVehGrupoBody"></div>'+
+      '<div class="he-acts"><button type="button" class="he-b2" style="flex:1" onclick="closeModal(\'moVehGrupo\')">Cancelar</button></div></div>';
+    mo.addEventListener('click',e=>{ if(e.target===mo) mo.classList.remove('open'); });
+    document.body.appendChild(mo);
+  }
+  const enGrupo={}; progGrupos.forEach((x,i)=>{ if(x.vehiculo&&i!==idx) enGrupo[x.vehiculo]=x; });
+  const tarjeta=v=>{
+    const otro=enGrupo[v.id], libre=v.estado==='disponible'&&!otro, actual=g.vehiculo===v.id;
+    const est=ESTADOS_VEHICULO[v.estado]||ESTADOS_VEHICULO.disponible;
+    const solo=(v.campanias||[]).length&&!(v.campanias||[]).includes(g.campania)?`Solo ${v.campanias.join(', ')}`:'';
+    const sub=v.estado!=='disponible'?est.texto:otro?`En ${otro.campania} · Grupo ${otro.__n||''}`:(solo||'Libre');
+    const tono=v.estado!=='disponible'?'r':otro?'a':(solo?'a':'g');
+    return `<button type="button" class="sx-op pg-vop${actual?' on':''}${libre?'':' no'}"${libre?` onclick="progElegirVeh(${idx},'${v.id}')"`:' disabled'}>
+      <i>${v.tipo==='moto'?ICO_MOTO:ICO_PICKUP}</i><b class="pg-vop-placa">${v.nombre}</b><small class="${tono}">${sub}</small></button>`;
+  };
+  const orden=v=>(v.estado!=='disponible'?3:enGrupo[v.id]?2:((v.campanias||[]).length&&!(v.campanias||[]).includes(g.campania)?1:0));
+  const lista=tipo=>progVehiculos.filter(v=>v.tipo===tipo&&v.estado!=='baja').sort((a,b)=>orden(a)-orden(b)||a.nombre.localeCompare(b.nombre));
+  const seccion=(tit,tipo)=>{ const vs=lista(tipo); const libres=vs.filter(v=>orden(v)<2).length;
+    return vs.length?`<div class="he-k2">${tit} <span class="pg-vcount${libres?'':' cero'}">${libres?libres+' libre'+(libres===1?'':'s'):'ninguno libre'}</span></div><div class="sx-ops c3">${vs.map(tarjeta).join('')}</div>`:''; };
+  $('moVehGrupoTit').textContent=`${g.campania} · Grupo ${g.__n||''}${g.zona?' · '+g.zona:''}`;
+  $('moVehGrupoBody').innerHTML=(seccion('Pick-ups','carro')+seccion('Motos','moto'))||'<div class="sx-hint">No hay vehículos en el catálogo.</div>';
+  mo.classList.add('open');
+};
 window.progElegirVeh=(idx,vid)=>{
   const g=progGrupos[idx]; if(!g) return;
   const veh=progVehiculos.find(v=>v.id===vid);
   if(veh && veh.estado!=='disponible') return; // no disponibles no se asignan
   g.vehiculo=vid; g.vehiculoNombre=veh?veh.nombre:'';
-  progVehAbierto=null;
+  progVehAbierto=null; closeModal('moVehGrupo');
   renderArmar(); persistProg();
 };
 window.progVerNoDisp=()=>{

@@ -207,6 +207,9 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   al rato regresa. Se apaga con `prefers-reduced-motion` y no dibuja si el login no está activo. Ya no hay telaraña ni araña. La sangre de la tarjeta es un SVG con
   filtro de líquido y brillo que arma `__escenaHalloween` (`.hw-sangre`). Dentro de la app el fondo es negro
   ("Penumbra") y las tarjetas siguen claras.
+- **Programación, vehículo del grupo**: "+ Vehículo" abre una hoja (`progAbrirVeh`, `#moVehGrupo`, estilo sx) con
+  tarjetas por pick-up y moto: libres primero, luego los restringidos a otra campaña ("Solo …"), los que ya van en
+  otro grupo ("En CPT MT · Grupo 1") y al final los no disponibles con su estado; los de baja no se muestran.
 - **Halloween, rendimiento del login**: evitar lo que repinta en cada cuadro. Las brasas se mueven con
   `transform` (no `background-position`), la sangre es estática (su filtro de líquido se calcula una vez), los
   murciélagos no llevan `filter` y aletean con CSS (los lejanos no aletean), y el brillo del fantasma es un

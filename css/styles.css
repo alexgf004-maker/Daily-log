@@ -981,6 +981,14 @@ tbody tr:hover td{background:var(--bluelt)}
 .pg-vadd{font:700 11.5px var(--sans);color:#2563eb;background:#fff;border:1.5px dashed #93c5fd;border-radius:7px;padding:3px 8px;cursor:pointer}
 #adProg .pg-zona{margin-top:8px;height:34px;padding:0 10px;font-size:12.5px;border-radius:9px;border:1px solid var(--gray200);background:var(--gray50)}
 .pg-vpanel{margin-top:8px}
+/* hoja para elegir vehículo del grupo */
+.pg-vop{min-height:92px}
+.pg-vop .pg-vop-placa{font:800 13px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.8px;color:#0b1a33}
+.pg-vop small.g{color:#047857}.pg-vop small.a{color:#b45309}.pg-vop small.r{color:#dc2626}
+.pg-vop.no{cursor:not-allowed;background:#f8fafc;border-style:dashed}
+.pg-vop.no i{opacity:.45}.pg-vop.no .pg-vop-placa{color:#64748b}
+.pg-vop.no:hover{border-color:var(--gray200)}
+.pg-vcount{font-weight:700;letter-spacing:0;text-transform:none;color:#047857;margin-left:4px}.pg-vcount.cero{color:#94a3b8}
 .pg-g-pp{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
 .pg-p{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 3px;border-radius:20px;background:#eff6ff;border:1px solid #bfdbfe;font-size:12px;font-weight:700;color:#1e3a8a;cursor:pointer}
 .pg-p i{font-style:normal;width:20px;height:20px;border-radius:50%;background:#1e3a5f;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center}
