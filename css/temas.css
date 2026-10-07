@@ -73,12 +73,6 @@
 @keyframes hwFlash{0%,92%,100%{opacity:0}92.6%{opacity:.85}93.4%{opacity:0}95%{opacity:.6}95.8%{opacity:0}}
 .hw-rayo{position:absolute;left:24%;top:0;width:52px;height:210px;opacity:0;animation:hwFlash 11s linear infinite}
 .hw-rayo svg{width:100%;height:100%;filter:drop-shadow(0 0 8px #fff) drop-shadow(0 0 18px #fca5a5)}
-/* araña que baja de la telaraña y vuelve a subir */
-.hw-arana{position:absolute;left:118px;top:0;width:22px;animation:hwBaja 9s ease-in-out infinite}
-.hw-arana:before{content:'';position:absolute;left:10.5px;bottom:24px;width:1px;height:600px;background:linear-gradient(transparent,rgba(231,229,228,.6))}
-.hw-arana svg{display:block;width:22px;height:26px;animation:hwPatas .5s ease-in-out infinite alternate}
-@keyframes hwBaja{0%,100%{transform:translateY(40px)}45%,60%{transform:translateY(128px)}}
-@keyframes hwPatas{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
 /* ojos que aparecen en la oscuridad */
 .hw-ojos{position:absolute;width:46px;height:14px;opacity:0;animation:hwOjos var(--dur,8s) ease-in-out var(--del,0s) infinite}
 .hw-ojos:before,.hw-ojos:after{content:'';position:absolute;top:2px;width:13px;height:9px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#2a0000 0 2px,#ff3b1f 3px,rgba(255,59,31,.25) 6px,transparent 7px);animation:hwParpa var(--dur,8s) linear var(--del,0s) infinite}
@@ -102,6 +96,9 @@
 
 /* ══ Sangre de la tarjeta: espesa, oscura y con brillo de líquido; reemplaza el borde dibujado ══ */
 .tema-halloween .login-form::before{display:none!important}
+/* sin telaraña ni araña: el cielo queda libre para el fantasma */
+.tema-halloween #loginScreen::after{content:none!important}
+.hw-fantasma{position:absolute;inset:0;width:100%;height:100%;display:block}
 .hw-sangre{position:absolute;left:0;right:0;top:-1px;height:60px;pointer-events:none;z-index:2;filter:drop-shadow(0 1.5px 1.2px rgba(60,0,0,.35))}
 .hw-sangre svg{display:block;width:100%;height:100%;overflow:visible}
 @keyframes hwEstira{from{transform:scaleY(.7)}to{transform:scaleY(1.06)}}
