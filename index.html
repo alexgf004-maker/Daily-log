@@ -112,7 +112,7 @@ self.addEventListener('fetch', e => {
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=70">
-<link rel="stylesheet" href="css/temas.css?v=4">
+<link rel="stylesheet" href="css/temas.css?v=5">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -141,10 +141,28 @@ self.addEventListener('fetch', e => {
     vuelos.forEach(function(v){ h+='<div class="hw-bat" style="--tx:'+v[0]+'px;--ty:'+v[1]+'px;--dur:'+v[2]+'s;--del:'+v[3]+'s;--esc:'+v[4]+';--arco:'+v[5]+'px;--rot:'+v[6]+'deg">'+bat((0.18+Math.random()*0.1).toFixed(2))+'</div>'; });
     [[8,'9%',230,11,0],[30,'3%',170,8,2.5],[58,'16%',300,13,5]].forEach(function(r){ h+='<div class="hw-ronda" style="left:'+r[0]+'%;top:'+r[1]+';--dur:'+r[3]+'s;--del:-'+r[4]+'s">'+bat('0.22')+'</div>'; });
     h+='<div class="hw-arana"><svg viewBox="0 0 24 28"><g stroke="#e9d5ff" stroke-width="1.3" stroke-linecap="round" fill="none"><path d="M9 14l-6-4-2 3M9 16H2l-1 4M9 18l-6 4v4M15 14l6-4 2 3M15 16h7l1 4M15 18l6 4v4"/></g><ellipse cx="12" cy="11" rx="3.2" ry="3" fill="#140726" stroke="#e9d5ff" stroke-width=".8"/><ellipse cx="12" cy="18" rx="4.6" ry="5.6" fill="#140726" stroke="#e9d5ff" stroke-width=".8"/><circle cx="10.9" cy="10.5" r=".9" fill="#ff3b1f"/><circle cx="13.1" cy="10.5" r=".9" fill="#ff3b1f"/></svg></div>';
-    [['6%','58%',9,0],['84%','64%',11,4],['12%','36%',13,7.5]].forEach(function(o){ h+='<div class="hw-ojos" style="left:'+o[0]+';top:'+o[1]+';--dur:'+o[2]+'s;--del:'+o[3]+'s"></div>'; });
+
     var capa=document.createElement('div'); capa.className='hw-capa'; capa.innerHTML=h; ls.insertBefore(capa,ls.firstChild);
     var f=ls.querySelector('.login-form');
-    if(f) [[16,2.8,0],[31,3.4,1.1],[52,3.1,2.2],[71,3.7,.6],[86,2.9,1.7]].forEach(function(g){ var d=document.createElement('i'); d.className='hw-gota'; d.style.cssText='left:'+g[0]+'%;--dur:'+g[1]+'s;--del:'+g[2]+'s'; f.appendChild(d); });
+    // sangre de la tarjeta: pocas gotas de distinto grosor que se alargan despacio; el filtro las une como líquido y les da brillo
+    if(f&&!f.querySelector('.hw-sangre')){
+      var semilla=7, rnd=function(){ semilla=(semilla*16807)%2147483647; return semilla/2147483647; }, A=400, H=60, n=8, g='';
+      for(var i=0;i<n;i++){ var x=(i+.5)*A/n+(rnd()-.5)*A/n*.7, w=4+rnd()*9, lar=8+Math.pow(rnd(),1.5)*H*.36;
+        g+='<rect x="'+(x-w/2).toFixed(1)+'" y="0" width="'+w.toFixed(1)+'" height="'+lar.toFixed(1)+'" rx="'+(w/2).toFixed(1)+'" style="transform-origin:'+x.toFixed(1)+'px 0;animation:hwEstira '+(6+rnd()*7).toFixed(2)+'s ease-in-out '+(-rnd()*8).toFixed(2)+'s infinite alternate"/>'+
+           '<circle cx="'+x.toFixed(1)+'" cy="'+(lar-1).toFixed(1)+'" r="'+(w*.62).toFixed(1)+'"/>';
+        if(rnd()<.5){ var x2=x+(rnd()-.5)*20, w2=2+rnd()*4; g+='<rect x="'+(x2-w2/2).toFixed(1)+'" y="0" width="'+w2.toFixed(1)+'" height="'+(6+rnd()*10).toFixed(1)+'" rx="'+(w2/2).toFixed(1)+'"/>'; } }
+      var s=document.createElement('div'); s.className='hw-sangre';
+      s.innerHTML='<svg viewBox="0 0 '+A+' '+H+'" preserveAspectRatio="none" aria-hidden="true"><defs>'+
+        '<filter id="hwS" x="-5%" y="-30%" width="110%" height="190%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.6" result="b"/><feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -11" result="liq"/>'+
+        '<feGaussianBlur in="liq" stdDeviation="1.8" result="lb"/><feSpecularLighting in="lb" surfaceScale="2.6" specularConstant=".75" specularExponent="34" lighting-color="#ffd2c8" result="br"><fePointLight x="-60" y="-160" z="220"/></feSpecularLighting>'+
+        '<feComposite in="br" in2="liq" operator="in" result="bri"/><feComposite in="liq" in2="bri" operator="arithmetic" k2="1" k3=".7"/></filter>'+
+        '<linearGradient id="hwSg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a0000"/><stop offset=".35" stop-color="#5c0000"/><stop offset="1" stop-color="#7a0606"/></linearGradient></defs>'+
+        '<g filter="url(#hwS)" fill="url(#hwSg)"><path d="M0 -4H'+A+'V5C'+(A*.8)+' 8 '+(A*.6)+' 3 '+(A*.4)+' 7S'+(A*.1)+' 3 0 6Z"/>'+g+'</g></svg>';
+      f.insertBefore(s,f.firstChild);
+    }
+    // ojos rojos en la oscuridad, abajo entre las tumbas
+    var panel=ls.querySelector('.login-panel');
+    if(panel) [['17%','58px',9,0],['88%','76px',11,4],['47%','30px',13,7.5]].forEach(function(o){ var e=document.createElement('div'); e.className='hw-ojos'; e.style.cssText='left:'+o[0]+';bottom:'+o[1]+';--dur:'+o[2]+'s;--del:'+o[3]+'s'; panel.appendChild(e); });
   };
   document.addEventListener('DOMContentLoaded',function(){ window.__escenaHalloween(); });
 })();
