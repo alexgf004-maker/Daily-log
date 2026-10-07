@@ -1179,6 +1179,7 @@ window.doLogin = async ()=>{
 };
 
 window.doLogout=()=>{
+  quitarCapasFlotantes();
   me=null;
   localStorage.removeItem('innova_session');
   stopDashRefresh();
@@ -1189,6 +1190,16 @@ window.doLogout=()=>{
   aplicarUsuarioRecordado();
   screen('loginScreen');
 };
+// Lo que se agrega directo al <body> (campanita, tutorial, resúmenes, globos de las gráficas) no se
+// borra con appContainer: al cerrar sesión se quita aquí para que no quede tapando el login.
+function quitarCapasFlotantes(){
+  window.cerrarNovedades?.();
+  try{ clearInterval(tourCuenta); window.removeEventListener('resize',ubicarTour); }catch(_){}
+  document.body.classList.remove('tc-quieto');
+  document.querySelectorAll('#tcCapa,.rm-card,.rm-dim,.ag-export').forEach(e=>e.remove());
+  document.querySelector('.ag-tip')?.classList.remove('on');
+  document.querySelectorAll('.mo.open').forEach(m=>m.classList.remove('open'));
+}
 // Usuario recordado: se rellena solo en el login (el PIN nunca se guarda)
 function aplicarUsuarioRecordado(){
   let u=null; try{ u=localStorage.getItem(USUARIO_RECORDADO_KEY); }catch(_){}
@@ -6206,7 +6217,7 @@ new MutationObserver(cambios=>cambios.forEach(c=>{
   m.querySelectorAll('.he-chips[data-fecha]').forEach(x=>sxMarcarFecha(x.dataset.fecha));
 })).observe(document.body,{attributes:true,subtree:true,attributeFilter:['class'],attributeOldValue:true});
 document.addEventListener('change',e=>{ if(e.target.type==='date'&&e.target.id) sxMarcarFecha(e.target.id); });
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.mo.open').forEach(m=>m.classList.remove('open'));});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.mo.open').forEach(m=>m.classList.remove('open'));if($('nvPan'))cerrarNovedades();}});
 
 // Lock scroll on login screen at startup
 document.body.style.overflow='hidden';
