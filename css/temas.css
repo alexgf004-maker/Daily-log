@@ -111,6 +111,55 @@
 /* ══ Fondo de la app: noche cerrada, las tarjetas siguen claras (opción B) ══ */
 .tema-halloween{--bg:#0b0709}
 .tema-halloween body:not(:has(#loginScreen.active)){background:radial-gradient(ellipse 120% 60% at 50% -10%,rgba(127,29,29,.35),transparent 60%),radial-gradient(ellipse 80% 50% at 50% 115%,rgba(90,10,14,.4),transparent 70%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .6  0 0 0 0 .1  0 0 0 0 .1  0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),#0b0709!important}
+/* ══ Marcaje: la Muerte y el tajo de la guadaña (ver tajoHalloween en index.html) ══ */
+.mk3-dot.hw{background:none!important;width:46px;height:50px;border-radius:0;color:inherit}
+.mk3-dot.hw::after{display:none!important}
+.hw-parca{width:46px;height:50px;overflow:visible;filter:drop-shadow(0 3px 4px rgba(20,8,10,.35))}
+.hw-parca .hw-pojos ellipse{transform-box:fill-box;transform-origin:center}
+.mk3-t.hw-partida{position:relative;display:inline-block;color:transparent}
+.hw-partida .hw-hueco{visibility:hidden}
+.hw-partida .hw-m{position:absolute;left:0;top:0;color:var(--text)}
+.hw-partida .arriba{clip-path:polygon(-5% -10%,105% -10%,105% 38%,-5% 66%);transform:translate(-2px,-3px) rotate(-3deg)}
+.hw-partida .abajo{clip-path:polygon(-5% 66%,105% 38%,105% 110%,-5% 110%)}
+.hw-cicatriz{position:absolute;left:-6px;top:0;width:calc(100% + 12px);height:100%;overflow:visible}
+.hw-gotas path{transform-box:fill-box;transform-origin:top}
+/* escena */
+.mk3.hw-escena{position:relative;overflow:hidden}
+.hw-tajo{position:absolute;inset:0;pointer-events:none;z-index:4}
+.hw-osc{position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 60px 60%,rgba(48,20,8,.86),rgba(6,2,4,.97) 45%);animation:hwNoche 3.4s ease both}
+@keyframes hwNoche{0%{opacity:0}10%,82%{opacity:1}100%{opacity:0}}
+.hw-escena .mk3-pt.recien>*{position:relative;z-index:5}
+.hw-escena .mk3-pt.recien :is(.mk3-t,.hw-m){animation:hwLuz 3.4s ease both}
+.hw-escena .mk3-pt.recien .mk3-l{animation:hwLuzL 3.4s ease both}
+@keyframes hwLuz{0%,100%{color:var(--text)}10%,82%{color:#efe6e6}}
+@keyframes hwLuzL{0%,100%{color:var(--text2)}10%,82%{color:#a59597}}
+.hw-hoja{position:absolute;left:0;top:calc(var(--y) - 36px);width:330px;z-index:6;opacity:0;animation:hwBarre 3.4s cubic-bezier(.7,0,.3,1) both;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+@keyframes hwBarre{0%,26%{opacity:0;transform:translateX(440px) rotate(10deg)}28%{opacity:1}35%{opacity:1;transform:translateX(-120px) rotate(-6deg)}39%,100%{opacity:0;transform:translateX(-440px) rotate(-12deg)}}
+.hw-estela{position:absolute;left:0;top:calc(var(--y) - 22px);width:100%;height:40px;z-index:6;opacity:0;animation:hwEstela 3.4s linear both}
+@keyframes hwEstela{0%,31%{opacity:0}34%{opacity:.9}46%,100%{opacity:0}}
+.mk3-pt.recien .mk3-dot.hw{animation:none}
+.mk3-pt.recien .hw-parca .hw-cuerpo{animation:hwEmerge 1s cubic-bezier(.2,.8,.3,1) both}
+.mk3-pt.recien .hw-parca .hw-guadana{animation:hwEmerge 1s .1s cubic-bezier(.2,.8,.3,1) both}
+@keyframes hwEmerge{0%{transform:translateY(24px);opacity:0;filter:blur(4px)}100%{transform:none;opacity:1;filter:none}}
+/* a tiempo: la hora, la etiqueta y el chip se agachan */
+.hw-escena.hw-ok .mk3-pt.recien .mk3-t{animation:hwLuz 3.4s ease both,hwAgacha 3.4s ease both}
+.hw-escena.hw-ok .mk3-pt.recien .mk3-l{animation:hwLuzL 3.4s ease both,hwAgacha 3.4s ease both}
+.hw-escena.hw-ok .mk3-pt.recien .tg{animation:hwAgacha 3.4s ease both}
+@keyframes hwAgacha{0%,24%{transform:none}29%,36%{transform:translateY(14px) scale(1.08,.7)}42%{transform:translateY(-6px) scale(.96,1.06)}48%,100%{transform:none}}
+/* tarde: la hora se parte, la herida gotea y la tarjeta tiembla */
+.hw-escena.hw-mal{animation:hwSacude .4s 1.15s linear both}
+@keyframes hwSacude{0%,100%{transform:none}15%{transform:translate(-4px,2px)}30%{transform:translate(4px,-2px)}45%{transform:translate(-3px,-1px)}60%{transform:translate(3px,2px)}75%{transform:translate(-1px,1px)}}
+.hw-escena.hw-mal .mk3-pt.recien .mk3-t.hw-partida{animation:none}
+.hw-escena.hw-mal .mk3-pt.recien .hw-partida .arriba{animation:hwLuz 3.4s ease both,hwParte 3.4s ease both}
+@keyframes hwParte{0%,33%{transform:none}38%{transform:translate(-8px,-9px) rotate(-10deg)}100%{transform:translate(-2px,-3px) rotate(-3deg)}}
+.hw-escena.hw-mal .mk3-pt.recien .hw-cicatriz path:first-child{stroke-dasharray:120;animation:hwCorta .2s 1.15s ease-out both}
+@keyframes hwCorta{from{stroke-dashoffset:120}to{stroke-dashoffset:0}}
+.hw-escena.hw-mal .mk3-pt.recien .hw-gotas path{animation:hwGotea 1.2s 1.4s ease-in both}
+@keyframes hwGotea{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.hw-escena.hw-mal .mk3-pt.recien .hw-pojos{animation:hwRojos .5s 1.3s ease-out both}
+@keyframes hwRojos{0%{opacity:0;transform:scale(.4)}60%{opacity:1;transform:scale(1.5)}100%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hw-tajo{display:none}.hw-escena,.hw-escena *{animation:none!important}}
+
 /* AUTO-COLORES:INICIO (no editar a mano: herramientas/tema-colores.py) */
 :where(.tema-halloween) #loginScreen{background:linear-gradient(160deg,#050307 0%,#1a0509 45%,#2a070b 100%)}
 :where(.tema-halloween) .login-form input:focus{box-shadow:0 0 0 4px rgba(185,28,28,.12)}

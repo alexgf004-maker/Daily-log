@@ -207,6 +207,11 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   al rato regresa. Se apaga con `prefers-reduced-motion` y no dibuja si el login no está activo. Ya no hay telaraña ni araña. La sangre de la tarjeta es un SVG con
   filtro de líquido y brillo que arma `__escenaHalloween` (`.hw-sangre`). Dentro de la app el fondo es negro
   ("Penumbra") y las tarjetas siguen claras.
+- **Halloween, marcaje**: en la tarjeta "Mi marcaje" el punto es una Muerte con guadaña (`parcaMini`, ojos
+  pálidos a tiempo y rojos si es tarde o salida antes) y, si fue tarde, la hora queda partida en dos con una
+  herida (`horaPartida`). Al marcar, `tajoHalloween` oscurece la tarjeta y cruza una guadaña a la altura de la
+  hora: a tiempo la hora se agacha; tarde la parte y la tarjeta tiembla. Estilos `.hw-tajo`, `.hw-parca`,
+  `.hw-partida` en `css/temas.css`. Fuera del tema todo sigue igual (cheque verde / signo de alerta).
 - **Colores del tema sobre lo nuevo**: `herramientas/tema-colores.py` lee `css/styles.css`, toma cada
   regla que usa los azules de la app y escribe su versión en tonos del tema entre las marcas
   `AUTO-COLORES` de `css/temas.css` (con `:where(.tema-halloween)` para no subir especificidad).
