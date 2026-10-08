@@ -87,6 +87,7 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   `justificado: {por, nombre, nota, ts}` — ver sección 5, "Justificar tardanzas".
 - `config/`: configuración varia (incluye `config/vehiculos`, `config/campanias`,
   `config/sabadosLaborales`, `config/musica` y `config/musicaDatos`).
+- `config/tema`: tema para todos (ver "Temas de temporada").
 - `config/musica`: `{version, nombre, tipo, bytes, partes, activa, subidoPor, subidoEn}` de la música de
   fondo; el audio va en `config/musicaDatos/{version}/{i}` como texto base64 en partes de 512 KB (la app no
   usa Firebase Storage). Cada teléfono la baja una vez y la guarda en IndexedDB (`innova-musica`); solo
@@ -208,6 +209,12 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
 ---
 
 ## Temas de temporada
+
+- **Tema para todos** (Perfil del admin → Administración → "Tema para todos"): Por fecha → Encendido →
+  Apagado. Se guarda en `config/tema` (`{modo:'on'|'off', tema, por, en}`; sin nodo = por fecha) y cada
+  teléfono lo escucha en vivo, también en el login, y lo copia en `localStorage.innova_tema_global` para
+  aplicarlo al abrir sin parpadeo. Prioridad: el modo de ESE dispositivo (Ver ahora / Apagado, `innova_tema`)
+  > para todos > por fecha. Al apagarse se quitan del login la escena, la sangre y los ojos (`aplicarTema`).
 
 `css/temas.css` + un script corto en el `<head>` de `index.html` (lista `TEMAS`). Cada tema
 tiene fechas `desde`/`hasta` en formato mes-día y se aplica solo cada año poniendo clases en

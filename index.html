@@ -117,15 +117,27 @@ self.addEventListener('fetch', e => {
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
 // sumar una entrada aquí y sus estilos en css/temas.css. Desde Mi Perfil del admin
-// se puede ver antes o apagar, solo en ese dispositivo (localStorage 'innova_tema').
+// se puede ver antes o apagar, solo en ese dispositivo (localStorage 'innova_tema'),
+// o encender/apagar para TODOS (config/tema en la base). Lo de la base se guarda
+// en este teléfono ('innova_tema_global') para aplicarlo al abrir, sin parpadeo.
+// Prioridad: este dispositivo (Ver ahora / Apagado) > para todos > por fecha.
 (function(){
   var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'11-02',clases:['tema-halloween','fuerte']}];
   var d=new Date(), md=('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-  var modo='auto'; try{ modo=localStorage.getItem('innova_tema')||'auto'; }catch(e){}
+  var modo='auto', global=null; try{ modo=localStorage.getItem('innova_tema')||'auto'; global=JSON.parse(localStorage.getItem('innova_tema_global')||'null'); }catch(e){}
   var porFecha=null; for(var i=0;i<TEMAS.length;i++){ if(md>=TEMAS[i].desde&&md<=TEMAS[i].hasta) porFecha=TEMAS[i]; }
-  var t=modo==='off'?null:(modo==='ver'?(porFecha||TEMAS[0]):porFecha);
+  function efectivo(T){
+    if(T.modo==='off') return null;
+    if(T.modo==='ver') return T.porFecha||T.lista[0];
+    var g=T.global;
+    if(g&&g.modo==='off') return null;
+    if(g&&g.modo==='on'){ for(var k=0;k<T.lista.length;k++) if(T.lista[k].id===g.tema) return T.lista[k]; return T.lista[0]; }
+    return T.porFecha;
+  }
+  var T={lista:TEMAS,porFecha:porFecha,modo:modo,global:global,efectivo:efectivo};
+  var t=efectivo(T); T.activo=t;
   if(t) for(var j=0;j<t.clases.length;j++) document.documentElement.classList.add(t.clases[j]);
-  window.__temas={lista:TEMAS,activo:t,porFecha:porFecha,modo:modo};
+  window.__temas=T;
   // Halloween: escena animada del login (murciélagos que salen de la luna, relámpago,
   // fantasma, ojos en la oscuridad y sangre). Solo se arma si el tema está activo.
   // Fantasma de sábana (como el de la mansión) que pasea por el cielo, detrás de la tarjeta.
@@ -170,6 +182,7 @@ self.addEventListener('fetch', e => {
       if(!g.fuera&&g.ver>.5&&Math.abs(p.x-g.x)<36*s&&Math.abs(p.y-g.y)<46*s){ g.fuera=1; return; }   // lo tocaste: se desvanece
       curiosear(p); },{passive:true});
     function cuadro(t){
+      if(!el.isConnected) return;   // se quitó la escena (tema apagado): deja de animar
       requestAnimationFrame(cuadro);
       var f=Math.max(.2,Math.min(3,(t-(ult||t))/16.7)); ult=t;
       if(!ls.classList.contains('active')||document.hidden) return;
@@ -855,6 +868,10 @@ function renderAdmin(){
           <button class="pf-row ap-aud" onclick="cicloTema()">
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></span>
             <span class="pf-tx"><b>Tema de temporada</b><span id="temaStatus">…</span></span><span class="ap-tema" id="temaModo"></span>
+          </button>
+          <button class="pf-row ap-aud" onclick="cicloTemaGlobal()">
+            <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
+            <span class="pf-tx"><b>Tema para todos</b><span id="temaGlobalStatus">…</span></span><span class="ap-tema" id="temaGlobalModo"></span>
           </button>
           <button class="pf-row ap-aud tema-probar" id="temaProbar" onclick="probarMarcajeTema()">
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2 14 22"/><path d="M18.5 2.5C13 .5 6 1.5 1.5 6.5 6 4.5 12 4 17 6Z"/></svg></span>
@@ -3304,24 +3321,59 @@ window.cargarPerfilEmpleado=async()=>{
 function pintarTema(){
   const T=window.__temas; if(!T) return;
   const sig=T.lista[0], fc=md=>{ const [m,d]=md.split('-').map(Number); return `${d} ${MESES_FX[m-1]}`; };
-  const st=$('temaStatus'), md=$('temaModo');
+  const g=T.global, st=$('temaStatus'), md=$('temaModo');
   if(st) st.textContent=T.modo==='off'?'Apagado en este dispositivo'
-    :T.activo?`${T.activo.nombre} activo${T.modo==='ver'&&!T.porFecha?' (vista previa)':''}`
+    :T.activo?`${T.activo.nombre} activo${T.modo==='ver'&&!T.porFecha&&g?.modo!=='on'?' (vista previa)':''}`
+    :g?.modo==='off'?'Apagado para todos'
     :`${sig.nombre}: del ${fc(sig.desde)} al ${fc(sig.hasta)}`;
   if(md) md.textContent={auto:'Automático',ver:'Ver ahora',off:'Apagado'}[T.modo];
+  const gs=$('temaGlobalStatus'), gm=$('temaGlobalModo');
+  if(gs) gs.textContent=g?.modo==='on'?`${sig.nombre} encendido para todos, aunque no sea la fecha`
+    :g?.modo==='off'?`${sig.nombre} apagado para todos, aunque sea la fecha`
+    :`Solo en sus fechas (del ${fc(sig.desde)} al ${fc(sig.hasta)})`;
+  if(gm) gm.textContent=g?.modo==='on'?'Encendido':g?.modo==='off'?'Apagado':'Por fecha';
+}
+// Aplica el tema que corresponde (dispositivo, para todos o por fecha) si cambió
+function aplicarTema(){
+  const T=window.__temas; if(!T) return;
+  const nuevo=T.efectivo(T);
+  const html=document.documentElement;
+  if(nuevo!==T.activo){
+    T.lista.forEach(t=>t.clases.forEach(c=>html.classList.remove(c)));
+    T.activo=nuevo;
+    if(nuevo){ nuevo.clases.forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); }
+    else document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos').forEach(c=>c.remove());   // escena del login: fantasma, luna, sangre y ojos
+    renderMarcajeCard();   // la tarjeta de marcaje cambia de figuras con el tema
+  }
+  pintarTema();
 }
 window.cicloTema=()=>{
   const T=window.__temas; if(!T) return;
   T.modo={auto:'ver',ver:'off',off:'auto'}[T.modo]||'auto';
   try{ if(T.modo==='auto') localStorage.removeItem('innova_tema'); else localStorage.setItem('innova_tema',T.modo); }catch(e){}
-  const html=document.documentElement;
-  T.lista.forEach(t=>t.clases.forEach(c=>html.classList.remove(c)));
-  T.activo=T.modo==='off'?null:(T.modo==='ver'?(T.porFecha||T.lista[0]):T.porFecha);
-  if(T.activo) T.activo.clases.forEach(c=>html.classList.add(c));
-  if(T.activo) window.__escenaHalloween&&window.__escenaHalloween();
-  pintarTema();
-  renderMarcajeCard();   // la tarjeta de marcaje cambia de figuras con el tema
+  aplicarTema();
 };
+// Tema para TODOS (solo admin): Por fecha → Encendido → Apagado. Se guarda en config/tema.
+window.cicloTemaGlobal=async()=>{
+  const T=window.__temas; if(!T) return;
+  const act=T.global?.modo||'auto';
+  const sig={auto:'on',on:'off',off:'auto'}[act];
+  const nombre=T.lista[0].nombre;
+  if(sig==='on'&&!confirm(`¿Encender el tema de ${nombre} para todos? Lo verán en el login y en la app desde ya.`)) return;
+  if(sig==='off'&&!confirm(`¿Apagar el tema de ${nombre} para todos, aunque sea su fecha?`)) return;
+  try{ await set(ref(db,'config/tema'), sig==='auto'?null:{modo:sig,tema:T.lista[0].id,por:me?.nombre||'',en:Date.now()}); }
+  catch(e){ alert('No se pudo guardar: '+e.message); }
+};
+// Escucha config/tema (también en el login): si el admin lo cambia, se aplica solo en todos los teléfonos
+try{
+  onValue(refFirebase(db,'config/tema'), sn=>{
+    const T=window.__temas; if(!T) return;
+    const v=sn.val(); const g=v&&(v.modo==='on'||v.modo==='off')?{modo:v.modo,tema:v.tema||T.lista[0].id}:null;
+    T.global=g;
+    try{ if(g) localStorage.setItem('innova_tema_global',JSON.stringify(g)); else localStorage.removeItem('innova_tema_global'); }catch(_){}
+    aplicarTema();
+  });
+}catch(e){ console.warn('[tema]', e.message); }
 // Vista previa de la escena del marcaje con datos de ejemplo: no guarda nada ni pide ubicación
 window.probarMarcajeTema=function(){
   if(!hwTema()) return;
