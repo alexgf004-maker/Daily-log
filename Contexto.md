@@ -222,6 +222,11 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   de cheque, salpica y gotea, y la pantalla sangra desde arriba (`sangreTopHW`, armada al ancho de la pantalla). La sangre pasa por un filtro
   de líquido con brillo (`FILTRO_SANGRE_HW`): tallos que se alargan y cabezas que bajan (`chorroHW`) se unen como gotas. Dura ~4.4 s. `#fxOk` se mueve a
   `body` al mostrarse para quedar encima de la barra y la niebla del tema. Estilos `.fxh-*` en `css/temas.css`.
+- **Halloween, coherencia (revisión)**: dentro de la app no hay telarañas ni arañazos en los encabezados (esa
+  capa se salía del encabezado y dibujaba arañazos al fondo de la página); la niebla y el oscurecido de orillas
+  solo van en el login (encima de la app ensuciaban las tarjetas). Sin morados fuera de estados (perfil, "Ver
+  ahora"). El viático apagado usa el tono del tema; encendido sigue verde como el resto de los viáticos.
+  Los colores de estado (verde a tiempo, rojo tarde, naranja horas extra, amarillo avisos) se mantienen.
 - **Halloween, rendimiento del login**: evitar lo que repinta en cada cuadro. Las brasas se mueven con
   `transform` (no `background-position`), la sangre es estática (su filtro de líquido se calcula una vez), los
   murciélagos no llevan `filter` y aletean con CSS (los lejanos no aletean), y el brillo del fantasma es un

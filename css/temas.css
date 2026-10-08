@@ -220,6 +220,20 @@
 .fx-ok.hw .fx-ok-t{transition-delay:1.9s}.fx-ok.hw .fx-ok-s{transition-delay:2s}.fx-ok.hw .fx-ok-pills{transition-delay:2.1s}
 @media (prefers-reduced-motion:reduce){.fx-ok.hw *,.fx-ok.hw::before,.fxh::before{animation:none!important}}
 
+/* ══ Coherencia del tema (revisión general) ══ */
+/* encabezados: sin telaraña ni arañazos. Esa capa no quedaba dentro del encabezado y los arañazos
+   aparecían al fondo de la página encima de botones y tarjetas. Se queda la sangre del borde. */
+.tema-halloween :is(.dash-hero,.rg-hero,.pg-hero,.ps-hero,.page-header,.pe)::before{content:none!important}
+/* la niebla y el oscurecido de las orillas solo en el login: dentro de la app iban encima de todo
+   y ensuciaban de gris las tarjetas blancas cerca de los bordes de la pantalla */
+.tema-halloween body:not(:has(#loginScreen.active))::after,.tema-halloween body:not(:has(#loginScreen.active))::before{display:none}
+/* morados que no son del tema */
+.tema-halloween .pf-ic.v{background:#fef2f2;color:#991b1b}
+.tema-halloween .ap-tema{color:#fecaca;background:linear-gradient(135deg,#2a0a0f,#5c0a10);border-color:#7f1d1d}
+/* viático: ícono con el tono del tema (encendido sigue verde, como los viáticos en el resto de la app) */
+.tema-halloween .fx-viat:not(.on) .fx-viat-ic{background:#fef2f2;color:#991b1b}
+.tema-halloween .fx-viat:not(.on) .fx-sw{background:#e9d8da}
+
 /* AUTO-COLORES:INICIO (no editar a mano: herramientas/tema-colores.py) */
 :where(.tema-halloween) #loginScreen{background:linear-gradient(160deg,#050307 0%,#1a0509 45%,#2a070b 100%)}
 :where(.tema-halloween) .login-form input:focus{box-shadow:0 0 0 4px rgba(185,28,28,.12)}
