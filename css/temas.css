@@ -244,6 +244,9 @@
 .tema-halloween .dt-extra{background:linear-gradient(135deg,#2b1605,#3d1f06)!important;border-color:#7c4a12!important;color:#fcd34d!important}
 .tema-halloween .dt-extra.sel{border-color:#f59e0b!important}
 
+/* colores de estado del tema (las variables que usa la app): verde veneno, sangre y calabaza */
+html.tema-halloween{--green:#2f7f1b;--greenlt:#f1fbea;--danger:#a31515;--warn:#c2510a;--warnlt:#fff5ea}
+
 /* AUTO-COLORES:INICIO (no editar a mano: herramientas/tema-colores.py) */
 :where(.tema-halloween) #loginScreen{background:linear-gradient(160deg,#050307 0%,#1a0509 45%,#2a070b 100%)}
 :where(.tema-halloween) .login-form input:focus{box-shadow:0 0 0 4px rgba(185,28,28,.12)}
@@ -255,12 +258,37 @@
 :where(.tema-halloween) .role-a{color:#f87171}
 :where(.tema-halloween) .page-header{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%);box-shadow:0 10px 24px -10px rgba(185,28,28,.5)}
 :where(.tema-halloween) .stat-card{box-shadow:0 6px 16px -8px rgba(185,28,28,.5)}
+:where(.tema-halloween) .stat-card.g{background:linear-gradient(135deg,#10240a 0%,#3a9d23 100%)}
+:where(.tema-halloween) .stat-card.w{background:linear-gradient(135deg,#3b1503 0%,#d4590a 100%)}
+:where(.tema-halloween) .stat-card.d{background:linear-gradient(135deg,#3b0609 0%,#b31b1b 100%)}
 :where(.tema-halloween) input:focus,:where(.tema-halloween) textarea:focus,:where(.tema-halloween) select:focus{box-shadow:0 0 0 3px rgba(185,28,28,.1)}
 :where(.tema-halloween) .btn-p:hover{box-shadow:0 3px 10px rgba(185,28,28,.3)}
+:where(.tema-halloween) .btn-g:hover{background:#26661a}
+:where(.tema-halloween) .btn-d:hover{background:#b91c1c}
+:where(.tema-halloween) .prog-avisos{border:1px solid #fbd0a3}
+:where(.tema-halloween) .prog-aviso{color:#7a2e06}
 :where(.tema-halloween) .btn-personal-flot{box-shadow:0 6px 20px -4px rgba(185,28,28,.55)}
+:where(.tema-halloween) .tbl-asig-veh{background:#f1fbea}
 :where(.tema-halloween) .dash-hero{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%);box-shadow:0 10px 24px -10px rgba(185,28,28,.5)}
+:where(.tema-halloween) .mk3-dot.ok{background:#3a9d23}
+:where(.tema-halloween) .mk3-dot.mal{background:#c81e1e}
 :where(.tema-halloween) .mk3-btn{background:linear-gradient(135deg,#050307,#3b0a10);box-shadow:0 8px 16px -8px rgba(185,28,28,.7)}
+:where(.tema-halloween) .rban{border:1px solid #fbd0a3}
+:where(.tema-halloween) .rban.ok{border-color:#c9ecb3}
+:where(.tema-halloween) .rban-hd{color:#9a3d08}
+:where(.tema-halloween) .rban-ic{background:#e8650c}
+:where(.tema-halloween) .rban-ic.ok{background:#3a9d23}
+:where(.tema-halloween) .rban-t{color:#7a2e06}
+:where(.tema-halloween) .rban.ok .rban-t{color:#1d4f15}
+:where(.tema-halloween) .rban-s{color:#9a3d08}
+:where(.tema-halloween) .rban-body{border-top:1px solid #fbd0a3}
+:where(.tema-halloween) .dtile.t-g{background:linear-gradient(135deg,#10240a,#3a9d23);color:#2f7f1b}
+:where(.tema-halloween) .dtile.t-r{background:linear-gradient(135deg,#3b0609,#b31b1b);color:#a31515}
 :where(.tema-halloween) .dtile.t-b{background:linear-gradient(135deg,#050307,#3b0a10);color:#b91c1c}
+:where(.tema-halloween) .dtile.t-a{background:linear-gradient(135deg,#3b1503,#d4590a);color:#c2510a}
+:where(.tema-halloween) .dt-extra{border:1px solid #fbd0a3;color:#9a3d08}
+:where(.tema-halloween) .tg.mal{color:#b91c1c}
+:where(.tema-halloween) .tg.ok{color:#26661a;background:#f1fbea;border-color:#c9ecb3}
 :where(.tema-halloween) .pe{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%)}
 :where(.tema-halloween) #maintenanceScreen{background:linear-gradient(160deg,#050307 0%,#1a0509 45%,#2a070b 100%)}
 :where(.tema-halloween) .mt-doc i:nth-child(1){background:#b91c1c}
@@ -269,78 +297,220 @@
 :where(.tema-halloween) .mt-av{color:#450a0a}
 :where(.tema-halloween) .rg-hero{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%);box-shadow:0 10px 24px -12px rgba(185,28,28,.5)}
 :where(.tema-halloween) .rg-st.b{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .rg-st.g{background:linear-gradient(135deg,#10240a,#3a9d23)}
+:where(.tema-halloween) .rg-st.a{background:linear-gradient(135deg,#3b1503,#d4590a)}
 :where(.tema-halloween) .rg-emp-n{background:linear-gradient(160deg,#050307,#3b0a10)}
+:where(.tema-halloween) .rg-emp-m b.g{color:#2f7f1b}
+:where(.tema-halloween) .rg-emp-m b.a{color:#c2510a}
+:where(.tema-halloween) .rg-pill.a{color:#9a3d08;background:#fff5ea;border-color:#fbd0a3}
+:where(.tema-halloween) .rg-pill.g{color:#26661a;background:#f1fbea;border-color:#c9ecb3}
+:where(.tema-halloween) .rg-pill.r{color:#b91c1c}
 :where(.tema-halloween) .rg-pill.b{color:#991b1b;background:#fef2f2;border-color:#fecaca}
+:where(.tema-halloween) .rg-pill.v{color:#5a2396;background:#f7f0fd;border-color:#e6d3f7}
 :where(.tema-halloween) .rg-av{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .rg-xls{color:#26661a;background:#f1fbea;border:1px solid #c9ecb3}
+:where(.tema-halloween) .rg-pend{background:#fff5ea;border:1px solid #fbd0a3;color:#7a2e06}
+:where(.tema-halloween) .rg-pend-ic{background:#e8650c}
+:where(.tema-halloween) .rg-pend-go{color:#9a3d08}
 :where(.tema-halloween) .rg-cd.ok{background:#3f0d12}
+:where(.tema-halloween) .rg-cd.vi{background:#3a9d23}
+:where(.tema-halloween) .rg-cd.he{background:#e8650c}
+:where(.tema-halloween) .rg-cd.aus{background:#8040c0}
+:where(.tema-halloween) .rg-cd.falta{color:#a31515}
 :where(.tema-halloween) .rg-cd.hoy{box-shadow:0 0 0 2px #fff,0 0 0 4px #450a0a}
 :where(.tema-halloween) .rg-cal-ley i.ok{background:#3f0d12}
+:where(.tema-halloween) .rg-cal-ley i.vi{background:#3a9d23}
+:where(.tema-halloween) .rg-cal-ley i.he{background:#e8650c}
+:where(.tema-halloween) .rg-cal-ley i.aus{background:#8040c0}
+:where(.tema-halloween) .rg-it.pend{box-shadow:inset 3px 0 0 #e8650c}
+:where(.tema-halloween) .rg-it-h b{color:#c2510a}
+:where(.tema-halloween) .rg-it-rango{color:#5a2396}
+:where(.tema-halloween) .rg-it-nota.a{color:#9a3d08}
 :where(.tema-halloween) .fx-chip.on{border-color:#b91c1c;background:#fef2f2;color:#991b1b}
 :where(.tema-halloween) .fx-chip.on small{color:#b91c1c}
 :where(.tema-halloween) .fx-tipo .tipo-btn.active{color:#991b1b}
+:where(.tema-halloween) .fx-just .fl{color:#9a3d08}
+:where(.tema-halloween) #empReg .fx-just textarea{border-color:#fbd0a3;background:#fff5ea}
 :where(.tema-halloween) .fx-vo.no.on{border-color:#b91c1c;background:#fef2f2}
 :where(.tema-halloween) .fx-vo.no.on b{color:#991b1b}
+:where(.tema-halloween) .fx-vo.si.on{border-color:#3a9d23;background:#f1fbea}
+:where(.tema-halloween) .fx-vo.si.on b{color:#26661a}
 :where(.tema-halloween) .fx-save{box-shadow:0 10px 20px -10px rgba(185,28,28,.8)}
+:where(.tema-halloween) .fx-err{color:#b91c1c}
+:where(.tema-halloween) .fx-err b{background:#c81e1e}
+:where(.tema-halloween) #empReg .fx-bad,:where(.tema-halloween) #empReg textarea.fx-bad,:where(.tema-halloween) #empReg input.fx-bad{border-color:#e05252!important}
 :where(.tema-halloween) .fx-ok{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .fx-viat.on{border-color:#3a9d23;background:#f1fbea}
+:where(.tema-halloween) .fx-viat.on .fx-viat-ic{background:#3a9d23}
+:where(.tema-halloween) .fx-viat.on .fx-viat-tx span{color:#26661a}
+:where(.tema-halloween) .fx-viat.on .fx-sw{background:#3a9d23}
+:where(.tema-halloween) .mk-av.lejos{background:#fff5ea;border-color:#fbd0a3}
+:where(.tema-halloween) .mk-av.lejos .mk-av-ic{background:#e8650c}
+:where(.tema-halloween) .mk-av.lejos b{color:#7a2e06}
+:where(.tema-halloween) .mk-av.lejos .mk-av-tx>span{color:#8a3a07}
+:where(.tema-halloween) .mk-av.mal .mk-av-ic{background:#c81e1e}
+:where(.tema-halloween) .mk-av.mal b{color:#991b1b}
+:where(.tema-halloween) .mk-av.mal .mk-av-tx>span{color:#b91c1c}
+:where(.tema-halloween) .mk-av.ok{background:#f1fbea;border-color:#c9ecb3}
+:where(.tema-halloween) .mk-av.ok .mk-av-ic{background:#3a9d23}
+:where(.tema-halloween) .mk-av.ok b{color:#1d4f15}
+:where(.tema-halloween) .mk-av.ok .mk-av-tx>span{color:#26661a}
 :where(.tema-halloween) .mk-av.info{background:#fef2f2;border-color:#fecaca}
 :where(.tema-halloween) .mk-av.info .mk-av-ic{background:#b91c1c}
 :where(.tema-halloween) .mk-av.info b{color:#7f1d1d}
 :where(.tema-halloween) .mk-av-spin{border:2.5px solid #fecaca;border-top-color:#b91c1c}
+:where(.tema-halloween) .mk-av-ayuda summary{color:#9a3d08}
+:where(.tema-halloween) .mk-av-ayuda div{border-top:1px dashed #f7ae5e;color:#7a2e06}
 :where(.tema-halloween) .cl-mon:focus-within{box-shadow:0 0 0 3px rgba(185,28,28,.15)}
+:where(.tema-halloween) .cl-bol h4.ing{color:#26661a}
+:where(.tema-halloween) .cl-bol h4.des{color:#a31515}
+:where(.tema-halloween) .cl-bl b.neg{color:#a31515}
 :where(.tema-halloween) .cl-bol-tot b{color:#450a0a}
 :where(.tema-halloween) .cl-formula{color:#450a0a}
 :where(.tema-halloween) .pf-gafete-top{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%)}
 :where(.tema-halloween) .pf-av{background:linear-gradient(135deg,#050307,#3b0a10)}
 :where(.tema-halloween) .pf-marca{color:#b91c1c}
 :where(.tema-halloween) .pf-ic.b{background:#fef2f2;color:#b91c1c}
+:where(.tema-halloween) .pf-ic.g{background:#f1fbea;color:#2f7f1b}
+:where(.tema-halloween) .pf-ic.v{background:#f7f0fd;color:#6d2fb0}
+:where(.tema-halloween) .pf-ic.a{background:#fff5ea;color:#c2510a}
+:where(.tema-halloween) .pf-tx>span.mal{color:#a31515}
 :where(.tema-halloween) .pf-inp:focus-within{box-shadow:0 0 0 3px rgba(185,28,28,.15)}
+:where(.tema-halloween) .pf-salir{color:#a31515}
+:where(.tema-halloween) .rg-st.r{background:linear-gradient(135deg,#3b0609,#b31b1b)}
+:where(.tema-halloween) .as-emp-n.mal{background:linear-gradient(160deg,#3b0609,#b31b1b)}
+:where(.tema-halloween) .as-emp-n.ok{background:linear-gradient(160deg,#10240a,#3a9d23)}
+:where(.tema-halloween) .as-emp-m b.r{color:#a31515}
+:where(.tema-halloween) .as-emp-m b.a{color:#c2510a}
+:where(.tema-halloween) .rg-cd.as-ok{background:#3a9d23}
+:where(.tema-halloween) .rg-cd.as-t{background:#c81e1e}
+:where(.tema-halloween) .rg-cd.as-s{background:#e8650c}
+:where(.tema-halloween) .rg-cal-ley i.as-ok{background:#3a9d23}
+:where(.tema-halloween) .rg-cal-ley i.as-t{background:#c81e1e}
+:where(.tema-halloween) .rg-cal-ley i.as-s{background:#e8650c}
+:where(.tema-halloween) .mk3-pt.recien .mk3-dot.ok::after{border-color:#3a9d23}
+:where(.tema-halloween) .mk3-pt.recien .mk3-dot.mal::after{border-color:#c81e1e}
 :where(.tema-halloween) .us-nuevo{color:#991b1b}
 :where(.tema-halloween) .us-fil button.on{border-color:#b91c1c;background:#fef2f2;color:#991b1b}
 :where(.tema-halloween) .us-av{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .us-t.a{color:#9a3d08;background:#fff5ea;border-color:#fbd0a3}
 :where(.tema-halloween) .us-t.b{color:#991b1b;background:#fef2f2;border-color:#fecaca}
+:where(.tema-halloween) .us-t.r{color:#b91c1c}
+:where(.tema-halloween) .us-t.v{color:#5a2396;background:#f7f0fd;border-color:#e6d3f7}
 :where(.tema-halloween) .us-aic.b{background:#fef2f2;color:#b91c1c}
+:where(.tema-halloween) .us-aic.g{background:#f1fbea;color:#2f7f1b}
+:where(.tema-halloween) .us-aic.a{background:#fff5ea;color:#c2510a}
+:where(.tema-halloween) .us-aic.v{background:#f7f0fd;color:#6d2fb0}
+:where(.tema-halloween) .us-aic.r{color:#a31515}
+:where(.tema-halloween) .us-ac.r .us-actx b{color:#a31515}
 :where(.tema-halloween) .lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0 0 3px rgba(185,28,28,.25)}
 :where(.tema-halloween) .rm-hd{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%)}
+:where(.tema-halloween) .cm-hd{background:linear-gradient(120deg,#2b0e02 0%,#3b1503 55%,#d4590a 100%)}
+:where(.tema-halloween) .cm-hd.urgente{background:linear-gradient(120deg,#2a0406 0%,#3b0609 55%,#b31b1b 100%)}
+:where(.tema-halloween) .cm-chips button{color:#b91c1c}
+:where(.tema-halloween) .pf-ic.r{color:#a31515}
+:where(.tema-halloween) #mantStatus.mal{color:#a31515}
+:where(.tema-halloween) .fx-sw.ap-sw.on{background:#a31515}
 :where(.tema-halloween) .prog-subtab.active{color:#991b1b}
 :where(.tema-halloween) .pg-hero{background:linear-gradient(120deg,#050307 0%,#3b0a10 100%);box-shadow:0 10px 24px -12px rgba(185,28,28,.5)}
 :where(.tema-halloween) .pg-acts button.w{color:#991b1b}
 :where(.tema-halloween) .pg-sel{background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
 :where(.tema-halloween) .pg-sel button{color:#991b1b}
+:where(.tema-halloween) .pg-dot.on{background:#3a9d23}
 :where(.tema-halloween) .pg-c-add{color:#b91c1c}
 :where(.tema-halloween) .pg-g.destino{border-color:#fca5a5;box-shadow:0 0 0 3px rgba(185,28,28,.12)}
+:where(.tema-halloween) .pg-g-del:hover{color:#a31515}
 :where(.tema-halloween) .pg-placa{border:1.5px solid #450a0a;box-shadow:inset 0 2px 0 #b91c1c}
 :where(.tema-halloween) .pg-vadd{color:#b91c1c;border:1.5px dashed #fca5a5}
+:where(.tema-halloween) .pg-vop small.g{color:#26661a}
+:where(.tema-halloween) .pg-vop small.a{color:#9a3d08}
+:where(.tema-halloween) .pg-vop small.r{color:#a31515}
+:where(.tema-halloween) .pg-vcount{color:#26661a}
 :where(.tema-halloween) .pg-p{background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
 :where(.tema-halloween) .pg-p i{background:#450a0a}
 :where(.tema-halloween) .pg-add{border:1.5px dashed #fca5a5;color:#b91c1c}
 :where(.tema-halloween) .hl-it:before{background:#b91c1c}
+:where(.tema-halloween) .hl-it.pend:before{background:#e8650c}
+:where(.tema-halloween) .hl-it.aus:before{background:#8040c0}
+:where(.tema-halloween) .hl-it.mal:before{background:#c81e1e}
 :where(.tema-halloween) .hl-f{color:#450a0a}
+:where(.tema-halloween) .hl-h small{color:#c2510a}
+:where(.tema-halloween) .hl-nota{color:#9a3d08}
+:where(.tema-halloween) .hl-dot.ok{background:#3a9d23}
+:where(.tema-halloween) .hl-dot.mal{background:#c81e1e}
 :where(.tema-halloween) .ds-emp{color:#b91c1c}
-:where(.tema-halloween) .tb-bell i{border:2px solid #450a0a}
+:where(.tema-halloween) .ds-chip.g{background:#3a9d23}
+:where(.tema-halloween) .ds-chip.a{background:#e8650c}
+:where(.tema-halloween) .ds-chip.r{background:#c81e1e}
+:where(.tema-halloween) .ds-chip.v{background:#8040c0}
+:where(.tema-halloween) .ds-just{border-left:3px solid #fbd0a3}
+:where(.tema-halloween) .tb-bell i{background:#c81e1e;border:2px solid #450a0a}
+:where(.tema-halloween) .nv-ic.g{background:#3a9d23}
+:where(.tema-halloween) .nv-ic.r{background:#c81e1e}
+:where(.tema-halloween) .nv-ic.a{background:#e8650c}
+:where(.tema-halloween) .nv-tx em{color:#b91c1c}
+:where(.tema-halloween) .nv-tx em.a{color:#9a3d08}
 :where(.tema-halloween) .pd-seg button.on{color:#450a0a}
+:where(.tema-halloween) .pd-seg i{background:#c81e1e}
 :where(.tema-halloween) .pd-av{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .pd-av.v{background:linear-gradient(135deg,#1f0a33,#6b2fa8)}
+:where(.tema-halloween) .pd-all{color:#2f7f1b;background:#f1fbea;border:1px solid #c9ecb3}
+:where(.tema-halloween) .pd-x b small{color:#c2510a}
+:where(.tema-halloween) .pd-ib.ok{background:#3a9d23}
+:where(.tema-halloween) .pd-ib.no{color:#c81e1e}
+:where(.tema-halloween) .pd-anu{color:#a31515}
+:where(.tema-halloween) .pd-cita{border-left:3px solid #e6d3f7}
+:where(.tema-halloween) .pd-b1{background:#3a9d23}
 :where(.tema-halloween) .pd-dia b{color:#450a0a}
+:where(.tema-halloween) .tab-bd{background:#c81e1e}
 @media(max-width:899px){:where(.tema-halloween) #adminScreen .tab.active{background:linear-gradient(120deg,#050307,#3b0a10);box-shadow:0 4px 10px rgba(185,28,28,.28)}}
 @media(min-width:900px){:where(.tema-halloween) #adminScreen .tabs{background:linear-gradient(180deg,#050307 0%,#1a0509 60%,#3b0a10 140%)}:where(.tema-halloween) #adminScreen .tab.active{color:#450a0a}}
 :where(.tema-halloween) .tc-k{color:#b91c1c}
+:where(.tema-halloween) .tc-p b.rojo{color:#a31515}
+:where(.tema-halloween) .tc-ej i.g{background:#3a9d23}
+:where(.tema-halloween) .tc-ej i.a{background:#e8650c}
+:where(.tema-halloween) .tc-ej i.r{background:#c81e1e}
+:where(.tema-halloween) .tc-ej i.v{background:#8040c0}
 :where(.tema-halloween) .tc-ej i.b{background:#b91c1c}
 :where(.tema-halloween) .tc-ley i.ok{background:#b91c1c}
+:where(.tema-halloween) .tc-ley i.vi{background:#3a9d23}
+:where(.tema-halloween) .tc-ley i.he{background:#e8650c}
+:where(.tema-halloween) .tc-ley i.aus{background:#8040c0}
+:where(.tema-halloween) .tc-ley i.falta{border:2px dashed #c81e1e}
 :where(.tema-halloween) .tc-dots i.on{background:#b91c1c}
 :where(.tema-halloween) .ps-hero{background:linear-gradient(120deg,#050307,#3b0a10)}
 :where(.tema-halloween) .ps-hero-btn{color:#450a0a}
 :where(.tema-halloween) .ps-sec.campo{color:#b91c1c}
 :where(.tema-halloween) .ps-sec.campo:after{background:#fecaca}
+:where(.tema-halloween) .ps-sec.plantel{color:#c2510a}
+:where(.tema-halloween) .ps-sec.plantel:after{background:#fbd0a3}
 :where(.tema-halloween) .au-tiles .b{background:linear-gradient(135deg,#050307,#3b0a10)}
+:where(.tema-halloween) .au-tiles .r{background:linear-gradient(135deg,#3b0609,#b31b1b)}
+:where(.tema-halloween) .au-tiles .g{background:linear-gradient(135deg,#10240a,#3a9d23)}
+:where(.tema-halloween) .au-tiles .v{background:linear-gradient(135deg,#1f0a33,#6b2fa8)}
+:where(.tema-halloween) .au-av.r{background:linear-gradient(135deg,#3b0609,#b31b1b)}
+:where(.tema-halloween) .au-av.g{background:linear-gradient(135deg,#10240a,#3a9d23)}
+:where(.tema-halloween) .au-av.v{background:linear-gradient(135deg,#1f0a33,#6b2fa8)}
+:where(.tema-halloween) .au-bar i.r{background:#c81e1e}
+:where(.tema-halloween) .au-bar i.g{background:#3a9d23}
+:where(.tema-halloween) .au-bar i.v{background:#8040c0}
+:where(.tema-halloween) .au-x{color:#c81e1e}
 :where(.tema-halloween) .ph-it.on{background:#fef2f2;box-shadow:inset 3px 0 0 #b91c1c}
 :where(.tema-halloween) .ph-it.on .ph-dd{background:linear-gradient(135deg,#050307,#3b0a10)}
 :where(.tema-halloween) .ph-it.on .ph-dd span{color:#fecaca}
 :where(.tema-halloween) .ph-det-hd{background:linear-gradient(120deg,#050307,#3b0a10)}
 :where(.tema-halloween) .ph-g-bar{background:#b91c1c}
+:where(.tema-halloween) .ph-g.plantel .ph-g-bar{background:#e8650c}
 :where(.tema-halloween) .ph-zona{color:#991b1b;background:#fef2f2}
 :where(.tema-halloween) .ph-placa{border:1.5px solid #450a0a;border-top:3px solid #b91c1c}
 :where(.tema-halloween) .ct-placa{border:2px solid #450a0a;border-top:5px solid #b91c1c}
+:where(.tema-halloween) .ct-est:before{background:#3a9d23}
+:where(.tema-halloween) .ct-est.mal:before{background:#c81e1e}
+:where(.tema-halloween) .ct-est.med:before{background:#e8650c}
+:where(.tema-halloween) .ct-solo{color:#9a3d08}
 :where(.tema-halloween) .ct-add{color:#b91c1c}
 :where(.tema-halloween) .ct-col-hd.campo{background:linear-gradient(120deg,#050307,#3b0a10)}
+:where(.tema-halloween) .ct-col-hd.plantel{background:linear-gradient(120deg,#2b0e02,#d4590a)}
 :where(.tema-halloween) .ct-camp-add{color:#b91c1c}
 :where(.tema-halloween) .cp-k{color:#b91c1c}
 :where(.tema-halloween) .cp-it.on{background:#fef2f2;box-shadow:inset 3px 0 0 #b91c1c}
@@ -349,28 +519,64 @@
 :where(.tema-halloween) .on>.cp-ck{border-color:#b91c1c;background:#b91c1c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L19 7'/%3E%3C/svg%3E") center/13px no-repeat}
 :where(.tema-halloween) .cp-otra.on{border-color:#b91c1c;background:#fef2f2}
 :where(.tema-halloween) .cp-otra-ic{color:#b91c1c}
+:where(.tema-halloween) .ap-tema{color:#6d2fb0;background:#f7f0fd;border:1px solid #e6d3f7}
 :where(.tema-halloween) .he-k{color:#b91c1c}
+:where(.tema-halloween) .he-reg b{color:#c2510a}
 :where(.tema-halloween) .he-bt{color:#450a0a}
 :where(.tema-halloween) .he-val{background:linear-gradient(120deg,#050307,#3b0a10)}
 :where(.tema-halloween) .he-chips button.on{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+:where(.tema-halloween) .he-dif.g{background:#f1fbea;color:#26661a}
+:where(.tema-halloween) .he-dif.a{background:#fff5ea;color:#9a3d08}
+:where(.tema-halloween) .he-nota.falta{border-color:#e8650c;background:#fff5ea}
+:where(.tema-halloween) .he-b1{background:#3a9d23}
+:where(.tema-halloween) .c-ok{background:#3a9d23}
+:where(.tema-halloween) .c-tarde{background:#c81e1e}
+:where(.tema-halloween) .c-temp{background:#e8650c}
+:where(.tema-halloween) .c-aus{background:#8040c0}
+:where(.tema-halloween) .ag-c.ok{background:#3a9d23}
+:where(.tema-halloween) .ag-c.tarde{background:#c81e1e}
+:where(.tema-halloween) .ag-c.temp{background:#e8650c}
+:where(.tema-halloween) .ag-c.aus{background:#8040c0}
 :where(.tema-halloween) .ag-c:not(.off):hover{outline:2px solid #450a0a}
 :where(.tema-halloween) .ag-mini button.on{color:#450a0a}
 :where(.tema-halloween) .ag-chip:hover{border-color:#fca5a5}
 :where(.tema-halloween) .ag-av{color:#450a0a}
 :where(.tema-halloween) .ag-chip.on{background:linear-gradient(120deg,#050307,#3b0a10);box-shadow:0 4px 10px rgba(185,28,28,.25)}
+:where(.tema-halloween) .ag-dp.ent .arriba{color:#a31515}
+:where(.tema-halloween) .ag-dp.ent .abajo{color:#2f7f1b}
+:where(.tema-halloween) .ag-dp.sal .arriba{color:#2f7f1b}
+:where(.tema-halloween) .ag-dp.sal .abajo{background:#fff5ea;color:#9a3d08}
 :where(.tema-halloween) .ag-yl.cero{border-top:2px dashed #450a0a}
 :where(.tema-halloween) .ag-yl.cero span{color:#450a0a}
+:where(.tema-halloween) .he-k.r{color:#a31515}
 :where(.tema-halloween) .he-b1.b{background:#b91c1c}
+:where(.tema-halloween) .he-b1.r{background:#c81e1e}
 :where(.tema-halloween) .sx-op:hover{border-color:#fca5a5}
 :where(.tema-halloween) .sx-op.on,:where(.tema-halloween) .sx-op.active{border-color:#b91c1c;background:#fef2f2;color:#450a0a}
 :where(.tema-halloween) .sx-op.on i,:where(.tema-halloween) .sx-op.active i{background:linear-gradient(120deg,#050307,#3b0a10)}
+:where(.tema-halloween) .sx-op.active i.g{background:#3a9d23}
+:where(.tema-halloween) .sx-op.active i.r{background:#c81e1e}
+:where(.tema-halloween) .sx-op.active:has(i.r){border-color:#c81e1e;color:#991b1b}
+:where(.tema-halloween) .sx-op.active:has(i.g){border-color:#3a9d23;background:#f1fbea;color:#1d4f15}
+:where(.tema-halloween) .sx-op i.dot.g,:where(.tema-halloween) .sx-op.on i.dot.g{background:#3a9d23}
+:where(.tema-halloween) .sx-op i.dot.a,:where(.tema-halloween) .sx-op.on i.dot.a{background:#e8650c}
 :where(.tema-halloween) .sx-op i.dot.b,:where(.tema-halloween) .sx-op.on i.dot.b{background:#3f0d12}
+:where(.tema-halloween) .sx-op i.dot.r,:where(.tema-halloween) .sx-op.on i.dot.r{background:#c81e1e}
 :where(.tema-halloween) .sx-res{background:#fef2f2;color:#450a0a}
+:where(.tema-halloween) .sx-res.a{background:#fff5ea;color:#7a2e06}
 :where(.tema-halloween) .sx-res svg,:where(.tema-halloween) .sx-aviso svg{stroke:#b91c1c}
+:where(.tema-halloween) .sx-res.a svg{stroke:#c2510a}
 :where(.tema-halloween) .sx-mini button{color:#450a0a}
 :where(.tema-halloween) .sx-mini:focus-within{box-shadow:0 0 0 3px rgba(185,28,28,.1)}
+:where(.tema-halloween) .sx-est.g{background:#f1fbea;color:#26661a}
+:where(.tema-halloween) .sx-est.g i{background:#3a9d23}
+:where(.tema-halloween) .sx-quitar{color:#a31515}
 :where(.tema-halloween) .sx-chk input:checked{background:#b91c1c;border-color:#b91c1c}
 :where(.tema-halloween) .sx-chk:has(input:checked){background:#fef2f2}
 :where(.tema-halloween) .sx-k2r .he-k2 span{color:#b91c1c}
 :where(.tema-halloween) .sx-sw input:checked~i{background:#b91c1c}
+:where(.tema-halloween) .ag-zl.ent .up{color:#a31515}
+:where(.tema-halloween) .ag-zl.ent .dn{color:#2f7f1b}
+:where(.tema-halloween) .ag-zl.sal .up{color:#2f7f1b}
+:where(.tema-halloween) .ag-zl.sal .dn{background:#fff5ea;color:#9a3d08}
 /* AUTO-COLORES:FIN */

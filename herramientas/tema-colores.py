@@ -1,5 +1,9 @@
 # Genera los colores del tema Halloween a partir de css/styles.css.
-# Busca cada regla que usa los azules de la app y escribe su versión en tonos del tema
+# Busca cada regla que usa los azules de la app (y los colores de estado: verde, rojo, ámbar y
+# morado) y escribe su versión en tonos del tema: azul → rojo sangre/negro, verde → verde veneno,
+# rojo → sangre, ámbar → calabaza, morado → morado bruja. En degradados, el primer tono sale de la
+# oscuridad para que los bloques de color no se vean planos sobre la noche.
+# Escribe
 # entre las marcas AUTO-COLORES de css/temas.css. Correr después de cambiar styles.css:
 #   python3 herramientas/tema-colores.py
 # Se usa :where(.tema-halloween) para no subir la especificidad: así las reglas más
@@ -35,7 +39,24 @@ PLANO={'2563eb':'#b91c1c','1d4ed8':'#991b1b','3b82f6':'#dc2626','60a5fa':'#f8717
 GRAD={'1e3a5f':'#050307','2563eb':'#3b0a10','1d4ed8':'#2a070b','3b82f6':'#5c0d14','1e40af':'#1a0509','1e3a8a':'#1a0509','60a5fa':'#7f1d1d','081428':'#050307','12284a':'#1a0509'}
 # colores que son dato (calendario / leyendas): oscuro, no rojo, para no confundir con "tarde"
 DATO=re.compile(r'rg-cd\.ok|rg-cal-ley i\.ok|dot\.b\b')
+# Colores de estado: mismo significado (verde bien, rojo mal, ámbar atención, morado ausencia),
+# en la paleta de Halloween
+EST_PLANO={
+ '10b981':'#3a9d23','059669':'#2f7f1b','047857':'#26661a','065f46':'#1d4f15','34d399':'#6cc24a','6ee7b7':'#9ad77c',
+ 'a7f3d0':'#c9ecb3','d1fae5':'#ddf5cc','ecfdf5':'#f1fbea',
+ 'ef4444':'#c81e1e','dc2626':'#a31515','f87171':'#e05252',
+ 'f59e0b':'#e8650c','d97706':'#c2510a','b45309':'#9a3d08','92400e':'#7a2e06','a16207':'#8a3a07','fbbf24':'#f28c28',
+ 'fcd34d':'#f7ae5e','fde68a':'#fbd0a3','fef3c7':'#fde4cc','fffbeb':'#fff5ea',
+ '8b5cf6':'#8040c0','7c3aed':'#6d2fb0','6d28d9':'#5a2396','a78bfa':'#a874d9','ddd6fe':'#e6d3f7','ede9fe':'#efe3fa','f5f3ff':'#f7f0fd'}
+EST_GRAD={'059669':'#10240a','047857':'#10240a','10b981':'#3a9d23','dc2626':'#3b0609','b91c1c':'#3b0609','991b1b':'#2a0406','ef4444':'#b31b1b',
+ 'd97706':'#3b1503','b45309':'#2b0e02','f59e0b':'#d4590a','6d28d9':'#1f0a33','7c3aed':'#2a0d45','8b5cf6':'#6b2fa8'}
+ES=re.compile(r'#('+'|'.join(sorted(set(EST_PLANO)|set(EST_GRAD),key=len,reverse=True))+r')\b',re.I)
+def mapear_estado(decl):
+    g='gradient' in decl
+    return ES.sub(lambda m:(EST_GRAD.get(m.group(1).lower()) if g else None) or EST_PLANO.get(m.group(1).lower()) or m.group(0),decl)
+def toca(t): return AZ.search(t) or ES.search(t)
 def mapear(decl,sel):
+    decl=mapear_estado(decl)
     if DATO.search(sel): return AZ.sub(lambda m:'#3f0d12' if m.group(1) else 'rgba(63,13,18',decl)
     g='gradient' in decl
     def f(m):
@@ -73,9 +94,9 @@ def emit(nodes):
             inner=emit(body)
             if inner: res.append(pre+'{'+''.join(inner)+'}')
             continue
-        if pre.startswith('@') or not AZ.search(body): continue
-        if 'url(' in body and AZ.search(re.sub(r'url\([^)]*\)','',body)) is None: continue
-        ds=[mapear(d,pre) for d in split_decls(body) if AZ.search(re.sub(r'url\([^)]*\)','',d)) and not d.lstrip().startswith('--')]
+        if pre.startswith('@') or not toca(body): continue
+        if 'url(' in body and toca(re.sub(r'url\([^)]*\)','',body)) is None: continue
+        ds=[mapear(d,pre) for d in split_decls(body) if toca(re.sub(r'url\([^)]*\)','',d)) and not d.lstrip().startswith('--')]
         if not ds: continue
         p=pref(pre)
         if not p: continue

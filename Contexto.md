@@ -228,6 +228,10 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   ahora"). El viático apagado usa el tono del tema; encendido sigue verde como el resto de los viáticos.
   Los colores de estado (verde a tiempo, rojo tarde, naranja horas extra) se mantienen; los avisos del
   Dashboard (`.rban`, `.dt-extra`) van en ámbar oscuro.
+- **Halloween, colores de estado**: `herramientas/tema-colores.py` también convierte los colores de estado de
+  `styles.css` (verde → verde veneno, rojo → sangre, ámbar → calabaza, morado → morado bruja; en degradados el
+  primer tono sale de la oscuridad) y `html.tema-halloween` redefine `--green`, `--danger`, `--warn`. Mismo
+  significado, paleta del tema. La imagen que se comparte de Programación no cambia (se dibuja en canvas).
 - **Halloween, rendimiento del login**: evitar lo que repinta en cada cuadro. Las brasas se mueven con
   `transform` (no `background-position`), la sangre es estática (su filtro de líquido se calcula una vez), los
   murciélagos no llevan `filter` y aletean con CSS (los lejanos no aletean), y el brillo del fantasma es un
