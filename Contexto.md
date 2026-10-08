@@ -60,6 +60,7 @@ La app nació como un `index.html` monolítico y se ha ido modularizando. Estruc
 /js/asistencia.js      → sábados laborales, resúmenes de asistencia, alertas
 /js/calculadora.js     → cálculo de descuentos ISSS/AFP/Renta
 /js/programacion.js    → catálogos de campañas/vehículos, CRUD, guardado de programación
+/js/musica.js          → música de fondo (login y app): subida del admin, caché en el teléfono, botón de silencio
 ```
 
 `index.html` sigue siendo grande (~4600 líneas). Modularizar más (separar admin/empleado)
@@ -85,7 +86,12 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   (`ts, lat, lng, precision, sedeUsada, estado, horaStr, minDiff`). Puede tener además
   `justificado: {por, nombre, nota, ts}` — ver sección 5, "Justificar tardanzas".
 - `config/`: configuración varia (incluye `config/vehiculos`, `config/campanias`,
-  `config/sabadosLaborales`).
+  `config/sabadosLaborales`, `config/musica` y `config/musicaDatos`).
+- `config/musica`: `{version, nombre, tipo, bytes, partes, activa, subidoPor, subidoEn}` de la música de
+  fondo; el audio va en `config/musicaDatos/{version}/{i}` como texto base64 en partes de 512 KB (la app no
+  usa Firebase Storage). Cada teléfono la baja una vez y la guarda en IndexedDB (`innova-musica`); solo
+  vuelve a bajarla si cambia `version`. Al subir otra se escriben primero las partes, luego `config/musica`
+  y al final se borra la versión anterior. Tope 6 MB por archivo.
 - `programaciones/{fecha}`: `{grupos:[{campania, area, empleados[], empleadosNombres[],
   vehiculo, vehiculoNombre, zona}], noDisponibles:{personal[], vehiculos[]}, ...}`.
 - `asuetos/`, `observaciones/`, `suspensiones/`: nodos de apoyo.
@@ -171,6 +177,12 @@ importante — ver sección 7.**
   Por persona (frase + gráficas de entrada/salida), Resumen y Detalle.
 
 ---
+
+- **Música de fondo**: el admin la sube en Perfil → Administración → "Música de la app" (también puede
+  apagarla para todos o quitarla). Suena en el login y dentro de la app, en bucle y a volumen bajo, con un
+  botón flotante abajo a la izquierda para silenciarla (cada persona; se recuerda en `innova_musica_silencio`).
+  Los navegadores no dejan sonar audio sin un toque: si no puede arrancar sola, empieza con el primer toque o
+  tecla. Se pausa cuando la app queda en segundo plano.
 
 ## 6. Rendimiento (ya optimizado, mantener el patrón)
 

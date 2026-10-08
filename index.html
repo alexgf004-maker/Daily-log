@@ -111,8 +111,8 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=71">
-<link rel="stylesheet" href="css/temas.css?v=21">
+<link rel="stylesheet" href="css/styles.css?v=72">
+<link rel="stylesheet" href="css/temas.css?v=22">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -347,6 +347,7 @@ import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, ca
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
+import { iniciarMusica, subirMusica, activarMusica, quitarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
 
 const cfg = {
@@ -367,6 +368,8 @@ initializeAppCheck(app, {
 });
 
 const db = getDatabase(app);
+// Música de fondo (login y app): la sube el admin desde su perfil
+iniciarMusica({ db, ref: refFirebase, get: getFirebase, onValue, set, update });
 
 // ── Espejo en vivo de registros y marcajes (solo admin y asistente) ──────────
 // El Dashboard, Asistencia, Registros y Pendientes leen los registros y marcajes de todos, y el
@@ -856,6 +859,20 @@ function renderAdmin(){
           <button class="pf-row ap-aud tema-probar" id="temaProbar" onclick="probarMarcajeTema()">
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2 14 22"/><path d="M18.5 2.5C13 .5 6 1.5 1.5 6.5 6 4.5 12 4 17 6Z"/></svg></span>
             <span class="pf-tx"><b>Probar animación de marcaje</b><span>Sin marcar de verdad</span></span>
+          </button>
+          <label class="pf-row ap-aud" for="musFile">
+            <span class="pf-ic g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+            <span class="pf-tx"><b>Música de la app</b><span id="musStatus">…</span></span><span class="chev"></span>
+          </label>
+          <input type="file" id="musFile" accept="audio/*,.mp3,.m4a" hidden onchange="subirMusicaAdmin(this)">
+          <button class="pf-row ap-aud" id="musTogRow" onclick="toggleMusicaTodos()" style="display:none">
+            <span class="pf-ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7M19 5a10 10 0 010 14"/></svg></span>
+            <span class="pf-tx"><b>Sonar para todos</b><span id="musTogTx">…</span></span>
+            <span class="fx-sw mus-sw" id="togMus" aria-hidden="true"><i></i></span>
+          </button>
+          <button class="pf-row ap-aud" id="musQuitarRow" onclick="quitarMusicaAdmin()" style="display:none">
+            <span class="pf-ic r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></span>
+            <span class="pf-tx"><b>Quitar música</b><span>Deja la app sin música para todos</span></span>
           </button>
           <button class="pf-row ap-aud" onclick="toggleAuditoria()">
             <span class="pf-ic v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span>
@@ -2548,7 +2565,7 @@ window.adTab=(t,btn)=>{
     const box=$('adPerfilPinBox'); if(box) box.open=false;
     const aud=$('auditoriaResult'); if(aud){ aud.style.display='none'; aud.innerHTML=''; }
     pintarMiMarcajeCard();
-    if(isAdmin()) checkMaintenance().then(on=>pintarMantenimiento(on));
+    if(isAdmin()) { checkMaintenance().then(on=>pintarMantenimiento(on)); pintarMusicaAdmin(); }
     pintarTema();
   }
 };
@@ -3328,6 +3345,37 @@ function pintarMantenimiento(on){
   const tog=$('togMant'); if(tog) tog.classList.toggle('on',!!on);
   const st=$('mantStatus'); if(st){ st.textContent=on?'Activo: solo tú puedes entrar':'Apagado: todos pueden entrar'; st.className=on?'mal':''; }
 }
+// Música de la app (solo admin): subir MP3, encender/apagar para todos, quitar
+async function pintarMusicaAdmin(){
+  let m=null; try{ m=(await getFirebase(refFirebase(db,'config/musica'))).val(); }catch(_){}
+  const st=$('musStatus'); if(!st) return;
+  const mb=n=>(n/1048576).toFixed(1)+' MB';
+  st.textContent=m?.version?`${m.nombre||'Canción'} · ${mb(m.bytes||0)} · toca para cambiarla`:`Sin música · toca para subir un MP3 (máx. ${MUSICA_MAX/1048576} MB)`;
+  $('musTogRow').style.display=$('musQuitarRow').style.display=m?.version?'':'none';
+  const on=m?.version&&m.activa!==false;
+  $('togMus')?.classList.toggle('on',!!on);
+  const tx=$('musTogTx'); if(tx) tx.textContent=on?'Suena en el login y en la app':'Apagada para todos';
+}
+window.subirMusicaAdmin=async(inp)=>{
+  const f=inp.files&&inp.files[0]; inp.value='';
+  if(!f) return;
+  const st=$('musStatus');
+  try{
+    if(st) st.textContent='Subiendo… 0%';
+    await subirMusica(f, me?.nombre||'', p=>{ if(st) st.textContent=`Subiendo… ${Math.round(p*100)}%`; });
+  }catch(e){ alert('No se pudo subir la música: '+e.message); }
+  pintarMusicaAdmin();
+};
+window.toggleMusicaTodos=async()=>{
+  const on=$('togMus')?.classList.contains('on');
+  try{ await activarMusica(!on); }catch(e){ alert('No se pudo cambiar: '+e.message); }
+  pintarMusicaAdmin();
+};
+window.quitarMusicaAdmin=async()=>{
+  if(!confirm('¿Quitar la música de la app para todos?')) return;
+  try{ await quitarMusica(); }catch(e){ alert('No se pudo quitar: '+e.message); }
+  pintarMusicaAdmin();
+};
 window.toggleMantenimiento=async()=>{
   const actual=await checkMaintenance();
   const nuevo=!actual;

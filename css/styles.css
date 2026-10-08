@@ -1533,3 +1533,15 @@ button.ag-mn:hover{color:var(--blue)}
 .ag-zl span{font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:3px 8px;border-radius:20px}
 .ag-zl.ent .up{background:#fef2f2;color:#dc2626}.ag-zl.ent .dn{background:#f0fdf4;color:#059669}
 .ag-zl.sal .up{background:#f0fdf4;color:#059669}.ag-zl.sal .dn{background:#fffbeb;color:#b45309}
+
+/* Música de fondo: botón flotante para silenciar (js/musica.js) */
+.mus-btn{position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:150;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(15,23,42,.62);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 18px -6px rgba(15,23,42,.55);-webkit-tap-highlight-color:transparent;transition:transform .15s,opacity .2s}
+.mus-btn[hidden]{display:none}
+.mus-btn svg{width:19px;height:19px}
+.mus-btn:active{transform:scale(.92)}
+.mus-btn.off{opacity:.6}
+.mus-btn:not(.off) svg{animation:musLatido 1.6s ease-in-out infinite}
+@keyframes musLatido{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+@media (prefers-reduced-motion:reduce){.mus-btn:not(.off) svg{animation:none}}
+.fx-sw.mus-sw.on{background:#10b981}
+.fx-sw.mus-sw.on i{transform:translateX(20px)}

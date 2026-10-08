@@ -579,4 +579,8 @@ html.tema-halloween{--green:#2f7f1b;--greenlt:#f1fbea;--danger:#a31515;--warn:#c
 :where(.tema-halloween) .ag-zl.ent .dn{color:#2f7f1b}
 :where(.tema-halloween) .ag-zl.sal .up{color:#2f7f1b}
 :where(.tema-halloween) .ag-zl.sal .dn{background:#fff5ea;color:#9a3d08}
+:where(.tema-halloween) .fx-sw.mus-sw.on{background:#3a9d23}
 /* AUTO-COLORES:FIN */
+
+/* Música de fondo: botón de silencio con el naranja del tema */
+html.tema-halloween .mus-btn{background:rgba(20,10,4,.72);border-color:rgba(249,115,22,.5);color:#fdba74;box-shadow:0 6px 18px -6px rgba(249,115,22,.45)}
