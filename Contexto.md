@@ -92,7 +92,8 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   sesión se cierra (al abrir la app o al instante con la app abierta) con el aviso "La app se actualizó".
   No compara relojes. Sesiones sin marca guardada (versiones viejas) se cierran si existe un cierre.
   Al volver a entrar, si hay música que ese teléfono no tiene, el login la espera con una pantalla de
-  avance (`retenerParaMusica`; a los 15 s deja "Entrar sin esperar").
+  avance (`retenerParaMusica`; a los 15 s deja "Entrar sin esperar"). El texto no menciona la música:
+  con Halloween dice "Preparando la temporada de Halloween" (calabaza); sin tema, "Preparando la app".
 - `config/tema`: tema para todos (ver "Temas de temporada").
 - `config/musica`: `{version, nombre, tipo, bytes, partes, activa, subidoPor, subidoEn}` de la música de
   fondo; el audio va en `config/musicaDatos/{version}/{i}` como texto base64 en partes de 512 KB (la app no
