@@ -183,8 +183,15 @@ Firebase por render). Se resolvió así:
   de inmediato y guardan en segundo plano** (no esperan la confirmación de Firebase).
 
 **Regla**: no volver al patrón de leer por-empleado en bucle. Usar los cachés.
-Queda pendiente un patrón similar en la lectura de **marcajes** día-por-día en el
-dashboard (aún no optimizado) — candidato de auditoría.
+
+**Espejo en vivo (admin y asistente)**: `get` y `ref` del módulo principal envuelven a los de
+Firebase. Al entrar un admin se abre una escucha `onValue` sobre `registros` (y sobre `marcajes`
+la primera vez que se pide el historial de alguien, `marcajes/{uid}`). Las lecturas bajo esos nodos
+se contestan con `snap.child(ruta)` del espejo: mismo resultado que un `get`, al día y sin volver a
+descargar. Firebase baja el nodo una vez y luego solo los cambios. Se cierra en `doLogout`. Si la
+escucha falla o tarda más de 8 s, se lee normal. Los técnicos no usan espejo (leen solo lo suyo).
+Antes, el Dashboard abierto (refresco cada 30 s) descargaba del orden de 1–2 GB por jornada; con el
+espejo, unos pocos MB. Medición y comparación de pantallas antes/después en las pruebas locales.
 
 ---
 

@@ -341,7 +341,7 @@ self.addEventListener('fetch', e => {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref as refFirebase, set, get as getFirebase, update, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
@@ -367,6 +367,44 @@ initializeAppCheck(app, {
 });
 
 const db = getDatabase(app);
+
+// ── Espejo en vivo de registros y marcajes (solo admin y asistente) ──────────
+// El Dashboard, Asistencia, Registros y Pendientes leen los registros y marcajes de todos, y el
+// Dashboard se refresca cada 30 s. Antes cada lectura volvía a descargar todo (cientos de MB al
+// día). Ahora, para un admin, se abre UNA escucha en vivo por nodo: Firebase baja el nodo
+// una vez y después solo manda lo que cambia. Las lecturas de esos nodos se contestan desde ahí,
+// con el mismo resultado que una lectura normal (y al día, porque la escucha recibe los cambios
+// de todos, incluidos los propios al instante). Si la escucha falla o tarda, se lee normal.
+const RUTAS=new WeakMap();
+const ref=(d,p)=>{ const r=refFirebase(d,p); RUTAS.set(r,p||''); return r; };
+const ESPEJOS={};
+let espejosActivos=false;
+// registros se abre al entrar (el Dashboard ya lo lee completo); marcajes solo cuando se pide el
+// historial de alguien (Asistencia, perfil del técnico), para que una visita corta no lo baje todo.
+function iniciarEspejos(){ espejosActivos=true; abrirEspejo('registros'); }
+function abrirEspejo(raiz){
+  if(ESPEJOS[raiz]) return;
+  const e={snap:null,fallo:false,off:null};
+  e.listo=new Promise(res=>{
+    try{ e.off=onValue(refFirebase(db,raiz),s=>{ e.snap=s; res(); },err=>{ e.fallo=true; e.snap=null; console.warn('Espejo '+raiz+' sin escucha:',err&&err.message); res(); }); }
+    catch(err){ e.fallo=true; res(); }
+  });
+  ESPEJOS[raiz]=e;
+}
+function detenerEspejos(){ espejosActivos=false; Object.keys(ESPEJOS).forEach(k=>{ try{ ESPEJOS[k].off&&ESPEJOS[k].off(); }catch(_){} delete ESPEJOS[k]; }); }
+async function get(r){
+  const p=RUTAS.get(r);
+  if(p!=null){
+    const ks=p.split('/').filter(Boolean);
+    if(espejosActivos&&ks[0]==='marcajes'&&ks.length===2&&!ESPEJOS.marcajes) abrirEspejo('marcajes');
+    const e=ks.length&&ESPEJOS[ks[0]];
+    if(e&&!e.fallo){
+      if(!e.snap) await Promise.race([e.listo,new Promise(res=>setTimeout(res,8000))]);
+      if(e.snap&&!e.fallo&&ESPEJOS[ks[0]]===e) return ks.length>1?e.snap.child(ks.slice(1).join('/')):e.snap;
+    }
+  }
+  return getFirebase(r);
+}
 
 let me=null, editUID=null, rejKey=null, filtRegs=[], tipoDia='normal';
 const AUS_TIPO_LABEL={incapacidad:'Incapacidad',vacaciones:'Vacaciones',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
@@ -1243,7 +1281,7 @@ window.maintLogin=async()=>{
   if(!found.activo){al.innerHTML=avisoLogin('Usuario inactivo','Pide a David que lo revise');return;}
   me=found;
   localStorage.setItem('innova_session',JSON.stringify(me));
-  renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+  iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
 };
 const _mp=$('maintPin'); if(_mp) _mp.addEventListener('keydown',e=>{if(e.key==='Enter')window.maintLogin();});
 
@@ -1279,7 +1317,7 @@ window.doLogin = async ()=>{
     else localStorage.removeItem(USUARIO_RECORDADO_KEY);
   }catch(_){}
   if(me.role==='admin'||me.role==='asistente'){
-    renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+    iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
   } else {
     renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita();
   }
@@ -1290,6 +1328,7 @@ window.doLogout=()=>{
   me=null;
   localStorage.removeItem('innova_session');
   stopDashRefresh();
+  detenerEspejos();
   $('appContainer').innerHTML='';
   $('loginUser').value='';
   $('loginPin').value='';
@@ -1342,7 +1381,7 @@ if(navigator.storage && navigator.storage.persist){
             if(fresh.activo&&fresh.role==='admin'){
               me={id:user.id,...fresh};
               localStorage.setItem('innova_session',JSON.stringify(me));
-              renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+              iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
               return;
             }
           }
@@ -1366,7 +1405,7 @@ if(navigator.storage && navigator.storage.persist){
       me = {id:user.id, ...fresh};
       localStorage.setItem('innova_session', JSON.stringify(me));
       if(me.role==='admin'||me.role==='asistente'){
-        renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+        iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
       } else {
         renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita();
       }
