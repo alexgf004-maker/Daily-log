@@ -111,8 +111,8 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=72">
-<link rel="stylesheet" href="css/temas.css?v=22">
+<link rel="stylesheet" href="css/styles.css?v=73">
+<link rel="stylesheet" href="css/temas.css?v=23">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -360,7 +360,7 @@ import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, ca
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
-import { iniciarMusica, subirMusica, activarMusica, quitarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
+import { iniciarMusica, subirMusica, activarMusica, quitarMusica, esperarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
 
 const cfg = {
@@ -869,6 +869,10 @@ function renderAdmin(){
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></span>
             <span class="pf-tx"><b>Tema de temporada</b><span id="temaStatus">…</span></span><span class="ap-tema" id="temaModo"></span>
           </button>
+          <button class="pf-row ap-aud" onclick="cerrarSesionTodos()">
+            <span class="pf-ic r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+            <span class="pf-tx"><b>Cerrar sesión a todos</b><span id="cierreStatus">…</span></span>
+          </button>
           <button class="pf-row ap-aud" onclick="cicloTemaGlobal()">
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
             <span class="pf-tx"><b>Tema para todos</b><span id="temaGlobalStatus">…</span></span><span class="ap-tema" id="temaGlobalModo"></span>
@@ -1296,6 +1300,71 @@ async function checkMaintenance(){
 function avisoLogin(titulo, detalle){
   return `<div class="mk-av mal lg-av"><span class="mk-av-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg></span><div class="mk-av-tx"><b>${titulo}</b>${detalle?`<span>${detalle}</span>`:''}</div></div>`;
 }
+
+// ── Cerrar sesión a todos (admin) ──
+// config/cierreSesion = marca del último "cerrar sesión a todos" (hora del admin). Al entrar, cada
+// teléfono guarda la marca que había ('innova_sesion_cierre'); si después aparece otra, la sesión se
+// cierra: al abrir la app o al instante si está abierta. No se comparan relojes (un celular con la
+// hora atrasada no queda saliendo una y otra vez). Las sesiones sin marca (versiones viejas) se cierran.
+const SESION_CIERRE_KEY='innova_sesion_cierre';
+let cierreConocido=0;   // última marca leída de la base, para guardarla al entrar
+const cierreVisto=()=>{ try{ const v=localStorage.getItem(SESION_CIERRE_KEY); return v==null?null:Number(v)||0; }catch(_){ return null; } };
+const marcarInicioSesion=()=>{ try{ localStorage.setItem(SESION_CIERRE_KEY,String(cierreConocido)); }catch(_){} };
+const sesionVencida=c=>!!c&&cierreVisto()!==c;
+async function leerCierreSesion(){ try{ cierreConocido=Number((await getFirebase(refFirebase(db,'config/cierreSesion'))).val())||0; }catch(_){} return cierreConocido; }
+function avisoSesionCerrada(){
+  const al=$('loginAlert');
+  if(al) al.innerHTML=`<div class="mk-av info lg-av"><span class="mk-av-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></span><div class="mk-av-tx"><b>La app se actualizó</b><span>Vuelve a entrar con tu usuario y PIN</span></div></div>`;
+}
+function cerrarSesionForzada(){
+  if(!me) return;
+  window.doLogout();
+  avisoSesionCerrada();
+}
+try{
+  onValue(refFirebase(db,'config/cierreSesion'), sn=>{
+    const c=Number(sn.val())||0;
+    cierreConocido=c;
+    if(me&&sesionVencida(c)) cerrarSesionForzada();
+  });
+}catch(e){ console.warn('[sesion]', e.message); }
+window.cerrarSesionTodos=async()=>{
+  if(!confirm('¿Cerrar la sesión a todos? Tendrán que volver a entrar con su usuario y PIN (tú sigues dentro).')) return;
+  const ahora=Date.now();
+  try{
+    cierreConocido=ahora; marcarInicioSesion();   // primero la tuya, para que no te saque a ti
+    await set(ref(db,'config/cierreSesion'), ahora);
+    pintarCierreSesion();
+  }catch(e){ alert('No se pudo: '+e.message); }
+};
+async function pintarCierreSesion(){
+  const st=$('cierreStatus'); if(!st) return;
+  const c=await leerCierreSesion();
+  st.textContent=c?`Último cierre: ${new Date(c).toLocaleString('es-SV',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`:'Saca a todos para que entren con la versión nueva';
+}
+
+// Antes de entrar: si hay música nueva que este teléfono aún no tiene, se espera a que baje
+// (con avance). Después de 15 s se puede entrar sin esperar, para no dejar a nadie atrapado.
+async function retenerParaMusica(){
+  let capa=null, salir=null;
+  const t=setTimeout(()=>{
+    capa=document.createElement('div'); capa.className='mus-espera';
+    capa.innerHTML=`<div class="mus-espera-c"><div class="mus-espera-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+      <b>Preparando la app</b><span>Descargando la música, solo esta vez…</span>
+      <div class="mus-espera-bar"><i id="musEsperaBar"></i></div><em id="musEsperaPct">0%</em>
+      <button type="button" id="musEsperaSaltar" hidden>Entrar sin esperar</button></div>`;
+    document.body.appendChild(capa);
+    setTimeout(()=>{ const b=capa?.querySelector('#musEsperaSaltar'); if(b){ b.hidden=false; b.onclick=()=>salir&&salir(); } },15000);
+  },300);   // si ya está guardada no aparece nada
+  try{
+    await Promise.race([
+      esperarMusica(p=>{ const b=$('musEsperaBar'), e=$('musEsperaPct'); if(b) b.style.width=Math.round(p*100)+'%'; if(e) e.textContent=Math.round(p*100)+'%'; }),
+      new Promise(r=>{ salir=r; }),
+    ]);
+  }catch(_){}
+  clearTimeout(t); capa?.remove();
+}
+
 window.maintLogin=async()=>{
   const u=$('maintUser').value.trim().toLowerCase();
   const p=$('maintPin').value.trim();
@@ -1313,8 +1382,10 @@ window.maintLogin=async()=>{
   }
   if(!found||found.role!=='admin'){al.innerHTML=avisoLogin('Acceso solo para administración','La app está en mantenimiento');return;}
   if(!found.activo){al.innerHTML=avisoLogin('Usuario inactivo','Pide a David que lo revise');return;}
+  await leerCierreSesion();
   me=found;
   localStorage.setItem('innova_session',JSON.stringify(me));
+  marcarInicioSesion();
   iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
 };
 const _mp=$('maintPin'); if(_mp) _mp.addEventListener('keydown',e=>{if(e.key==='Enter')window.maintLogin();});
@@ -1343,8 +1414,10 @@ window.doLogin = async ()=>{
   if(enMant&&found.role!=='admin'){
     al.innerHTML=avisoLogin('App en mantenimiento','Por ahora solo puede entrar el administrador');return;
   }
+  await Promise.all([retenerParaMusica(), leerCierreSesion()]);
   me=found;
   localStorage.setItem('innova_session', JSON.stringify(me));
+  marcarInicioSesion();
   // Recordar (o dejar de recordar) el usuario en este celular
   try{
     if($('loginRecordar')?.checked) localStorage.setItem(USUARIO_RECORDADO_KEY,u);
@@ -1429,6 +1502,11 @@ if(navigator.storage && navigator.storage.persist){
     // Sin mantenimiento — restaurar sesión normal
     const saved = localStorage.getItem('innova_session');
     if(!saved){ screen('loginScreen'); return; }
+    // ¿El admin cerró la sesión a todos después de que esta empezó?
+    const cierre=await leerCierreSesion();
+    if(sesionVencida(cierre)){
+      localStorage.removeItem('innova_session'); screen('loginScreen'); avisoSesionCerrada(); return;
+    }
     try {
       const user = JSON.parse(saved);
       if(!user||!user.id||!user.username){ screen('loginScreen'); return; }
@@ -2582,7 +2660,7 @@ window.adTab=(t,btn)=>{
     const box=$('adPerfilPinBox'); if(box) box.open=false;
     const aud=$('auditoriaResult'); if(aud){ aud.style.display='none'; aud.innerHTML=''; }
     pintarMiMarcajeCard();
-    if(isAdmin()) { checkMaintenance().then(on=>pintarMantenimiento(on)); pintarMusicaAdmin(); }
+    if(isAdmin()) { checkMaintenance().then(on=>pintarMantenimiento(on)); pintarMusicaAdmin(); pintarCierreSesion(); }
     pintarTema();
   }
 };

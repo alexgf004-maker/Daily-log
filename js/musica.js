@@ -22,6 +22,10 @@ let fb = null;            // { db, ref, get, set, update }
 let audio = null, url = null, versionActual = null;
 let silenciada = false, activa = false, desbloqueada = false;
 let boton = null;
+// Descarga en curso (para que el login pueda esperarla) y primer aviso de la base
+let descarga = null, progreso = 0;
+const oyentesProgreso = new Set();
+let listoMeta, metaLista = new Promise(r => { listoMeta = r; });
 
 // ── Caché en el navegador ─────────────────────────
 function abrirIDB() {
@@ -144,24 +148,48 @@ export function alternarSilencio() {
 // ── Sincronizar con la base ───────────────────────
 async function sincronizar(meta) {
   activa = !!(meta && meta.version && meta.activa !== false);
-  if (!meta || !meta.version) { quitarPista(); guardarCache(null); return; }
-  if (!activa) { audio?.pause(); pintarBoton(); return; }   // apagada para todos: ni se descarga
-  if (meta.version === versionActual) { pintarBoton(); intentarSonar(); return; }
+  if (!meta || !meta.version) { quitarPista(); guardarCache(null); listoMeta(); return; }
+  if (!activa) { audio?.pause(); pintarBoton(); listoMeta(); return; }   // apagada para todos: ni se descarga
+  if (meta.version === versionActual) { pintarBoton(); intentarSonar(); listoMeta(); return; }
 
   const cache = await leerCache();
-  if (cache && cache.version === meta.version && cache.blob) { ponerPista(cache.blob, meta.version); return; }
+  if (cache && cache.version === meta.version && cache.blob) { ponerPista(cache.blob, meta.version); listoMeta(); return; }
 
-  // Versión nueva: se baja una sola vez y queda guardada en el teléfono
-  try {
-    const snap = await fb.get(fb.ref(fb.db, `config/musicaDatos/${meta.version}`));
-    if (!snap.exists()) return;
-    const val = snap.val();
-    const partes = Array.isArray(val) ? val : Object.keys(val).sort((a, b) => a - b).map(k => val[k]);
-    if (partes.length !== meta.partes) return;   // a medio subir
-    const blob = deBase64(partes.join(''), meta.tipo);
-    await guardarCache({ version: meta.version, blob, nombre: meta.nombre || '' });
-    ponerPista(blob, meta.version);
-  } catch (e) { console.warn('[musica]', e.message); }
+  // Versión nueva: se baja una sola vez (parte por parte, para mostrar el avance) y queda guardada
+  if (descarga && descarga.version === meta.version) { listoMeta(); return descarga.promesa; }
+  const avisar = v => { progreso = v; oyentesProgreso.forEach(fn => { try { fn(v); } catch (_) {} }); };
+  const promesa = (async () => {
+    try {
+      avisar(0);
+      const partes = [];
+      for (let i = 0; i < meta.partes; i++) {
+        const sn = await fb.get(fb.ref(fb.db, `config/musicaDatos/${meta.version}/${i}`));
+        if (!sn.exists()) return;          // a medio subir o ya reemplazada
+        partes.push(sn.val());
+        avisar((i + 1) / meta.partes);
+      }
+      const blob = deBase64(partes.join(''), meta.tipo);
+      await guardarCache({ version: meta.version, blob, nombre: meta.nombre || '' });
+      ponerPista(blob, meta.version);
+    } catch (e) { console.warn('[musica]', e.message); }
+    finally { if (descarga && descarga.version === meta.version) descarga = null; }
+  })();
+  descarga = { version: meta.version, promesa };
+  listoMeta();   // el login ya sabe que hay que esperar esta descarga
+  return promesa;
+}
+
+/**
+ * Para el login: si hay música nueva que este teléfono aún no tiene, la
+ * espera (avisando el avance con onProgreso(0..1)). Devuelve true si hubo que
+ * esperar. Si no hay música, ya está guardada o está apagada, sale enseguida.
+ */
+export async function esperarMusica(onProgreso) {
+  await Promise.race([metaLista, new Promise(r => setTimeout(r, 4000))]);
+  if (!descarga) return false;
+  if (onProgreso) { oyentesProgreso.add(onProgreso); onProgreso(progreso); }
+  try { await descarga.promesa; } finally { if (onProgreso) oyentesProgreso.delete(onProgreso); }
+  return true;
 }
 
 /**
@@ -183,7 +211,7 @@ export async function iniciarMusica(fbFns) {
 
   // Escuchar cambios: si el admin sube otra o la quita, se aplica sola
   try {
-    fb.onValue(fb.ref(fb.db, 'config/musica'), s => sincronizar(s.val()), e => console.warn('[musica]', e.message));
+    fb.onValue(fb.ref(fb.db, 'config/musica'), s => sincronizar(s.val()), e => { console.warn('[musica]', e.message); listoMeta(); });
   } catch (e) { console.warn('[musica]', e.message); }
 }
 

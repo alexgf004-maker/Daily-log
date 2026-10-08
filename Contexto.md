@@ -87,6 +87,12 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   `justificado: {por, nombre, nota, ts}` — ver sección 5, "Justificar tardanzas".
 - `config/`: configuración varia (incluye `config/vehiculos`, `config/campanias`,
   `config/sabadosLaborales`, `config/musica` y `config/musicaDatos`).
+- `config/cierreSesion`: marca (ms) del último "Cerrar sesión a todos" del admin. Al entrar, cada teléfono
+  guarda la marca vigente en `localStorage.innova_sesion_cierre`; si en la base aparece otra distinta, la
+  sesión se cierra (al abrir la app o al instante con la app abierta) con el aviso "La app se actualizó".
+  No compara relojes. Sesiones sin marca guardada (versiones viejas) se cierran si existe un cierre.
+  Al volver a entrar, si hay música que ese teléfono no tiene, el login la espera con una pantalla de
+  avance (`retenerParaMusica`; a los 15 s deja "Entrar sin esperar").
 - `config/tema`: tema para todos (ver "Temas de temporada").
 - `config/musica`: `{version, nombre, tipo, bytes, partes, activa, subidoPor, subidoEn}` de la música de
   fondo; el audio va en `config/musicaDatos/{version}/{i}` como texto base64 en partes de 512 KB (la app no

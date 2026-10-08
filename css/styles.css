@@ -1545,3 +1545,15 @@ button.ag-mn:hover{color:var(--blue)}
 @media (prefers-reduced-motion:reduce){.mus-btn:not(.off) svg{animation:none}}
 .fx-sw.mus-sw.on{background:#10b981}
 .fx-sw.mus-sw.on i{transform:translateX(20px)}
+
+/* Login: espera mientras baja la música nueva (solo la primera vez en cada teléfono) */
+.mus-espera{position:fixed;inset:0;z-index:400;background:rgba(2,8,23,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeUp .3s ease both}
+.mus-espera-c{background:#fff;border-radius:22px;padding:26px 22px 22px;width:100%;max-width:320px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 30px 60px -20px rgba(2,8,23,.6)}
+.mus-espera-ic{width:54px;height:54px;border-radius:16px;background:var(--blue,#2563eb);color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.mus-espera-ic svg{width:26px;height:26px;animation:musLatido 1.6s ease-in-out infinite}
+.mus-espera-c b{font-size:16px;color:var(--text)}
+.mus-espera-c span{font-size:13px;color:var(--text2)}
+.mus-espera-bar{width:100%;height:8px;border-radius:8px;background:var(--gray100);overflow:hidden;margin-top:12px}
+.mus-espera-bar i{display:block;height:100%;width:0;background:var(--blue,#2563eb);border-radius:8px;transition:width .3s}
+.mus-espera-c em{font-style:normal;font-size:12px;font-weight:700;color:var(--text2)}
+.mus-espera-c button{margin-top:10px;border:none;background:none;color:var(--blue,#2563eb);font:600 13px var(--sans);cursor:pointer;padding:6px}
