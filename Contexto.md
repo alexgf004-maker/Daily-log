@@ -226,7 +226,8 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   capa se salía del encabezado y dibujaba arañazos al fondo de la página); la niebla y el oscurecido de orillas
   solo van en el login (encima de la app ensuciaban las tarjetas). Sin morados fuera de estados (perfil, "Ver
   ahora"). El viático apagado usa el tono del tema; encendido sigue verde como el resto de los viáticos.
-  Los colores de estado (verde a tiempo, rojo tarde, naranja horas extra, amarillo avisos) se mantienen.
+  Los colores de estado (verde a tiempo, rojo tarde, naranja horas extra) se mantienen; los avisos del
+  Dashboard (`.rban`, `.dt-extra`) van en ámbar oscuro.
 - **Halloween, rendimiento del login**: evitar lo que repinta en cada cuadro. Las brasas se mueven con
   `transform` (no `background-position`), la sangre es estática (su filtro de líquido se calcula una vez), los
   murciélagos no llevan `filter` y aletean con CSS (los lejanos no aletean), y el brillo del fantasma es un

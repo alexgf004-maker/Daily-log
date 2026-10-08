@@ -234,6 +234,16 @@
 .tema-halloween .fx-viat:not(.on) .fx-viat-ic{background:#fef2f2;color:#991b1b}
 .tema-halloween .fx-viat:not(.on) .fx-sw{background:#e9d8da}
 
+/* avisos (revisión de ayer, salieron temprano) en ámbar oscuro: el amarillo claro desentonaba con la noche */
+.tema-halloween .rban:not(.ok){background:linear-gradient(135deg,#2b1605,#3d1f06)!important;border-color:#7c4a12!important}
+.tema-halloween .rban:not(.ok) .rban-hd{color:#fbbf24}
+.tema-halloween .rban:not(.ok) .rban-t{color:#fde68a}
+.tema-halloween .rban:not(.ok) .rban-s{color:#f2c46d}
+.tema-halloween .rban:not(.ok) .rban-ic{background:linear-gradient(135deg,#b45309,#f59e0b);box-shadow:0 0 14px rgba(245,158,11,.35)}
+.tema-halloween .rban:not(.ok) .rban-body{border-top-color:#7c4a12}
+.tema-halloween .dt-extra{background:linear-gradient(135deg,#2b1605,#3d1f06)!important;border-color:#7c4a12!important;color:#fcd34d!important}
+.tema-halloween .dt-extra.sel{border-color:#f59e0b!important}
+
 /* AUTO-COLORES:INICIO (no editar a mano: herramientas/tema-colores.py) */
 :where(.tema-halloween) #loginScreen{background:linear-gradient(160deg,#050307 0%,#1a0509 45%,#2a070b 100%)}
 :where(.tema-halloween) .login-form input:focus{box-shadow:0 0 0 4px rgba(185,28,28,.12)}
