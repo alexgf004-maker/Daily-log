@@ -192,6 +192,15 @@ importante — ver sección 7.**
   Los navegadores no dejan sonar audio sin un toque: si no puede arrancar sola, empieza con el primer toque o
   tecla. Se pausa cuando la app queda en segundo plano.
 
+- **Asistencia, horas de cualquier día**: pestaña "Por día" (elige el día; entrada y salida de todos, ordenados por
+  hora de llegada, con estado y sede; tocar a alguien abre su detalle en ese día). En el detalle de cada persona,
+  "Día por día" (todos los días con entrada y salida, también días no laborales con marca) o "Solo incidencias".
+  Usa los marcajes y registros del mes que ya baja el resumen (`asistCache.marcs`/`regs`): sin lecturas extra.
+- **Compañeros del día en un registro** (solo admin y asistente): "Anduvo con" en el detalle de un registro y en
+  el día por día del perfil del empleado. Sale del grupo de la Programación de ese día y de los nombres escritos
+  en las actividades (nombre + apellido, o solo el nombre si es único y va después de "con"/"y"). Tocar a uno
+  abre al momento lo que esa persona registró ese día y su marcaje (`verCompanero`).
+
 ## 6. Rendimiento (ya optimizado, mantener el patrón)
 
 Se detectó lentitud por leer `registros/{uid}` **empleado por empleado** (~30 viajes a

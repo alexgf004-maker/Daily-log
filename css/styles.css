@@ -1557,3 +1557,50 @@ button.ag-mn:hover{color:var(--blue)}
 .mus-espera-bar i{display:block;height:100%;width:0;background:var(--blue,#2563eb);border-radius:8px;transition:width .3s}
 .mus-espera-c em{font-style:normal;font-size:12px;font-weight:700;color:var(--text2)}
 .mus-espera-c button{margin-top:10px;border:none;background:none;color:var(--blue,#2563eb);font:600 13px var(--sans);cursor:pointer;padding:6px}
+
+/* Asistencia: hora de entrada y salida de cualquier día (vista "Por día" y día por día de cada persona) */
+.as-seg button{font-size:12px}
+.as-h{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.as-h b{font-size:14px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.as-h.nada{color:var(--gray400);font-weight:700}
+.as-nolab{font-size:11.5px;font-weight:600;color:var(--gray400)}
+.as-dnav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.as-dnav>button{width:38px;height:42px;border-radius:12px;border:1px solid var(--gray200);background:#fff;color:var(--text);font-size:18px;cursor:pointer;flex-shrink:0}
+.as-dnav>button:disabled{opacity:.35;cursor:default}
+.as-dsel{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;height:42px;border-radius:12px;background:#fff;border:1px solid var(--gray200);cursor:pointer}
+.as-dsel b{font-size:14px;color:var(--text)}
+.as-dsel span{font-size:11px;color:var(--text2)}
+.as-dsel input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.as-dtira{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.as-dtira::-webkit-scrollbar{display:none}
+.as-dtira button{flex-shrink:0;width:42px;padding:5px 0 6px;border-radius:11px;border:1px solid var(--gray200);background:#fff;font:800 14px var(--sans);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.as-dtira button small{font-size:9.5px;font-weight:700;color:var(--gray400);text-transform:uppercase}
+.as-dtira button.vacio{opacity:.5}
+.as-dtira button.on{background:var(--blue);border-color:var(--blue);color:#fff;opacity:1}
+.as-dtira button.on small{color:rgba(255,255,255,.8)}
+.as-dlist{padding-bottom:4px}
+.as-dhd,.as-drow{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center;padding:10px 14px}
+.as-dhd{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gray400);padding-bottom:4px}
+.as-drow{border-top:1px solid var(--gray100);cursor:pointer}
+.as-drow:active{background:var(--gray50,#f8fafc)}
+.as-dn{min-width:0}
+.as-dn b{display:block;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.as-dn span{font-size:11px;color:var(--text2)}
+.as-dnota{grid-column:2/4}
+.as-drow .as-h{flex-direction:column;align-items:flex-start;gap:3px}
+.as-dia{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;align-items:center}
+.as-dia-k{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.as-detseg{margin:14px 0 10px}
+
+/* Compañeros del día en un registro (solo oficina): tocar uno muestra lo que puso ese día */
+.cmp-fila{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 2px}
+.cmp-fila:empty{display:none}
+#moDetComp .cmp-fila{margin:0 0 14px}
+.cmp-lbl{font-size:11px;font-weight:700;color:var(--text2);margin-right:2px}
+.cmp-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray200);background:#fff;border-radius:20px;padding:3px 10px 3px 3px;font:600 12px var(--sans);color:var(--text);cursor:pointer}
+.cmp-chip i{width:22px;height:22px;border-radius:50%;background:#e8f0fe;color:var(--blue);font-style:normal;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.cmp-chip span{color:var(--gray400);font-weight:800}
+.cmp-chip:active{transform:scale(.97)}
+.cmp-mo{z-index:210}
+.cmp-nada{color:var(--text2)}
+.cmp-abrir{margin:2px 0 6px}

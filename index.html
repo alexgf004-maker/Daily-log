@@ -111,8 +111,8 @@ self.addEventListener('fetch', e => {
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=73">
-<link rel="stylesheet" href="css/temas.css?v=23">
+<link rel="stylesheet" href="css/styles.css?v=75">
+<link rel="stylesheet" href="css/temas.css?v=25">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -718,11 +718,12 @@ function renderAdmin(){
             </div>
             <input type="hidden" id="asistMes">
           </div>
-          <div class="pd-seg as-seg" id="asistSeg"><button data-m="lista" onclick="asistVista('lista')">Por colaborador</button><button data-m="graf" onclick="asistVista('graf')">Comportamiento</button></div>
+          <div class="pd-seg as-seg" id="asistSeg"><button data-m="lista" onclick="asistVista('lista')">Por colaborador</button><button data-m="dia" onclick="asistVista('dia')">Por día</button><button data-m="graf" onclick="asistVista('graf')">Comportamiento</button></div>
           <div id="asistStats"></div>
           ${me?.role==='admin'?`<button class="as-sab" onclick="openSabadoLaboral()"><span>Sábados laborales del mes: <b id="asistSabTxt">—</b></span><b class="go">Configurar ›</b></button>`:''}
           <div id="asistList"><div class="spin"></div></div>
           <div id="asistGraf" style="display:none"></div>
+          <div id="asistDia" style="display:none"></div>
         </div>
         <div id="asistDetVista" style="display:none"></div>
       </div>
@@ -3389,6 +3390,7 @@ window.cargarPerfilEmpleado=async()=>{
       <div class="rg-it-b">
         <div class="rg-it-top"><span class="rg-it-h">${horario}${heStr?` · <b>${heStr}</b>`:''}</span><span class="rg-it-tags">${tags}</span></div>
         <div class="rg-it-a">${r.actividades||''}</div>
+        <div class="cmp-fila" data-cmp="${r.key}"></div>
         ${r.he&&r.heJustif?`<div class="rg-it-nota"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
         ${r.notaAjusteHE?`<div class="rg-it-nota a"><b>Ajuste HE:</b> ${r.notaAjusteHE} (${hmCorto(r.minHEAprobado||0)} aprobados)</div>`:''}
         ${r.motivoRechazoViatico?`<div class="rg-it-nota r"><b>Anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
@@ -3397,6 +3399,12 @@ window.cargarPerfilEmpleado=async()=>{
       </div>
     </div>`;
   }).join('')+`</div>`;
+  // Con quién anduvo cada día (se completa después, sin frenar la lista)
+  if(esOficina()) items.filter(r=>!r.tipoDia||r.tipoDia==='normal').forEach(r=>companerosDe(uid,r).then(lista=>{
+    if(perfilEmpUID!==uid) return;
+    const el=document.querySelector(`#adEmpRegs [data-cmp="${r.key}"]`);
+    if(el&&lista.length) el.innerHTML=`<span class="cmp-lbl">Anduvo con</span>${chipsCompaneros(lista,r.fecha)}`;
+  }));
 };
 
 // Tema de temporada: Automático (por fecha) → Ver ahora → Apagado. Solo en este dispositivo.
@@ -4252,6 +4260,66 @@ window.exportar=async()=>{
   XLSX.writeFile(wb, `registro-planilla-${nombre.split(' ')[0]}-${today()}.xlsx`);
 };
 
+// ── Compañeros del día (solo oficina) ──
+// Con quién anduvo alguien un día: los de su grupo en la Programación de ese día y las personas que
+// nombra en sus actividades ("anduve con Carlos Pérez"). Tocar a uno muestra al momento lo que puso
+// esa persona ese mismo día, para comparar.
+const esOficina=()=>me?.role==='admin'||me?.role==='asistente';
+const _progDia=new Map();
+const progDelDia=fecha=>{ if(!_progDia.has(fecha)) _progDia.set(fecha, obtenerProgramacion(db,{ref,get},fecha).catch(()=>null)); return _progDia.get(fecha); };
+const normTxt=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9ñ ]+/g,' ');
+async function companerosDe(uid, r){
+  if(!r||!r.fecha) return [];
+  const [users, prog]=await Promise.all([getUsers(), progDelDia(r.fecha)]);
+  const out=new Map();
+  const grupo=grupoDeEmpleado(prog, uid);
+  (grupo?.empleados||[]).forEach(id=>{ if(id!==uid){ const u=users.find(x=>x.id===id); if(u) out.set(id,{uid:id,nombre:u.nombre,fuente:'prog'}); } });
+  // Nombres en el texto: nombre + un apellido, o solo el nombre si es único y viene después de "con"/"y"
+  const txt=' '+normTxt([r.actividades,r.heJustif,r.nota].filter(Boolean).join(' ')).replace(/\s+/g,' ')+' ';
+  const otros=users.filter(u=>u.id!==uid&&u.nombre&&u.activo!==false);
+  const primero=u=>normTxt(u.nombre).trim().split(/\s+/)[0];
+  otros.forEach(u=>{
+    if(out.has(u.id)) return;
+    const pal=normTxt(u.nombre).trim().split(/\s+/).filter(w=>w.length>=3);
+    if(pal.length<2) return;
+    const tiene=w=>txt.includes(' '+w+' ');
+    const completo=tiene(pal[0])&&pal.slice(1).some(tiene);
+    const unico=otros.filter(o=>primero(o)===pal[0]).length===1;
+    const conNombre=unico&&(txt.includes(' con '+pal[0]+' ')||txt.includes(' y '+pal[0]+' '));
+    if(completo||conNombre) out.set(u.id,{uid:u.id,nombre:u.nombre,fuente:'texto'});
+  });
+  return [...out.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre));
+}
+const chipsCompaneros=(lista,fecha)=>lista.map(c=>`<button class="cmp-chip" onclick="event.stopPropagation();verCompanero('${c.uid}','${fecha}')" title="${c.fuente==='prog'?'Mismo grupo en la programación':'Lo nombra en sus actividades'}"><i>${inicialesDe(c.nombre)}</i>${c.nombre.split(' ').slice(0,2).join(' ')}<span>›</span></button>`).join('');
+// Hoja rápida con lo que puso el compañero ese día (y su marcaje)
+window.verCompanero=async(uid,fecha)=>{
+  document.getElementById('moComp')?.remove();
+  const mo=document.createElement('div'); mo.className='mo open cmp-mo'; mo.id='moComp';
+  mo.innerHTML=`<div class="modal ds"><div class="ds-grab"></div><div id="moCompC"><div class="spin"></div></div><button class="btn btn-gh ds-cerrar" onclick="document.getElementById('moComp').remove()">Cerrar</button></div>`;
+  mo.addEventListener('click',e=>{ if(e.target===mo) mo.remove(); });
+  document.body.appendChild(mo);
+  const [users, snap, marc]=await Promise.all([getUsers(), get(ref(db,`registros/${uid}`)), obtenerMarcajeDia(db,{ref,get},uid,fecha).catch(()=>null)]);
+  const u=users.find(x=>x.id===uid);
+  const regs=snap.exists()?Object.entries(snap.val()).map(([k,v])=>({key:k,...v})).filter(x=>x&&x.fecha===fecha):[];
+  const r=regs[0];
+  const c=$('moCompC'); if(!c) return;
+  const d=new Date(fecha+'T12:00:00');
+  const horaMarc=(lbl,m)=>m?`${lbl} ${m.horaStr}${chipEstado(m).color==='br'?` (${chipEstado(m).texto})`:''}`:'';
+  const marca=[horaMarc('Marcó entrada',marc?.entrada),horaMarc('salida',marc?.salida)].filter(Boolean).join(' · ');
+  const etiq={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
+  let cuerpo;
+  if(!r) cuerpo=`<div class="ds-box cmp-nada">No hizo registro de este día.</div>`;
+  else if(r.tipoDia&&r.tipoDia!=='normal') cuerpo=`<div class="ds-chips"><span class="ds-chip v">${etiq[r.tipoDia]||r.tipoDia}</span></div>${r.nota?`<div class="ds-k">Nota</div><div class="ds-box">${r.nota}</div>`:''}`;
+  else cuerpo=`<div class="ds-chips">${r.viatico?(r.estadoViatico==='rechazado'?'<span class="ds-chip r">Viático anulado</span>':'<span class="ds-chip g">Viático</span>'):'<span class="ds-chip n">Sin viático</span>'}${r.he?`<span class="ds-chip ${r.estadoHE==='aprobado'?'g':r.estadoHE==='rechazado'?'r':'a'}">${fmtMin(minHEde(r))} extra</span>`:''}</div>
+    <div class="ds-k">Actividades</div><div class="ds-box">${r.actividades||''}</div>
+    ${r.he&&r.heJustif?`<div class="ds-k">Justificación de horas extra</div><div class="ds-just">${r.heJustif}</div>`:''}`;
+  c.innerHTML=`<div class="ds-emp">${u?.nombre||uid}</div>
+    <div class="ds-t">${['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][d.getDay()]} ${d.getDate()} de ${MESES_FX[d.getMonth()]}</div>
+    <div class="ds-s">${[r?.horaEntrada&&r?.horaSalida?`Registró ${r.horaEntrada} – ${r.horaSalida}`:'', marca].filter(Boolean).join(' · ')||'Sin marcaje este día'}</div>
+    ${cuerpo}
+    ${r?`<button class="btn btn-gh btn-sm cmp-abrir" onclick="document.getElementById('moComp').remove();openDet('${uid}','${r.key}',true)">Ver registro completo</button>`:''}`;
+};
+
 window.openDet=async(uid,key,fromAdmin)=>{
   const snap=await get(ref(db,`registros/${uid}/${key}`));if(!snap.exists())return;
   const r=snap.val();
@@ -4299,7 +4367,9 @@ window.openDet=async(uid,key,fromAdmin)=>{
     <div class="ds-t">${titulo}</div>
     ${sub.length?`<div class="ds-s">${sub.join(' · ')}</div>`:'<div style="height:10px"></div>'}
     <div class="ds-chips">${chips}</div>
-    ${cuerpo}`;
+    ${cuerpo}
+    ${esOficina()&&!esEsp?'<div id="moDetComp"></div>':''}`;
+  if(esOficina()&&!esEsp) companerosDe(uid,r).then(l=>{ const el=$('moDetComp'); if(el&&l.length) el.innerHTML=`<div class="ds-k">Anduvo con · toca para ver lo que puso</div><div class="cmp-fila">${chipsCompaneros(l,r.fecha)}</div>`; });
   const puedeActuar=isAdmin()||fromAdmin===true;
 $('moDetActs').innerHTML=puedeActuar?(
     (r.he&&eh==='pendiente')
@@ -4774,12 +4844,13 @@ window.cargarAsistencia=async()=>{
     const emps=await empleadosParaAsistencia();
     if(!emps.length){ $('asistStats').innerHTML=''; cont.innerHTML='<div class="empty" style="padding:20px"><div class="et">No hay empleados con sede asignada</div></div>'; return; }
     const sabados=await obtenerSabadosLaborales(db,{ref,get},mes);
+    const marcs={}, regs={};   // crudos del mes por persona: para "Por día" y el día por día (sin lecturas extra)
     const filas=await resumenMesTodos(mes, emps,
-      uid=>marcajesEmpleadoMes(uid,mes),
-      uid=>regsEmpleadoMes(uid,mes),
+      async uid=>(marcs[uid]=await marcajesEmpleadoMes(uid,mes)),
+      async uid=>(regs[uid]=await regsEmpleadoMes(uid,mes)),
       sabados, today());
     if(($('asistMes')?.value)!==mes) return; // cambió de mes mientras cargaba
-    asistCache={mes, filas, sabados};
+    asistCache={mes, filas, sabados, marcs, regs};
 
     const tot=filas.reduce((a,f)=>({t:a.t+f.diasTarde,s:a.s+f.salidasTemp,n:a.n+f.noMarco}),{t:0,s:0,n:0});
     $('asistStats').innerHTML=`<div class="rg-stats" style="margin-top:0">
@@ -4812,19 +4883,84 @@ window.cargarAsistencia=async()=>{
 window.volverAsistLista=()=>{ asistDetUid=null; hide('asistDetVista'); show('asistListaVista'); };
 
 // ── Comportamiento: gráficas del mes con los mismos datos del resumen (sin lecturas extra) ──
-let asistModo=(()=>{ try{ return localStorage.getItem('asistModo')==='graf'?'graf':'lista'; }catch(e){ return 'lista'; } })();
+let asistModo=(()=>{ try{ const m=localStorage.getItem('asistModo'); return m==='graf'||m==='dia'?m:'lista'; }catch(e){ return 'lista'; } })();
 window.asistVista=(modo)=>{
   asistModo=modo; try{ localStorage.setItem('asistModo',modo); }catch(e){}
   aplicarAsistModo();
 };
 function aplicarAsistModo(pintar=true){
-  const g=asistModo==='graf';
+  const g=asistModo==='graf', dia=asistModo==='dia', lista=asistModo==='lista';
   document.querySelectorAll('#asistSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===asistModo));
-  ['asistStats','asistList'].forEach(id=>{ const e=$(id); if(e) e.style.display=g?'none':''; });
-  const sab=document.querySelector('#asistListaVista .as-sab'); if(sab) sab.style.display=g?'none':'';
+  ['asistStats','asistList'].forEach(id=>{ const e=$(id); if(e) e.style.display=lista?'':'none'; });
+  const sab=document.querySelector('#asistListaVista .as-sab'); if(sab) sab.style.display=lista?'':'none';
   $('asistGraf').style.display=g?'':'none';
+  $('asistDia').style.display=dia?'':'none';
   if(g&&pintar) pintarAsistGraf();
+  if(dia&&pintar) pintarAsistDia();
 }
+
+// ── Asistencia de un día: hora de entrada y de salida de todos ──
+// Sale de los marcajes del mes ya cargados (sin lecturas extra). Incluye días no laborales si alguien marcó.
+let asistDiaSel=null;
+function marcaTxt(m, tipo){
+  if(!m) return `<span class="as-h nada">—</span>`;
+  const mala=tipo==='entrada'?m.estado==='tarde':m.estado==='salida_temprana';
+  const pill=!mala?etiquetaEstado('ok',tipo==='entrada'?'A tiempo':'A su hora','sm')
+    :m.justificado?etiquetaEstado('neutro','Justificado','sm')
+    :etiquetaEstado('mal',fmtMin(m.minDiff||0)+(tipo==='entrada'?' tarde':' antes'),'sm');
+  return `<span class="as-h"><b>${m.horaStr||'—'}</b>${pill}</span>`;
+}
+// Lo que pasó un día con una persona: marcas, o por qué no hay
+function diaPersona(f, fecha){
+  const c=asistCache, m=c.marcs?.[f.uid]?.[fecha]||null, det=f.detalle.find(d=>d.fecha===fecha)||null, r=c.regs?.[f.uid]?.[fecha]||null;
+  const tipos={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
+  let nota='';
+  if(!m?.entrada&&!m?.salida){
+    if(det?.tipo==='no_marco') nota=etiquetaEstado('mal','No marcó','sm');
+    else if(det?.tipo==='justificado'||(r&&r.tipoDia&&r.tipoDia!=='normal')) nota=`<span class="rg-pill v">${tipos[det?.tipoDia||r?.tipoDia]||'Ausencia justificada'}</span>`;
+    else nota=`<span class="as-nolab">${fecha>today()?'Aún no llega':'Día no laboral'}</span>`;
+  } else if(!det) nota=`<span class="as-nolab">Día no laboral</span>`;
+  const sede=m?.entrada?.sedeUsada||m?.salida?.sedeUsada;
+  return {m, det, r, nota, sede:sede?(NOMBRE_SEDES[sede]||sede):''};
+}
+function pintarAsistDia(){
+  const cont=$('asistDia'); if(!cont||!asistCache) return;
+  const {mes, filas}=asistCache, hoy=today();
+  const [y,mm]=mes.split('-').map(Number), ultimo=new Date(y,mm,0).getDate();
+  const fechas=[]; for(let d=1; d<=ultimo; d++){ const fe=`${mes}-${String(d).padStart(2,'0')}`; if(fe<=hoy) fechas.push(fe); }
+  if(!fechas.length){ cont.innerHTML='<div class="dt-vacio">Este mes aún no empieza</div>'; return; }
+  if(!asistDiaSel||!fechas.includes(asistDiaSel)) asistDiaSel=fechas[fechas.length-1];
+  const fe=asistDiaSel, idx=fechas.indexOf(fe);
+  const conMarca=new Set(); filas.forEach(f=>Object.keys(asistCache.marcs?.[f.uid]||{}).forEach(x=>conMarca.add(x)));
+  const filasDia=filas.map(f=>({f, ...diaPersona(f,fe)}))
+    .sort((a,b)=>(a.m?.entrada?.horaStr||'99').localeCompare(b.m?.entrada?.horaStr||'99')||a.f.nombre.localeCompare(b.f.nombre));
+  const vinieron=filasDia.filter(x=>x.m?.entrada||x.m?.salida).length;
+  const d=new Date(fe+'T12:00:00');
+  cont.innerHTML=`
+    <div class="as-dnav">
+      <button onclick="asistDiaIr(-1)" ${idx<=0?'disabled':''} aria-label="Día anterior">‹</button>
+      <label class="as-dsel"><b>${['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][d.getDay()]} ${d.getDate()} de ${MESES_FX[d.getMonth()]}</b><span>${vinieron} de ${filas.length} marcaron</span>
+        <input type="date" min="${fechas[0]}" max="${fechas[fechas.length-1]}" value="${fe}" onchange="asistDiaSel=this.value;pintarAsistDia()"></label>
+      <button onclick="asistDiaIr(1)" ${idx>=fechas.length-1?'disabled':''} aria-label="Día siguiente">›</button>
+    </div>
+    <div class="as-dtira">${fechas.map(x=>`<button class="${x===fe?'on':''}${conMarca.has(x)?'':' vacio'}" onclick="asistDiaSel='${x}';pintarAsistDia()"><small>${DIAS_CORTOS[new Date(x+'T12:00:00').getDay()]}</small>${parseInt(x.slice(8))}</button>`).join('')}</div>
+    <div class="rg-det as-dlist">
+      <div class="as-dhd"><span>Colaborador</span><span>Entrada</span><span>Salida</span></div>
+      ${filasDia.map(x=>`<div class="as-drow" onclick="abrirAsistEmp('${x.f.uid}');setTimeout(()=>asIrDia('${fe}'),60)">
+        <div class="as-dn"><b>${x.f.nombre}</b>${x.sede?`<span>${x.sede}</span>`:''}</div>
+        ${x.nota&&!x.m?.entrada&&!x.m?.salida?`<div class="as-dnota">${x.nota}</div>`:`${marcaTxt(x.m?.entrada,'entrada')}${marcaTxt(x.m?.salida,'salida')}`}
+      </div>`).join('')}
+    </div>`;
+  cont.querySelector('.as-dtira .on')?.scrollIntoView({block:'nearest',inline:'center'});
+}
+window.pintarAsistDia=pintarAsistDia;
+window.asistDiaIr=(delta)=>{
+  const {mes}=asistCache, hoy=today();
+  const d=new Date(asistDiaSel+'T12:00:00'); d.setDate(d.getDate()+delta);
+  const fe=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  if(fe.slice(0,7)!==mes||fe>hoy) return;
+  asistDiaSel=fe; pintarAsistDia();
+};
 const agMin=h=>{ const [a,b]=String(h||'0:0').split(':').map(Number); return a*60+(b||0); };
 const agHora=m=>{ m=Math.round(m); const h=Math.floor(m/60), mm=((m%60)+60)%60; return `${h>12?h-12:h}:${String(mm).padStart(2,'0')}`; };
 const agDifTxt=(d,ant,des)=>{ d=Math.round(d); return d===0?'en punto':d<0?`${fmtMin(-d)} ${ant}`:`${fmtMin(d)} ${des}`; };
@@ -5113,10 +5249,14 @@ function agTipInit(){
 
 // Detalle de un empleado: totales, calendario del mes e incidencias
 window.asIrDia=(fecha)=>{
-  const el=document.getElementById('asd-'+fecha); if(!el) return;
+  let el=document.getElementById('asd-'+fecha);
+  if(!el&&asistDetModo!=='dias'&&asistDetUid){ asistDetModo='dias'; abrirAsistEmp(asistDetUid,true); el=document.getElementById('asd-'+fecha); }
+  if(!el) return;
   el.scrollIntoView({behavior:'smooth',block:'center'});
   el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
 };
+let asistDetModo='dias';
+window.asistDetVer=(m)=>{ asistDetModo=m; if(asistDetUid) abrirAsistEmp(asistDetUid,true); };
 window.abrirAsistEmp=(uid,mantenerScroll)=>{
   if(!asistCache) return;
   const f=asistCache.filas.find(x=>x.uid===uid); if(!f) return;
@@ -5141,7 +5281,7 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
       const dow=new Date(fe+'T12:00:00').getDay();
       cls=(dow===0||dow===6)?'off':'fut';
     }
-    const tap=(cls==='tarde'||cls==='temp'||cls==='falta')?` onclick="asIrDia('${fe}')"`:'';
+    const tap=(it||asistCache.marcs?.[f.uid]?.[fe])?` onclick="asIrDia('${fe}')"`:'';   // cualquier día con datos
     celdas+=`<span class="rg-cd ${cls==='tarde'?'as-t':cls==='temp'?'as-s':cls==='ok'?'as-ok':cls}${fe===hoy?' hoy':''}"${tap}>${d}</span>`;
   }
   const puedeJustificar=isAdmin();
@@ -5158,6 +5298,21 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
     if(d.salida?.estado==='salida_temprana') partes.push({tipo:'salida',m:d.salida,txt:`Salida <b>${d.salida.horaStr}</b>`,pill:d.salida.justificado?etiquetaEstado('neutro','Justificado','sm'):etiquetaEstado('mal',fmtMin(d.salida.minDiff||0)+' antes','sm')});
     partes.forEach((p,k)=>incid.push(`<div class="rg-it as-it"${k===0?` id="asd-${d.fecha}"`:''}>${fechaCol(d.fecha)}<div class="rg-it-b"><div class="as-it-row"><div><div class="rg-it-a" style="margin-top:0">${p.txt}</div><div class="as-it-tags">${p.pill}${p.m.justificado?.nota?`<span class="as-it-nota">${p.m.justificado.nota}</span>`:''}</div></div>${btnJ(p.tipo,d.fecha,!!p.m.justificado)}</div></div></div>`));
   });
+  // Día por día: todos los días del mes con su hora de entrada y de salida (no solo las incidencias)
+  const fechasMes=[...new Set([...f.detalle.map(d=>d.fecha), ...Object.keys(asistCache.marcs?.[f.uid]||{})])].filter(x=>x.startsWith(mes)&&x<=hoy).sort().reverse();
+  const dias=fechasMes.map(fe=>{
+    const x=diaPersona(f,fe);
+    const sinMarca=!x.m?.entrada&&!x.m?.salida;
+    const btns=[x.m?.entrada?.estado==='tarde'?btnJ('entrada',fe,!!x.m.entrada.justificado):'', x.m?.salida?.estado==='salida_temprana'?btnJ('salida',fe,!!x.m.salida.justificado):''].filter(Boolean).join('');
+    const notas=[x.m?.entrada?.justificado?.nota,x.m?.salida?.justificado?.nota].filter(Boolean).map(n=>`<span class="as-it-nota">${n}</span>`).join('');
+    return `<div class="rg-it as-it" id="asd-${fe}">${fechaCol(fe)}<div class="rg-it-b">
+      ${sinMarca?`<div class="as-it-tags" style="margin-top:2px">${x.nota}</div>`
+        :`<div class="as-dia"><span class="as-dia-k">Entrada</span>${marcaTxt(x.m?.entrada,'entrada')}<span class="as-dia-k">Salida</span>${marcaTxt(x.m?.salida,'salida')}</div>
+          ${x.sede||x.nota||notas?`<div class="as-it-tags">${x.sede?`<span class="as-it-nota">${x.sede}</span>`:''}${!x.det?x.nota:''}${notas}</div>`:''}`}
+      ${btns?`<div class="rg-it-acc">${btns}</div>`:''}
+    </div></div>`;
+  });
+  const modoDet=asistDetModo==='incid'?'incid':'dias';
   $('asistDetVista').innerHTML=`
     <div class="rg-ph">
       <button class="rg-back" onclick="volverAsistLista()" aria-label="Volver">‹</button>
@@ -5173,7 +5328,10 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
       <div class="rg-cal-g">${['L','M','M','J','V','S','D'].map(x=>`<span class="rg-cal-h">${x}</span>`).join('')}${celdas}</div>
       <div class="rg-cal-ley"><span><i class="as-ok"></i>A tiempo</span><span><i class="as-t"></i>Tarde</span><span><i class="as-s"></i>Salió antes</span><span><i class="aus"></i>Ausencia justificada</span><span><i class="asu"></i>Asueto</span><span><i class="falta"></i>Sin marcar</span></div>
     </div>
-    <div class="rg-det"><div class="rg-det-k">Incidencias</div>${incid.length?incid.join(''):'<div class="dt-vacio" style="padding:4px 14px 14px">Sin incidencias este mes 🎉</div>'}</div>`;
+    <div class="pd-seg as-detseg"><button class="${modoDet==='dias'?'on':''}" onclick="asistDetVer('dias')">Día por día</button><button class="${modoDet==='incid'?'on':''}" onclick="asistDetVer('incid')">Solo incidencias${incid.length?`<i>${incid.length}</i>`:''}</button></div>
+    ${modoDet==='dias'
+      ?`<div class="rg-det"><div class="rg-det-k">Entradas y salidas del mes</div>${dias.length?dias.join(''):'<div class="dt-vacio" style="padding:4px 14px 14px">Sin días en este mes</div>'}</div>`
+      :`<div class="rg-det"><div class="rg-det-k">Incidencias</div>${incid.length?incid.join(''):'<div class="dt-vacio" style="padding:4px 14px 14px">Sin incidencias este mes 🎉</div>'}</div>`}`;
   hide('asistListaVista'); show('asistDetVista');
   if(!mantenerScroll) window.scrollTo(0,0);
 };
