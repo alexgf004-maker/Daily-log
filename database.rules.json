@@ -1,0 +1,91 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      ".read": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')",
+      ".indexOn": [
+        "username"
+      ],
+      "$uid": {
+        ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && root.child('users/'+auth.uid+'/role').val() === 'admin'",
+        "dispositivoId": {
+          ".write": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && !data.exists() && newData.isString()"
+        },
+        "avisosVistosEn": {
+          ".write": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')"
+        },
+        "tutoCampanitaV": {
+          ".write": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')"
+        }
+      }
+    },
+    "registros": {
+      ".read": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')",
+      ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')",
+        "$key": {
+          ".write": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && !data.exists() && newData.child('userId').val() === $uid && newData.child('estadoHE').val() !== 'aprobado' && !newData.child('minHEAprobado').exists() && !newData.child('heAjustada').exists() && (newData.child('estadoEspecial').val() !== 'aprobado' || (newData.child('tipoDia').val() !== 'incapacidad' && newData.child('tipoDia').val() !== 'vacaciones' && newData.child('tipoDia').val() !== 'permiso'))"
+        }
+      }
+    },
+    "marcajes": {
+      ".read": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')",
+      ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')",
+        "$fecha": {
+          "$tipo": {
+            ".write": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && ($tipo === 'entrada' || $tipo === 'salida') && ((!data.exists() && newData.child('ts').val() === now && !newData.child('justificado').exists()) || (data.exists() && !data.child('estado').exists() && newData.child('ts').val() === data.child('ts').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('sedeUsada').val() === data.child('sedeUsada').val() && !newData.child('justificado').exists()))"
+          }
+        }
+      }
+    },
+    "observaciones": {
+      ".read": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')",
+      ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')"
+    },
+    "suspensiones": {
+      ".read": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')",
+      ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')"
+      }
+    },
+    "asuetos": {
+      ".read": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')",
+      ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')"
+    },
+    "programaciones": {
+      ".read": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')",
+      ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')"
+    },
+    "config": {
+      ".read": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')",
+      "mantenimiento": {
+        ".read": true,
+        ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && root.child('users/'+auth.uid+'/role').val() === 'admin'"
+      },
+      "cierreSesion": {
+        ".read": true,
+        ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && root.child('users/'+auth.uid+'/role').val() === 'admin'"
+      },
+      "tema": {
+        ".read": true,
+        ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && root.child('users/'+auth.uid+'/role').val() === 'admin'"
+      },
+      "musica": {
+        ".read": true,
+        ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && root.child('users/'+auth.uid+'/role').val() === 'admin'"
+      },
+      "musicaDatos": {
+        ".read": true,
+        ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && root.child('users/'+auth.uid+'/role').val() === 'admin'"
+      },
+      "$otro": {
+        ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')"
+      }
+    }
+  }
+}

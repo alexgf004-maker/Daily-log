@@ -4,13 +4,29 @@
       "source": "functions",
       "codebase": "default",
       "runtime": "nodejs22",
-      "ignore": ["node_modules", ".git", "*.test.js", "*.log"]
+      "ignore": [
+        "node_modules",
+        ".git",
+        "*.test.js",
+        "*.log"
+      ]
     }
   ],
   "emulators": {
-    "auth": { "port": 9099 },
-    "functions": { "port": 5001 },
-    "database": { "port": 9000 },
-    "ui": { "enabled": false }
+    "auth": {
+      "port": 9099
+    },
+    "functions": {
+      "port": 5001
+    },
+    "database": {
+      "port": 9000
+    },
+    "ui": {
+      "enabled": false
+    }
+  },
+  "database": {
+    "rules": "database.rules.json"
   }
 }

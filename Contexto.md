@@ -294,9 +294,21 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
 
 ## 7. Carencias conocidas / deuda técnica (buenos objetivos de auditoría)
 
-1. **Reglas de Firebase abiertas** (`.read`/`.write: true` en todos los nodos). Ya hay
-   Firebase Auth (login por servidor), así que el siguiente paso es cerrar las reglas por rol
-   (exigir sesión, negar `pins`/`pins_viejos`/`seguridad_intentos`, cada empleado solo lo suyo).
+1. *(Resuelto)* Reglas de la base por rol en `database.rules.json` (se publican solas con
+   GitHub Actions, con respaldo de las anteriores y prueba después). Resumen:
+   - Sin sesión solo se lee `config/mantenimiento`, `cierreSesion`, `tema`, `musica`, `musicaDatos`.
+   - Empleado: lee `users`, `programaciones`, `asuetos`, `config` y solo SUS `registros`,
+     `marcajes` y `suspensiones`. Crea sus registros (no los edita ni borra; no puede crearlos
+     con HE aprobadas ni con vacaciones/permiso/incapacidad aprobados). Marca entrada/salida
+     una sola vez con hora del servidor (`ts` = `now`) y solo completa `estado/horaStr/minDiff`
+     una vez. En su ficha solo escribe `avisosVistosEn`, `tutoCampanitaV` y `dispositivoId`
+     (este solo si no tenía).
+   - Oficina (admin y asistente): lee todo y escribe `registros`, `marcajes`, `observaciones`,
+     `suspensiones`, `asuetos`, `programaciones` y el resto de `config`.
+   - Solo admin: `users` y `config/mantenimiento|cierreSesion|tema|musica|musicaDatos`.
+   - `pins`, `pins_viejos`, `seguridad_intentos`: nadie desde la app (solo el servidor).
+   - Usuario inactivo = sin acceso aunque tenga sesión.
+   Si una función nueva lee o escribe otra ruta, **hay que agregarla a las reglas** o fallará.
 2. *(Resuelto)* Login con Firebase Authentication vía servidor (ver §2 Seguridad).
 3. **`index.html` demasiado grande** (~4600 líneas). Difícil de mantener. Modularizar más
    (separar admin/empleado) es deseable pero de alto riesgo en producción.

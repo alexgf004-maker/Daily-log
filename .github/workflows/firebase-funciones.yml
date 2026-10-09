@@ -1,6 +1,6 @@
-# Publica las Cloud Functions de Registro de Planilla (carpeta functions/) en Firebase
-# cada vez que cambian en main. También se puede correr a mano desde la
-# pestaña Actions ("Run workflow").
+# Publica las Cloud Functions de Registro de Planilla (carpeta functions/) y las reglas
+# de la base (database.rules.json) en Firebase cada vez que cambian en main. También se
+# puede correr a mano desde la pestaña Actions ("Run workflow").
 #
 # Necesita el secreto FIREBASE_SERVICE_ACCOUNT (JSON de una cuenta de servicio
 # del proyecto daily-e4f86 con rol Propietario). Ver functions/LEEME.md.
@@ -13,6 +13,7 @@ on:
       - 'functions/**'
       - 'firebase.json'
       - '.firebaserc'
+      - 'database.rules.json'
       - '.github/workflows/firebase-funciones.yml'
   workflow_dispatch:
 
@@ -83,3 +84,48 @@ jobs:
         if: failure()
         run: |
           gcloud functions logs read login --region us-central1 --gen2 --limit 40 --project "$PROYECTO" || true
+
+      # ── Reglas de la base ───────────────────────────────────────────────
+      # Antes de cambiarlas se guarda una copia de las que había (se puede bajar
+      # del intento en Actions → "reglas-anteriores"); si la prueba de después
+      # falla, se vuelven a poner solas.
+      - name: Respaldar las reglas actuales de la base
+        run: |
+          TOKEN=$(gcloud auth print-access-token --scopes=https://www.googleapis.com/auth/firebase.database,https://www.googleapis.com/auth/userinfo.email)
+          curl -sf "https://$PROYECTO-default-rtdb.firebaseio.com/.settings/rules.json?access_token=$TOKEN" -o reglas-anteriores.json
+          echo "Reglas que había:"; cat reglas-anteriores.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reglas-anteriores
+          path: reglas-anteriores.json
+
+      - name: Publicar las reglas de la base
+        run: npx --yes firebase-tools@14 deploy --only database --project "$PROYECTO" --non-interactive
+
+      # Sin sesión: no se puede leer nada salvo lo que necesita la pantalla de login
+      - name: Probar las reglas (sin sesión no se lee nada)
+        id: probar_reglas
+        run: |
+          sleep 10
+          B="https://$PROYECTO-default-rtdb.firebaseio.com"
+          for RUTA in users registros marcajes pins config/sabadosLaborales; do
+            CODIGO=$(curl -s -o /dev/null -w '%{http_code}' "$B/$RUTA.json?shallow=true")
+            if [ "$CODIGO" != "401" ]; then echo "::error::$RUTA se puede leer sin sesión (respuesta $CODIGO)"; exit 1; fi
+            echo "$RUTA: cerrado"
+          done
+          for RUTA in config/mantenimiento config/cierreSesion config/tema config/musica; do
+            CODIGO=$(curl -s -o /dev/null -w '%{http_code}' "$B/$RUTA.json")
+            if [ "$CODIGO" != "200" ]; then echo "::error::$RUTA no se puede leer en el login (respuesta $CODIGO)"; exit 1; fi
+            echo "$RUTA: visible para el login"
+          done
+          CODIGO=$(curl -s -o /dev/null -w '%{http_code}' -X PUT -d 'true' "$B/prueba_sin_sesion.json")
+          if [ "$CODIGO" != "401" ]; then echo "::error::Se pudo escribir sin sesión (respuesta $CODIGO)"; exit 1; fi
+          echo "Escribir sin sesión: negado"
+
+      - name: Volver a poner las reglas anteriores (si la prueba falló)
+        if: failure() && steps.probar_reglas.outcome == 'failure'
+        run: |
+          TOKEN=$(gcloud auth print-access-token --scopes=https://www.googleapis.com/auth/firebase.database,https://www.googleapis.com/auth/userinfo.email)
+          curl -sf -X PUT --data-binary @reglas-anteriores.json "https://$PROYECTO-default-rtdb.firebaseio.com/.settings/rules.json?access_token=$TOKEN"
+          echo "Se volvieron a poner las reglas anteriores."

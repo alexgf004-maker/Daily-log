@@ -23,6 +23,13 @@ En la consola de Firebase, **Authentication** tiene que estar iniciado (botón
 En GitHub → Actions → "Publicar funciones de Firebase": verde = publicado y el
 login responde; rojo = abrir el intento para ver el paso que falló.
 
+## Reglas de la base
+
+`database.rules.json` (en la raíz) se publica con el mismo flujo: primero guarda las
+reglas que había (artefacto "reglas-anteriores" del intento en Actions), publica las
+nuevas y prueba que sin sesión no se lea nada; si la prueba falla, vuelve a poner las
+anteriores. Resumen de qué puede cada rol en `Contexto.md` (§7).
+
 ## Probar en local
 
 ```
