@@ -103,23 +103,27 @@ jobs:
       - name: Publicar las reglas de la base
         run: npx --yes firebase-tools@14 deploy --only database --project "$PROYECTO" --non-interactive
 
-      # Sin sesión: no se puede leer nada salvo lo que necesita la pantalla de login
+      # Sin sesión: no se puede leer nada salvo lo que necesita la pantalla de login.
+      # Se pregunta con la cuenta de servicio pero evaluando las reglas "sin sesión"
+      # (auth_variable_override=null): así App Check no se mete en la prueba.
       - name: Probar las reglas (sin sesión no se lee nada)
         id: probar_reglas
         run: |
           sleep 10
+          TOKEN=$(gcloud auth print-access-token --scopes=https://www.googleapis.com/auth/firebase.database,https://www.googleapis.com/auth/userinfo.email)
           B="https://$PROYECTO-default-rtdb.firebaseio.com"
+          Q="access_token=$TOKEN&auth_variable_override=null"
           for RUTA in users registros marcajes pins config/sabadosLaborales; do
-            CODIGO=$(curl -s -o /dev/null -w '%{http_code}' "$B/$RUTA.json?shallow=true")
+            CODIGO=$(curl -s -o r.txt -w '%{http_code}' "$B/$RUTA.json?shallow=true&$Q")
             if [ "$CODIGO" != "401" ]; then echo "::error::$RUTA se puede leer sin sesión (respuesta $CODIGO)"; exit 1; fi
             echo "$RUTA: cerrado"
           done
           for RUTA in config/mantenimiento config/cierreSesion config/tema config/musica; do
-            CODIGO=$(curl -s -o /dev/null -w '%{http_code}' "$B/$RUTA.json")
-            if [ "$CODIGO" != "200" ]; then echo "::error::$RUTA no se puede leer en el login (respuesta $CODIGO)"; exit 1; fi
+            CODIGO=$(curl -s -o r.txt -w '%{http_code}' "$B/$RUTA.json?$Q")
+            if [ "$CODIGO" != "200" ]; then echo "::error::$RUTA no se puede leer en el login (respuesta $CODIGO: $(head -c 200 r.txt))"; exit 1; fi
             echo "$RUTA: visible para el login"
           done
-          CODIGO=$(curl -s -o /dev/null -w '%{http_code}' -X PUT -d 'true' "$B/prueba_sin_sesion.json")
+          CODIGO=$(curl -s -o r.txt -w '%{http_code}' -X PUT -d 'true' "$B/prueba_sin_sesion.json?$Q")
           if [ "$CODIGO" != "401" ]; then echo "::error::Se pudo escribir sin sesión (respuesta $CODIGO)"; exit 1; fi
           echo "Escribir sin sesión: negado"
 
