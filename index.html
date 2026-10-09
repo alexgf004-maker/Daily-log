@@ -446,7 +446,16 @@ const AUS_TIPOS=['vacaciones','incapacidad','permiso','bienestar','injustificado
 const $       = id => document.getElementById(id);
 const show    = id => { const e=$(id); if(e) e.style.display=''; };
 const hide    = id => { const e=$(id); if(e) e.style.display='none'; };
+// Despierta el servidor del login (si nadie entró en un rato tarda unos segundos en arrancar):
+// se hace al mostrar el login y al tocar el usuario, así ya está listo al terminar el PIN
+let _despertadoEn=0;
+function despertarServidor(){
+  if(Date.now()-_despertadoEn<60000) return;
+  _despertadoEn=Date.now();
+  llamar('login',{despertar:true}).catch(()=>{});
+}
 const screen  = id => {
+  if(id==='loginScreen'||id==='maintenanceScreen') despertarServidor();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   window.scrollTo(0,0);
@@ -1469,6 +1478,7 @@ function aplicarUsuarioRecordado(){
 }
 aplicarUsuarioRecordado();
 const _lp=$('loginPin'); if(_lp) _lp.addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
+['loginUser','loginPin','maintUser'].forEach(id=>$(id)?.addEventListener('focus',despertarServidor));
 
 // Pedir almacenamiento "persistente": en Android, Chrome puede borrar
 // localStorage de sitios que no lo tienen cuando el teléfono anda bajo de

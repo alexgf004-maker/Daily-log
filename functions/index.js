@@ -102,35 +102,42 @@ async function quienLlama(req) {
 
 // ── login ─────────────────────────────────────────
 exports.login = onCall(async req => {
+  // La app llama con { despertar: true } al abrir el login: así el servidor ya está
+  // listo cuando la persona termina de escribir el PIN (no revisa nada ni cuenta intentos)
+  if (req.data?.despertar === true) return { ok: true };
   const username = normUsuario(req.data?.username);
   const pin = String(req.data?.pin || '');
   if (!username || !pin) throw new HttpsError('invalid-argument', 'Escribe tu usuario y tu PIN.');
 
   const ip = String(req.rawRequest?.ip || req.rawRequest?.headers?.['x-forwarded-for'] || 'sin-ip').split(',')[0].trim();
   const claveU = 'u_' + claveSegura(username), claveIp = 'ip_' + claveSegura(ip);
-  await revisarBloqueo(claveU);
-  await revisarBloqueo(claveIp);
+  // Todo lo que no depende de otra cosa se lee al mismo tiempo
+  const [, , u, mantSnap] = await Promise.all([
+    revisarBloqueo(claveU),
+    revisarBloqueo(claveIp),
+    username.length <= 100 ? usuarioPorNombre(username) : null,
+    rtdb().ref('config/mantenimiento').once('value'),
+  ]);
 
   const incorrecto = async () => {
     await Promise.all([anotarFallo(claveU, MAX_FALLOS_USUARIO), anotarFallo(claveIp, MAX_FALLOS_IP)]);
     throw new HttpsError('permission-denied', 'Usuario o PIN incorrecto');
   };
 
-  const u = username.length <= 100 ? await usuarioPorNombre(username) : null;
   if (!u) return incorrecto();
   const guardado = await pinGuardado(u.uid, u);
   if (!guardado || !guardado.revisar(pin)) return incorrecto();
 
   if (!activo(u)) throw new HttpsError('permission-denied', 'Usuario inactivo. Pide a David que lo revise.');
   if (!ROLES.includes(u.role)) throw new HttpsError('permission-denied', 'Usuario sin rol asignado.');
-  const mant = (await rtdb().ref('config/mantenimiento').once('value')).val() === true;
-  if (mant && u.role !== 'admin') throw new HttpsError('failed-precondition', 'App en mantenimiento. Por ahora solo puede entrar el administrador.');
-
-  await limpiarFallos(claveU);
-  if (guardado.viejo) await guardarPin(u.uid, pin);
+  if (mantSnap.val() === true && u.role !== 'admin') throw new HttpsError('failed-precondition', 'App en mantenimiento. Por ahora solo puede entrar el administrador.');
 
   try {
-    const token = await admin.auth().createCustomToken(u.uid, { role: u.role });
+    const [token] = await Promise.all([
+      admin.auth().createCustomToken(u.uid, { role: u.role }),
+      limpiarFallos(claveU),
+      guardado.viejo ? guardarPin(u.uid, pin) : null,
+    ]);
     return { token };
   } catch (e) {
     console.error('No se pudo crear el token de acceso:', e.code || '', e.message);
