@@ -129,8 +129,13 @@ exports.login = onCall(async req => {
   await limpiarFallos(claveU);
   if (guardado.viejo) await guardarPin(u.uid, pin);
 
-  const token = await admin.auth().createCustomToken(u.uid, { role: u.role });
-  return { token };
+  try {
+    const token = await admin.auth().createCustomToken(u.uid, { role: u.role });
+    return { token };
+  } catch (e) {
+    console.error('No se pudo crear el token de acceso:', e.code || '', e.message);
+    throw new HttpsError('internal', 'No se pudo iniciar sesión, intenta de nuevo en un momento.');
+  }
 });
 
 // ── cambiarPin (el propio usuario) ────────────────
@@ -162,7 +167,7 @@ exports.guardarUsuario = onCall(async req => {
   const role = String(d.role || '');
   const pin = String(d.pin || '');
   if (!nombre || !username) throw new HttpsError('invalid-argument', 'Completa nombre y usuario.');
-  if (!/^[a-z0-9._-]{2,40}$/.test(username)) throw new HttpsError('invalid-argument', 'El usuario solo puede llevar letras, números, punto, guion y guion bajo.');
+  if (username.length < 2 || username.length > 40 || /\s/.test(username)) throw new HttpsError('invalid-argument', 'El usuario debe tener de 2 a 40 letras, sin espacios.');
   if (!ROLES.includes(role)) throw new HttpsError('invalid-argument', 'Rol no válido.');
   if (!uid && !pinValido(pin)) throw new HttpsError('invalid-argument', 'El PIN debe tener de 4 a 8 números.');
   if (uid && pin && !pinValido(pin)) throw new HttpsError('invalid-argument', 'El PIN debe tener de 4 a 8 números.');

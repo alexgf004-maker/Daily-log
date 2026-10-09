@@ -7,6 +7,7 @@ admin.initializeApp({ projectId: PROYECTO, databaseURL: `https://${PROYECTO}-def
 const db = admin.database();
 const sha = t => crypto.createHash('sha256').update(t).digest('hex');
 const URL = `https://us-central1-${PROYECTO}.cloudfunctions.net/login`;
+const API_KEY = 'AIzaSyCOSdaBxZzAJTio8JDbamR8AP0SDFW1SZE'; // la misma que usa la app (es pública)
 const llamar = data => fetch(URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) }).then(r => r.json());
 
 (async () => {
@@ -21,15 +22,32 @@ const llamar = data => fetch(URL, { method: 'POST', headers: { 'Content-Type': '
       [`users/${uid}`]: { nombre: 'Prueba automatica (se borra sola)', username, role: 'empleado', activo: true },
       [`pins/${uid}`]: { hash: sha(salt + pin), salt },
     });
-    const r = await llamar({ username, pin });
+    // Los permisos recién dados pueden tardar unos minutos en aplicarse: se reintenta
+    let r;
+    for (let i = 0; i < 6; i++) {
+      r = await llamar({ username, pin });
+      if (r?.result?.token || r?.error?.status !== 'INTERNAL') break;
+      console.log('Aún sin token (los permisos pueden tardar), reintento en 30 s…');
+      await new Promise(res => setTimeout(res, 30000));
+    }
     // Con la app en mantenimiento el servidor revisa el PIN y luego frena al empleado: también vale
     if (!r?.result?.token && r?.error?.status !== 'FAILED_PRECONDITION') throw new Error('El login correcto no entregó el token: ' + JSON.stringify(r));
     console.log('Login correcto: el servidor entregó el token de acceso.');
+    // Canjear el token como lo hace la app (sin esto nadie podría entrar): prueba que Auth está activo
+    if (r?.result?.token) {
+      const canje = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${API_KEY}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Referer: 'https://alexgf004-maker.github.io/Daily-log/' },
+        body: JSON.stringify({ token: r.result.token, returnSecureToken: true }),
+      }).then(x => x.json());
+      if (!canje.idToken) throw new Error('La app no podría entrar con el token (¿Authentication activo en Firebase?): ' + JSON.stringify(canje.error || canje));
+      console.log('La app puede entrar con el token: bien.');
+    }
   } catch (e) {
     fallo = true;
     console.error('::error::' + e.message);
   } finally {
     await db.ref().update({ [`users/${uid}`]: null, [`pins/${uid}`]: null, [`seguridad_intentos/u_${sha('usuario-que-no-existe-xyz')}`]: null }).catch(() => {});
+    await admin.auth().deleteUser(uid).catch(() => {});
     process.exit(fallo ? 1 : 0);
   }
 })();

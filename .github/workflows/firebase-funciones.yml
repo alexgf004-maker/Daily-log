@@ -54,7 +54,7 @@ jobs:
         run: |
           gcloud services enable cloudfunctions.googleapis.com cloudbuild.googleapis.com \
             artifactregistry.googleapis.com run.googleapis.com eventarc.googleapis.com \
-            iamcredentials.googleapis.com cloudbilling.googleapis.com --project "$PROYECTO"
+            iamcredentials.googleapis.com cloudbilling.googleapis.com identitytoolkit.googleapis.com --project "$PROYECTO"
 
       - name: Publicar funciones
         run: npx --yes firebase-tools@14 deploy --only functions --project "$PROYECTO" --force --non-interactive
