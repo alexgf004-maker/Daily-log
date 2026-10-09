@@ -6064,6 +6064,53 @@ window.progEliminarGrupo=(idx)=>{
 };
 
 // ── GENERAR IMAGEN PARA WHATSAPP ──
+// ── Dibujos de Halloween para la imagen de la programación ──
+// Murciélago centrado en (x,y); s=1 mide unos 110 px de ala a ala
+function murcielagoHW(ctx,x,y,s,color){
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s); ctx.fillStyle=color; ctx.beginPath();
+  ctx.moveTo(0,-10);
+  [1,-1].forEach((d,i)=>{
+    if(i===1){ ctx.moveTo(0,-10); }
+    ctx.lineTo(d*4,-18); ctx.lineTo(d*7,-9); ctx.lineTo(d*11,-8);
+    ctx.quadraticCurveTo(d*30,-24,d*55,-12);
+    ctx.quadraticCurveTo(d*46,-4,d*44,6); ctx.quadraticCurveTo(d*38,-2,d*30,4);
+    ctx.quadraticCurveTo(d*24,-2,d*17,6); ctx.quadraticCurveTo(d*12,2,d*6,10);
+    ctx.lineTo(0,14);
+  });
+  ctx.fill(); ctx.restore();
+}
+// Calabaza centrada en (x,y); s=1 mide unos 56 px de ancho
+function calabazaHW(ctx,x,y,s){
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  ctx.fillStyle='#3f6212'; ctx.beginPath(); ctx.moveTo(-3,-20); ctx.quadraticCurveTo(2,-34,10,-36); ctx.lineTo(11,-31); ctx.quadraticCurveTo(5,-28,4,-18); ctx.closePath(); ctx.fill();
+  [[-15,14,'#c2410c'],[15,14,'#c2410c'],[0,17,'#f97316']].forEach(([dx,rx,c])=>{ ctx.fillStyle=c; ctx.beginPath(); ctx.ellipse(dx,2,rx,21,0,0,Math.PI*2); ctx.fill(); });
+  ctx.fillStyle='#1c0a03';
+  ctx.beginPath(); ctx.moveTo(-12,-4); ctx.lineTo(-5,-4); ctx.lineTo(-8.5,-11); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(12,-4); ctx.lineTo(5,-4); ctx.lineTo(8.5,-11); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-14,6); ctx.quadraticCurveTo(0,20,14,6); ctx.lineTo(8,8); ctx.lineTo(5,4); ctx.lineTo(2,9); ctx.lineTo(-2,5); ctx.lineTo(-5,9); ctx.lineTo(-8,5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+// Telaraña en la esquina de abajo a la derecha
+function telaranaHW(ctx,W,H,r,color){
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=1.6;
+  const n=6, ang=i=>Math.PI+(Math.PI/2)*(i/(n-1));
+  for(let i=0;i<n;i++){ ctx.beginPath(); ctx.moveTo(W,H); ctx.lineTo(W+Math.cos(ang(i))*r,H+Math.sin(ang(i))*r); ctx.stroke(); }
+  for(let k=1;k<=4;k++){ const rr=r*k/4; ctx.beginPath();
+    for(let i=0;i<n;i++){ const a=ang(i), px=W+Math.cos(a)*rr, py=H+Math.sin(a)*rr;
+      if(i===0) ctx.moveTo(px,py); else { const am=(ang(i-1)+a)/2, cr=rr*.86; ctx.quadraticCurveTo(W+Math.cos(am)*cr,H+Math.sin(am)*cr,px,py); } }
+    ctx.stroke(); }
+  ctx.restore();
+}
+// Goteo de sangre colgando del borde de abajo del encabezado
+function goteoHW(ctx,W,y,color){
+  ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.moveTo(0,y-6);
+  const gotas=[[70,16],[150,30],[205,12],[330,24],[470,14],[560,34],[690,18],[800,26],[905,12],[1010,22]];
+  let x0=0;
+  gotas.forEach(([gx,l])=>{ ctx.lineTo(gx-9,y-6); ctx.quadraticCurveTo(gx-6,y+l*.4,gx-5,y+l-5); ctx.arc(gx,y+l-5,5,Math.PI,0,true); ctx.quadraticCurveTo(gx+6,y+l*.4,gx+9,y-6); x0=gx; });
+  ctx.lineTo(W,y-6); ctx.lineTo(W,y); ctx.lineTo(0,y); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(185,28,28,.55)'; ctx.fillRect(0,y-6,W,3);
+  ctx.restore();
+}
 window.progGenerarImagen=async()=>{
   if(!progGrupos.length){ alert('No hay grupos en la programación de este día.'); return; }
 
@@ -6084,7 +6131,16 @@ window.progGenerarImagen=async()=>{
   const W=1080, scale=2, pad=56;
   const F='"Plus Jakarta Sans", sans-serif';
   try{ await Promise.all(['500 20px','600 20px','700 20px','800 20px'].map(w=>document.fonts.load(`${w} ${F}`))); }catch(e){}
-  const C={azul:'#1e3a5f', azul2:'#2563eb', ambar:'#f59e0b', ambarT:'#d97706', texto:'#0f172a', gris:'#64748b', borde:'#e2e8f0', linea:'#eef2f7'};
+  // Con el tema de Halloween la imagen sale "de temporada": encabezado negro y sangre con goteo,
+  // luna y murciélagos, campo en rojo sangre y plantel en naranja calabaza (mismos datos y orden)
+  const HW=hwTema();
+  const C=HW
+    ? {azul:'#3b0a10', azul2:'#dc2626', ambar:'#ea580c', ambarT:'#c2410c', texto:'#1c1917', gris:'#78716c', borde:'#f3dede', linea:'#f8eeee',
+       fondo:'#fffaf7', zona:['#fef2f2','#b91c1c'], marcaInnova:'#f97316', pie:'#a8a29e',
+       campo:{color:'#b91c1c', barra:'#b91c1c', fondo:['#1a0509','#b91c1c']}, plantel:{color:'#ea580c', barra:'#ea580c', fondo:['#7c2d12','#f97316']}, aus:['#1c1917','#57534e']}
+    : {azul:'#1e3a5f', azul2:'#2563eb', ambar:'#f59e0b', ambarT:'#d97706', texto:'#0f172a', gris:'#64748b', borde:'#e2e8f0', linea:'#eef2f7',
+       fondo:'#ffffff', zona:['#eff6ff','#1d4ed8'], marcaInnova:'#60a5fa', pie:'#94a3b8',
+       campo:{color:'#2563eb', barra:'#2563eb', fondo:['#1e3a5f','#2563eb']}, plantel:{color:'#f59e0b', barra:'#f59e0b', fondo:['#d97706','#d97706']}, aus:['#64748b','#64748b']};
   const fechaTxt=fmtLong(progFecha).replace(/^\w/,c=>c.toUpperCase());
   const tituloFecha=fechaTxt.replace(/,/,'').replace(/ de \d{4}$/,'');
 
@@ -6119,8 +6175,8 @@ window.progGenerarImagen=async()=>{
   const anchoZona=(z)=>{ fuente(700,18); return ancho('📍 '+z)+22; };
   const zonaDib=(z,x,cy,max)=>{
     fuente(700,18); const t=recortar('📍 '+z,max-22); const w=ancho(t)+22;
-    ctx.fillStyle='#eff6ff'; rrect(x,cy-15,w,30,8); ctx.fill();
-    texto(t,x+11,cy+1,'#1d4ed8');
+    ctx.fillStyle=C.zona[0]; rrect(x,cy-15,w,30,8); ctx.fill();
+    texto(t,x+11,cy+1,C.zona[1]);
   };
   const numDib=(n,cx,cy,color)=>{ ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,NUM/2,0,Math.PI*2); ctx.fill(); fuente(800,17); texto(String(n),cx,cy+1,'#ffffff','center'); };
   // Nombres partidos entre nombres completos (nunca a la mitad de un nombre)
@@ -6233,8 +6289,8 @@ window.progGenerarImagen=async()=>{
     area.h=area.bloques.reduce((a,b)=>a+b.h,0)+gapT*(area.bloques.length-1);
     areas.push(area);
   };
-  if(campo.length) armarArea('CAMPO',campo,C.azul2,C.azul2,[C.azul,C.azul2]);
-  if(plantel.length) armarArea('PLANTEL',plantel,C.ambar,C.ambar,[C.ambarT,C.ambarT]);
+  if(campo.length) armarArea('CAMPO',campo,C.campo.color,C.campo.barra,C.campo.fondo);
+  if(plantel.length) armarArea('PLANTEL',plantel,C.plantel.color,C.plantel.barra,C.plantel.fondo);
 
   // Ausentes: etiquetas que pasan a la siguiente línea
   const ausGrupos=[['Vacaciones','vacaciones'],['Incapacidad','incapacidad'],['Permiso','permiso'],['Día de bienestar','bienestar'],['Permiso injustificado','injustificado']].filter(([,k])=>ausentes[k].length);
@@ -6248,7 +6304,7 @@ window.progGenerarImagen=async()=>{
       ausentes[k].forEach(n=>{ fuente(600,21); const w=ancho(n)+32; if(x+w>cW){ x=0; y+=48; } chipsAus.push({t:n,x,y,w}); x+=w+10; });
       x+=16;
     });
-    areas.push({nombre:'AUSENTES', fondo:['#64748b','#64748b'], aus:true, h:y+40+24});
+    areas.push({nombre:'AUSENTES', fondo:C.aus, aus:true, h:y+40+24});
   }
   // La barra necesita espacio para el nombre escrito de lado
   areas.forEach(a=>{ fuente(800,21); esp('6px'); a.railH=Math.max(a.h,ancho(a.nombre)+44); esp('0px'); });
@@ -6267,15 +6323,29 @@ window.progGenerarImagen=async()=>{
 
   canvas.width=W*scale; canvas.height=Math.ceil(alto)*scale;
   ctx=canvas.getContext('2d'); ctx.scale(scale,scale);
-  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,alto);
+  ctx.fillStyle=C.fondo; ctx.fillRect(0,0,W,alto);
 
-  const grad=ctx.createLinearGradient(0,0,W,headH); grad.addColorStop(0,C.azul); grad.addColorStop(1,C.azul2);
-  ctx.fillStyle=grad; ctx.fillRect(0,0,W,headH);
-  ctx.fillStyle='rgba(255,255,255,.07)'; ctx.beginPath(); ctx.arc(W-30,10,190,0,Math.PI*2); ctx.fill();
+  if(HW){
+    // Noche: negro a rojo sangre, luna con halo, murciélagos y goteo de sangre en el borde
+    const grad=ctx.createLinearGradient(0,0,W,headH); grad.addColorStop(0,'#050307'); grad.addColorStop(.55,'#1a0509'); grad.addColorStop(1,'#3b0a10');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,headH);
+    // La luna va arriba al centro: entre "PROGRAMACIÓN" e "INNOVA", sobre la fecha y las cifras
+    const lx=640, ly=46;
+    const halo=ctx.createRadialGradient(lx,ly,14,lx,ly,86); halo.addColorStop(0,'rgba(254,243,199,.32)'); halo.addColorStop(1,'rgba(254,243,199,0)');
+    ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(lx,ly,86,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fef3c7'; ctx.beginPath(); ctx.arc(lx,ly,27,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(180,140,90,.22)'; [[-9,-6,6],[7,5,7],[-3,12,4],[10,-10,3.5]].forEach(([dx,dy,r])=>{ ctx.beginPath(); ctx.arc(lx+dx,ly+dy,r,0,Math.PI*2); ctx.fill(); });
+    murcielagoHW(ctx,lx-96,ly+10,.55,'#0a0204'); murcielagoHW(ctx,lx+82,ly-4,.42,'#0a0204'); murcielagoHW(ctx,lx+150,ly+20,.3,'#14060a');
+    goteoHW(ctx,W,headH,'#7f1d1d');
+  } else {
+    const grad=ctx.createLinearGradient(0,0,W,headH); grad.addColorStop(0,C.azul); grad.addColorStop(1,C.azul2);
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,headH);
+    ctx.fillStyle='rgba(255,255,255,.07)'; ctx.beginPath(); ctx.arc(W-30,10,190,0,Math.PI*2); ctx.fill();
+  }
   fuente(800,19); esp('3px'); texto('PROGRAMACIÓN',pad,52,'rgba(255,255,255,.75)');
   fuente(800,20); texto('INNOVA',W-pad,52,'#ffffff','right');
   const innW=ancho('INNOVA'); esp('0px');
-  ctx.fillStyle='#60a5fa'; rrect(W-pad-innW-16,40,5,24,3); ctx.fill();
+  ctx.fillStyle=C.marcaInnova; rrect(W-pad-innW-16,40,5,24,3); ctx.fill();
   fuente(800,48); texto(tituloFecha,pad,108,'#ffffff');
   let px=pillsAlLado?W-pad-pillsTot:pad; const py=pillsAlLado?108:174;
   pills.forEach((t,i)=>{
@@ -6301,7 +6371,7 @@ window.progGenerarImagen=async()=>{
       chipsAus.forEach(ch=>{
         const cy=base+ch.y+20;
         if(ch.lbl){ fuente(800,21); texto(ch.t,cx0+ch.x,cy,C.texto); }
-        else { ctx.fillStyle='#f1f5f9'; rrect(cx0+ch.x,cy-20,ch.w,40,20); ctx.fill(); fuente(600,21); texto(ch.t,cx0+ch.x+16,cy+1,'#475569'); }
+        else { ctx.fillStyle=HW?'#f5efe9':'#f1f5f9'; rrect(cx0+ch.x,cy-20,ch.w,40,20); ctx.fill(); fuente(600,21); texto(ch.t,cx0+ch.x+16,cy+1,HW?'#57534e':'#475569'); }
       });
     } else {
       let by=y;
@@ -6316,10 +6386,11 @@ window.progGenerarImagen=async()=>{
 
   // ── Pie ──
   const ahora=new Date();
-  fuente(500,18); ctx.fillStyle='#94a3b8';
-  ctx.fillText('INNOVA · Registro de Planilla',pad,alto-30);
+  if(HW){ telaranaHW(ctx,W,alto,118,'rgba(120,113,108,.26)'); calabazaHW(ctx,pad+14,alto-36,.62); }
+  fuente(500,18); ctx.fillStyle=C.pie;
+  ctx.fillText(HW?'INNOVA · Registro de Planilla · Temporada de Halloween':'INNOVA · Registro de Planilla',HW?pad+36:pad,alto-30);
   ctx.textAlign='right';
-  ctx.fillText(`Generado el ${ahora.getDate()}/${ahora.getMonth()+1} · ${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`,W-pad,alto-30);
+  ctx.fillText(`Generado el ${ahora.getDate()}/${ahora.getMonth()+1} · ${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`,HW?W-130:W-pad,alto-30);
   ctx.textAlign='left';
 
   // ── Compartir o descargar ──
