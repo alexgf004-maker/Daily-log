@@ -1,0 +1,11 @@
+{
+  "name": "registro-planilla-functions",
+  "private": true,
+  "description": "Servidor de Registro de Planilla: login con PIN y gestión de usuarios (ver functions/index.js)",
+  "main": "index.js",
+  "engines": { "node": "22" },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}
