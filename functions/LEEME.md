@@ -16,6 +16,10 @@ cuando cambia algo de `functions/` en `main`. Necesita el secreto
 proyecto daily-e4f86, rol Propietario). Después de publicar, prueba el login con
 un usuario temporal que se borra solo (`prueba-despliegue.test.js`).
 
+En la consola de Firebase, **Authentication** tiene que estar iniciado (botón
+"Comenzar"); no hace falta activar ningún método de acceso. Si no, la prueba falla con
+`CONFIGURATION_NOT_FOUND`.
+
 En GitHub → Actions → "Publicar funciones de Firebase": verde = publicado y el
 login responde; rojo = abrir el intento para ver el paso que falló.
 
