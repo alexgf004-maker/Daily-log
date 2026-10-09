@@ -40,11 +40,19 @@ técnicos y comerciales de INNOVA.
 - **Hosting**: GitHub Pages. Repo `github.com/alexgf004-maker/Daily-log`,
   publicado en `https://alexgf004-maker.github.io/Daily-log/`.
 - **Seguridad**:
-  - PINs hasheados con SHA-256, salt `INNOVA_SALT_2025_`.
+  - **Login por servidor** (Cloud Functions en `functions/`, se publican solas con GitHub
+    Actions al cambiar `functions/` en `main`; ver `functions/LEEME.md`). El servidor revisa
+    usuario + PIN (con límite de intentos) y entrega un token; la app entra con él a
+    **Firebase Authentication** (`signInWithCustomToken`, el uid de Auth = la clave en `users`).
+    La app ya **no descarga** la lista de usuarios ni los PIN.
+  - Funciones: `login`, `cambiarPin` (el propio usuario), `guardarUsuario` (admin crea/edita,
+    PIN opcional al editar), `migrarPines` (se llama sola una vez por teléfono al entrar un admin).
+  - Los PIN viven en `pins/{uid}` = `{hash, salt}` (sha256(salt+pin)). Los del formato viejo
+    (`users/{uid}/pin` con salt `INNOVA_SALT_2025_`, o `pins_viejos/{uid}`) se convierten al
+    primer login correcto. `pins`, `pins_viejos` y `seguridad_intentos` no los debe leer la app.
+  - La sesión guardada (`innova_session`) solo vale si además hay sesión de Firebase Auth con el
+    mismo uid; si no, pide entrar de nuevo ("La app se actualizó").
   - Firebase App Check con reCAPTCHA v3 (site key `6Lfd1bMsAAAAAGk4puMSgSLebxVqffk-qsouUIie`).
-  - Reglas de Firebase por nodo.
-  - **NO** usa Firebase Authentication (migración deferida a propósito; el login es por
-    usuario + PIN propio contra el nodo `users`).
 
 ---
 
@@ -71,7 +79,7 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
 
 ## 4. Estructura de datos en Firebase (nodos principales)
 
-- `users/{uid}`: `{nombre, nombreCorto?, cargo?, username, pin(SHA-256), role, activo,
+- `users/{uid}`: `{nombre, nombreCorto?, cargo?, username, role, activo,
   empleadosAsig[], sede, dispositivoId?, avisosVistosEn?, tutoCampanitaV?}`. `avisosVistosEn` = hasta cuándo
   el técnico vio su campanita de novedades (timestamp); `tutoCampanitaV` = versión del
   recorrido de novedades que ya vio (campanita, calendario y detalle; obligatorio la
@@ -286,11 +294,10 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
 
 ## 7. Carencias conocidas / deuda técnica (buenos objetivos de auditoría)
 
-1. **Reglas de Firebase abiertas** (`.read`/`.write: true` en todos los nodos). Cualquiera
-   con la URL puede leer/escribir. Hoy se mitiga con App Check + PIN, pero es la carencia
-   de seguridad más seria. Endurecer las reglas es delicado porque no hay Firebase Auth.
-2. **Sin Firebase Authentication**: el login es usuario+PIN contra el nodo `users`. Migrar
-   a Auth daría seguridad real pero es un proyecto grande; se ha diferido.
+1. **Reglas de Firebase abiertas** (`.read`/`.write: true` en todos los nodos). Ya hay
+   Firebase Auth (login por servidor), así que el siguiente paso es cerrar las reglas por rol
+   (exigir sesión, negar `pins`/`pins_viejos`/`seguridad_intentos`, cada empleado solo lo suyo).
+2. *(Resuelto)* Login con Firebase Authentication vía servidor (ver §2 Seguridad).
 3. **`index.html` demasiado grande** (~4600 líneas). Difícil de mantener. Modularizar más
    (separar admin/empleado) es deseable pero de alto riesgo en producción.
 4. **Truncamiento al descargar `index.html`**: históricamente, al bajarlo/subirlo por

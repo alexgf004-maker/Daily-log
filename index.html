@@ -356,6 +356,8 @@ self.addEventListener('fetch', e => {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref as refFirebase, set, get as getFirebase, update, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
+import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js";
@@ -381,6 +383,20 @@ initializeAppCheck(app, {
 });
 
 const db = getDatabase(app);
+// Sesión de Firebase: el servidor (functions/) revisa usuario + PIN y entrega un token para entrar.
+// La base solo deja leer y escribir a quien entró así (ver database.rules.json).
+const auth = getAuth(app);
+const fns = getFunctions(app, 'us-central1');
+const authListo = new Promise(r=>{ const off=onAuthStateChanged(auth,u=>{ off(); r(u); }); });
+function mensajeServidor(e){
+  const c=String(e?.code||'').replace('functions/','');
+  if(['unavailable','deadline-exceeded','internal','unknown'].includes(c)&&(!e.message||/^(internal|unavailable|deadline-exceeded)$/i.test(e.message))) return 'Sin conexión. Revisa tu internet e intenta de nuevo.';
+  return e?.message||'No se pudo, intenta de nuevo.';
+}
+async function llamar(nombre, datos){
+  try{ return (await httpsCallable(fns,nombre)(datos||{})).data; }
+  catch(e){ throw new Error(mensajeServidor(e)); }
+}
 // Música de fondo (login y app): la sube el admin desde su perfil
 iniciarMusica({ db, ref: refFirebase, get: getFirebase, onValue, set, update });
 
@@ -1270,26 +1286,6 @@ function modalsHTML(){
 // ── LOGIN ──────────────────────────────
 // ── CIERRE DE MES ──────────────────────────────────────
 // mesCerrado -> importado de utils.js
-async function hashPIN(pin){
-  const msgBuffer = new TextEncoder().encode('INNOVA_SALT_2025_' + pin);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function verifyPIN(pin, stored){
-  // Si el stored ya es un hash (64 chars hex), comparar con hash
-  if(stored && stored.length === 64){
-    const h = await hashPIN(pin);
-    return h === stored;
-  }
-  // Compatibilidad hacia atrás: PIN en texto plano (migración)
-  return String(pin) === String(stored);
-}
-
-async function savePIN(pin){
-  return await hashPIN(pin);
-}
 async function checkMaintenance(){
   try{
     const snap=await get(ref(db,'config/mantenimiento'));
@@ -1370,27 +1366,48 @@ async function retenerParaMusica(){
   clearTimeout(t); capa?.remove();
 }
 
+// Entra con el servidor: revisa usuario + PIN y devuelve la ficha del usuario (sin PIN) o null
+async function entrarConServidor(u,p,al){
+  let r;
+  try{ r=await llamar('login',{username:u,pin:p}); }
+  catch(e){
+    const m=e.message, i=m.indexOf('. ');
+    al.innerHTML=m==='Usuario o PIN incorrecto'?avisoLogin(m,'Revisa e intenta de nuevo')
+      :i>0?avisoLogin(m.slice(0,i),m.slice(i+2).replace(/\.$/,'')):avisoLogin(m,'');
+    return null;
+  }
+  try{
+    const cred=await signInWithCustomToken(auth,r.token);
+    const snap=await getFirebase(refFirebase(db,`users/${cred.user.uid}`));
+    if(!snap.exists()) throw new Error('sin ficha');
+    const { pin, ...ficha }=snap.val();
+    return { id:cred.user.uid, ...ficha };
+  }catch(e){
+    signOut(auth).catch(()=>{});
+    al.innerHTML=avisoLogin('Sin conexión','Revisa tu internet e intenta de nuevo');
+    return null;
+  }
+}
+// Una vez por teléfono de admin: saca los PIN que aún estén en las fichas de usuario
+function migrarPinesUnaVez(){
+  const K='innova_pines_migrados_v1';
+  try{ if(localStorage.getItem(K)) return; }catch(_){ return; }
+  llamar('migrarPines').then(()=>{ try{ localStorage.setItem(K,'1'); }catch(_){} }).catch(e=>console.warn('[pines]',e.message));
+}
+
 window.maintLogin=async()=>{
   const u=$('maintUser').value.trim().toLowerCase();
   const p=$('maintPin').value.trim();
   const al=$('maintAlert'); al.innerHTML='';
   if(!u||!p){al.innerHTML=avisoLogin('Faltan datos','Escribe tu usuario y tu PIN');return;}
-  let snap;
-  try{snap=await get(ref(db,'users'));}catch(e){al.innerHTML=avisoLogin('Sin conexión','Revisa tu internet e intenta de nuevo');return;}
-  if(!snap.exists()) return;
-  let found=null;
-  for(const [k,v] of Object.entries(snap.val())){
-    if(v&&v.username===u){
-      const ok = await verifyPIN(p, v.pin);
-      if(ok) found={id:k,...v};
-    }
-  }
-  if(!found||found.role!=='admin'){al.innerHTML=avisoLogin('Acceso solo para administración','La app está en mantenimiento');return;}
-  if(!found.activo){al.innerHTML=avisoLogin('Usuario inactivo','Pide a David que lo revise');return;}
+  const found=await entrarConServidor(u,p,al);
+  if(!found) return;
+  if(found.role!=='admin'){ signOut(auth).catch(()=>{}); al.innerHTML=avisoLogin('Acceso solo para administración','La app está en mantenimiento');return;}
   await leerCierreSesion();
   me=found;
   localStorage.setItem('innova_session',JSON.stringify(me));
   marcarInicioSesion();
+  migrarPinesUnaVez();
   iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
 };
 const _mp=$('maintPin'); if(_mp) _mp.addEventListener('keydown',e=>{if(e.key==='Enter')window.maintLogin();});
@@ -1401,28 +1418,13 @@ window.doLogin = async ()=>{
   const p=$('loginPin').value.trim();
   const al=$('loginAlert'); al.innerHTML='';
   if(!u||!p){al.innerHTML=avisoLogin('Faltan datos','Escribe tu usuario y tu PIN');return;}
-  let snap;
-  try{snap=await get(ref(db,'users'));}catch(e){al.innerHTML=avisoLogin('Sin conexión','Revisa tu internet e intenta de nuevo');return;}
-  if(!snap.exists()){al.innerHTML=avisoLogin('Sin usuarios registrados','');return;}
-  let found=null;
-  const raw=snap.val();
-  for(const [k,v] of Object.entries(raw)){
-    if(v && v.username===u){
-      const ok = await verifyPIN(p, v.pin);
-      if(ok) found={id:k,...v};
-    }
-  }
-  if(!found){al.innerHTML=avisoLogin('Usuario o PIN incorrecto','Revisa e intenta de nuevo');return;}
-  if(!found.activo){al.innerHTML=avisoLogin('Usuario inactivo','Pide a David que lo revise');return;}
-  // Verificar mantenimiento — solo admin puede entrar
-  const enMant=await checkMaintenance();
-  if(enMant&&found.role!=='admin'){
-    al.innerHTML=avisoLogin('App en mantenimiento','Por ahora solo puede entrar el administrador');return;
-  }
+  const found=await entrarConServidor(u,p,al);
+  if(!found) return;
   await Promise.all([retenerParaMusica(), leerCierreSesion()]);
   me=found;
   localStorage.setItem('innova_session', JSON.stringify(me));
   marcarInicioSesion();
+  if(me.role==='admin') migrarPinesUnaVez();
   // Recordar (o dejar de recordar) el usuario en este celular
   try{
     if($('loginRecordar')?.checked) localStorage.setItem(USUARIO_RECORDADO_KEY,u);
@@ -1439,6 +1441,7 @@ window.doLogout=()=>{
   quitarCapasFlotantes();
   me=null;
   localStorage.removeItem('innova_session');
+  signOut(auth).catch(()=>{});
   stopDashRefresh();
   detenerEspejos();
   $('appContainer').innerHTML='';
@@ -1484,12 +1487,13 @@ if(navigator.storage && navigator.storage.persist){
     if(enMant){
       // Solo admin puede pasar — si hay sesión guardada de admin, dejarla pasar
       const saved=localStorage.getItem('innova_session');
-      if(saved){
+      const usr=await authListo;
+      if(saved&&usr){
         try{
           const user=JSON.parse(saved);
-          const snap=await get(ref(db,`users/${user.id}`));
-          if(snap.exists()){
-            const fresh=snap.val();
+          const snap=usr.uid===user.id?await get(ref(db,`users/${user.id}`)):null;
+          if(snap&&snap.exists()){
+            const { pin, ...fresh }=snap.val();
             if(fresh.activo&&fresh.role==='admin'){
               me={id:user.id,...fresh};
               localStorage.setItem('innova_session',JSON.stringify(me));
@@ -1506,7 +1510,10 @@ if(navigator.storage && navigator.storage.persist){
 
     // Sin mantenimiento — restaurar sesión normal
     const saved = localStorage.getItem('innova_session');
-    if(!saved){ screen('loginScreen'); return; }
+    const usr = await authListo;
+    if(!saved){ if(usr) signOut(auth).catch(()=>{}); screen('loginScreen'); return; }
+    // Sesión de antes del login por servidor (o vencida): hay que volver a entrar
+    if(!usr){ localStorage.removeItem('innova_session'); screen('loginScreen'); avisoSesionCerrada(); return; }
     // ¿El admin cerró la sesión a todos después de que esta empezó?
     const cierre=await leerCierreSesion();
     if(sesionVencida(cierre)){
@@ -1514,11 +1521,11 @@ if(navigator.storage && navigator.storage.persist){
     }
     try {
       const user = JSON.parse(saved);
-      if(!user||!user.id||!user.username){ screen('loginScreen'); return; }
+      if(!user||!user.id||!user.username||user.id!==usr.uid){ window.doLogout(); return; }
       const snap = await get(ref(db,`users/${user.id}`));
-      if(!snap.exists()) { localStorage.removeItem('innova_session'); screen('loginScreen'); return; }
-      const fresh = snap.val();
-      if(!fresh.activo) { localStorage.removeItem('innova_session'); screen('loginScreen'); return; }
+      if(!snap.exists()) { window.doLogout(); return; }
+      const { pin, ...fresh } = snap.val();
+      if(!fresh.activo) { window.doLogout(); return; }
       me = {id:user.id, ...fresh};
       localStorage.setItem('innova_session', JSON.stringify(me));
       if(me.role==='admin'||me.role==='asistente'){
@@ -2467,13 +2474,11 @@ window.cambiarPin=async()=>{
   const nuevo=$('pinNuevo').value.trim();
   const conf=$('pinConfirm').value.trim();
   if(!actual||!nuevo||!conf){al.innerHTML='<div class="alert ae">Completa todos los campos.</div>';return;}
-  if(!(await verifyPIN(actual,me.pin))){al.innerHTML='<div class="alert ae">El PIN actual es incorrecto.</div>';return;}
   if(nuevo.length<4){al.innerHTML='<div class="alert ae">PIN nuevo mínimo 4 dígitos.</div>';return;}
   if(nuevo!==conf){al.innerHTML='<div class="alert ae">Los PINs nuevos no coinciden.</div>';return;}
   if(nuevo===actual){al.innerHTML='<div class="alert ae">El PIN nuevo debe ser diferente al actual.</div>';return;}
-  const nuevoHash=await savePIN(nuevo);
-  await update(ref(db,`users/${me.id}`),{pin:nuevoHash});
-  me.pin=nuevoHash;
+  try{ await llamar('cambiarPin',{actual,nuevo}); }
+  catch(e){ al.innerHTML='<div class="alert ae"></div>'; al.firstChild.textContent=e.message; return; }
   al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
   ['pinActual','pinNuevo','pinConfirm'].forEach(id=>{ const e=$(id); e.value=''; e.type='password'; });
   document.querySelectorAll('#empPerfil .pf-ver').forEach(b=>b.classList.remove('visible'));
@@ -3532,13 +3537,11 @@ window.cambiarPinAdmin=async()=>{
   const nuevo=$('adPinNuevo').value.trim();
   const conf=$('adPinConfirm').value.trim();
   if(!actual||!nuevo||!conf){al.innerHTML='<div class="alert ae">Completa todos los campos.</div>';return;}
-  if(!(await verifyPIN(actual,me.pin))){al.innerHTML='<div class="alert ae">El PIN actual es incorrecto.</div>';return;}
   if(nuevo.length<4){al.innerHTML='<div class="alert ae">PIN nuevo mínimo 4 dígitos.</div>';return;}
   if(nuevo!==conf){al.innerHTML='<div class="alert ae">Los PINs nuevos no coinciden.</div>';return;}
   if(nuevo===actual){al.innerHTML='<div class="alert ae">El PIN nuevo debe ser diferente al actual.</div>';return;}
-  const nuevoHash=await savePIN(nuevo);
-  await update(ref(db,`users/${me.id}`),{pin:nuevoHash});
-  me.pin=nuevoHash;
+  try{ await llamar('cambiarPin',{actual,nuevo}); }
+  catch(e){ al.innerHTML='<div class="alert ae"></div>'; al.firstChild.textContent=e.message; return; }
   al.innerHTML='<div class="alert as">✓ PIN actualizado correctamente.</div>';
   ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e){e.value='';e.type='password';}});
   document.querySelectorAll('#adPerfil .pf-ver').forEach(b=>b.classList.remove('visible')); };
@@ -6830,13 +6833,11 @@ window.saveUser=async()=>{
     empleadosAsig=Array.from(checks).map(c=>c.value);
   }
   const sede=(rol==='empleado'&&$('uSede'))?($('uSede').value||''):'';
-  if(editUID){
-    const d={nombre:nom,nombreCorto:nomCorto,cargo,username:usr,role:rol,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede};
-    if(pin.length>=4){ d.pin=await savePIN(pin); }
-    await update(ref(db,`users/${editUID}`),d);
-  } else {
-    await set(push(ref(db,'users')),{nombre:nom,nombreCorto:nomCorto,cargo,username:usr,pin:await savePIN(pin),role:rol,activo:true,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede});
-  }
+  if(editUID&&pin&&pin.length<4){al.innerHTML='<div class="alert ae">PIN mínimo de 4 dígitos.</div>';return;}
+  // El servidor guarda la ficha y el PIN (el PIN ya no se guarda en la ficha del usuario)
+  try{
+    await llamar('guardarUsuario',{uid:editUID||null,nombre:nom,nombreCorto:nomCorto,cargo,username:usr,role:rol,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede,pin});
+  }catch(e){ al.innerHTML='<div class="alert ae"></div>'; al.firstChild.textContent=e.message; return; }
   closeModal('moUsr');loadUsrs();
 };
 
