@@ -16,7 +16,7 @@ const admin = require('firebase-admin');
 
 const rtdb = () => admin.database();
 const ZONA = 'America/El_Salvador';
-const MINUTOS_DESPUES_SALIDA = 15;
+const MIN_AVISO_SALIDA = 5; // se avisa 5 min antes y 5 min después de la hora oficial de salida
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const ERRORES_TOKEN_MUERTO = ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token', 'messaging/invalid-argument'];
@@ -73,12 +73,15 @@ async function enviarA(uid, { titulo, cuerpo, url = './', tag = 'innova' }) {
 }
 
 // ── 1) Recordatorio de marcar salida ──────────────
-// Se corre cada 15 min por la tarde. A quien marcó entrada hoy y no salida, le avisa
-// una sola vez, 15 min después de la hora oficial de salida.
+// Se corre cada 5 min por la tarde. A quien marcó entrada hoy y no salida le llegan dos
+// avisos: 5 min antes de la hora oficial de salida y, si sigue sin marcar, 5 min después.
+// Cada uno una sola vez al día (avisos_enviados/{fecha}/{uid}/{antes|despues}).
 async function revisarSalidas(cuando = new Date()) {
   const { fecha, minutos } = ahoraSV(cuando);
   const h = horarioOficial(fecha);
-  if (!h || minutos < aMin(h.salida) + MINUTOS_DESPUES_SALIDA) return { fecha, avisados: 0, revisados: 0 };
+  const sal = h ? aMin(h.salida) : 0;
+  const cual = !h ? null : minutos >= sal + MIN_AVISO_SALIDA ? 'despues' : minutos >= sal - MIN_AVISO_SALIDA ? 'antes' : null;
+  if (!cual) return { fecha, cual, avisados: 0, revisados: 0 };
   const [users, ya] = await Promise.all([
     rtdb().ref('users').once('value').then(s => s.val() || {}),
     rtdb().ref(`avisos_enviados/${fecha}`).once('value').then(s => s.val() || {}),
@@ -86,16 +89,14 @@ async function revisarSalidas(cuando = new Date()) {
   const empleados = Object.entries(users).filter(([, u]) => activo(u) && u.role === 'empleado');
   let avisados = 0, revisados = 0;
   await Promise.all(empleados.map(async ([uid]) => {
-    if (ya[uid]?.salida) return;
+    if (ya[uid]?.[cual]) return;
     const m = (await rtdb().ref(`marcajes/${uid}/${fecha}`).once('value')).val();
     if (!m || !m.entrada || m.salida) return;
     revisados++;
-    const n = await enviarA(uid, {
-      titulo: '¿Ya saliste? Marca tu salida',
-      cuerpo: `Tu salida de hoy era a las ${hora12(h.salida)}; cuando termines, márcala en la app.`,
-      tag: 'salida-' + fecha,
-    });
-    await rtdb().ref(`avisos_enviados/${fecha}/${uid}/salida`).set(Date.now());
+    const n = await enviarA(uid, cual === 'antes'
+      ? { titulo: 'En 5 minutos es tu salida', cuerpo: `Tu salida es a las ${hora12(h.salida)}; no olvides marcarla en la app al salir.`, tag: 'salida-' + fecha }
+      : { titulo: '¿Ya saliste? Marca tu salida', cuerpo: `Tu salida era a las ${hora12(h.salida)} y todavía no la has marcado.`, tag: 'salida-' + fecha });
+    await rtdb().ref(`avisos_enviados/${fecha}/${uid}/${cual}`).set(Date.now());
     if (n) avisados++;
   }));
   // Limpieza: solo se guardan los avisos de los últimos días

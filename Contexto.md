@@ -117,8 +117,8 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   vehiculo, vehiculoNombre, zona}], noDisponibles:{personal[], vehiculos[]}, ...}`.
 - `asuetos/`, `observaciones/`, `suspensiones/`: nodos de apoyo.
 - `avisos_tokens/{uid}/{id}`: `{token, actualizado, equipo}` un registro por teléfono con los avisos
-  activados (lo escribe la app; solo el dueño lo lee). `avisos_enviados/{fecha}/{uid}/salida`: control
-  del recordatorio de salida (una vez al día; solo el servidor). `avisos_prueba/`: solo en el emulador.
+  activados (lo escribe la app; solo el dueño lo lee). `avisos_enviados/{fecha}/{uid}/{antes|despues}`: control
+  del recordatorio de salida (cada aviso una vez al día; solo el servidor). `avisos_prueba/`: solo en el emulador.
 
 **Reglas de Firebase**: todos los nodos anteriores tienen `.read`/`.write: true` (abiertas).
 La protección real hoy es App Check + PIN, no las reglas. **Esto es una carencia de seguridad
@@ -223,8 +223,9 @@ importante — ver sección 7.**
   "Mandarme un aviso de prueba" y "Apagar". Al cerrar sesión el teléfono deja de recibir los avisos de
   esa persona; al volver a entrar se reactivan solos si el permiso ya estaba dado.
 - Avisos (servidor, `functions/avisos.js`):
-  1. **Recordatorio de salida**: cada 15 min por la tarde (lun–sáb); a quien marcó entrada y no salida,
-     una vez, 15 min después de la salida oficial (5:15 lun–jue, 4:15 vie, 2:15 sáb).
+  1. **Recordatorio de salida**: se revisa cada 5 min por la tarde (lun–sáb); a quien marcó entrada y
+     no salida le llegan dos avisos: 5 min antes de la salida oficial y, si sigue sin marcar, 5 min después
+     (4:55 y 5:05 lun–jue, 3:55 y 4:05 vie, 1:55 y 2:05 sáb). Cada uno una vez al día.
   2. **Aprobaciones/rechazos**: al revisar HE, viático o día especial (cambia `revisadoHEEn`,
      `revisadoViaticEn` o `revisadoEspEn`); mismos textos que la campanita.
   3. **Programación**: botón "Avisar al equipo" en Programar (no se manda sola porque la programación

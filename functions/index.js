@@ -9,7 +9,7 @@
  *   - cambiarPin:     el propio usuario cambia su PIN (revisa el actual).
  *   - guardarUsuario: el admin crea o edita usuarios (y su PIN).
  *   - migrarPines:    el admin pasa todos los PIN a la rama protegida.
- *   - Avisos al celular (ver avisos.js): recordatorioSalida (cada 15 min por la tarde),
+ *   - Avisos al celular (ver avisos.js): recordatorioSalida (cada 5 min por la tarde),
  *     avisarAprobacion (al revisar HE, viáticos o días especiales), avisarProgramacion
  *     (botón "Avisar al equipo" en Programar) y probarAviso (botón en el perfil).
  *
@@ -228,8 +228,8 @@ exports.migrarPines = onCall(async req => {
 });
 
 // ── Avisos al celular ─────────────────────────────
-// Recordatorio de marcar salida: de lunes a sábado, cada 15 min por la tarde
-exports.recordatorioSalida = onSchedule({ schedule: '*/15 13-21 * * 1-6', timeZone: 'America/El_Salvador' }, async () => {
+// Recordatorio de marcar salida (5 min antes y 5 min después): lunes a sábado, cada 5 min por la tarde
+exports.recordatorioSalida = onSchedule({ schedule: '*/5 13-21 * * 1-6', timeZone: 'America/El_Salvador' }, async () => {
   const r = await avisos.revisarSalidas();
   if (r.revisados) console.log('Recordatorio de salida', r);
 });
