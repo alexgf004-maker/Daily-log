@@ -12,6 +12,8 @@
 <meta name="apple-mobile-web-app-title" content="INNOVA">
 <meta name="description" content="Registro de Planilla — INNOVA Servicios técnicos y comerciales">
 <title>Registro de Planilla — INNOVA</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icono-180.png">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script>
 // ── PWA SETUP ──────────────────────────────────────────
@@ -42,14 +44,6 @@
     img.src = iconURL;
   }
 
-  // Apple touch icon
-  makePNG(180, function(png){
-    const link = document.createElement('link');
-    link.rel = 'apple-touch-icon';
-    link.href = png;
-    document.head.appendChild(link);
-  });
-
   // Favicon
   makePNG(32, function(png){
     const link = document.createElement('link');
@@ -57,62 +51,18 @@
     link.type = 'image/png';
     link.href = png;
     document.head.appendChild(link);
-
-    // PWA Manifest
-    makePNG(192, function(png192){
-      makePNG(512, function(png512){
-        const manifest = {
-          name: 'INNOVA · Registro de Planilla',
-          short_name: 'INNOVA',
-          description: 'Registro de actividades — Servicios técnicos y comerciales',
-          start_url: './',
-          display: 'standalone',
-          background_color: '#1e3a5f',
-          theme_color: '#1e3a5f',
-          orientation: 'portrait',
-          icons: [
-            { src: png192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-            { src: png512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-          ]
-        };
-        const mBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-        const mURL = URL.createObjectURL(mBlob);
-        const ml = document.createElement('link');
-        ml.rel = 'manifest'; ml.href = mURL;
-        document.head.appendChild(ml);
-      });
-    });
   });
 
-  // Service Worker (inline via blob) — cache básico para offline
+  // Service worker real (sw.js): muestra los avisos al celular. No guarda caché.
+  // (El manifest y el ícono de la pantalla de inicio son archivos: manifest.json e icono-*.png;
+  // en iPhone los avisos solo llegan con la app agregada a la pantalla de inicio.)
   if('serviceWorker' in navigator){
-    const swCode = `
-const CACHE = 'innova-v4';
-self.addEventListener('install', e => {
-  self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys=>Promise.all(
-      keys.filter(k=>k!=='innova-v3').map(k=>caches.delete(k))
-    )).then(()=>clients.claim())
-  );
-});
-self.addEventListener('fetch', e => {
-  if(e.request.method !== 'GET') return;
-  // Network first — siempre busca la versión más reciente
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
-  );
-});`;
-    const swBlob = new Blob([swCode], {type:'application/javascript'});
-    const swURL = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swURL, {scope:'./'}).catch(()=>{});
+    navigator.serviceWorker.register('sw.js', {scope:'./'}).catch(()=>{});
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=75">
-<link rel="stylesheet" href="css/temas.css?v=25">
+<link rel="stylesheet" href="css/styles.css?v=76">
+<link rel="stylesheet" href="css/temas.css?v=26">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -358,10 +308,12 @@ import { getDatabase, ref as refFirebase, set, get as getFirebase, update, push,
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+import { getMessaging, getToken, deleteToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
+import { configurarAvisos, estadoAvisos, activarAvisos, refrescarAvisos, quitarAvisosDeEsteTelefono, apagarAvisos, probarAviso } from "./js/avisos.js";
 import { iniciarMusica, subirMusica, activarMusica, quitarMusica, esperarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
 
@@ -397,6 +349,9 @@ async function llamar(nombre, datos){
   try{ return (await httpsCallable(fns,nombre)(datos||{})).data; }
   catch(e){ throw new Error(mensajeServidor(e)); }
 }
+// Avisos al celular (js/avisos.js): se configura cuando ya existe db (más abajo)
+const configurarAvisosApp=()=>configurarAvisos({ app, db, ref:refFirebase, set, llamar, fb:{ getMessaging, getToken, deleteToken, isSupported } });
+configurarAvisosApp();
 // Música de fondo (login y app): la sube el admin desde su perfil
 iniciarMusica({ db, ref: refFirebase, get: getFirebase, onValue, set, update });
 
@@ -490,6 +445,7 @@ function renderEmployee(nombre){
         <div class="page-header"><div><div class="ph-title">Registro de actividades</div><div class="ph-sub" id="empFechaLbl"></div></div></div>
         <div id="marcajeCard" style="display:none"></div>
         <div id="progEmpCard" style="display:none"></div>
+        <div id="avisosCard" class="av-card" style="display:none"></div>
         <!-- Día -->
         <div class="fx-card">
           <div class="fx-k">Día</div>
@@ -601,6 +557,8 @@ function renderEmployee(nombre){
           <div class="pf-row"><span class="pf-ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg></span><span class="pf-tx"><b>Usuario</b><span id="perfilUsername"></span></span></div>
           <div class="pf-row"><span class="pf-ic g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span class="pf-tx"><b>Sede para marcar</b><span id="perfilSede"></span></span></div>
           <div class="pf-row"><span class="pf-ic v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span><span class="pf-tx"><b>Celular</b><span id="perfilCelular">…</span></span></div>
+          <div class="pf-row pf-tap" id="perfilAvisos" onclick="tocarAvisos('perfil')"><span class="pf-ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg></span><span class="pf-tx"><b>Avisos al celular</b><span class="av-est">…</span></span><span class="chev"></span></div>
+          <div class="av-extra" id="perfilAvisosExtra"></div>
           <details class="pf-pin" id="perfilPinBox">
             <summary class="pf-row"><span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span><span class="pf-tx"><b>Cambiar PIN</b><span>Toca para cambiarlo</span></span><span class="chev"></span></summary>
             <div class="pf-pin-form">
@@ -863,6 +821,8 @@ function renderAdmin(){
                 <option value="zacatecoluca">Subestación Zacatecoluca</option>
               </select>
             </span><span class="chev"></span></label>
+          <div class="pf-row pf-tap" id="adPerfilAvisos" onclick="tocarAvisos('adPerfil')"><span class="pf-ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg></span><span class="pf-tx"><b>Avisos al celular</b><span class="av-est">…</span></span><span class="chev"></span></div>
+          <div class="av-extra" id="adPerfilAvisosExtra"></div>
           <details class="pf-pin" id="adPerfilPinBox">
             <summary class="pf-row"><span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span><span class="pf-tx"><b>Cambiar PIN</b><span>Toca para cambiarlo</span></span><span class="chev"></span></summary>
             <div class="pf-pin-form">
@@ -1418,6 +1378,7 @@ window.maintLogin=async()=>{
   marcarInicioSesion();
   migrarPinesUnaVez();
   iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+  trasEntrarAvisos();
 };
 const _mp=$('maintPin'); if(_mp) _mp.addEventListener('keydown',e=>{if(e.key==='Enter')window.maintLogin();});
 
@@ -1444,13 +1405,16 @@ window.doLogin = async ()=>{
   } else {
     renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita();
   }
+  trasEntrarAvisos();
 };
 
 window.doLogout=()=>{
   quitarCapasFlotantes();
+  const uidSale=me?.id;
   me=null;
   localStorage.removeItem('innova_session');
-  signOut(auth).catch(()=>{});
+  quitarAvisosDeEsteTelefono(uidSale).finally(()=>signOut(auth).catch(()=>{}));
+  $('avisosCard')&&($('avisosCard').style.display='none');
   stopDashRefresh();
   detenerEspejos();
   $('appContainer').innerHTML='';
@@ -1508,6 +1472,7 @@ if(navigator.storage && navigator.storage.persist){
               me={id:user.id,...fresh};
               localStorage.setItem('innova_session',JSON.stringify(me));
               iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+              trasEntrarAvisos();
               return;
             }
           }
@@ -1543,12 +1508,77 @@ if(navigator.storage && navigator.storage.persist){
       } else {
         renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita();
       }
+      trasEntrarAvisos();
     } catch(e) { localStorage.removeItem('innova_session'); screen('loginScreen'); }
   } catch(e){
     // Cualquier fallo inesperado — no dejar al usuario atrapado en la pantalla de carga
     screen('loginScreen');
   }
 })();
+
+// ── Avisos al celular: interfaz ──────────────────────────
+// Estados (js/avisos.js): activo · apagado · bloqueado · ios-instalar · no-soportado
+const AV_TXT={
+  activo:'Activados en este celular',
+  apagado:'Apagados · toca para activar',
+  bloqueado:'Bloqueados en este celular',
+  'ios-instalar':'Agrega la app a tu pantalla de inicio',
+  'no-soportado':'Este celular o navegador no los permite',
+};
+const AV_IOS='En Safari toca <b>Compartir</b> <span class="av-ios-ic">⬆︎</span> y luego <b>Agregar a pantalla de inicio</b>. Abre la app desde ese ícono, entra y activa los avisos aquí.';
+const AV_BLOQ='Los avisos están bloqueados para esta app. Actívalos en los ajustes del navegador (Permisos del sitio → Notificaciones) y vuelve a entrar aquí.';
+let avOcupado=false;
+async function pintarAvisos(pre){
+  const fila=$(pre+'Avisos'), extra=$(pre+'AvisosExtra'); if(!fila||!me) return;
+  const est=await estadoAvisos().catch(()=>'no-soportado');
+  fila.dataset.est=est;
+  fila.querySelector('.av-est').textContent=AV_TXT[est]||'';
+  fila.querySelector('.av-est').className='av-est '+est;
+  if(!extra) return;
+  extra.innerHTML=est==='activo'
+    ? `<div class="av-bts"><button class="btn btn-gh btn-sm" onclick="avProbar('${pre}')">Mandarme un aviso de prueba</button><button class="btn btn-gh btn-sm" onclick="avApagar('${pre}')">Apagar</button></div><div class="av-msg" id="${pre}AvisosMsg"></div>`
+    : est==='ios-instalar'?`<div class="av-ayuda">${AV_IOS}</div>`
+    : est==='bloqueado'?`<div class="av-ayuda">${AV_BLOQ}</div>`
+    : '';
+}
+window.tocarAvisos=async(pre)=>{
+  const fila=$(pre+'Avisos'); if(!fila||avOcupado) return;
+  if(fila.dataset.est!=='apagado') return;
+  avOcupado=true; fila.querySelector('.av-est').textContent='Activando…';
+  try{ await activarAvisos(me.id); }
+  catch(e){ alert('No se pudieron activar los avisos: '+e.message); }
+  finally{ avOcupado=false; }
+  await pintarAvisos(pre); pintarAvisosInicio();
+};
+window.avProbar=async(pre)=>{
+  const m=$(pre+'AvisosMsg'); if(m) m.textContent='Enviando…';
+  try{ const r=await probarAviso(); if(m) m.textContent=r.telefonos?'Listo: en unos segundos te llega el aviso.':'No encontré tu celular, vuelve a activar los avisos.'; }
+  catch(e){ if(m) m.textContent=e.message; }
+};
+window.avApagar=async(pre)=>{
+  if(!confirm('¿Apagar los avisos en este celular?')) return;
+  await apagarAvisos(me.id).catch(()=>{}); pintarAvisos(pre);
+};
+// Tarjeta en el inicio del empleado: invita a activarlos (se puede posponer una semana)
+const AV_POSPUESTO='innova_avisos_pospuesto';
+async function pintarAvisosInicio(){
+  const c=$('avisosCard'); if(!c) return;
+  if(!me||me.role!=='empleado'){ c.style.display='none'; return; }
+  const est=await estadoAvisos().catch(()=>'no-soportado');
+  let pos=0; try{ pos=Number(localStorage.getItem(AV_POSPUESTO))||0; }catch(_){}
+  if(!['apagado','ios-instalar'].includes(est)||Date.now()<pos){ c.style.display='none'; return; }
+  c.innerHTML=`<div class="av-card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg></div>
+    <div class="av-card-tx"><b>Activa los avisos</b><span>Te recordamos marcar tu salida, te avisamos cuando revisen tus horas extra o permisos, y te llega tu programación.</span>
+    ${est==='ios-instalar'?`<div class="av-ayuda">${AV_IOS}</div>`:''}
+    <div class="av-bts">${est==='apagado'?`<button class="btn btn-p btn-sm" onclick="avActivarInicio()">Activar</button>`:''}<button class="btn btn-gh btn-sm" onclick="avPosponer()">Ahora no</button></div></div>`;
+  c.style.display='';
+}
+window.avActivarInicio=async()=>{
+  try{ await activarAvisos(me.id); }catch(e){ alert('No se pudieron activar los avisos: '+e.message); }
+  pintarAvisosInicio();
+};
+window.avPosponer=()=>{ try{ localStorage.setItem(AV_POSPUESTO,String(Date.now()+7*864e5)); }catch(_){} pintarAvisosInicio(); };
+function trasEntrarAvisos(){ if(!me) return; refrescarAvisos(me.id).finally(pintarAvisosInicio); }
 
 // EMP TABS
 window.empTab=(t,btn)=>{
@@ -1565,6 +1595,7 @@ window.empTab=(t,btn)=>{
     $('perfilUsername').textContent='@'+me.username;
     const sedeP=sedeEfectiva(me,today());
     $('perfilSede').textContent=sedeP?sedeP.nombre+(sedeP.temporal?' · temporal':''):'Sin sede asignada';
+    pintarAvisos('perfil');
     $('perfilAlert').innerHTML='';
     ['pinActual','pinNuevo','pinConfirm'].forEach(id=>{ const e=$(id); e.value=''; e.type='password'; });
     document.querySelectorAll('#empPerfil .pf-ver').forEach(b=>b.classList.remove('visible'));
@@ -2674,6 +2705,7 @@ window.adTab=(t,btn)=>{
     $('adPerfilRol').textContent=me.role==='asistente'?'Asistente':'Administradora';
     $('adPerfilUsername').textContent='@'+(me.username||'');
     if($('adPerfilSede')) $('adPerfilSede').value=me.sede||'';
+    pintarAvisos('adPerfil');
     $('adPerfilAlert').innerHTML='';
     ['adPinActual','adPinNuevo','adPinConfirm'].forEach(id=>{const e=$(id);if(e){e.value='';e.type='password';}});
     document.querySelectorAll('#adPerfil .pf-ver').forEach(b=>b.classList.remove('visible'));
@@ -5716,6 +5748,19 @@ window.progCopiarElegir=(f)=>{
   if(btn){ btn.disabled=!f; btn.textContent=f?`Copiar del ${fechaCortaFx(f)}`:'Copiar'; }
 };
 
+// Avisa a cada persona asignada su grupo, compañeros y vehículo (functions/avisos.js)
+window.progAvisarEquipo=async()=>{
+  if(!progGrupos.length) return;
+  if(!confirm(`¿Avisar a cada persona su programación del ${fmt(progFecha)}?`)) return;
+  try{
+    await persistProg();
+    const r=await llamar('avisarProgramacion',{fecha:progFecha});
+    let t=`Listo: avisé a ${r.conAvisos} de ${r.personas} ${r.personas===1?'persona':'personas'}.`;
+    if(r.sinAvisos?.length) t+=`\n\nNo tienen los avisos activados (avísales por WhatsApp):\n• ${r.sinAvisos.join('\n• ')}`;
+    alert(t);
+  }catch(e){ alert('No se pudo avisar: '+e.message); }
+};
+
 // Vaciar toda la programación del día — para rehacerla de cero, p.ej. si
 // se copió de otro día y no sirve. Pide confirmación (es irreversible).
 window.progVaciar=async()=>{
@@ -5870,6 +5915,7 @@ function renderArmar(){
       <div class="pg-acts">
         <button onclick="abrirCopiarProg()">Copiar de…</button>
         <button class="w" onclick="progGenerarImagen()">Compartir imagen</button>
+        ${progGrupos.length?`<button onclick="progAvisarEquipo()">Avisar al equipo</button>`:''}
         ${progGrupos.length?`<button onclick="progVaciar()">Vaciar</button>`:''}
       </div>
     </div>

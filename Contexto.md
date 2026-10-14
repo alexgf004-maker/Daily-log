@@ -69,6 +69,11 @@ La app nació como un `index.html` monolítico y se ha ido modularizando. Estruc
 /js/calculadora.js     → cálculo de descuentos ISSS/AFP/Renta
 /js/programacion.js    → catálogos de campañas/vehículos, CRUD, guardado de programación
 /js/musica.js          → música de fondo (login y app): subida del admin, caché en el teléfono, botón de silencio
+/js/avisos.js          → avisos al celular (notificaciones): activar/apagar/probar, token del teléfono
+/sw.js                 → service worker: solo muestra los avisos y abre la app al tocarlos (no guarda caché)
+/manifest.json, /icono-*.png → app instalable (pantalla de inicio); en iPhone los avisos lo necesitan
+/functions/            → servidor (Cloud Functions): login/PIN (index.js) y avisos (avisos.js)
+/database.rules.json   → reglas de la base (se publican solas con GitHub Actions)
 ```
 
 `index.html` sigue siendo grande (~4600 líneas). Modularizar más (separar admin/empleado)
@@ -111,6 +116,9 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
 - `programaciones/{fecha}`: `{grupos:[{campania, area, empleados[], empleadosNombres[],
   vehiculo, vehiculoNombre, zona}], noDisponibles:{personal[], vehiculos[]}, ...}`.
 - `asuetos/`, `observaciones/`, `suspensiones/`: nodos de apoyo.
+- `avisos_tokens/{uid}/{id}`: `{token, actualizado, equipo}` un registro por teléfono con los avisos
+  activados (lo escribe la app; solo el dueño lo lee). `avisos_enviados/{fecha}/{uid}/salida`: control
+  del recordatorio de salida (una vez al día; solo el servidor). `avisos_prueba/`: solo en el emulador.
 
 **Reglas de Firebase**: todos los nodos anteriores tienen `.read`/`.write: true` (abiertas).
 La protección real hoy es App Check + PIN, no las reglas. **Esto es una carencia de seguridad
@@ -208,6 +216,22 @@ importante — ver sección 7.**
   el día por día del perfil del empleado. Sale del grupo de la Programación de ese día y de los nombres escritos
   en las actividades (nombre + apellido, o solo el nombre si es único y va después de "con"/"y"). Tocar a uno
   abre al momento lo que esa persona registró ese día y su marcaje (`verCompanero`).
+
+### Avisos al celular (notificaciones)
+- Cada persona los activa en su teléfono: tarjeta "Activa los avisos" en el inicio del empleado
+  (se puede posponer 7 días) o fila "Avisos al celular" en Mi Perfil (empleado y admin), con
+  "Mandarme un aviso de prueba" y "Apagar". Al cerrar sesión el teléfono deja de recibir los avisos de
+  esa persona; al volver a entrar se reactivan solos si el permiso ya estaba dado.
+- Avisos (servidor, `functions/avisos.js`):
+  1. **Recordatorio de salida**: cada 15 min por la tarde (lun–sáb); a quien marcó entrada y no salida,
+     una vez, 15 min después de la salida oficial (5:15 lun–jue, 4:15 vie, 2:15 sáb).
+  2. **Aprobaciones/rechazos**: al revisar HE, viático o día especial (cambia `revisadoHEEn`,
+     `revisadoViaticEn` o `revisadoEspEn`); mismos textos que la campanita.
+  3. **Programación**: botón "Avisar al equipo" en Programar (no se manda sola porque la programación
+     se guarda con cada cambio). Avisa a cada asignado su campaña, zona, compañeros y vehículo, y dice
+     quiénes no tienen los avisos activados.
+- Se mandan mensajes "solo datos" y `sw.js` los muestra (igual en Android e iPhone). Los tokens que
+  ya no sirven se borran solos.
 
 ## 6. Rendimiento (ya optimizado, mantener el patrón)
 
@@ -315,8 +339,9 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
 4. **Truncamiento al descargar `index.html`**: históricamente, al bajarlo/subirlo por
    GitHub se truncaba (llegaban menos líneas de las reales). Por eso se prefiere entregar
    por zip o pegar fragmentos. Verificar siempre el número de líneas tras subir.
-5. **Marcaje: la gente olvida marcar, sobre todo la salida.** Se estudiaron notificaciones:
-   - Push reales en PWA: poco fiables (sobre todo iOS) → descartadas.
+5. **Marcaje: la gente olvida marcar, sobre todo la salida.**
+   - *(Hecho)* **Avisos al celular** (Firebase Cloud Messaging, ver §5 "Avisos al celular").
+     En iPhone solo llegan con la app agregada a la pantalla de inicio (iOS 16.4+).
    - Marcaje automático por GPS en segundo plano: **imposible en PWA** (el navegador no
      deja leer GPS con la app cerrada; requeriría app nativa).
    - Opciones viables no implementadas aún: recordatorio fuerte al abrir la app, alarma
