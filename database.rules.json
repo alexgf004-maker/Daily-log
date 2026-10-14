@@ -86,6 +86,15 @@
       "$otro": {
         ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && (root.child('users/'+auth.uid+'/role').val() === 'admin' || root.child('users/'+auth.uid+'/role').val() === 'asistente')"
       }
+    },
+    "avisos_tokens": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')",
+        ".write": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')",
+        "$id": {
+          ".validate": "newData.hasChildren(['token','actualizado']) && newData.child('token').isString() && newData.child('token').val().length < 600"
+        }
+      }
     }
   }
 }

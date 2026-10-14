@@ -9,6 +9,9 @@
  *   - cambiarPin:     el propio usuario cambia su PIN (revisa el actual).
  *   - guardarUsuario: el admin crea o edita usuarios (y su PIN).
  *   - migrarPines:    el admin pasa todos los PIN a la rama protegida.
+ *   - Avisos al celular (ver avisos.js): recordatorioSalida (cada 15 min por la tarde),
+ *     avisarAprobacion (al revisar HE, viáticos o días especiales), avisarProgramacion
+ *     (botón "Avisar al equipo" en Programar) y probarAviso (botón en el perfil).
  *
  * Los PIN viven en `pins/{uid}` = { hash, salt } (sha256(salt + pin)). Las
  * reglas de la base deben negar `pins`, `pins_viejos` y `seguridad_intentos` a la app.
@@ -17,11 +20,14 @@
  */
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onValueUpdated } = require('firebase-functions/v2/database');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
 
 admin.initializeApp();
+const avisos = require('./avisos');
 setGlobalOptions({ region: 'us-central1', maxInstances: 5 });
 
 const rtdb = () => admin.database();
@@ -219,4 +225,37 @@ exports.migrarPines = onCall(async req => {
   }
   if (movidos) await rtdb().ref().update(upd);
   return { movidos };
+});
+
+// ── Avisos al celular ─────────────────────────────
+// Recordatorio de marcar salida: de lunes a sábado, cada 15 min por la tarde
+exports.recordatorioSalida = onSchedule({ schedule: '*/15 13-21 * * 1-6', timeZone: 'America/El_Salvador' }, async () => {
+  const r = await avisos.revisarSalidas();
+  if (r.revisados) console.log('Recordatorio de salida', r);
+});
+
+// Al revisar un registro (HE, viático o día especial), avisar a su dueño
+exports.avisarAprobacion = onValueUpdated('/registros/{uid}/{key}', async ev => {
+  const lista = avisos.avisosDeRevision(ev.data.before.val(), ev.data.after.val());
+  for (const a of lista) await avisos.enviarA(ev.params.uid, a);
+});
+
+// Botón "Avisar al equipo" en Programar (admin o asistente)
+exports.avisarProgramacion = onCall(async req => {
+  const yo = await quienLlama(req);
+  if (yo.role !== 'admin' && yo.role !== 'asistente') throw new HttpsError('permission-denied', 'Solo la oficina puede avisar la programación.');
+  const fecha = String(req.data?.fecha || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) throw new HttpsError('invalid-argument', 'Fecha no válida.');
+  return avisos.avisarProgramacion(fecha);
+});
+
+// Botón "Probar aviso" del perfil: manda un aviso de prueba a mis teléfonos
+exports.probarAviso = onCall(async req => {
+  const yo = await quienLlama(req);
+  const telefonos = await avisos.enviarA(yo.uid, {
+    titulo: 'Avisos activados',
+    cuerpo: `Hola ${yo.nombreCorto || (yo.nombre || '').split(' ')[0] || ''}, así te van a llegar los avisos de la planilla.`,
+    tag: 'prueba',
+  });
+  return { telefonos };
 });

@@ -55,13 +55,16 @@ jobs:
         run: |
           gcloud services enable cloudfunctions.googleapis.com cloudbuild.googleapis.com \
             artifactregistry.googleapis.com run.googleapis.com eventarc.googleapis.com \
-            iamcredentials.googleapis.com cloudbilling.googleapis.com identitytoolkit.googleapis.com --project "$PROYECTO"
+            iamcredentials.googleapis.com cloudbilling.googleapis.com identitytoolkit.googleapis.com \
+            fcm.googleapis.com fcmregistrations.googleapis.com firebaseinstallations.googleapis.com \
+            cloudscheduler.googleapis.com pubsub.googleapis.com --project "$PROYECTO"
 
       - name: Publicar funciones
         run: npx --yes firebase-tools@14 deploy --only functions --project "$PROYECTO" --force --non-interactive
 
       # Permisos de la cuenta con la que corren las funciones: firmar tokens de
-      # acceso (login), leer y escribir la base (Realtime Database) y administrar Auth.
+      # acceso (login), leer y escribir la base (Realtime Database), administrar Auth
+      # y mandar avisos al celular (Cloud Messaging).
       - name: Permisos de las funciones
         run: |
           NUM=$(gcloud projects describe "$PROYECTO" --format='value(projectNumber)')
@@ -69,7 +72,7 @@ jobs:
           gcloud iam service-accounts add-iam-policy-binding "$SA" \
             --member="serviceAccount:$SA" --role="roles/iam.serviceAccountTokenCreator" \
             --project "$PROYECTO" >/dev/null
-          for ROL in roles/firebasedatabase.admin roles/firebaseauth.admin; do
+          for ROL in roles/firebasedatabase.admin roles/firebaseauth.admin roles/firebasecloudmessaging.admin; do
             gcloud projects add-iam-policy-binding "$PROYECTO" --member="serviceAccount:$SA" \
               --role="$ROL" --condition=None >/dev/null
           done
