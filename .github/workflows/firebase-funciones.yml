@@ -59,8 +59,29 @@ jobs:
             fcm.googleapis.com fcmregistrations.googleapis.com firebaseinstallations.googleapis.com \
             cloudscheduler.googleapis.com pubsub.googleapis.com --project "$PROYECTO"
 
+      # Las funciones que reaccionan a cambios en la base (avisarAprobacion) usan Eventarc:
+      # sus cuentas internas necesitan estos permisos (la primera vez tardan en aplicarse)
+      - name: Permisos de Eventarc
+        run: |
+          NUM=$(gcloud projects describe "$PROYECTO" --format='value(projectNumber)')
+          gcloud beta services identity create --service=eventarc.googleapis.com --project "$PROYECTO" >/dev/null 2>&1 || true
+          gcloud beta services identity create --service=pubsub.googleapis.com --project "$PROYECTO" >/dev/null 2>&1 || true
+          gcloud projects add-iam-policy-binding "$PROYECTO" --condition=None >/dev/null \
+            --member="serviceAccount:service-$NUM@gcp-sa-eventarc.iam.gserviceaccount.com" --role="roles/eventarc.serviceAgent"
+          gcloud projects add-iam-policy-binding "$PROYECTO" --condition=None >/dev/null \
+            --member="serviceAccount:service-$NUM@gcp-sa-pubsub.iam.gserviceaccount.com" --role="roles/iam.serviceAccountTokenCreator"
+          gcloud projects add-iam-policy-binding "$PROYECTO" --condition=None >/dev/null \
+            --member="serviceAccount:$NUM-compute@developer.gserviceaccount.com" --role="roles/eventarc.eventReceiver"
+          echo "Permisos de Eventarc listos"
+
+      # Si falla (permisos recién dados que aún no se aplican), se espera y se intenta otra vez
       - name: Publicar funciones
-        run: npx --yes firebase-tools@14 deploy --only functions --project "$PROYECTO" --force --non-interactive
+        run: |
+          for INTENTO in 1 2 3; do
+            if npx --yes firebase-tools@14 deploy --only functions --project "$PROYECTO" --force --non-interactive; then exit 0; fi
+            echo "Intento $INTENTO falló; espero 2 minutos y vuelvo a intentar"; sleep 120
+          done
+          exit 1
 
       # Permisos de la cuenta con la que corren las funciones: firmar tokens de
       # acceso (login), leer y escribir la base (Realtime Database), administrar Auth
