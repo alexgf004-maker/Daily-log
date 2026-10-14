@@ -16,7 +16,7 @@ const admin = require('firebase-admin');
 
 const rtdb = () => admin.database();
 const ZONA = 'America/El_Salvador';
-const MIN_AVISO_SALIDA = 5; // se avisa 5 min antes y 5 min después de la hora oficial de salida
+const MIN_AVISO_SALIDA = 5; // se avisa 5 min antes y 5 min después de la hora oficial (entrada y salida)
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const ERRORES_TOKEN_MUERTO = ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token', 'messaging/invalid-argument'];
@@ -72,37 +72,88 @@ async function enviarA(uid, { titulo, cuerpo, url = './', tag = 'innova' }) {
   return r.successCount;
 }
 
-// ── 1) Recordatorio de marcar salida ──────────────
-// Se corre cada 5 min por la tarde. A quien marcó entrada hoy y no salida le llegan dos
-// avisos: 5 min antes de la hora oficial de salida y, si sigue sin marcar, 5 min después.
-// Cada uno una sola vez al día (avisos_enviados/{fecha}/{uid}/{antes|despues}).
-async function revisarSalidas(cuando = new Date()) {
+// ── 1) Recordatorios de marcar entrada y salida ───
+// Se corre cada 5 min temprano y por la tarde (lun–sáb). Para cada marca hay dos avisos:
+// 5 min antes de la hora oficial y, si sigue sin marcar, 5 min después. Cada uno una sola
+// vez al día (avisos_enviados/{fecha}/{uid}/{entrada_antes|entrada_despues|salida_antes|salida_despues}).
+//   Entrada: a quien trabaja ese día y no ha marcado (ver debeMarcarEntrada).
+//   Salida:  a quien marcó entrada y no salida.
+const AUS_TIPOS = ['vacaciones', 'incapacidad', 'permiso', 'bienestar', 'injustificado'];
+const SEDES = ['plantel', 'gestionmedida', 'cucumacayan', 'zacatecoluca', 'prueba']; // js/marcaje.js
+const VENTANA = { entrada: 60, salida: 4 * 60 }; // hasta cuántos min después de la hora se manda el 2.º aviso
+
+// Asuetos fijos (igual que asuetosFijos() de js/utils.js) + los que agregó el admin
+function semanaSanta(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mes = Math.floor((h + l - 7 * m + 114) / 31), dia = ((h + l - 7 * m + 114) % 31) + 1;
+  const pascua = `${y}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+  return [-3, -2, -1].map(n => sumarDias(pascua, n));
+}
+async function esAsueto(fecha) {
+  const y = Number(fecha.slice(0, 4));
+  const fijos = [...semanaSanta(y), ...['01-01', '05-01', '05-10', '06-17', '08-03', '08-06', '09-15', '11-02', '12-25'].map(md => `${y}-${md}`)];
+  if (fijos.includes(fecha)) return true;
+  const custom = (await rtdb().ref('asuetos').once('value')).val() || {};
+  return Object.values(custom).some(a => a && a.fecha === fecha);
+}
+const tieneSede = (u, fecha) => (u.sedeTemporal && u.sedeTemporal.hasta >= fecha && SEDES.includes(u.sedeTemporal.sede)) || SEDES.includes(u.sede);
+
+// ¿Le toca marcar entrada hoy? (los días y ausencias se cuentan igual que en Asistencia)
+async function debeMarcarEntrada(uid, u, fecha, sabados) {
+  if (!tieneSede(u, fecha)) return false;
+  if (new Date(fecha + 'T12:00:00').getDay() === 6 && !((sabados[fecha] || {}).empleados || []).includes(uid)) return false;
+  const regs = rtdb().ref(`registros/${uid}`);
+  const [delDia, vacas, susp] = await Promise.all([
+    regs.orderByChild('fecha').equalTo(fecha).once('value').then(s => Object.values(s.val() || {})),
+    regs.orderByChild('tipoDia').equalTo('vacaciones').once('value').then(s => Object.values(s.val() || {})),
+    rtdb().ref(`suspensiones/${uid}`).once('value').then(s => Object.values(s.val() || {})),
+  ]);
+  if (delDia.some(r => AUS_TIPOS.includes(r.tipoDia) && r.estadoEspecial !== 'rechazado')) return false;
+  if (vacas.some(r => r.estadoEspecial !== 'rechazado' && r.vacIni && r.vacFin && fecha >= r.vacIni && fecha <= r.vacFin)) return false;
+  if (susp.some(x => x && x.fecha === fecha)) return false;
+  return true;
+}
+
+const TEXTOS = {
+  entrada_antes: h => ({ titulo: 'En 5 minutos es tu entrada', cuerpo: `Tu entrada es a las ${hora12(h)}; no olvides marcarla en la app al llegar.` }),
+  entrada_despues: h => ({ titulo: '¿Ya llegaste? Marca tu entrada', cuerpo: `Tu entrada era a las ${hora12(h)} y todavía no la has marcado.` }),
+  salida_antes: h => ({ titulo: 'En 5 minutos es tu salida', cuerpo: `Tu salida es a las ${hora12(h)}; no olvides marcarla en la app al salir.` }),
+  salida_despues: h => ({ titulo: '¿Ya saliste? Marca tu salida', cuerpo: `Tu salida era a las ${hora12(h)} y todavía no la has marcado.` }),
+};
+
+async function revisarMarcajes(cuando = new Date()) {
   const { fecha, minutos } = ahoraSV(cuando);
   const h = horarioOficial(fecha);
-  const sal = h ? aMin(h.salida) : 0;
-  const cual = !h ? null : minutos >= sal + MIN_AVISO_SALIDA ? 'despues' : minutos >= sal - MIN_AVISO_SALIDA ? 'antes' : null;
-  if (!cual) return { fecha, cual, avisados: 0, revisados: 0 };
-  const [users, ya] = await Promise.all([
+  let tipo = null, cual = null;
+  if (h) for (const t of ['entrada', 'salida']) {
+    const m = aMin(h[t]);
+    if (minutos >= m + MIN_AVISO_SALIDA && minutos < m + VENTANA[t]) { tipo = t; cual = 'despues'; }
+    else if (minutos >= m - MIN_AVISO_SALIDA && minutos < m + MIN_AVISO_SALIDA) { tipo = t; cual = 'antes'; }
+  }
+  if (!tipo) return { fecha, aviso: null, avisados: 0, revisados: 0 };
+  const clave = `${tipo}_${cual}`;
+  if (tipo === 'entrada' && await esAsueto(fecha)) return { fecha, aviso: clave, asueto: true, avisados: 0, revisados: 0 };
+  const [users, ya, sabados] = await Promise.all([
     rtdb().ref('users').once('value').then(s => s.val() || {}),
     rtdb().ref(`avisos_enviados/${fecha}`).once('value').then(s => s.val() || {}),
+    tipo === 'entrada' ? rtdb().ref('config/sabadosLaborales').once('value').then(s => s.val() || {}) : {},
   ]);
   const empleados = Object.entries(users).filter(([, u]) => activo(u) && u.role === 'empleado');
   let avisados = 0, revisados = 0;
-  await Promise.all(empleados.map(async ([uid]) => {
-    if (ya[uid]?.[cual]) return;
-    const m = (await rtdb().ref(`marcajes/${uid}/${fecha}`).once('value')).val();
-    if (!m || !m.entrada || m.salida) return;
+  await Promise.all(empleados.map(async ([uid, u]) => {
+    if (ya[uid]?.[clave]) return;
+    const m = (await rtdb().ref(`marcajes/${uid}/${fecha}`).once('value')).val() || {};
+    if (tipo === 'entrada' ? (m.entrada || !(await debeMarcarEntrada(uid, u, fecha, sabados))) : (!m.entrada || m.salida)) return;
     revisados++;
-    const n = await enviarA(uid, cual === 'antes'
-      ? { titulo: 'En 5 minutos es tu salida', cuerpo: `Tu salida es a las ${hora12(h.salida)}; no olvides marcarla en la app al salir.`, tag: 'salida-' + fecha }
-      : { titulo: '¿Ya saliste? Marca tu salida', cuerpo: `Tu salida era a las ${hora12(h.salida)} y todavía no la has marcado.`, tag: 'salida-' + fecha });
-    await rtdb().ref(`avisos_enviados/${fecha}/${uid}/${cual}`).set(Date.now());
+    const n = await enviarA(uid, { ...TEXTOS[clave](h[tipo]), tag: `${tipo}-${fecha}` });
+    await rtdb().ref(`avisos_enviados/${fecha}/${uid}/${clave}`).set(Date.now());
     if (n) avisados++;
   }));
   // Limpieza: solo se guardan los avisos de los últimos días
   const viejos = Object.keys((await rtdb().ref('avisos_enviados').orderByKey().endAt(sumarDias(fecha, -7)).once('value')).val() || {});
   if (viejos.length) await rtdb().ref().update(Object.fromEntries(viejos.map(k => [`avisos_enviados/${k}`, null])));
-  return { fecha, avisados, revisados };
+  return { fecha, aviso: clave, avisados, revisados };
 }
 
 // ── 2) Aprobaciones y rechazos ────────────────────
@@ -174,4 +225,4 @@ async function avisarProgramacion(fecha) {
   return { personas, conAvisos, sinAvisos };
 }
 
-module.exports = { enviarA, revisarSalidas, avisosDeRevision, avisarProgramacion, ahoraSV, horarioOficial, fechaCorta, fmtMin };
+module.exports = { enviarA, revisarMarcajes, avisosDeRevision, avisarProgramacion, ahoraSV, horarioOficial, fechaCorta, fmtMin };

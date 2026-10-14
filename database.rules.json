@@ -27,7 +27,11 @@
         ".read": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')",
         "$key": {
           ".write": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && !data.exists() && newData.child('userId').val() === $uid && newData.child('estadoHE').val() !== 'aprobado' && !newData.child('minHEAprobado').exists() && !newData.child('heAjustada').exists() && (newData.child('estadoEspecial').val() !== 'aprobado' || (newData.child('tipoDia').val() !== 'incapacidad' && newData.child('tipoDia').val() !== 'vacaciones' && newData.child('tipoDia').val() !== 'permiso'))"
-        }
+        },
+        ".indexOn": [
+          "fecha",
+          "tipoDia"
+        ]
       }
     },
     "marcajes": {

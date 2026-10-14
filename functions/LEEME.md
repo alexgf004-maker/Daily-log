@@ -5,7 +5,7 @@ intentos) y entrega un token de acceso a Firebase Auth. Así la base puede exigi
 haber iniciado sesión y separar lo que puede hacer cada rol. Detalle en `index.js`.
 
 Funciones: `login`, `cambiarPin`, `guardarUsuario` (admin), `migrarPines` (admin).
-Avisos al celular (`avisos.js`): `recordatorioSalida` (programada, cada 5 min por la tarde: avisa 5 min antes y 5 min después de la salida),
+Avisos al celular (`avisos.js`): `recordatorioMarcaje` (programada, cada 5 min temprano y por la tarde: avisa 5 min antes y 5 min después de la entrada y de la salida),
 `avisarAprobacion` (al revisar un registro), `avisarProgramacion` y `probarAviso` (botones de la app).
 Los PIN viven en `pins/{uid}` (y los de formato viejo, hasta su primer login, en
 `pins_viejos/{uid}`): las reglas de la base las cierran a la app.
