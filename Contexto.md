@@ -218,8 +218,9 @@ importante — ver sección 7.**
   abre al momento lo que esa persona registró ese día y su marcaje (`verCompanero`).
 
 ### Avisos al celular (notificaciones)
-- Al entrar sale un anuncio a pantalla completa ("Ya te pueden llegar avisos al celular") a empleados y a
-  la admin que no los tengan activados en ese celular: "Activar avisos" funciona al instante y "Ahora no"
+- Al entrar sale un anuncio a pantalla completa ("Ya te pueden llegar avisos al celular") a todos
+  (empleados, admin y asistente). Si ya los tienen activados sale una sola vez (`innova_avisos_anuncio_activo`)
+  con "Mandarme un aviso de prueba". Si no los tienen activados: "Activar avisos" funciona al instante y "Ahora no"
   se habilita a los 10 s; si lo saltan no vuelve a salir ese día (`innova_avisos_anuncio`). No se encima
   con el recorrido de novedades. En iPhone sin instalar explica cómo agregar la app a inicio.
 - Cada persona los activa en su teléfono: tarjeta "Activa los avisos" en el inicio del empleado

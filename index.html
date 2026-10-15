@@ -1546,7 +1546,7 @@ window.tocarAvisos=async(pre)=>{
   const fila=$(pre+'Avisos'); if(!fila||avOcupado) return;
   if(fila.dataset.est!=='apagado') return;
   avOcupado=true; fila.querySelector('.av-est').textContent='Activando…';
-  try{ await activarAvisos(me.id); }
+  try{ if(await activarAvisos(me.id)==='activo') avYaSeEntero(); }
   catch(e){ alert('No se pudieron activar los avisos: '+e.message); }
   finally{ avOcupado=false; }
   await pintarAvisos(pre); pintarAvisosInicio();
@@ -1575,46 +1575,51 @@ async function pintarAvisosInicio(){
   c.style.display='';
 }
 window.avActivarInicio=async()=>{
-  try{ await activarAvisos(me.id); }catch(e){ alert('No se pudieron activar los avisos: '+e.message); }
+  try{ if(await activarAvisos(me.id)==='activo') avYaSeEntero(); }catch(e){ alert('No se pudieron activar los avisos: '+e.message); }
   pintarAvisosInicio();
 };
 window.avPosponer=()=>{ try{ localStorage.setItem(AV_POSPUESTO,String(Date.now()+7*864e5)); }catch(_){} pintarAvisosInicio(); };
 function trasEntrarAvisos(){ if(!me) return; refrescarAvisos(me.id).finally(()=>{ pintarAvisosInicio(); programarAnuncioAvisos(); }); }
 
 // ── Anuncio "Ya te pueden llegar avisos" (pantalla completa al entrar) ──
-// Sale a empleados y a la admin mientras no tengan los avisos activados en ese celular.
-// "Activar" funciona al instante; "Ahora no" se habilita después de unos segundos.
-// Si lo saltan, no vuelve a salir ese mismo día (al día siguiente sí).
-const AV_ANUNCIO='innova_avisos_anuncio', AV_ANUNCIO_ESPERA=10;
+// Sale a todos (empleados, admin y asistente). Si no tienen los avisos activados en ese celular,
+// "Activar" funciona al instante, "Ahora no" se habilita después de unos segundos y, si lo saltan,
+// no vuelve a salir ese mismo día (al día siguiente sí). Si ya los tienen activados, sale una sola
+// vez para que se enteren (con opción de mandarse un aviso de prueba).
+const AV_ANUNCIO='innova_avisos_anuncio', AV_ANUNCIO_ACTIVO='innova_avisos_anuncio_activo', AV_ANUNCIO_ESPERA=10;
 let avAnCuenta=null;
+// Quien activó los avisos ya se enteró: no hace falta mostrarle el anuncio de "ya los tienes"
+function avYaSeEntero(){ try{ localStorage.setItem(AV_ANUNCIO_ACTIVO,'1'); }catch(_){} }
 function programarAnuncioAvisos(){
-  if(!me||(me.role!=='empleado'&&me.role!=='admin')) return;
-  let visto=null; try{ visto=localStorage.getItem(AV_ANUNCIO); }catch(_){}
-  if(visto===today()) return;
+  if(!me) return;
+  const leer=k=>{ try{ return localStorage.getItem(k); }catch(_){ return null; } };
   let intentos=0;
   const probar=async()=>{
     if(!me||$('avAnuncio')) return;
     // Esperar a que no haya otra ventana encima (recorrido de novedades, resúmenes, etc.)
     if(document.querySelector('#tcCapa,.rm-card,.rm-dim,.mo.open,.nv-pan,.mus-espera')){ if(++intentos<150) setTimeout(probar,800); return; }
     const est=await estadoAvisos().catch(()=>'no-soportado');
-    if(['apagado','ios-instalar','bloqueado'].includes(est)) mostrarAnuncioAvisos(est);
+    if(est==='activo' ? leer(AV_ANUNCIO_ACTIVO) : leer(AV_ANUNCIO)===today()) return;
+    mostrarAnuncioAvisos(est);
   };
   setTimeout(probar,1800);
 }
 function mostrarAnuncioAvisos(est){
   const emp=me.role==='empleado';
-  const items=[['b','⏰','Recordatorio para marcar','5 minutos antes y después de tu hora de entrada y de salida']]
-    .concat(emp?[['g','✓','Tus aprobaciones','Cuando revisen tus horas extra, viáticos o permisos'],['v','📍','Tu programación','Dónde te toca, con quién y en qué vehículo']]:[]);
-  const accion=est==='apagado'
-    ? `<button class="tc-btn av-an-si" onclick="avAnActivar()">Activar avisos</button>`
-    : `<div class="tc-ojo av-an-ayuda${est==='ios-instalar'?' info':''}">${est==='ios-instalar'?AV_IOS:AV_BLOQ}</div>`;
-  const capa=document.createElement('div'); capa.id='avAnuncio'; capa.className='av-an';
+  const items=[['b','⏰','Recordatorio para marcar','5 minutos antes y después de la hora de entrada y de salida'],
+    ['g','✓',emp?'Tus aprobaciones':'Aprobaciones','Cuando se revisan horas extra, viáticos o permisos'],
+    ['v','📍',emp?'Tu programación':'Programación','Dónde le toca a cada quien, con quién y en qué vehículo']];
+  const AV_NO_SOP='Este celular o navegador no permite avisos. En Android abre la app en <b>Chrome</b>; en iPhone agrégala a la pantalla de inicio desde <b>Safari</b>.';
+  const accion=est==='apagado' ? `<button class="tc-btn av-an-si" onclick="avAnActivar()">Activar avisos</button>`
+    : est==='activo' ? `<div class="av-an-ok">✓ Ya tienes los avisos activados en este celular</div><button class="tc-btn av-an-si av-an-prueba" onclick="avAnProbar()">Mandarme un aviso de prueba</button>`
+    : `<div class="tc-ojo av-an-ayuda${est!=='bloqueado'?' info':''}">${est==='ios-instalar'?AV_IOS:est==='bloqueado'?AV_BLOQ:AV_NO_SOP}</div>`;
+  const capa=document.createElement('div'); capa.id='avAnuncio'; capa.className='av-an'; capa.dataset.est=est;
   capa.innerHTML=`<div class="av-an-velo"></div>
     <div class="av-an-card" role="dialog" aria-label="Avisos al celular">
       <div class="av-an-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg></div>
       <div class="tc-k">NUEVO</div>
       <div class="tc-t">Ya te pueden llegar avisos al celular</div>
-      <div class="tc-p">Actívalos para que no se te pase nada, aunque tengas la app cerrada:</div>
+      <div class="tc-p">${est==='activo'?'Te llegan al celular aunque tengas la app cerrada:':emp?'Actívalos para que no se te pase nada, aunque tengas la app cerrada:':'Ahora la app manda estos avisos al celular, aunque esté cerrada. Actívalos también en el tuyo:'}</div>
       <div class="tc-ej">${items.map(([c,ic,t,d])=>`<div><i class="${c}">${ic}</i><span><b>${t}</b><small>${d}</small></span></div>`).join('')}</div>
       <div id="avAnEstado">${accion}</div>
       <button class="av-an-no" id="avAnNo" onclick="avAnCerrar(true)" disabled>${est==='apagado'?'Ahora no':'Entendido'} (${AV_ANUNCIO_ESPERA})</button>
@@ -1628,9 +1633,15 @@ function mostrarAnuncioAvisos(est){
 }
 window.avAnCerrar=(salto)=>{
   clearInterval(avAnCuenta);
-  if(salto){ try{ localStorage.setItem(AV_ANUNCIO,today()); }catch(_){} }
+  if(salto){ try{ if($('avAnuncio')?.dataset.est==='activo') localStorage.setItem(AV_ANUNCIO_ACTIVO,'1'); else localStorage.setItem(AV_ANUNCIO,today()); }catch(_){} }
   $('avAnuncio')?.remove();
   if(!$('tcCapa')) document.body.classList.remove('tc-quieto');
+};
+window.avAnProbar=async()=>{
+  const b=document.querySelector('#avAnEstado .av-an-prueba'); if(!b) return;
+  b.disabled=true; b.textContent='Enviando…';
+  try{ const r=await probarAviso(); b.textContent=r.telefonos?'Listo: en unos segundos te llega':'No encontré tu celular; actívalos de nuevo en Mi Perfil'; }
+  catch(e){ b.textContent='No se pudo enviar'; }
 };
 window.avAnActivar=async()=>{
   const box=$('avAnEstado'); if(!box) return;
@@ -1638,6 +1649,7 @@ window.avAnActivar=async()=>{
   let est;
   try{ est=await activarAvisos(me.id); }catch(e){ est='error'; }
   if(est==='activo'){
+    avYaSeEntero();
     box.innerHTML='<div class="av-an-ok">✓ ¡Listo! Ya tienes los avisos activados.</div>';
     clearInterval(avAnCuenta); const b=$('avAnNo'); if(b) b.remove();
     pintarAvisosInicio();
