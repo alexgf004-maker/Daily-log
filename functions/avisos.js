@@ -77,6 +77,7 @@ async function enviarA(uid, { titulo, cuerpo, url = './', tag = 'innova' }) {
 // 5 min antes de la hora oficial y, si sigue sin marcar, 5 min después. Cada uno una sola
 // vez al día (avisos_enviados/{fecha}/{uid}/{entrada_antes|entrada_despues|salida_antes|salida_despues}).
 //   Entrada: a quien trabaja ese día y no ha marcado (ver debeMarcarEntrada).
+//   (Empleados, y la admin si tiene "Sede para marcar" en su perfil.)
 //   Salida:  a quien marcó entrada y no salida.
 const AUS_TIPOS = ['vacaciones', 'incapacidad', 'permiso', 'bienestar', 'injustificado'];
 const SEDES = ['plantel', 'gestionmedida', 'cucumacayan', 'zacatecoluca', 'prueba']; // js/marcaje.js
@@ -139,7 +140,8 @@ async function revisarMarcajes(cuando = new Date()) {
     rtdb().ref(`avisos_enviados/${fecha}`).once('value').then(s => s.val() || {}),
     tipo === 'entrada' ? rtdb().ref('config/sabadosLaborales').once('value').then(s => s.val() || {}) : {},
   ]);
-  const empleados = Object.entries(users).filter(([, u]) => activo(u) && u.role === 'empleado');
+  // Empleados y también la admin si tiene sede para marcar (la asistente no marca)
+  const empleados = Object.entries(users).filter(([, u]) => activo(u) && (u.role === 'empleado' || (u.role === 'admin' && tieneSede(u, fecha))));
   let avisados = 0, revisados = 0;
   await Promise.all(empleados.map(async ([uid, u]) => {
     if (ya[uid]?.[clave]) return;

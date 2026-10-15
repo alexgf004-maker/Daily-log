@@ -231,6 +231,7 @@ importante — ver sección 7.**
        suspendido y no ha marcado entrada.
      - Salida (4:55 y 5:05 lun–jue, 3:55 y 4:05 vie, 1:55 y 2:05 sáb): a quien marcó entrada y no salida.
      Cada aviso una vez al día (`avisos_enviados/{fecha}/{uid}/{entrada|salida}_{antes|despues}`).
+     Les llegan a los empleados y también a la admin si tiene "Sede para marcar" (la asistente no marca).
   2. **Aprobaciones/rechazos**: al revisar HE, viático o día especial (cambia `revisadoHEEn`,
      `revisadoViaticEn` o `revisadoEspEn`); mismos textos que la campanita.
   3. **Programación**: botón "Avisar al equipo" en Programar (no se manda sola porque la programación
