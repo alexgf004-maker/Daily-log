@@ -1622,3 +1622,19 @@ button.ag-mn:hover{color:var(--blue)}
 .av-card-tx b{display:block;font-size:14px;color:var(--text);margin-bottom:2px}
 .av-card-tx>span{display:block;font-size:12.5px;line-height:1.45;color:var(--text2)}
 .pf-row[data-est]:not([data-est="apagado"]) .chev{visibility:hidden}
+
+/* Anuncio "Ya te pueden llegar avisos" (pantalla completa al entrar) */
+.av-an{position:fixed;inset:0;z-index:410;display:flex;align-items:center;justify-content:center;padding:16px}
+.av-an-velo{position:absolute;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(14px) saturate(.9);-webkit-backdrop-filter:blur(14px) saturate(.9);animation:rmFade .3s ease both}
+.av-an-card{position:relative;width:100%;max-width:400px;max-height:calc(100vh - 32px);overflow:auto;background:#fff;border-radius:22px;padding:22px 20px 14px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:nvIn .35s cubic-bezier(.2,.9,.3,1) .1s both}
+.av-an-ic{width:52px;height:52px;border-radius:16px;background:var(--bluelt);color:var(--blue);display:flex;align-items:center;justify-content:center;margin-bottom:12px;animation:avCampana 1.4s ease-in-out .6s 2}
+.av-an-ic svg{width:28px;height:28px}
+@keyframes avCampana{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-4deg)}}
+.av-an .tc-ej i{font-size:14px}
+#avAnEstado{margin-top:16px}
+.av-an-si{width:100%;height:48px}
+.av-an-ayuda{margin-top:0}
+.av-an-ok{text-align:center;font-weight:800;font-size:14px;color:var(--green);background:var(--greenlt);border-radius:13px;padding:13px}
+.av-an-no{display:block;width:100%;height:42px;margin-top:6px;border:none;background:none;color:var(--text2);font:700 13.5px var(--sans);cursor:pointer}
+.av-an-no:disabled{color:var(--gray400);cursor:default}
+.av-an-ayuda.info{color:#1e3a8a;background:var(--bluelt);border-color:var(--bluemid)}

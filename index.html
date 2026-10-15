@@ -61,8 +61,8 @@
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=76">
-<link rel="stylesheet" href="css/temas.css?v=26">
+<link rel="stylesheet" href="css/styles.css?v=77">
+<link rel="stylesheet" href="css/temas.css?v=27">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -1430,7 +1430,8 @@ function quitarCapasFlotantes(){
   window.cerrarNovedades?.();
   try{ clearInterval(tourCuenta); window.removeEventListener('resize',ubicarTour); }catch(_){}
   document.body.classList.remove('tc-quieto');
-  document.querySelectorAll('#tcCapa,.rm-card,.rm-dim,.ag-export').forEach(e=>e.remove());
+  clearInterval(avAnCuenta);
+  document.querySelectorAll('#tcCapa,#avAnuncio,.rm-card,.rm-dim,.ag-export').forEach(e=>e.remove());
   document.querySelector('.ag-tip')?.classList.remove('on');
   document.querySelectorAll('.mo.open').forEach(m=>m.classList.remove('open'));
 }
@@ -1578,7 +1579,73 @@ window.avActivarInicio=async()=>{
   pintarAvisosInicio();
 };
 window.avPosponer=()=>{ try{ localStorage.setItem(AV_POSPUESTO,String(Date.now()+7*864e5)); }catch(_){} pintarAvisosInicio(); };
-function trasEntrarAvisos(){ if(!me) return; refrescarAvisos(me.id).finally(pintarAvisosInicio); }
+function trasEntrarAvisos(){ if(!me) return; refrescarAvisos(me.id).finally(()=>{ pintarAvisosInicio(); programarAnuncioAvisos(); }); }
+
+// ── Anuncio "Ya te pueden llegar avisos" (pantalla completa al entrar) ──
+// Sale a empleados y a la admin mientras no tengan los avisos activados en ese celular.
+// "Activar" funciona al instante; "Ahora no" se habilita después de unos segundos.
+// Si lo saltan, no vuelve a salir ese mismo día (al día siguiente sí).
+const AV_ANUNCIO='innova_avisos_anuncio', AV_ANUNCIO_ESPERA=10;
+let avAnCuenta=null;
+function programarAnuncioAvisos(){
+  if(!me||(me.role!=='empleado'&&me.role!=='admin')) return;
+  let visto=null; try{ visto=localStorage.getItem(AV_ANUNCIO); }catch(_){}
+  if(visto===today()) return;
+  let intentos=0;
+  const probar=async()=>{
+    if(!me||$('avAnuncio')) return;
+    // Esperar a que no haya otra ventana encima (recorrido de novedades, resúmenes, etc.)
+    if(document.querySelector('#tcCapa,.rm-card,.rm-dim,.mo.open,.nv-pan,.mus-espera')){ if(++intentos<150) setTimeout(probar,800); return; }
+    const est=await estadoAvisos().catch(()=>'no-soportado');
+    if(['apagado','ios-instalar','bloqueado'].includes(est)) mostrarAnuncioAvisos(est);
+  };
+  setTimeout(probar,1800);
+}
+function mostrarAnuncioAvisos(est){
+  const emp=me.role==='empleado';
+  const items=[['b','⏰','Recordatorio para marcar','5 minutos antes y después de tu hora de entrada y de salida']]
+    .concat(emp?[['g','✓','Tus aprobaciones','Cuando revisen tus horas extra, viáticos o permisos'],['v','📍','Tu programación','Dónde te toca, con quién y en qué vehículo']]:[]);
+  const accion=est==='apagado'
+    ? `<button class="tc-btn av-an-si" onclick="avAnActivar()">Activar avisos</button>`
+    : `<div class="tc-ojo av-an-ayuda${est==='ios-instalar'?' info':''}">${est==='ios-instalar'?AV_IOS:AV_BLOQ}</div>`;
+  const capa=document.createElement('div'); capa.id='avAnuncio'; capa.className='av-an';
+  capa.innerHTML=`<div class="av-an-velo"></div>
+    <div class="av-an-card" role="dialog" aria-label="Avisos al celular">
+      <div class="av-an-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg></div>
+      <div class="tc-k">NUEVO</div>
+      <div class="tc-t">Ya te pueden llegar avisos al celular</div>
+      <div class="tc-p">Actívalos para que no se te pase nada, aunque tengas la app cerrada:</div>
+      <div class="tc-ej">${items.map(([c,ic,t,d])=>`<div><i class="${c}">${ic}</i><span><b>${t}</b><small>${d}</small></span></div>`).join('')}</div>
+      <div id="avAnEstado">${accion}</div>
+      <button class="av-an-no" id="avAnNo" onclick="avAnCerrar(true)" disabled>${est==='apagado'?'Ahora no':'Entendido'} (${AV_ANUNCIO_ESPERA})</button>
+    </div>`;
+  document.body.appendChild(capa);
+  document.body.classList.add('tc-quieto');
+  let falta=AV_ANUNCIO_ESPERA; const etiqueta=est==='apagado'?'Ahora no':'Entendido';
+  clearInterval(avAnCuenta);
+  avAnCuenta=setInterval(()=>{ const b=$('avAnNo'); if(!b){ clearInterval(avAnCuenta); return; }
+    falta--; if(falta>0) b.textContent=`${etiqueta} (${falta})`; else { b.textContent=etiqueta; b.disabled=false; clearInterval(avAnCuenta); } },1000);
+}
+window.avAnCerrar=(salto)=>{
+  clearInterval(avAnCuenta);
+  if(salto){ try{ localStorage.setItem(AV_ANUNCIO,today()); }catch(_){} }
+  $('avAnuncio')?.remove();
+  if(!$('tcCapa')) document.body.classList.remove('tc-quieto');
+};
+window.avAnActivar=async()=>{
+  const box=$('avAnEstado'); if(!box) return;
+  box.innerHTML='<button class="tc-btn av-an-si" disabled>Activando…</button>';
+  let est;
+  try{ est=await activarAvisos(me.id); }catch(e){ est='error'; }
+  if(est==='activo'){
+    box.innerHTML='<div class="av-an-ok">✓ ¡Listo! Ya tienes los avisos activados.</div>';
+    clearInterval(avAnCuenta); const b=$('avAnNo'); if(b) b.remove();
+    pintarAvisosInicio();
+    setTimeout(()=>avAnCerrar(false),2200);
+  } else {
+    box.innerHTML=`<div class="tc-ojo av-an-ayuda">${est==='bloqueado'?AV_BLOQ:'No se pudieron activar. Puedes intentarlo después desde Mi Perfil → Avisos al celular.'}</div>`;
+  }
+};
 
 // EMP TABS
 window.empTab=(t,btn)=>{
@@ -3929,7 +3996,7 @@ function programarTutoCampanita(){
   let intentos=0;
   const probar=()=>{
     if(!me||me.role!=='empleado'||tourVisto()||!$('nvBell')) return;
-    const ocupado=document.querySelector('.rm-card,.rm-dim,.mo.open,.fx-ok.on,.nv-pan,#tcCapa');
+    const ocupado=document.querySelector('.rm-card,.rm-dim,.mo.open,.fx-ok.on,.nv-pan,#tcCapa,#avAnuncio');
     const rb=$('nvBell').getBoundingClientRect();
     if(ocupado||!rb.width){ if(++intentos<150) setTimeout(probar,800); return; }
     iniciarTour(false);
