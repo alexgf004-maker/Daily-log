@@ -244,6 +244,12 @@ importante — ver sección 7.**
      quiénes no tienen los avisos activados.
 - Se mandan mensajes "solo datos" y `sw.js` los muestra (igual en Android e iPhone). Los tokens que
   ya no sirven se borran solos.
+- Los recordatorios de marcar son más notorios (Android): se quedan en pantalla hasta que los toquen
+  (`requireInteraction`), imagen grande (`aviso-entrada.jpg` / `aviso-salida.jpg`), botón "Abrir para marcar"
+  (abre `./?marcar=1`, o con la app abierta el SW le manda `ir-marcar`: va a la tarjeta de marcaje y la
+  resalta) y vibración fuerte en el segundo aviso. `badge-96.png` = ícono blanco de la barra de arriba.
+  Sonido propio y "mostrar en pantalla" no los controla la web: en Mi Perfil hay una ayuda
+  ("Que los avisos se noten más") para configurarlo en Android e iPhone.
 
 ## 6. Rendimiento (ya optimizado, mantener el patrón)
 

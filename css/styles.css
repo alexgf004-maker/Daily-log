@@ -1639,3 +1639,15 @@ button.ag-mn:hover{color:var(--blue)}
 .av-an-no:disabled{color:var(--gray400);cursor:default}
 .av-an-ayuda.info{color:#1e3a8a;background:var(--bluelt);border-color:var(--bluemid)}
 .av-an-ok+.av-an-si{margin-top:10px}
+
+/* Al llegar desde "Abrir para marcar": la tarjeta de marcaje se resalta */
+#marcajeCard.mk-resalta{animation:mkResalta 1.6s ease-in-out 2;border-radius:var(--r)}
+@keyframes mkResalta{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}50%{box-shadow:0 0 0 6px rgba(37,99,235,.35)}}
+/* Ayuda "Que los avisos se noten más" (Mi Perfil) */
+.av-tips{margin-top:10px}
+.av-tips summary{font-size:12.5px;font-weight:700;color:var(--blue);cursor:pointer;list-style:none}
+.av-tips summary::-webkit-details-marker{display:none}
+.av-tips summary:before{content:"›";display:inline-block;margin-right:6px;transition:transform .2s}
+.av-tips[open] summary:before{transform:rotate(90deg)}
+.av-tips ol{margin:6px 0 0 18px;padding:0}
+.av-tips li{margin:3px 0}

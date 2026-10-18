@@ -61,8 +61,8 @@
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=77">
-<link rel="stylesheet" href="css/temas.css?v=27">
+<link rel="stylesheet" href="css/styles.css?v=78">
+<link rel="stylesheet" href="css/temas.css?v=28">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -313,7 +313,7 @@ import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, ca
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js";
 import { calcularDescuentos } from "./js/calculadora.js";
-import { configurarAvisos, estadoAvisos, activarAvisos, refrescarAvisos, quitarAvisosDeEsteTelefono, apagarAvisos, probarAviso } from "./js/avisos.js";
+import { configurarAvisos, estadoAvisos, activarAvisos, refrescarAvisos, quitarAvisosDeEsteTelefono, apagarAvisos, probarAviso, esIOS } from "./js/avisos.js";
 import { iniciarMusica, subirMusica, activarMusica, quitarMusica, esperarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
 
@@ -1527,6 +1527,9 @@ const AV_TXT={
   'no-soportado':'Este celular o navegador no los permite',
 };
 const AV_IOS='En Safari toca <b>Compartir</b> <span class="av-ios-ic">⬆︎</span> y luego <b>Agregar a pantalla de inicio</b>. Abre la app desde ese ícono, entra y activa los avisos aquí.';
+// Ayuda para que los avisos se noten más (lo decide cada celular, no la app)
+const AV_TIPS_ANDROID='<b>Android</b><ol><li>Cuando te llegue un aviso de INNOVA, déjalo presionado y toca <b>Ajustes</b> (o en el celular: Ajustes → Apps → INNOVA o Chrome → Notificaciones).</li><li>Activa <b>Mostrar en pantalla</b> (o <b>Emergente</b>) y el <b>sonido</b>.</li><li>Revisa que el modo <b>No molestar</b> no esté puesto en tu horario de trabajo.</li></ol>';
+const AV_TIPS_IOS='<b>iPhone</b><ol><li>Ve a <b>Ajustes → Notificaciones → INNOVA</b>.</li><li>Activa <b>Sonidos</b> y en el estilo del aviso elige <b>Persistente</b>, así no se quita solo.</li><li>Revisa que <b>Concentración / No molestar</b> no esté puesto en tu horario de trabajo.</li></ol>';
 const AV_BLOQ='Los avisos están bloqueados para esta app. Actívalos en los ajustes del navegador (Permisos del sitio → Notificaciones) y vuelve a entrar aquí.';
 let avOcupado=false;
 async function pintarAvisos(pre){
@@ -1537,7 +1540,8 @@ async function pintarAvisos(pre){
   fila.querySelector('.av-est').className='av-est '+est;
   if(!extra) return;
   extra.innerHTML=est==='activo'
-    ? `<div class="av-bts"><button class="btn btn-gh btn-sm" onclick="avProbar('${pre}')">Mandarme un aviso de prueba</button><button class="btn btn-gh btn-sm" onclick="avApagar('${pre}')">Apagar</button></div><div class="av-msg" id="${pre}AvisosMsg"></div>`
+    ? `<div class="av-bts"><button class="btn btn-gh btn-sm" onclick="avProbar('${pre}')">Mandarme un aviso de prueba</button><button class="btn btn-gh btn-sm" onclick="avApagar('${pre}')">Apagar</button></div><div class="av-msg" id="${pre}AvisosMsg"></div>
+       <details class="av-tips"><summary>Que los avisos se noten más</summary><div class="av-ayuda">${esIOS()?AV_TIPS_IOS:AV_TIPS_ANDROID}</div></details>`
     : est==='ios-instalar'?`<div class="av-ayuda">${AV_IOS}</div>`
     : est==='bloqueado'?`<div class="av-ayuda">${AV_BLOQ}</div>`
     : '';
@@ -1579,7 +1583,28 @@ window.avActivarInicio=async()=>{
   pintarAvisosInicio();
 };
 window.avPosponer=()=>{ try{ localStorage.setItem(AV_POSPUESTO,String(Date.now()+7*864e5)); }catch(_){} pintarAvisosInicio(); };
-function trasEntrarAvisos(){ if(!me) return; refrescarAvisos(me.id).finally(()=>{ pintarAvisosInicio(); programarAnuncioAvisos(); }); }
+function trasEntrarAvisos(){
+  if(!me) return;
+  // Se abrió desde el botón "Abrir para marcar" de un recordatorio: ir directo al marcaje
+  if(/[?&]marcar=1/.test(location.search)){ try{ history.replaceState(null,'',location.pathname); }catch(_){} irAMarcaje(); }
+  refrescarAvisos(me.id).finally(()=>{ pintarAvisosInicio(); programarAnuncioAvisos(); });
+}
+// Lleva a la tarjeta de marcaje (empleado: Nuevo Registro; admin: Dashboard) y la resalta
+function irAMarcaje(){
+  if(!me) return;
+  const tab=(sel,t)=>[...document.querySelectorAll(sel)].find(b=>(b.getAttribute('onclick')||'').includes(`'${t}'`));
+  if(me.role==='empleado'){ const t=tab('#employeeScreen .tab','r'); if(t&&!t.classList.contains('active')) empTab('r',t); }
+  else { const t=tab('#adminScreen .tab','dash'); if(t&&!t.classList.contains('active')) adTab('dash',t); }
+  let n=0;
+  const ir=()=>{
+    const c=$('marcajeCard');
+    if(c&&c.style.display!=='none'&&c.offsetHeight){ c.scrollIntoView({behavior:'smooth',block:'center'}); c.classList.remove('mk-resalta'); void c.offsetWidth; c.classList.add('mk-resalta'); }
+    else if(++n<25) setTimeout(ir,400);
+  };
+  setTimeout(ir,300);
+}
+// Con la app abierta, el service worker avisa cuando tocan "Abrir para marcar"
+try{ navigator.serviceWorker?.addEventListener('message',e=>{ if(e.data?.tipo==='ir-marcar') irAMarcaje(); }); }catch(_){}
 
 // ── Anuncio "Ya te pueden llegar avisos" (pantalla completa al entrar) ──
 // Sale a todos (empleados, admin y asistente). Si no tienen los avisos activados en ese celular,

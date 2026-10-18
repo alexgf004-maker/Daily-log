@@ -6,8 +6,9 @@
  * = { token, creado, actualizado, equipo }. El servidor manda a todos los teléfonos
  * de esa persona y borra los tokens que ya no sirven.
  *
- * Se mandan mensajes "solo datos" ({ titulo, cuerpo, url, tag }) y el service worker de
- * la app (sw.js) los muestra: así se ven igual en Android y en iPhone.
+ * Se mandan mensajes "solo datos" ({ titulo, cuerpo, url, tag } y opcionales fijo, vibrar,
+ * imagen, boton) y el service worker de la app (sw.js) los muestra: así se ven igual en
+ * Android y en iPhone (en iPhone no hay vibración propia, imagen ni botones).
  *
  * En el emulador no se manda nada: el aviso se anota en `avisos_prueba/{uid}` para las pruebas.
  */
@@ -50,11 +51,16 @@ const activo = u => u && (u.activo === true || u.activo === 'true');
 
 // ── Enviar a una persona ──────────────────────────
 // Devuelve cuántos teléfonos lo recibieron (0 = no tiene los avisos activados)
-async function enviarA(uid, { titulo, cuerpo, url = './', tag = 'innova' }) {
+// Opcionales (ver sw.js): fijo = se queda en pantalla hasta que lo toquen · vibrar = 'normal' | 'fuerte'
+// · imagen = imagen grande al desplegarlo · boton = texto de un botón que abre la app en `url`
+async function enviarA(uid, { titulo, cuerpo, url = './', tag = 'innova', fijo, vibrar, imagen, boton }) {
   const toks = (await rtdb().ref(`avisos_tokens/${uid}`).once('value')).val() || {};
   const lista = Object.entries(toks).filter(([, v]) => v && v.token);
   if (!lista.length) return 0;
-  const data = { titulo: String(titulo), cuerpo: String(cuerpo), url: String(url), tag: String(tag) };
+  const data = { titulo: String(titulo), cuerpo: String(cuerpo), url: String(url), tag: String(tag), vibrar: vibrar || 'normal' };
+  if (fijo) data.fijo = '1';
+  if (imagen) data.imagen = String(imagen);
+  if (boton) data.boton = String(boton);
   if (enEmulador()) {
     await rtdb().ref(`avisos_prueba/${uid}`).push({ ...data, telefonos: lista.length, en: Date.now() });
     return lista.length;
@@ -148,7 +154,11 @@ async function revisarMarcajes(cuando = new Date()) {
     const m = (await rtdb().ref(`marcajes/${uid}/${fecha}`).once('value')).val() || {};
     if (tipo === 'entrada' ? (m.entrada || !(await debeMarcarEntrada(uid, u, fecha, sabados))) : (!m.entrada || m.salida)) return;
     revisados++;
-    const n = await enviarA(uid, { ...TEXTOS[clave](h[tipo]), tag: `${tipo}-${fecha}` });
+    // Más notorios: se quedan en pantalla, imagen grande, botón para marcar y, el segundo, vibración fuerte
+    const n = await enviarA(uid, {
+      ...TEXTOS[clave](h[tipo]), tag: `${tipo}-${fecha}`, url: './?marcar=1',
+      fijo: true, vibrar: cual === 'despues' ? 'fuerte' : 'normal', imagen: `aviso-${tipo}.jpg`, boton: 'Abrir para marcar',
+    });
     await rtdb().ref(`avisos_enviados/${fecha}/${uid}/${clave}`).set(Date.now());
     if (n) avisados++;
   }));
