@@ -299,6 +299,10 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   al rato regresa. Se apaga con `prefers-reduced-motion` y no dibuja si el login no está activo. Ya no hay telaraña ni araña. La sangre de la tarjeta es un SVG con
   filtro de líquido y brillo que arma `__escenaHalloween` (`.hw-sangre`). Dentro de la app el fondo es negro
   ("Penumbra") y las tarjetas siguen claras.
+- Fantasma de las pantallas de adentro (`fantasmaAdentro()`, `.hw-fant-in`): más chico, capa que no recibe toques
+  (si lo tocas se desvanece pero el toque llega al botón de abajo), pasea por las orillas y a ratos cruza; aparece a los
+  8–15 s, después de 3–6 paradas se va y regresa en 30–90 s; se esconde con ventanas abiertas encima y se asusta si
+  mueves la pantalla muy rápido. Se quita al apagar el tema.
 - **Programación, vehículo del grupo**: "+ Vehículo" abre una hoja (`progAbrirVeh`, `#moVehGrupo`, estilo sx) con
   tarjetas por pick-up y moto: libres primero, luego los restringidos a otra campaña ("Solo …"), los que ya van en
   otro grupo ("En CPT MT · Grupo 1") y al final los no disponibles con su estado; los de baja no se muestran.

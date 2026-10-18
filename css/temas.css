@@ -591,3 +591,8 @@ html.tema-halloween{--green:#2f7f1b;--greenlt:#f1fbea;--danger:#a31515;--warn:#c
 html.tema-halloween .mus-btn{background:rgba(20,10,4,.72);border-color:rgba(249,115,22,.5);color:#fdba74;box-shadow:0 6px 18px -6px rgba(249,115,22,.45)}
 html.tema-halloween .mus-espera-ic,html.tema-halloween .mus-espera-bar i{background:linear-gradient(135deg,#7a0606,#c2410c)}
 html.tema-halloween .mus-espera-c button{color:#c2410c}
+/* Fantasma de las pantallas de adentro: capa que no recibe toques, debajo de ventanas y avisos */
+.hw-fant-in{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden}
+.hw-fantasma-in{position:absolute;filter:none}
+.hw-fantasma-in svg{filter:drop-shadow(0 6px 10px rgba(60,10,20,.28))}
+.hw-fantasma-in::before{background:radial-gradient(closest-side,rgba(255,240,240,.55),rgba(255,235,235,.18) 55%,transparent)}

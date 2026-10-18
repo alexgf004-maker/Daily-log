@@ -60,7 +60,7 @@
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=78">
-<link rel="stylesheet" href="css/temas.css?v=28">
+<link rel="stylesheet" href="css/temas.css?v=29">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -172,7 +172,84 @@
     }
     requestAnimationFrame(cuadro);
   }
+  // Fantasma de las pantallas de adentro (empleado y admin). Más chico que el del login y sin estorbar:
+  // no recibe toques (si lo tocas igual se desvanece, pero el toque llega al botón de abajo), pasea sobre
+  // todo por las orillas, a ratos cruza la pantalla, y cada tanto se va y regresa al rato. Se esconde
+  // mientras hay una ventana abierta encima y se asusta si mueves la pantalla muy rápido.
+  function fantasmaAdentro(){
+    if(document.querySelector('.hw-fant-in')) return;
+    var html=document.documentElement;
+    var capa=document.createElement('div'); capa.className='hw-fant-in'; capa.setAttribute('aria-hidden','true');
+    var el=document.createElement('div'); el.className='hw-fantasma hw-fantasma-in';
+    var cuerpo='M32 2C15 2 5 16 5 34V76l9-7 9 8 9-8 9 8 9-8 9 7V34C59 16 49 2 32 2Z', cuerpo2='M32 2C15 2 5 16 5 34V72l9 6 9-8 9 8 9-8 9 8 9-6V34C59 16 49 2 32 2Z';
+    el.innerHTML='<svg viewBox="0 0 64 80"><path fill="#fbf5f5" stroke="#8a5b63" stroke-opacity=".35" stroke-width="1.6" d="'+cuerpo+'"><animate attributeName="d" dur="1.6s" repeatCount="indefinite" values="'+cuerpo+';'+cuerpo2+';'+cuerpo+'"/></path>'+
+      '<g><ellipse cx="23" cy="30" rx="4.5" ry="7" fill="#1d0a0e"/><ellipse cx="41" cy="30" rx="4.5" ry="7" fill="#1d0a0e"/><ellipse cx="32" cy="48" rx="5" ry="7" fill="#1d0a0e"/></g></svg>';
+    capa.appendChild(el); document.body.appendChild(capa);
+    var cara=el.querySelectorAll('ellipse'), W=0, H=0, s=1, ult=0, prev={}, ancho=46;
+    var g={x:-100,y:300,tx:-100,ty:300,modo:'fuera',espera:480+Math.random()*420,visitas:0,pausa:0,ver:0,ojo:1,parpa:0,susto:0,vx:0,lado:1,mx:null,my:null,mira:0,escY:window.scrollY};
+    function medir(){ W=window.innerWidth; H=window.innerHeight; s=Math.max(.85,Math.min(1.15,W/420)); el.style.width=(ancho*s).toFixed(1)+'px'; }
+    medir(); window.addEventListener('resize',medir);
+    // orillas: franja izquierda o derecha (sin tapar la barra de arriba ni el borde de abajo)
+    function enOrilla(lado){ var f=Math.min(W*.2,140); return [lado<0?28*s+Math.random()*f:W-28*s-Math.random()*f, 110+Math.random()*Math.max(60,H-260)]; }
+    function siguiente(){
+      if(g.visitas--<=0){ g.modo='sale'; g.tx=g.x<W/2?-80*s:W+80*s; g.ty=Math.max(90,g.y-40); return; }
+      if(Math.random()<.22){ g.lado=-g.lado; }   // a veces cruza al otro lado de la pantalla
+      var p=enOrilla(g.lado); g.tx=p[0]; g.ty=p[1];
+    }
+    function entrar(){ g.lado=Math.random()<.5?-1:1; g.x=g.lado<0?-70*s:W+70*s; g.y=140+Math.random()*Math.max(60,H-320);
+      g.visitas=3+Math.floor(Math.random()*4); g.modo='pasea'; var p=enOrilla(g.lado); g.tx=p[0]; g.ty=p[1]; }
+    // ¿lo tocaste? Se desvanece; el toque sigue su camino al botón que esté debajo
+    document.addEventListener('pointerdown',function(e){
+      g.mx=e.clientX; g.my=e.clientY; g.mira=120;
+      if(g.modo!=='pasea'&&g.modo!=='sale') return;
+      var r=el.getBoundingClientRect();
+      if(g.ver>.5&&e.clientX>r.left-10&&e.clientX<r.right+10&&e.clientY>r.top-10&&e.clientY<r.bottom+10){ g.modo='boo'; }
+    },{capture:true,passive:true});
+    // mover la pantalla muy rápido lo asusta
+    window.addEventListener('scroll',function(){ var d=Math.abs(window.scrollY-g.escY); g.escY=window.scrollY; if(d>140&&g.modo==='pasea'&&g.ver>.5) g.susto=40; },{passive:true});
+    function encima(){ return document.querySelector('.mo.open,#tcCapa,#avAnuncio,.nv-pan,.rm-dim,.rm-card,.mus-espera'); }
+    function cuadro(t){
+      if(!capa.isConnected) return;
+      if(!html.classList.contains('tema-halloween')){ capa.remove(); return; }   // se apagó el tema
+      requestAnimationFrame(cuadro);
+      var f=Math.max(.2,Math.min(3,(t-(ult||t))/16.7)); ult=t;
+      var adentro=document.querySelector('#employeeScreen.active,#adminScreen.active');
+      if(!adentro||document.hidden){ capa.style.display='none'; return; }
+      capa.style.display='';
+      if(g.modo==='fuera'){ g.ver=0; el.style.opacity='0'; if((g.espera-=f)<=0) entrar(); return; }
+      var tapado=!!encima();
+      var dx=g.tx-g.x, dy=g.ty-g.y, d=Math.hypot(dx,dy), px=g.x;
+      var vel=g.susto>0?0:g.modo==='sale'?1.6*s:Math.min(d*.02,.9*s);
+      if(d>1){ g.x+=dx/d*vel*f; g.y+=dy/d*vel*f; }
+      g.x+=Math.sin(t/900)*.2*f; g.vx+=((g.x-px)/f-g.vx)*.08;
+      if(g.susto>0) g.susto-=f;
+      if(g.mira>0) g.mira-=f;
+      if(g.modo==='pasea'&&d<10*s){ if(g.pausa<=0) g.pausa=150+Math.random()*330; if((g.pausa-=f)<=0) siguiente(); }
+      if(g.modo==='sale'&&d<10*s){ g.modo='fuera'; g.espera=1800+Math.random()*3600; }   // regresa en 30–90 s
+      var esc=1;
+      if(g.modo==='boo'){ g.ver=Math.max(0,g.ver-.04*f); esc=1+(1-g.ver)*.35; if(g.ver<=0){ g.modo='fuera'; g.espera=1200+Math.random()*1200; } }
+      else g.ver=Math.min(1,g.ver+.02*f);
+      // ojos: parpadea y mira hacia donde tocaste o hacia donde va
+      if(g.parpa>0) g.parpa-=f; else if(Math.random()<.004*f) g.parpa=9;
+      g.ojo+=((g.parpa>0?.12:1)-g.ojo)*.2*f;
+      var mx=g.mira>0&&g.mx!=null?g.mx:g.tx, my=g.mira>0&&g.my!=null?g.my:g.ty, a=Math.atan2(my-g.y,mx-g.x), ox=Math.cos(a)*2.6, oy=Math.sin(a)*1.8;
+      var asust=g.susto>0; if(asust){ ox=0; oy=-1; }
+      var ry=asust?'9.5':(7*g.ojo).toFixed(1), rx=asust?'5.8':'4.5', bry=asust?'10':(g.ojo<.5?'3.5':'7'), brx=asust?'6.5':'5', tr='translate('+ox.toFixed(1)+' '+oy.toFixed(1)+')';
+      if(ry!==prev.ry){ cara[0].setAttribute('ry',ry); cara[1].setAttribute('ry',ry); prev.ry=ry; }
+      if(rx!==prev.rx){ cara[0].setAttribute('rx',rx); cara[1].setAttribute('rx',rx); prev.rx=rx; }
+      if(bry+brx!==prev.b){ cara[2].setAttribute('ry',bry); cara[2].setAttribute('rx',brx); prev.b=bry+brx; }
+      if(tr!==prev.tr){ cara[0].parentNode.setAttribute('transform',tr); prev.tr=tr; }
+      var bob=Math.sin(t/700)*4*s, inc=Math.max(-12,Math.min(12,g.vx*10));
+      if(asust){ bob=-5*s+Math.sin(t/18)*2*s; inc=Math.sin(t/22)*7; g.x+=Math.sin(t/15); }
+      var op=(tapado?0:g.ver*.95).toFixed(2), fl=g.modo==='boo'?'blur('+((1-g.ver)*6).toFixed(1)+'px)':'';
+      if(op!==prev.op){ el.style.opacity=op; prev.op=op; }
+      if(fl!==prev.fl){ el.style.filter=fl; prev.fl=fl; }
+      el.style.transform='translate('+(g.x-ancho/2*s).toFixed(1)+'px,'+(g.y-30*s+bob).toFixed(1)+'px) rotate('+inc.toFixed(1)+'deg) scale('+esc.toFixed(3)+')';
+    }
+    requestAnimationFrame(cuadro);
+  }
   window.__escenaHalloween=function(){
+    if(document.documentElement.classList.contains('tema-halloween')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)) fantasmaAdentro();
     var ls=document.getElementById('loginScreen');
     if(!ls||!document.documentElement.classList.contains('tema-halloween')||document.querySelector('.hw-capa')) return;
     var up='M50 30C42 14 24 6 4 12C11 15 13 19 13 24C19 20 25 22 27 28C32 24 38 25 43 31Z',
@@ -3581,7 +3658,7 @@ function aplicarTema(){
     T.lista.forEach(t=>t.clases.forEach(c=>html.classList.remove(c)));
     T.activo=nuevo;
     if(nuevo){ nuevo.clases.forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); }
-    else document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos').forEach(c=>c.remove());   // escena del login: fantasma, luna, sangre y ojos
+    else document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
     renderMarcajeCard();   // la tarjeta de marcaje cambia de figuras con el tema
   }
   pintarTema();
