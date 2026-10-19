@@ -59,7 +59,7 @@
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=78">
+<link rel="stylesheet" href="css/styles.css?v=79">
 <link rel="stylesheet" href="css/temas.css?v=29">
 <script>
 // ── Temas de temporada ──
@@ -524,8 +524,10 @@ function renderEmployee(nombre){
         <!-- Día -->
         <div class="fx-card">
           <div class="fx-k">Día</div>
-          <div class="fx-chips" id="fxFechaChips"></div>
-          <input type="date" id="empFecha" class="fx-fecha-oculta" onchange="onFechaChange()" tabindex="-1" aria-label="Fecha">
+          <!-- El campo de fecha va transparente encima del botón "Otra": al tocarlo se abre el calendario del
+               celular (en iPhone no se puede abrir desde un botón; ver abrirCalendario) -->
+          <div class="fx-fechas"><div class="fx-chips" id="fxFechaChips"></div>
+          <input type="date" id="empFecha" class="fx-fecha-sobre" onchange="onFechaChange()" onclick="abrirCalendario(this)" aria-label="Elegir otra fecha"></div>
           <div class="fx-tipo" id="tipoDiaGrid">
             <button type="button" class="tipo-btn active" onclick="setTipoDia('normal',this)">Normal</button>
             <button type="button" class="tipo-btn" onclick="setTipoDia('vacaciones',this)">Vacaciones</button>
@@ -2463,7 +2465,7 @@ function renderFechaChips(){
     const d=new Date(v+'T12:00:00');
     const off=(min&&v<min&&tipoDia!=='vacaciones')||mesCerrado(v);
     return `<button type="button" class="fx-chip${v===sel?' on':''}"${off?' disabled':''} onclick="elegirFecha('${v}')">${lbl}<small>${DIAS_FX[d.getDay()]} ${d.getDate()}</small></button>`;
-  }).join('')+`<button type="button" class="fx-chip${sel&&!esRapida?' on':''}" onclick="abrirOtraFecha()">${sel&&!esRapida?fechaCortaFx(sel):'Otra'}<small>${sel&&!esRapida?'cambiar':'📅'}</small></button>`;
+  }).join('')+`<button type="button" class="fx-chip fx-otra${sel&&!esRapida?' on':''}" tabindex="-1" aria-hidden="true">${sel&&!esRapida?fechaCortaFx(sel):'Otra'}<small>${sel&&!esRapida?'cambiar':'📅'}</small></button>`;
 }
 // Abrir Nuevo Registro con una fecha (desde el calendario o el aviso de cierre de mes)
 window.registrarDia=(f)=>{
@@ -2476,10 +2478,12 @@ window.registrarDia=(f)=>{
   window.scrollTo({top:0,behavior:'smooth'});
 };
 window.elegirFecha=(v)=>{ const f=$('empFecha'); if(!f) return; f.value=v; window.onFechaChange(); };
-window.abrirOtraFecha=()=>{
-  const f=$('empFecha'); if(!f) return;
-  try{ if(f.showPicker){ f.showPicker(); return; } }catch(e){}
-  f.classList.add('visible'); f.focus();
+// Los campos de fecha van transparentes encima de su botón ("Otra" y la fecha de Programar): en el
+// celular, al tocarlos se abre su calendario (iPhone solo lo abre así, tocando el campo mismo). En la
+// compu, donde el clic no abre el calendario solo, se pide con showPicker.
+window.abrirCalendario=(f)=>{
+  if(!(window.matchMedia&&matchMedia('(pointer:fine)').matches)) return;
+  try{ f.showPicker&&f.showPicker(); }catch(e){}
 };
 window.setViatico=(v)=>{
   const tv=$('togV'); if(tv) tv.classList.toggle('on',!!v);
@@ -5837,11 +5841,6 @@ window.progDia=(delta)=>{
   const d=new Date(progFecha+'T12:00:00'); d.setDate(d.getDate()+delta);
   cargarProgramacionFecha(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
 };
-window.progAbrirFecha=()=>{
-  const f=$('progFechaInput'); if(!f) return;
-  try{ if(f.showPicker){ f.showPicker(); return; } }catch(e){}
-  f.classList.add('visible'); f.focus();
-};
 window.progAgregarPersona=(idx)=>{ progSel=null; progDestino=idx; abrirPanelPersonal(); };
 
 // Nombre a mostrar en programación: usa nombreCorto si existe, si no el completo
@@ -6084,10 +6083,9 @@ function renderArmar(){
     <div class="pg-hero">
       <div class="rg-mnav" style="margin-top:0">
         <button onclick="progDia(-1)" aria-label="Día anterior">‹</button>
-        <button class="pg-fecha" onclick="progAbrirFecha()">${fechaTxt}</button>
+        <span class="pg-fecha-w"><button class="pg-fecha" tabindex="-1" aria-hidden="true">${fechaTxt}</button><input type="date" id="progFechaInput" class="fx-fecha-sobre" value="${progFecha}" onchange="progCambiarFecha(this.value)" onclick="abrirCalendario(this)" aria-label="Elegir fecha"></span>
         <button onclick="progDia(1)" aria-label="Día siguiente">›</button>
       </div>
-      <input type="date" id="progFechaInput" class="fx-fecha-oculta" value="${progFecha}" onchange="progCambiarFecha(this.value)" tabindex="-1" aria-label="Fecha">
       <div class="us-cnt">
         <span><b>${progGrupos.length}</b>Grupos</span><span><b>${persAsignadas.size}</b>Asignados</span><span><b>${persLibres.length}</b>Libres</span><span><b>${ausentesAuto.length}</b>Ausentes</span>
       </div>
