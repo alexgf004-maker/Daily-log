@@ -509,7 +509,7 @@ function renderEmployee(nombre){
         <div class="tb-sub">Servicios técnicos y comerciales</div></div>
       </div>
       <div class="tb-right">
-        <div class="tb-user"><span class="tb-username" id="empUsername">${nombre}</span><span class="tb-role role-e">Empleado</span></div>
+        <div class="tb-user"><span class="tb-username" id="empUsername">${escHtml(nombre)}</span><span class="tb-role role-e">Empleado</span></div>
         <button class="tb-bell" id="nvBell" onclick="abrirNovedades()" aria-label="Novedades"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 003.4 0"/></svg><i id="nvBadge" style="display:none"></i></button>
         <button class="btn-out" onclick="doLogout()">Salir</button>
       </div>
@@ -1911,7 +1911,7 @@ window.setTipoDia=function(tipo,btn){
       if(a){
         const al=$('empAlert');
         if(al) al.innerHTML=`<div class="alert" style="background:var(--warnlt);color:var(--warn);border-left:3px solid var(--warn);margin-bottom:12px">
-          ⚠️ Día de asueto (<b>${a.nombre}</b>) — todas las horas que registres contarán como horas extras.
+          ⚠️ Día de asueto (<b>${escHtml(a.nombre)}</b>) — todas las horas que registres contarán como horas extras.
         </div>`;
       }
     });
@@ -2130,16 +2130,16 @@ async function renderProgEmpCard(){
     const esCampo=grupo.area==='campo';
     const iniciales=n=>n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
     const con=companeros.length
-      ? `<span class="pe-lbl">Vas con</span>${companeros.map(n=>`<span class="pe-chip"><i>${iniciales(n)}</i>${n}</span>`).join('')}`
+      ? `<span class="pe-lbl">Vas con</span>${companeros.map(n=>`<span class="pe-chip"><i>${escHtml(iniciales(n))}</i>${escHtml(n)}</span>`).join('')}`
       : `<span class="pe-lbl">Vas solo</span>`;
     cont.innerHTML=`
       <div class="pe">
         <div class="pe-top">
           <div class="pe-tx">
             <div class="pe-k">Mi programación · ${esCampo?'Campo':'Plantel'}</div>
-            <div class="pe-camp">${grupo.campania}</div>
+            <div class="pe-camp">${escHtml(grupo.campania)}</div>
           </div>
-          ${grupo.vehiculoNombre?`<span class="pe-placa" title="Vehículo">${grupo.vehiculoNombre}</span>`:''}
+          ${grupo.vehiculoNombre?`<span class="pe-placa" title="Vehículo">${escHtml(grupo.vehiculoNombre)}</span>`:''}
         </div>
         <div class="pe-cut"></div>
         <div class="pe-bot">${con}</div>
@@ -2388,7 +2388,7 @@ window.onFechaChange = async function(){
     hide('camposNormal');hide('heResumen');hide('heBox');hide('camposEspecial');hide('tipoDiaGrid');
     if(empAlert) empAlert.innerHTML=`
       <div style="background:var(--bluelt);border:1px solid var(--bluemid);border-radius:var(--r);padding:16px;text-align:center">
-        <div style="font-weight:700;font-size:15px;margin-bottom:4px">${asueto.nombre}</div>
+        <div style="font-weight:700;font-size:15px;margin-bottom:4px">${escHtml(asueto.nombre)}</div>
         <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Este día es asueto. Si no trabajaste, no necesitas registrar nada.</div>
         <button class="btn btn-gh" onclick="trabajeEnAsueto('${asueto.nombre}')">Trabajé este día →</button>
       </div>`;
@@ -2817,8 +2817,8 @@ async function loadHist(){
       const cls=(r.he&&eh==='pendiente')?'pend':(ev==='rechazado'||eh==='rechazado')?'mal':'';
       const notas=[
         r.heAjustada&&r.notaAjusteHE?`<div class="hl-nota">HE ajustada a ${fmtMin(minHEde(r))}: ${r.notaAjusteHE}</div>`:'',
-        r.motivoRechazoHE?`<div class="hl-nota r">HE rechazada: ${r.motivoRechazoHE}</div>`:'',
-        r.motivoRechazoViatico?`<div class="hl-nota r">Viático anulado: ${r.motivoRechazoViatico}</div>`:''
+        r.motivoRechazoHE?`<div class="hl-nota r">HE rechazada: ${escHtml(r.motivoRechazoHE)}</div>`:'',
+        r.motivoRechazoViatico?`<div class="hl-nota r">Viático anulado: ${escHtml(r.motivoRechazoViatico)}</div>`:''
       ].join('');
       const marc=marcajesPorFecha[r.fecha];
       return `<div class="hl-it ${cls}"${idH(r.fecha)} onclick="openDet('${me.id}','${r.key}',false)">
@@ -3181,8 +3181,8 @@ function pintarPend(){
       const uid=rs[0].userId, nombre=rs[0].userName||uid;
       const tot=rs.reduce((a,r)=>a+minHEPend(r),0);
       return `<div class="pd-gp">
-        <div class="pd-hd"><div class="pd-av">${inicialesDe(nombre)}</div>
-          <div class="pd-n"><b>${nombre}</b><span>${rs.length} ${rs.length===1?'pendiente':'pendientes'} · ${fmtMin(tot)}</span></div>
+        <div class="pd-hd"><div class="pd-av">${escHtml(inicialesDe(nombre))}</div>
+          <div class="pd-n"><b>${escHtml(nombre)}</b><span>${rs.length} ${rs.length===1?'pendiente':'pendientes'} · ${fmtMin(tot)}</span></div>
           ${admin?`<button class="pd-all" onclick="aprobarTodasHE('${uid}')">✓ Todas</button>`:''}</div>
         ${rs.map(r=>`<div class="pd-rw">
           ${diaCol(r.fecha)}
@@ -3210,8 +3210,8 @@ function pintarPend(){
       const aprobar=r.tipoDia==='permiso'?`abrirAprobarPermiso('${uid}','${r.key}','${esc(nombre)}','${r.fecha}')`
         :r.tipoDia==='vacaciones'?`aprobarVacacionesPend('${uid}','${r.key}')`:`aprobarEspecialPend('${uid}','${r.key}')`;
       return `<div class="pd-gp">
-        <div class="pd-hd"><div class="pd-av v">${inicialesDe(nombre)}</div>
-          <div class="pd-n"><b>${nombre}</b><span>${cuando}</span></div>
+        <div class="pd-hd"><div class="pd-av v">${escHtml(inicialesDe(nombre))}</div>
+          <div class="pd-n"><b>${escHtml(nombre)}</b><span>${cuando}</span></div>
           <span class="rg-pill v">${tipoLabels[r.tipoDia]||r.tipoDia}</span></div>
         <div class="pd-sol">
           ${r.nota?`<div class="pd-cita">${escHtml(r.nota)}</div>`:''}
@@ -3233,7 +3233,7 @@ function pintarPend(){
       <div class="pd-dia"><b>${fechaLarga(f)}</b><span>${porDia[f].length} ${porDia[f].length===1?'viático':'viáticos'}</span></div>
       ${porDia[f].sort((a,b)=>(a.userName||'').localeCompare(b.userName||'')).map(r=>`<div class="pd-rw">
         <div class="pd-av sm">${inicialesDe(r.userName||r.userId)}</div>
-        <div class="pd-x" onclick="openDet('${r.userId}','${r.key}',true)"><b>${r.userName||r.userId}</b><div>${escHtml(r.actividades||'')}</div></div>
+        <div class="pd-x" onclick="openDet('${r.userId}','${r.key}',true)"><b>${escHtml(r.userName||r.userId)}</b><div>${escHtml(r.actividades||'')}</div></div>
         <button class="pd-anu" onclick="openRej('${r.userId}','${r.key}','viatico')">Anular</button>
       </div>`).join('')}
     </div>`).join('')+'<div class="pd-tip">Viáticos del último mes · toca uno para ver el detalle</div>';
@@ -3324,8 +3324,8 @@ function rejPreparar(){
     const det=k.tipo==='he'?[r.heInicio&&r.heFin?`${r.heInicio}–${r.heFin}`:(r.horaEntrada&&r.horaSalida?`${r.horaEntrada}–${r.horaSalida}`:''),minHE?fmtMin(minHE)+' extra':'Horas extra'].filter(Boolean).join(' · ')
       :k.tipo==='viatico'?escHtml(r.actividades||'Viático')
       :(AUS_TIPO_LABEL[r.tipoDia]||r.tipoDia||'Solicitud')+(r.vacIni&&r.vacFin?` · del ${fechaCortaFx(r.vacIni)} al ${fechaCortaFx(r.vacFin)}`:'');
-    $('rejInfo').innerHTML=`<div class="sx-reg"><div class="sx-dia"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></div><div class="sx-reg-t"><b>${nombre}</b><span>${det}</span></div></div>`;
-    $('rejAviso').innerHTML=`${SX_BELL}<span>${nombre.split(' ')[0]} verá este motivo en su campanita.</span>`;
+    $('rejInfo').innerHTML=`<div class="sx-reg"><div class="sx-dia"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></div><div class="sx-reg-t"><b>${escHtml(nombre)}</b><span>${det}</span></div></div>`;
+    $('rejAviso').innerHTML=`${SX_BELL}<span>${escHtml(nombre.split(' ')[0])} verá este motivo en su campanita.</span>`;
   }).catch(()=>{});
 }
 window.rejChip=(btn)=>{
@@ -3427,11 +3427,11 @@ async function loadFiltEmps(){
   </div>`;
 
   empListHTML=filas.length?filas.map(f=>`
-    <button class="rg-emp" data-nombre="${f.u.nombre}" data-uid="${f.u.id}" onclick="abrirPerfilEmp(this.dataset.uid)">
+    <button class="rg-emp" data-nombre="${escHtml(f.u.nombre)}" data-uid="${f.u.id}" onclick="abrirPerfilEmp(this.dataset.uid)">
       <span class="rg-emp-n"><b>${f.regs}</b><small>reg</small></span>
       <span class="rg-emp-b">
-        <span class="rg-emp-top"><span class="rg-emp-nom">${f.u.nombre}</span>${f.pend?`<span class="rg-pill a">${f.pend} por aprobar</span>`:''}</span>
-        <span class="rg-emp-c">${f.u.cargo||'—'}</span>
+        <span class="rg-emp-top"><span class="rg-emp-nom">${escHtml(f.u.nombre)}</span>${f.pend?`<span class="rg-pill a">${f.pend} por aprobar</span>`:''}</span>
+        <span class="rg-emp-c">${escHtml(f.u.cargo||'—')}</span>
         <span class="rg-emp-m"><span><b class="g">${f.viaticos}</b> viáticos</span><span><b class="a">${f.minHE?hmCorto(f.minHE):'—'}</b> extra</span></span>
       </span>
     </button>`).join(''):'<div class="empty"><div class="et">No hay empleados activos</div></div>';
@@ -3593,7 +3593,7 @@ window.cargarPerfilEmpleado=async()=>{
             <span class="rg-pill ${est==='pendiente'?'a':est==='aprobado'?'g':'r'}">${est==='pendiente'?'Pendiente':est==='aprobado'?'Aprobado':'Rechazado'}</span>${remPill}</span></div>
           ${rangoVac}
           ${r.nota?`<div class="rg-it-a">${escHtml(r.nota)}</div>`:''}
-          ${r.motivoRechazoEspecial?`<div class="rg-it-nota r"><b>Motivo rechazo:</b> ${r.motivoRechazoEspecial}</div>`:''}
+          ${r.motivoRechazoEspecial?`<div class="rg-it-nota r"><b>Motivo rechazo:</b> ${escHtml(r.motivoRechazoEspecial)}</div>`:''}
           ${isAdmin()&&pendEspecial?`<div class="rg-it-acc">
             ${r.tipoDia==='permiso'
               ?`<button class="btn btn-g btn-xs" onclick="abrirAprobarPermiso('${uid}','${r.key}','${(r.userName||'').replace(/'/g,"\\'")}','${r.fecha}',cargarPerfilEmpleado)">✓ Aprobar</button>`
@@ -3628,8 +3628,8 @@ window.cargarPerfilEmpleado=async()=>{
         <div class="cmp-fila" data-cmp="${r.key}"></div>
         ${r.he&&r.heJustif?`<div class="rg-it-nota"><b>Justif. HE:</b> ${escHtml(r.heJustif)}</div>`:''}
         ${r.notaAjusteHE?`<div class="rg-it-nota a"><b>Ajuste HE:</b> ${r.notaAjusteHE} (${hmCorto(r.minHEAprobado||0)} aprobados)</div>`:''}
-        ${r.motivoRechazoViatico?`<div class="rg-it-nota r"><b>Anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
-        ${r.motivoRechazoHE?`<div class="rg-it-nota r"><b>Rechazo HE:</b> ${r.motivoRechazoHE}</div>`:''}
+        ${r.motivoRechazoViatico?`<div class="rg-it-nota r"><b>Anulación viático:</b> ${escHtml(r.motivoRechazoViatico)}</div>`:''}
+        ${r.motivoRechazoHE?`<div class="rg-it-nota r"><b>Rechazo HE:</b> ${escHtml(r.motivoRechazoHE)}</div>`:''}
         ${acciones?`<div class="rg-it-acc">${acciones}</div>`:''}
       </div>
     </div>`;
@@ -3794,8 +3794,8 @@ async function abrirAprobarHE(uid,key,cb){
   const nombre=r.userName||uid, f=fmtLong(r.fecha).replace(',','').replace(/ de \d{4}$/,'');
   $('moHEKicker').textContent=heYaAprobada?'YA APROBADAS · AJUSTE':'HORAS EXTRA';
   $('moHETitulo').textContent=heYaAprobada?'Ajustar horas extra':'Aprobar horas extra';
-  $('moHEInfo').innerHTML=`<div class="he-per"><span class="pd-av">${inicialesDe(nombre)}</span>
-      <span class="he-per-tx"><b>${nombre}</b><span>${f.charAt(0).toUpperCase()+f.slice(1)} · ${r.horaEntrada||''}–${r.horaSalida||''}</span></span>
+  $('moHEInfo').innerHTML=`<div class="he-per"><span class="pd-av">${escHtml(inicialesDe(nombre))}</span>
+      <span class="he-per-tx"><b>${escHtml(nombre)}</b><span>${f.charAt(0).toUpperCase()+f.slice(1)} · ${r.horaEntrada||''}–${r.horaSalida||''}</span></span>
       <span class="he-reg"><small>Registró</small><b>${fmtMin(heOriginal)}</b></span></div>
     ${r.heJustif?`<div class="ds-just" style="margin:12px 0 4px">${escHtml(r.heJustif)}</div>`:''}`;
   const chips=[heOriginal,heOriginal-30,heOriginal-60,120,60].filter((v,i,a)=>v>0&&a.indexOf(v)===i).slice(0,4);
@@ -4040,7 +4040,7 @@ window.abrirNovedades=()=>{
   const vistos=nvVistosEn();
   const fila=n=>`<button class="nv-it${n.ts>vistos?' nuevo':''}" onclick="nvAbrir('${n.key}')">
       <span class="nv-ic ${n.c}">${n.ic}</span>
-      <span class="nv-tx"><b>${n.t}</b><span>${n.s}</span>${n.m?`<em class="${n.c==='a'?'a':''}">${n.m}</em>`:''}</span>
+      <span class="nv-tx"><b>${n.t}</b><span>${n.s}</span>${n.m?`<em class="${n.c==='a'?'a':''}">${escHtml(n.m)}</em>`:''}</span>
       <span class="nv-go">›</span></button>`;
   const nuevas=novedades.filter(n=>n.ts>vistos), antes=novedades.filter(n=>n.ts<=vistos);
   const cuerpo=novedades.length
@@ -4245,7 +4245,7 @@ const sxSvg=k=>SX_IC[k]?`<svg viewBox="0 0 24 24">${SX_IC[k]}</svg>`:'';
 const SX_BELL='<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 003.4 0"/></svg>';
 const SX_INFO='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
 const SX_CAL='<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
-const sxPersona=(nombre,sub)=>`<div class="he-per"><span class="pd-av">${inicialesDe(nombre)}</span><span class="he-per-tx"><b>${nombre}</b><span>${sub||''}</span></span></div>`;
+const sxPersona=(nombre,sub)=>`<div class="he-per"><span class="pd-av">${escHtml(inicialesDe(nombre))}</span><span class="he-per-tx"><b>${escHtml(nombre)}</b><span>${sub||''}</span></span></div>`;
 const sxFechaLarga=f=>{ const t=fmtLong(f).replace(/ de \d{4}$/,''); return t.charAt(0).toUpperCase()+t.slice(1); };
 // Las opciones de un <select class="sx-oculto"> se muestran como tarjetas en su .sx-ops[data-for]
 function sxPintarOps(raiz){
@@ -4402,7 +4402,7 @@ async function loadAsuetos(){
   l.innerHTML=todos.map((a,i)=>`<div style="${i>0?'border-top:1px solid var(--gray100);':''}padding:11px 0;display:flex;justify-content:space-between;align-items:center;gap:8px">
     <div>
       <div style="font-size:13px;font-weight:600">${fmtLong(a.fecha)}</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:1px">${a.nombre}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:1px">${escHtml(a.nombre)}</div>
     </div>
     <div style="display:flex;align-items:center;gap:6px">
       ${a.oficial?'<span class="badge bn" style="font-size:10px">Oficial</span>':`<span class="badge by" style="font-size:10px">Personalizado</span><button class="btn btn-gh btn-xs" onclick="eliminarAsueto('${a.key}')">✕</button>`}
@@ -4523,7 +4523,7 @@ async function companerosDe(uid, r){
   });
   return [...out.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre));
 }
-const chipsCompaneros=(lista,fecha)=>lista.map(c=>`<button class="cmp-chip" onclick="event.stopPropagation();verCompanero('${c.uid}','${fecha}')" title="${c.fuente==='prog'?'Mismo grupo en la programación':'Lo nombra en sus actividades'}"><i>${inicialesDe(c.nombre)}</i>${c.nombre.split(' ').slice(0,2).join(' ')}<span>›</span></button>`).join('');
+const chipsCompaneros=(lista,fecha)=>lista.map(c=>`<button class="cmp-chip" onclick="event.stopPropagation();verCompanero('${c.uid}','${fecha}')" title="${c.fuente==='prog'?'Mismo grupo en la programación':'Lo nombra en sus actividades'}"><i>${escHtml(inicialesDe(c.nombre))}</i>${escHtml(c.nombre.split(' ').slice(0,2).join(' '))}<span>›</span></button>`).join('');
 // Hoja rápida con lo que puso el compañero ese día (y su marcaje)
 window.verCompanero=async(uid,fecha)=>{
   document.getElementById('moComp')?.remove();
@@ -4546,7 +4546,7 @@ window.verCompanero=async(uid,fecha)=>{
   else cuerpo=`<div class="ds-chips">${r.viatico?(r.estadoViatico==='rechazado'?'<span class="ds-chip r">Viático anulado</span>':'<span class="ds-chip g">Viático</span>'):'<span class="ds-chip n">Sin viático</span>'}${r.he?`<span class="ds-chip ${r.estadoHE==='aprobado'?'g':r.estadoHE==='rechazado'?'r':'a'}">${fmtMin(minHEde(r))} extra</span>`:''}</div>
     <div class="ds-k">Actividades</div><div class="ds-box">${escHtml(r.actividades||'')}</div>
     ${r.he&&r.heJustif?`<div class="ds-k">Justificación de horas extra</div><div class="ds-just">${escHtml(r.heJustif)}</div>`:''}`;
-  c.innerHTML=`<div class="ds-emp">${u?.nombre||uid}</div>
+  c.innerHTML=`<div class="ds-emp">${escHtml(u?.nombre||uid)}</div>
     <div class="ds-t">${['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][d.getDay()]} ${d.getDate()} de ${MESES_FX[d.getMonth()]}</div>
     <div class="ds-s">${[r?.horaEntrada&&r?.horaSalida?`Registró ${r.horaEntrada} – ${r.horaSalida}`:'', marca].filter(Boolean).join(' · ')||'Sin marcaje este día'}</div>
     ${cuerpo}
@@ -4578,7 +4578,7 @@ window.openDet=async(uid,key,fromAdmin)=>{
       +((r.tipoDia==='permiso'&&est==='aprobado')?`<span class="ds-chip n">${r.remunerado===false?'No remunerado':'Remunerado'}</span>`:'');
     if(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin) sub.push(`Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)}`);
     cuerpo=(r.nota?`<div class="ds-k">Nota</div><div class="ds-box">${escHtml(r.nota)}</div>`:'')
-      +(r.motivoRechazoEspecial?`<div class="ds-k">Motivo del rechazo</div><div class="ds-just r">${r.motivoRechazoEspecial}</div>`:'');
+      +(r.motivoRechazoEspecial?`<div class="ds-k">Motivo del rechazo</div><div class="ds-just r">${escHtml(r.motivoRechazoEspecial)}</div>`:'');
   } else {
     chips=(r.viatico
         ?(ev==='rechazado'?'<span class="ds-chip r">✗ Viático anulado</span>':'<span class="ds-chip g">✓ Viático aprobado</span>')
@@ -4591,12 +4591,12 @@ window.openDet=async(uid,key,fromAdmin)=>{
     cuerpo=`<div class="ds-k">Actividades</div><div class="ds-box">${escHtml(r.actividades||'')}</div>`
       +(r.he?`<div class="ds-k">Justificación de horas extra${r.heInicio&&r.heFin?` · ${r.heInicio} a ${r.heFin}`:''}</div><div class="ds-just">${escHtml(r.heJustif||'Sin justificación')}</div>`:'')
       +(r.he&&r.heAjustada?`<div class="ds-k">Horas extra ajustadas</div><div class="ds-just">Aprobadas ${fmtMin(r.minHEAprobado||0)} de ${fmtMin(r.minHE||0)} registradas${r.notaAjusteHE?` · ${r.notaAjusteHE}`:''}</div>`:'')
-      +(r.he&&r.motivoRechazoHE?`<div class="ds-k">Motivo del rechazo de horas extra</div><div class="ds-just r">${r.motivoRechazoHE}</div>`:'')
-      +(r.viatico&&r.motivoRechazoViatico?`<div class="ds-k">Motivo de anulación del viático</div><div class="ds-just r">${r.motivoRechazoViatico}</div>`:'');
+      +(r.he&&r.motivoRechazoHE?`<div class="ds-k">Motivo del rechazo de horas extra</div><div class="ds-just r">${escHtml(r.motivoRechazoHE)}</div>`:'')
+      +(r.viatico&&r.motivoRechazoViatico?`<div class="ds-k">Motivo de anulación del viático</div><div class="ds-just r">${escHtml(r.motivoRechazoViatico)}</div>`:'');
   }
   const verNombre=fromAdmin===true||isAdmin();
   $('moDetContent').innerHTML=`
-    ${verNombre?`<div class="ds-emp">${r.userName||uid}</div>`:''}
+    ${verNombre?`<div class="ds-emp">${escHtml(r.userName||uid)}</div>`:''}
     <div class="ds-t">${titulo}</div>
     ${sub.length?`<div class="ds-s">${sub.join(' · ')}</div>`:'<div style="height:10px"></div>'}
     <div class="ds-chips">${chips}</div>
@@ -4671,7 +4671,7 @@ window.pintarUsrs=()=>{
     const i=usrInfo(u);
     const sub=u.role==='asistente'
       ?`Asistente · ${(u.empleadosAsig||[]).length} técnicos a cargo`
-      :`${u.cargo||'Técnico'} · @${u.username}`;
+      :`${escHtml(u.cargo||'Técnico')} · @${escHtml(u.username)}`;
     const tags=[];
     if(!i.activo) tags.push('<span class="us-t r">Inactivo</span>');
     if(u.role==='asistente') tags.push('<span class="us-t b">Asistente</span>');
@@ -4680,7 +4680,7 @@ window.pintarUsrs=()=>{
     if(u.role==='empleado'&&u.dispositivoId) tags.push('<span class="us-t v">Celular vinculado</span>');
     return `<button class="us-u" onclick="abrirUsrSheet('${u.id}')">
       <span class="us-av${i.activo?'':' off'}">${inicialesDe(u.nombre)}</span>
-      <span class="us-tx"><b>${u.nombre}</b><span class="s">${sub}</span><span class="us-tags">${tags.join('')}</span></span>
+      <span class="us-tx"><b>${escHtml(u.nombre)}</b><span class="s">${sub}</span><span class="us-tags">${tags.join('')}</span></span>
       <span class="chev"></span>
     </button>`;
   }).join('')+'</div>';
@@ -4708,7 +4708,7 @@ window.abrirUsrSheet=(uid)=>{
   sh.dataset.uid=uid;
   sh.innerHTML=`<div class="us-grab"></div>
     <div class="us-sh-hd"><span class="us-av lg${i.activo?'':' off'}">${inicialesDe(u.nombre)}</span>
-      <div><div class="us-sh-n">${u.nombre}</div><div class="us-sh-s">${u.role==='asistente'?'Asistente':(u.cargo||'Técnico')} · @${u.username} · ${i.activo?'Activo':'Inactivo'}</div></div></div>
+      <div><div class="us-sh-n">${escHtml(u.nombre)}</div><div class="us-sh-s">${u.role==='asistente'?'Asistente':escHtml(u.cargo||'Técnico')} · @${escHtml(u.username)} · ${i.activo?'Activo':'Inactivo'}</div></div></div>
     ${cuerpo}`;
   sh.querySelectorAll('.us-ac:not([onclick]), .us-ac[onclick=""]').forEach(b=>{ b.disabled=true; });
   $('usrDim').classList.add('on'); sh.classList.add('on');
@@ -5010,8 +5010,8 @@ async function renderAlertaAyer(){
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${color};margin-bottom:4px">${tit} (${arr.length})</div>
         ${arr.map(fn).join('')}
       </div>`:'';
-    const filaMin=x=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:13px"><span>${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span>${etiquetaEstado('mal',fmtMin(x.min),'sm')}</div>`;
-    const filaNombre=x=>`<div style="padding:4px 0;font-size:13px">${x.nombre} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></div>`;
+    const filaMin=x=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:13px"><span>${escHtml(x.nombre)} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></span>${etiquetaEstado('mal',fmtMin(x.min),'sm')}</div>`;
+    const filaNombre=x=>`<div style="padding:4px 0;font-size:13px">${escHtml(x.nombre)} <span style="color:var(--text2);font-size:11px">· ${x.fecha}</span></div>`;
 
     cont.innerHTML=`<details class="rban">
       <summary class="rban-hd">
@@ -5100,7 +5100,7 @@ window.cargarAsistencia=async()=>{
       return `<button class="as-emp" onclick="abrirAsistEmp('${f.uid}')">
         <span class="as-emp-n ${inc?'mal':'ok'}"><b>${inc}</b><small>incid.</small></span>
         <span class="as-emp-b">
-          <span class="as-emp-nom">${f.nombre}</span>
+          <span class="as-emp-nom">${escHtml(f.nombre)}</span>
           <span class="as-emp-m"><span><b class="r">${f.diasTarde}</b> tarde</span><span><b class="a">${f.salidasTemp}</b> salidas</span><span><b class="n">${f.noMarco}</b> sin marcar</span></span>
           <span class="as-emp-c">${min?hmAsist(min)+' perdidos':'Sin minutos perdidos'}</span>
         </span>
@@ -5180,7 +5180,7 @@ function pintarAsistDia(){
     <div class="rg-det as-dlist">
       <div class="as-dhd"><span>Colaborador</span><span>Entrada</span><span>Salida</span></div>
       ${filasDia.map(x=>`<div class="as-drow" onclick="abrirAsistEmp('${x.f.uid}');setTimeout(()=>asIrDia('${fe}'),60)">
-        <div class="as-dn"><b>${x.f.nombre}</b>${x.sede?`<span>${x.sede}</span>`:''}</div>
+        <div class="as-dn"><b>${escHtml(x.f.nombre)}</b>${x.sede?`<span>${x.sede}</span>`:''}</div>
         ${x.nota&&!x.m?.entrada&&!x.m?.salida?`<div class="as-dnota">${x.nota}</div>`:`${marcaTxt(x.m?.entrada,'entrada')}${marcaTxt(x.m?.salida,'salida')}`}
       </div>`).join('')}
     </div>`;
@@ -5529,7 +5529,7 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
     const partes=[];
     if(d.entrada?.estado==='tarde') partes.push({tipo:'entrada',m:d.entrada,txt:`Entrada <b>${d.entrada.horaStr}</b>`,pill:d.entrada.justificado?etiquetaEstado('neutro','Justificado','sm'):etiquetaEstado('mal',fmtMin(d.entrada.minDiff||0)+' tarde','sm')});
     if(d.salida?.estado==='salida_temprana') partes.push({tipo:'salida',m:d.salida,txt:`Salida <b>${d.salida.horaStr}</b>`,pill:d.salida.justificado?etiquetaEstado('neutro','Justificado','sm'):etiquetaEstado('mal',fmtMin(d.salida.minDiff||0)+' antes','sm')});
-    partes.forEach((p,k)=>incid.push(`<div class="rg-it as-it"${k===0?` id="asd-${d.fecha}"`:''}>${fechaCol(d.fecha)}<div class="rg-it-b"><div class="as-it-row"><div><div class="rg-it-a" style="margin-top:0">${p.txt}</div><div class="as-it-tags">${p.pill}${p.m.justificado?.nota?`<span class="as-it-nota">${p.m.justificado.nota}</span>`:''}</div></div>${btnJ(p.tipo,d.fecha,!!p.m.justificado)}</div></div></div>`));
+    partes.forEach((p,k)=>incid.push(`<div class="rg-it as-it"${k===0?` id="asd-${d.fecha}"`:''}>${fechaCol(d.fecha)}<div class="rg-it-b"><div class="as-it-row"><div><div class="rg-it-a" style="margin-top:0">${p.txt}</div><div class="as-it-tags">${p.pill}${p.m.justificado?.nota?`<span class="as-it-nota">${escHtml(p.m.justificado.nota)}</span>`:''}</div></div>${btnJ(p.tipo,d.fecha,!!p.m.justificado)}</div></div></div>`));
   });
   // Día por día: todos los días del mes con su hora de entrada y de salida (no solo las incidencias)
   const fechasMes=[...new Set([...f.detalle.map(d=>d.fecha), ...Object.keys(asistCache.marcs?.[f.uid]||{})])].filter(x=>x.startsWith(mes)&&x<=hoy).sort().reverse();
@@ -5537,7 +5537,7 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
     const x=diaPersona(f,fe);
     const sinMarca=!x.m?.entrada&&!x.m?.salida;
     const btns=[x.m?.entrada?.estado==='tarde'?btnJ('entrada',fe,!!x.m.entrada.justificado):'', x.m?.salida?.estado==='salida_temprana'?btnJ('salida',fe,!!x.m.salida.justificado):''].filter(Boolean).join('');
-    const notas=[x.m?.entrada?.justificado?.nota,x.m?.salida?.justificado?.nota].filter(Boolean).map(n=>`<span class="as-it-nota">${n}</span>`).join('');
+    const notas=[x.m?.entrada?.justificado?.nota,x.m?.salida?.justificado?.nota].filter(Boolean).map(n=>`<span class="as-it-nota">${escHtml(n)}</span>`).join('');
     return `<div class="rg-it as-it" id="asd-${fe}">${fechaCol(fe)}<div class="rg-it-b">
       ${sinMarca?`<div class="as-it-tags" style="margin-top:2px">${x.nota}</div>`
         :`<div class="as-dia"><span class="as-dia-k">Entrada</span>${marcaTxt(x.m?.entrada,'entrada')}<span class="as-dia-k">Salida</span>${marcaTxt(x.m?.salida,'salida')}</div>
@@ -5550,7 +5550,7 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
     <div class="rg-ph">
       <button class="rg-back" onclick="volverAsistLista()" aria-label="Volver">‹</button>
       <div class="rg-av lg">${inicialesDe(f.nombre)}</div>
-      <div class="rg-ph-tx"><div class="rg-ph-n">${f.nombre}</div><div class="rg-ph-c">${mesLabel(mes)}</div></div>
+      <div class="rg-ph-tx"><div class="rg-ph-n">${escHtml(f.nombre)}</div><div class="rg-ph-c">${mesLabel(mes)}</div></div>
     </div>
     <div class="rg-stats">
       <div class="rg-st r"><div class="v">${f.diasTarde}</div><div class="l">Días tarde${f.minTarde?' · '+hmAsist(f.minTarde):''}</div></div>
@@ -5618,7 +5618,7 @@ window.onSabadoFechaChange=async()=>{
   const yaAsignados=snap.exists()&&Array.isArray(snap.val().empleados)?snap.val().empleados:[];
   $('sabadoBtnQuitar').style.display=snap.exists()?'':'none';
   if(!emps.length){ cont.innerHTML='<div class="sx-vacio">No hay empleados con sede asignada.</div>'; return; }
-  cont.innerHTML=emps.map(u=>`<label class="sx-chk"><input type="checkbox" value="${u.id}" ${yaAsignados.includes(u.id)?'checked':''}>${u.nombre}</label>`).join('');
+  cont.innerHTML=emps.map(u=>`<label class="sx-chk"><input type="checkbox" value="${u.id}" ${yaAsignados.includes(u.id)?'checked':''}>${escHtml(u.nombre)}</label>`).join('');
   sxCuenta('sabadoEmpleados','sabCuenta');
 };
 
@@ -6023,7 +6023,7 @@ function renderArmar(){
   const vehSelector=(idx,g)=>{
     if(g.area!=='campo') return '';
     const veh=g.vehiculo?progVehiculos.find(v=>v.id===g.vehiculo):null;
-    if(veh) return `<span class="pg-placa" onclick="event.stopPropagation();progQuitarVehiculo(${idx})" title="Quitar vehículo">${veh.nombre}<span class="tbl-x">×</span></span>`;
+    if(veh) return `<span class="pg-placa" onclick="event.stopPropagation();progQuitarVehiculo(${idx})" title="Quitar vehículo">${escHtml(veh.nombre)}<span class="tbl-x">×</span></span>`;
     return `<button class="pg-vadd" onclick="event.stopPropagation();progAbrirVeh(${idx})">+ Vehículo</button>`;
   };
   // Tarjeta de un grupo (dentro de su campaña)
@@ -6032,7 +6032,7 @@ function renderArmar(){
     const vacio=!(g.empleados&&g.empleados.length);
     const personas=(g.empleados||[]).map((uid,k)=>{
       const nom=(g.empleadosNombres||[])[k]||'';
-      return `<span class="pg-p" onclick="event.stopPropagation();progQuitarPersona(${idx},'${uid}')"><i>${inicialesDe(nom)}</i>${nom}<span class="tbl-x">×</span></span>`;
+      return `<span class="pg-p" onclick="event.stopPropagation();progQuitarPersona(${idx},'${uid}')"><i>${escHtml(inicialesDe(nom))}</i>${escHtml(nom)}<span class="tbl-x">×</span></span>`;
     }).join('');
     return `<div class="pg-g${vacio?' vacio':''}${progSel?' destino':''}" ondragover="progDragOver(event)" ondrop="progDrop(event,${idx})" onclick="progTapCaja(${idx})">
       <div class="pg-g-hd">
@@ -6069,7 +6069,7 @@ function renderArmar(){
       const kEsc=k.replace(/'/g,"\\'"), nEsc=c.nombre.replace(/'/g,"\\'");
       return `<div class="pg-c${open?' open':''}">
         <button class="pg-c-hd" onclick="progToggleCamp('${kEsc}',${gs.length?1:0})">
-          <span class="pg-dot${gs.length?' on':''}"></span><b>${c.nombre}</b><small>${info}</small><span class="chev"></span>
+          <span class="pg-dot${gs.length?' on':''}"></span><b>${escHtml(c.nombre)}</b><small>${info}</small><span class="chev"></span>
         </button>
         ${open?`<div class="pg-c-b">${gs.map(cajaGrupo).join('')}<button class="pg-c-add" onclick="progAgregarGrupo('${nEsc}','${area}')">+ Agregar grupo</button></div>`:''}
       </div>`;
@@ -6102,9 +6102,9 @@ function renderArmar(){
       </div>
     </div>
 
-    ${progSel?`<div class="pg-sel"><span>Asignando a <b>${progSel.nombre}</b>: toca un grupo</span><button onclick="progCancelSel()">Cancelar</button></div>`:''}
+    ${progSel?`<div class="pg-sel"><span>Asignando a <b>${escHtml(progSel.nombre)}</b>: toca un grupo</span><button onclick="progCancelSel()">Cancelar</button></div>`:''}
 
-    ${conflictos.length?`<div class="pg-avisos">${conflictos.map(a=>`<div class="mk-av lejos"><span class="mk-av-ic">!</span><div class="mk-av-tx"><span style="margin:0">${a}</span></div></div>`).join('')}</div>`:''}
+    ${conflictos.length?`<div class="pg-avisos">${conflictos.map(a=>`<div class="mk-av lejos"><span class="mk-av-ic">!</span><div class="mk-av-tx"><span style="margin:0">${escHtml(a)}</span></div></div>`).join('')}</div>`:''}
 
     <div class="pg-sec"><span>Campo</span><i></i></div>
     ${bloqueArea('campo')||'<div class="prog-vacio">No hay campañas de campo.</div>'}
@@ -6200,7 +6200,7 @@ window.progAbrirVeh=(idx)=>{
     const sub=v.estado!=='disponible'?est.texto:otro?`En ${otro.campania} · Grupo ${otro.__n||''}`:(solo||'Libre');
     const tono=v.estado!=='disponible'?'r':otro?'a':(solo?'a':'g');
     return `<button type="button" class="sx-op pg-vop${actual?' on':''}${libre?'':' no'}"${libre?` onclick="progElegirVeh(${idx},'${v.id}')"`:' disabled'}>
-      <i>${v.tipo==='moto'?ICO_MOTO:ICO_PICKUP}</i><b class="pg-vop-placa">${v.nombre}</b><small class="${tono}">${sub}</small></button>`;
+      <i>${v.tipo==='moto'?ICO_MOTO:ICO_PICKUP}</i><b class="pg-vop-placa">${escHtml(v.nombre)}</b><small class="${tono}">${sub}</small></button>`;
   };
   const orden=v=>(v.estado!=='disponible'?3:enGrupo[v.id]?2:((v.campanias||[]).length&&!(v.campanias||[]).includes(g.campania)?1:0));
   const lista=tipo=>progVehiculos.filter(v=>v.tipo===tipo&&v.estado!=='baja').sort((a,b)=>orden(a)-orden(b)||a.nombre.localeCompare(b.nombre));
@@ -6257,7 +6257,7 @@ window.renderPanelPersonal=()=>{
   const gDest=progDestino!==null?progGrupos[progDestino]:null;
   $('panelPersonalTit').textContent=gDest?`Agregar a ${gDest.campania} · Grupo ${gDest.__n||''}`:`Personal libre (${progPersLibres.length})`;
   cont.innerHTML = lista.length
-    ? lista.map(u=>`<div class="panel-pers-item" onclick="progPanelElegir('${u.id}','${(nombreMostrar(u)||'').replace(/'/g,"\\'")}')">${nombreMostrar(u)}</div>`).join('')
+    ? lista.map(u=>`<div class="panel-pers-item" onclick="progPanelElegir('${u.id}','${(nombreMostrar(u)||'').replace(/'/g,"\\'")}')">${escHtml(nombreMostrar(u))}</div>`).join('')
     : '<div style="font-size:13px;color:var(--text2);padding:12px;text-align:center">Sin coincidencias</div>';
   const nd=$('panelNoDisp');
   if(nd){
@@ -6654,7 +6654,7 @@ async function renderCatalogos(){
     const est=ESTADOS_VEHICULO[v.estado]||ESTADOS_VEHICULO.disponible;
     const restr=Array.isArray(v.campanias)&&v.campanias.length?`<div class="ct-solo">Solo ${v.campanias.join(', ')}</div>`:'';
     return `<button class="ct-veh${v.estado==='baja'?' baja':''}" onclick="openVehiculo('${v.id}')">
-      <span class="ct-placa">${v.nombre}</span>
+      <span class="ct-placa">${escHtml(v.nombre)}</span>
       <span class="ct-r">${icV[v.tipo]||icV.carro}<span class="ct-est ${tonoEst[v.estado]||'ok'}">${est.texto}</span></span>${restr}</button>`;
   };
   cv.innerHTML=`<div class="ps-sec">Vehículos · ${carros.length} ${carros.length===1?'carro':'carros'} y ${motos.length} ${motos.length===1?'moto':'motos'}</div>
@@ -6664,7 +6664,7 @@ async function renderCatalogos(){
   const col=(area,titulo)=>{
     const cs=progCampanias.filter(c=>c.area===area);
     return `<div class="ct-col"><div class="ct-col-hd ${area}">${titulo}<span>${cs.length} ${cs.length===1?'campaña':'campañas'}</span></div>
-      ${cs.map((c,i)=>`<button class="ct-camp${c.activa===false?' off':''}" onclick="openCampania('${c.id}')"><span class="ct-n">${i+1}</span><span class="ct-cn">${c.nombre}</span>${c.activa===false?'<span class="rg-pill">Inactiva</span>':''}<span class="ct-go">›</span></button>`).join('')||'<div class="ct-vacio">Ninguna</div>'}
+      ${cs.map((c,i)=>`<button class="ct-camp${c.activa===false?' off':''}" onclick="openCampania('${c.id}')"><span class="ct-n">${i+1}</span><span class="ct-cn">${escHtml(c.nombre)}</span>${c.activa===false?'<span class="rg-pill">Inactiva</span>':''}<span class="ct-go">›</span></button>`).join('')||'<div class="ct-vacio">Ninguna</div>'}
       <button class="ct-camp ct-camp-add" onclick="openCampania(null,'${area}')">+ Agregar campaña de ${area}</button></div>`;
   };
   cc.innerHTML=`<div class="ps-sec">Campañas</div><div class="ct-cols">${col('campo','CAMPO')}${col('plantel','PLANTEL')}</div>`;
@@ -6683,7 +6683,7 @@ window.openVehiculo=(id)=>{
   // Campañas de campo para restricción
   const campo=progCampanias.filter(c=>c.area==='campo'&&c.activa!==false);
   const marcadas=v?.campanias||[];
-  $('vehCampanias').innerHTML=campo.map(c=>`<label class="sx-chk"><input type="checkbox" value="${c.nombre}" ${marcadas.includes(c.nombre)?'checked':''}>${c.nombre}</label>`).join('')||'<div class="sx-vacio">No hay campañas de campo.</div>';
+  $('vehCampanias').innerHTML=campo.map(c=>`<label class="sx-chk"><input type="checkbox" value="${escHtml(c.nombre)}" ${marcadas.includes(c.nombre)?'checked':''}>${escHtml(c.nombre)}</label>`).join('')||'<div class="sx-vacio">No hay campañas de campo.</div>';
   $('moVehiculo').classList.add('open');
 };
 window.guardarVehiculoUI=async()=>{
@@ -6764,8 +6764,8 @@ window.verHistorialDia=(fecha,inicial)=>{
   const secc=(area,tit)=>{
     const ag=gs.filter(g=>g.area===area); if(!ag.length) return '';
     return `<div class="ps-sec ${area}">${tit}</div>`+ag.map(g=>`<div class="ph-g ${area}"><span class="ph-g-bar"></span>
-      <span class="ph-g-x"><b>${g.campania}</b>${g.zona?`<span class="ph-zona">📍 ${escHtml(g.zona)}</span>`:''}<span class="ph-g-p">${(g.empleadosNombres||[]).filter(Boolean).join(' · ')||'Sin personal'}</span></span>
-      ${placa(g)?`<span class="ph-placa">${placa(g)}</span>`:''}</div>`).join('');
+      <span class="ph-g-x"><b>${escHtml(g.campania)}</b>${g.zona?`<span class="ph-zona">📍 ${escHtml(g.zona)}</span>`:''}<span class="ph-g-p">${escHtml((g.empleadosNombres||[]).filter(Boolean).join(' · ')||'Sin personal')}</span></span>
+      ${placa(g)?`<span class="ph-placa">${escHtml(placa(g))}</span>`:''}</div>`).join('');
   };
   cont.innerHTML=`<div class="ph-det-hd"><div class="ph-det-t"><b>${titulo.charAt(0).toUpperCase()+titulo.slice(1)}</b><span>${gs.length} ${gs.length===1?'grupo':'grupos'} · ${nPers} ${nPers===1?'persona':'personas'}${nVeh?` · ${nVeh} ${nVeh===1?'vehículo':'vehículos'}`:''}</span></div>
       <button onclick="phCopiar('${fecha}')">Copiar a Programar</button><button onclick="phCompartir('${fecha}')">Compartir imagen</button></div>
@@ -6794,7 +6794,7 @@ window.openAusencia=async()=>{
   // Cargar empleados en el selector
   const users=await getUsers();
   const empleados=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true')).sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  $('ausEmpleado').innerHTML=empleados.map(u=>`<option value="${u.id}">${u.nombre}</option>`).join('');
+  $('ausEmpleado').innerHTML=empleados.map(u=>`<option value="${u.id}">${escHtml(u.nombre)}</option>`).join('');
   $('ausTipo').value='incapacidad';
   $('ausIni').value=today();
   $('ausDias').value='1';
@@ -6966,7 +6966,7 @@ async function renderAusencias(){
     const l=Math.min(100,dIni/14*100), w=Math.max(4,Math.min(100,dFin/14*100)-l);
     return `<div class="au-r">
       <span class="au-av ${t}">${inicialesDe(it.nombre)}</span>
-      <span class="au-n"><b>${it.nombre}</b><span>${cuando}</span></span>
+      <span class="au-n"><b>${escHtml(it.nombre)}</b><span>${cuando}</span></span>
       <span class="au-bar" title="Próximos 14 días"><i class="${t}" style="left:${l}%;width:${w}%"></i></span>
       <span class="rg-pill ${t==='r'?'r':t==='g'?'g':'v'} au-pill">${AUS_TIPO_LABEL[it.tipo]}</span>
       <button class="au-x" aria-label="Quitar" onclick='eliminarAusencia(${JSON.stringify(it.keys)},"${it.uid}","${(it.nombre||'').replace(/"/g,'')}")'>✕</button>
@@ -7056,7 +7056,7 @@ window.toggleAuditoria=async()=>{
     cont.innerHTML=`<div class="ap-aud-res">${sosp.map(({r,atras})=>{
       const u=porId[r.userId]||{}; const ext=u.extension;
       const conExt=ext&&ext.dias&&atras<=ext.dias-1;
-      return `<div class="ap-aud-r"><div class="ap-aud-tx"><b>${u.nombre||r.userName||r.userId}</b><span>Día ${fmt(r.fecha)} · guardado el ${fmt(diaLocal(r.creadoEn))}</span></div><span class="rg-pill ${conExt?'b':'r'}">${atras} días atrás${conExt?' · con extensión':''}</span></div>`;
+      return `<div class="ap-aud-r"><div class="ap-aud-tx"><b>${escHtml(u.nombre||r.userName||r.userId)}</b><span>Día ${fmt(r.fecha)} · guardado el ${fmt(diaLocal(r.creadoEn))}</span></div><span class="rg-pill ${conExt?'b':'r'}">${atras} días atrás${conExt?' · con extensión':''}</span></div>`;
     }).join('')}</div>`;
   }catch(e){ cont.innerHTML='<div style="font-size:13px;color:var(--danger);padding:8px 0 12px">No se pudo revisar la auditoría.</div>'; }
 };
@@ -7093,7 +7093,7 @@ async function cargarListaEmpleadosAsig(seleccionados=[]){
   const users=await getUsers();
   const emps=users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
   emps.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  l.innerHTML=emps.map(u=>`<label class="sx-chk"><input type="checkbox" value="${u.id}" ${seleccionados.includes(u.id)?'checked':''}>${u.nombre}</label>`).join('');
+  l.innerHTML=emps.map(u=>`<label class="sx-chk"><input type="checkbox" value="${u.id}" ${seleccionados.includes(u.id)?'checked':''}>${escHtml(u.nombre)}</label>`).join('');
 }
 
 window.openModalUser=async(uid)=>{
