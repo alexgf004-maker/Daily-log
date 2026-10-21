@@ -3322,7 +3322,7 @@ function rejPreparar(){
     const r=snap.val(), nombre=r.userName||k.uid, d=new Date(r.fecha+'T12:00:00');
     const minHE=r.minHE||(r.heInicio&&r.heFin?minutosEntre(r.heInicio,r.heFin):0);
     const det=k.tipo==='he'?[r.heInicio&&r.heFin?`${r.heInicio}–${r.heFin}`:(r.horaEntrada&&r.horaSalida?`${r.horaEntrada}–${r.horaSalida}`:''),minHE?fmtMin(minHE)+' extra':'Horas extra'].filter(Boolean).join(' · ')
-      :k.tipo==='viatico'?(r.actividades||'Viático')
+      :k.tipo==='viatico'?escHtml(r.actividades||'Viático')
       :(AUS_TIPO_LABEL[r.tipoDia]||r.tipoDia||'Solicitud')+(r.vacIni&&r.vacFin?` · del ${fechaCortaFx(r.vacIni)} al ${fechaCortaFx(r.vacFin)}`:'');
     $('rejInfo').innerHTML=`<div class="sx-reg"><div class="sx-dia"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></div><div class="sx-reg-t"><b>${nombre}</b><span>${det}</span></div></div>`;
     $('rejAviso').innerHTML=`${SX_BELL}<span>${nombre.split(' ')[0]} verá este motivo en su campanita.</span>`;
