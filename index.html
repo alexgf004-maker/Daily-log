@@ -476,6 +476,11 @@ const AUS_TIPOS=['vacaciones','incapacidad','permiso','bienestar','injustificado
 const $       = id => document.getElementById(id);
 const show    = id => { const e=$(id); if(e) e.style.display=''; };
 const hide    = id => { const e=$(id); if(e) e.style.display='none'; };
+function escHtml(v){
+  return String(v ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 // Despierta el servidor del login (si nadie entró en un rato tarda unos segundos en arrancar):
 // se hace al mostrar el login y al tocar el usuario, así ya está listo al terminar el PIN
 let _despertadoEn=0;
@@ -2353,7 +2358,7 @@ window.onFechaChange = async function(){
         <div style="font-size:22px;margin-bottom:6px">🚫</div>
         <div style="font-weight:700;font-size:15px;color:var(--danger);margin-bottom:6px">Día suspendido</div>
         <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Este día no será remunerado por suspensión.</div>
-        <div style="font-size:13px;color:var(--text);background:#fff;border-radius:6px;padding:8px 12px"><b>Motivo:</b> ${susp.motivo}</div>
+        <div style="font-size:13px;color:var(--text);background:#fff;border-radius:6px;padding:8px 12px"><b>Motivo:</b> ${escHtml(susp.motivo)}</div>
       </div>`;
     return;
   }
@@ -2798,7 +2803,7 @@ async function loadHist(){
         return `<div class="hl-it aus"${idH(r.fecha)} onclick="openDet('${me.id}','${r.key}',false)">
           <div class="hl-f">${diaTxt(r.fecha)}</div>
           <div class="hl-c"><div class="hl-top"><span class="hl-h">${label}</span><span class="hl-tags">${estPill}${remPill}</span></div>
-          ${r.nota?`<div class="hl-a">${r.nota}</div>`:''}</div>
+          ${r.nota?`<div class="hl-a">${escHtml(r.nota)}</div>`:''}</div>
         </div>`;
       }
       const ev=r.estadoViatico||(r.viatico?'aprobado':'na');
@@ -2820,7 +2825,7 @@ async function loadHist(){
         <div class="hl-f">${diaTxt(r.fecha)}${r.horaEntrada&&r.horaSalida?`<span>${r.horaEntrada} – ${r.horaSalida}</span>`:''}</div>
         <div class="hl-c">
           <div class="hl-top"><span class="hl-h">${dur?fmtMin(dur):'Registro'}${heMin?`<small>+${fmtMin(heMin)} extra</small>`:''}</span><span class="hl-tags">${tags}</span></div>
-          <div class="hl-a">${r.actividades||''}</div>
+          <div class="hl-a">${escHtml(r.actividades||'')}</div>
           ${notas}
           ${marc?`<div class="hl-m">${punto('Entrada',marc.entrada)}${punto('Salida',marc.salida)}</div>`:''}
         </div>
@@ -3096,7 +3101,7 @@ async function loadDash(){
                 <div style="flex:1;min-width:0">
                   <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||''}</span>
                   <span style="font-size:11px;color:var(--text2);margin-left:4px">${o.asistente||''}</span>
-                  <div style="font-size:13px;color:var(--text);margin-top:3px">${o.detalle}</div>
+                  <div style="font-size:13px;color:var(--text);margin-top:3px">${escHtml(o.detalle)}</div>
                 </div>
                 <button class="btn btn-gh btn-xs" style="flex-shrink:0" onclick="marcarLeida('${o.key}')">✓ Leída</button>
               </div>`).join('')+
@@ -3183,7 +3188,7 @@ function pintarPend(){
           ${diaCol(r.fecha)}
           <div class="pd-x" onclick="openDet('${uid}','${r.key}',true)">
             <b>${minHEPend(r)?fmtMin(minHEPend(r)):'Horas extra'}<small>${minHEPend(r)?'extra':''}${r.heInicio&&r.heFin?`${minHEPend(r)?' · ':''}${r.heInicio}–${r.heFin}`:''}</small></b>
-            <div class="${r.heJustif?'':'sin'}">${r.heJustif||'Sin justificación'}</div>
+            <div class="${r.heJustif?'':'sin'}">${escHtml(r.heJustif||'Sin justificación')}</div>
           </div>
           ${admin
             ?`<button class="pd-ib no" onclick="openRej('${uid}','${r.key}','he')" aria-label="Rechazar">✕</button><button class="pd-ib ok" onclick="aprobarHE('${uid}','${r.key}')" aria-label="Aprobar">✓</button>`
@@ -3209,7 +3214,7 @@ function pintarPend(){
           <div class="pd-n"><b>${nombre}</b><span>${cuando}</span></div>
           <span class="rg-pill v">${tipoLabels[r.tipoDia]||r.tipoDia}</span></div>
         <div class="pd-sol">
-          ${r.nota?`<div class="pd-cita">${r.nota}</div>`:''}
+          ${r.nota?`<div class="pd-cita">${escHtml(r.nota)}</div>`:''}
           <div class="pd-bt">${admin
             ?`<button class="pd-b2" onclick="openRejEspecial('${uid}','${r.key}');rejCallback=loadPend">Rechazar</button><button class="pd-b1" onclick="${aprobar}">✓ Aprobar</button>`
             :`<button class="pd-b2" onclick="openObs('${uid}','${r.key}','${esc(nombre)}','${r.fecha}')">Observación</button>`}</div>
@@ -3228,7 +3233,7 @@ function pintarPend(){
       <div class="pd-dia"><b>${fechaLarga(f)}</b><span>${porDia[f].length} ${porDia[f].length===1?'viático':'viáticos'}</span></div>
       ${porDia[f].sort((a,b)=>(a.userName||'').localeCompare(b.userName||'')).map(r=>`<div class="pd-rw">
         <div class="pd-av sm">${inicialesDe(r.userName||r.userId)}</div>
-        <div class="pd-x" onclick="openDet('${r.userId}','${r.key}',true)"><b>${r.userName||r.userId}</b><div>${r.actividades||''}</div></div>
+        <div class="pd-x" onclick="openDet('${r.userId}','${r.key}',true)"><b>${r.userName||r.userId}</b><div>${escHtml(r.actividades||'')}</div></div>
         <button class="pd-anu" onclick="openRej('${r.userId}','${r.key}','viatico')">Anular</button>
       </div>`).join('')}
     </div>`).join('')+'<div class="pd-tip">Viáticos del último mes · toca uno para ver el detalle</div>';
@@ -3317,7 +3322,7 @@ function rejPreparar(){
     const r=snap.val(), nombre=r.userName||k.uid, d=new Date(r.fecha+'T12:00:00');
     const minHE=r.minHE||(r.heInicio&&r.heFin?minutosEntre(r.heInicio,r.heFin):0);
     const det=k.tipo==='he'?[r.heInicio&&r.heFin?`${r.heInicio}–${r.heFin}`:(r.horaEntrada&&r.horaSalida?`${r.horaEntrada}–${r.horaSalida}`:''),minHE?fmtMin(minHE)+' extra':'Horas extra'].filter(Boolean).join(' · ')
-      :k.tipo==='viatico'?(r.actividades||'Viático')
+      :k.tipo==='viatico'?escHtml(r.actividades||'Viático')
       :(AUS_TIPO_LABEL[r.tipoDia]||r.tipoDia||'Solicitud')+(r.vacIni&&r.vacFin?` · del ${fechaCortaFx(r.vacIni)} al ${fechaCortaFx(r.vacFin)}`:'');
     $('rejInfo').innerHTML=`<div class="sx-reg"><div class="sx-dia"><b>${d.getDate()}</b><span>${DIAS_CORTOS[d.getDay()]}</span></div><div class="sx-reg-t"><b>${nombre}</b><span>${det}</span></div></div>`;
     $('rejAviso').innerHTML=`${SX_BELL}<span>${nombre.split(' ')[0]} verá este motivo en su campanita.</span>`;
@@ -3587,7 +3592,7 @@ window.cargarPerfilEmpleado=async()=>{
           <div class="rg-it-top"><span class="rg-pill v">${label}</span><span class="rg-it-tags">
             <span class="rg-pill ${est==='pendiente'?'a':est==='aprobado'?'g':'r'}">${est==='pendiente'?'Pendiente':est==='aprobado'?'Aprobado':'Rechazado'}</span>${remPill}</span></div>
           ${rangoVac}
-          ${r.nota?`<div class="rg-it-a">${r.nota}</div>`:''}
+          ${r.nota?`<div class="rg-it-a">${escHtml(r.nota)}</div>`:''}
           ${r.motivoRechazoEspecial?`<div class="rg-it-nota r"><b>Motivo rechazo:</b> ${r.motivoRechazoEspecial}</div>`:''}
           ${isAdmin()&&pendEspecial?`<div class="rg-it-acc">
             ${r.tipoDia==='permiso'
@@ -3619,9 +3624,9 @@ window.cargarPerfilEmpleado=async()=>{
       ${fechaCol(r.fecha)}
       <div class="rg-it-b">
         <div class="rg-it-top"><span class="rg-it-h">${horario}${heStr?` · <b>${heStr}</b>`:''}</span><span class="rg-it-tags">${tags}</span></div>
-        <div class="rg-it-a">${r.actividades||''}</div>
+        <div class="rg-it-a">${escHtml(r.actividades||'')}</div>
         <div class="cmp-fila" data-cmp="${r.key}"></div>
-        ${r.he&&r.heJustif?`<div class="rg-it-nota"><b>Justif. HE:</b> ${r.heJustif}</div>`:''}
+        ${r.he&&r.heJustif?`<div class="rg-it-nota"><b>Justif. HE:</b> ${escHtml(r.heJustif)}</div>`:''}
         ${r.notaAjusteHE?`<div class="rg-it-nota a"><b>Ajuste HE:</b> ${r.notaAjusteHE} (${hmCorto(r.minHEAprobado||0)} aprobados)</div>`:''}
         ${r.motivoRechazoViatico?`<div class="rg-it-nota r"><b>Anulación viático:</b> ${r.motivoRechazoViatico}</div>`:''}
         ${r.motivoRechazoHE?`<div class="rg-it-nota r"><b>Rechazo HE:</b> ${r.motivoRechazoHE}</div>`:''}
@@ -3792,7 +3797,7 @@ async function abrirAprobarHE(uid,key,cb){
   $('moHEInfo').innerHTML=`<div class="he-per"><span class="pd-av">${inicialesDe(nombre)}</span>
       <span class="he-per-tx"><b>${nombre}</b><span>${f.charAt(0).toUpperCase()+f.slice(1)} · ${r.horaEntrada||''}–${r.horaSalida||''}</span></span>
       <span class="he-reg"><small>Registró</small><b>${fmtMin(heOriginal)}</b></span></div>
-    ${r.heJustif?`<div class="ds-just" style="margin:12px 0 4px">${r.heJustif}</div>`:''}`;
+    ${r.heJustif?`<div class="ds-just" style="margin:12px 0 4px">${escHtml(r.heJustif)}</div>`:''}`;
   const chips=[heOriginal,heOriginal-30,heOriginal-60,120,60].filter((v,i,a)=>v>0&&a.indexOf(v)===i).slice(0,4);
   $('heChips').innerHTML=chips.map(v=>`<button type="button" onclick="heFijar(${v})">${v===heOriginal?'Lo registrado · ':''}${fmtMin(v)}</button>`).join('');
   hePintar();
@@ -4306,7 +4311,7 @@ async function loadObservaciones(){
         </div>
         <div style="font-size:11px;color:var(--text2);white-space:nowrap">${o.asistente||'—'}</div>
       </div>
-      <div style="font-size:13px;color:var(--text);margin-bottom:8px">${o.detalle||'—'}</div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:8px">${escHtml(o.detalle||'—')}</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         ${o.uid&&o.key?`<button class="btn btn-gh btn-xs" onclick="verRegObs('${o.uid}','${o.key}')">Ver registro</button>`:''}
        ${!o.leida?`<button class="btn btn-gh btn-xs" onclick="marcarLeida('${o.obsId}')">Marcar leída</button>`:'<span style="font-size:11px;color:var(--gray400)">✓ Leída</span>'}
@@ -4348,7 +4353,7 @@ window.marcarLeida=async(key)=>{
               <div style="flex:1;min-width:0">
                 <span class="badge by" style="font-size:10px">${tipoLabels[o.tipo]||''}</span>
                 <span style="font-size:11px;color:var(--text2);margin-left:4px">${o.asistente||''}</span>
-                <div style="font-size:13px;color:var(--text);margin-top:3px">${o.detalle}</div>
+                <div style="font-size:13px;color:var(--text);margin-top:3px">${escHtml(o.detalle)}</div>
               </div>
               <button class="btn btn-gh btn-xs" style="flex-shrink:0" onclick="marcarLeida('${o.key}')">✓ Leída</button>
             </div>`).join('')+
@@ -4537,10 +4542,10 @@ window.verCompanero=async(uid,fecha)=>{
   const etiq={asueto:'Asueto',vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso',bienestar:'Día de bienestar',injustificado:'Permiso injustificado'};
   let cuerpo;
   if(!r) cuerpo=`<div class="ds-box cmp-nada">No hizo registro de este día.</div>`;
-  else if(r.tipoDia&&r.tipoDia!=='normal') cuerpo=`<div class="ds-chips"><span class="ds-chip v">${etiq[r.tipoDia]||r.tipoDia}</span></div>${r.nota?`<div class="ds-k">Nota</div><div class="ds-box">${r.nota}</div>`:''}`;
+  else if(r.tipoDia&&r.tipoDia!=='normal') cuerpo=`<div class="ds-chips"><span class="ds-chip v">${etiq[r.tipoDia]||r.tipoDia}</span></div>${r.nota?`<div class="ds-k">Nota</div><div class="ds-box">${escHtml(r.nota)}</div>`:''}`;
   else cuerpo=`<div class="ds-chips">${r.viatico?(r.estadoViatico==='rechazado'?'<span class="ds-chip r">Viático anulado</span>':'<span class="ds-chip g">Viático</span>'):'<span class="ds-chip n">Sin viático</span>'}${r.he?`<span class="ds-chip ${r.estadoHE==='aprobado'?'g':r.estadoHE==='rechazado'?'r':'a'}">${fmtMin(minHEde(r))} extra</span>`:''}</div>
-    <div class="ds-k">Actividades</div><div class="ds-box">${r.actividades||''}</div>
-    ${r.he&&r.heJustif?`<div class="ds-k">Justificación de horas extra</div><div class="ds-just">${r.heJustif}</div>`:''}`;
+    <div class="ds-k">Actividades</div><div class="ds-box">${escHtml(r.actividades||'')}</div>
+    ${r.he&&r.heJustif?`<div class="ds-k">Justificación de horas extra</div><div class="ds-just">${escHtml(r.heJustif)}</div>`:''}`;
   c.innerHTML=`<div class="ds-emp">${u?.nombre||uid}</div>
     <div class="ds-t">${['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][d.getDay()]} ${d.getDate()} de ${MESES_FX[d.getMonth()]}</div>
     <div class="ds-s">${[r?.horaEntrada&&r?.horaSalida?`Registró ${r.horaEntrada} – ${r.horaSalida}`:'', marca].filter(Boolean).join(' · ')||'Sin marcaje este día'}</div>
@@ -4572,7 +4577,7 @@ window.openDet=async(uid,key,fromAdmin)=>{
       +`<span class="ds-chip ${est==='pendiente'?'a':est==='rechazado'?'r':'g'}">${est==='pendiente'?'⏳ Pendiente':est==='rechazado'?'✗ Rechazado':'✓ Aprobado'}</span>`
       +((r.tipoDia==='permiso'&&est==='aprobado')?`<span class="ds-chip n">${r.remunerado===false?'No remunerado':'Remunerado'}</span>`:'');
     if(r.tipoDia==='vacaciones'&&r.vacIni&&r.vacFin) sub.push(`Del ${fmt(r.vacIni)} al ${fmt(r.vacFin)}`);
-    cuerpo=(r.nota?`<div class="ds-k">Nota</div><div class="ds-box">${r.nota}</div>`:'')
+    cuerpo=(r.nota?`<div class="ds-k">Nota</div><div class="ds-box">${escHtml(r.nota)}</div>`:'')
       +(r.motivoRechazoEspecial?`<div class="ds-k">Motivo del rechazo</div><div class="ds-just r">${r.motivoRechazoEspecial}</div>`:'');
   } else {
     chips=(r.viatico
@@ -4583,8 +4588,8 @@ window.openDet=async(uid,key,fromAdmin)=>{
           :eh==='rechazado'?'<span class="ds-chip r">✗ Horas extra rechazadas</span>'
           :`<span class="ds-chip a">⏳ ${fmtMin(minHEde(r))} extra · pendiente</span>`)
         :'');
-    cuerpo=`<div class="ds-k">Actividades</div><div class="ds-box">${r.actividades||''}</div>`
-      +(r.he?`<div class="ds-k">Justificación de horas extra${r.heInicio&&r.heFin?` · ${r.heInicio} a ${r.heFin}`:''}</div><div class="ds-just">${r.heJustif||'Sin justificación'}</div>`:'')
+    cuerpo=`<div class="ds-k">Actividades</div><div class="ds-box">${escHtml(r.actividades||'')}</div>`
+      +(r.he?`<div class="ds-k">Justificación de horas extra${r.heInicio&&r.heFin?` · ${r.heInicio} a ${r.heFin}`:''}</div><div class="ds-just">${escHtml(r.heJustif||'Sin justificación')}</div>`:'')
       +(r.he&&r.heAjustada?`<div class="ds-k">Horas extra ajustadas</div><div class="ds-just">Aprobadas ${fmtMin(r.minHEAprobado||0)} de ${fmtMin(r.minHE||0)} registradas${r.notaAjusteHE?` · ${r.notaAjusteHE}`:''}</div>`:'')
       +(r.he&&r.motivoRechazoHE?`<div class="ds-k">Motivo del rechazo de horas extra</div><div class="ds-just r">${r.motivoRechazoHE}</div>`:'')
       +(r.viatico&&r.motivoRechazoViatico?`<div class="ds-k">Motivo de anulación del viático</div><div class="ds-just r">${r.motivoRechazoViatico}</div>`:'');
@@ -6759,7 +6764,7 @@ window.verHistorialDia=(fecha,inicial)=>{
   const secc=(area,tit)=>{
     const ag=gs.filter(g=>g.area===area); if(!ag.length) return '';
     return `<div class="ps-sec ${area}">${tit}</div>`+ag.map(g=>`<div class="ph-g ${area}"><span class="ph-g-bar"></span>
-      <span class="ph-g-x"><b>${g.campania}</b>${g.zona?`<span class="ph-zona">📍 ${g.zona}</span>`:''}<span class="ph-g-p">${(g.empleadosNombres||[]).filter(Boolean).join(' · ')||'Sin personal'}</span></span>
+      <span class="ph-g-x"><b>${g.campania}</b>${g.zona?`<span class="ph-zona">📍 ${escHtml(g.zona)}</span>`:''}<span class="ph-g-p">${(g.empleadosNombres||[]).filter(Boolean).join(' · ')||'Sin personal'}</span></span>
       ${placa(g)?`<span class="ph-placa">${placa(g)}</span>`:''}</div>`).join('');
   };
   cont.innerHTML=`<div class="ph-det-hd"><div class="ph-det-t"><b>${titulo.charAt(0).toUpperCase()+titulo.slice(1)}</b><span>${gs.length} ${gs.length===1?'grupo':'grupos'} · ${nPers} ${nPers===1?'persona':'personas'}${nVeh?` · ${nVeh} ${nVeh===1?'vehículo':'vehículos'}`:''}</span></div>
@@ -6951,7 +6956,7 @@ async function renderAusencias(){
   const fc=f=>fechaCortaFx(f), Fc=f=>{ const t=fc(f); return t.charAt(0).toUpperCase()+t.slice(1); };
   const fila=it=>{
     const t=tono[it.tipo]||'v';
-    const nota=it.nota&&it.nota!==AUS_TIPO_LABEL[it.tipo]?` · ${it.nota}`:'';
+    const nota=it.nota&&it.nota!==AUS_TIPO_LABEL[it.tipo]?` · ${escHtml(it.nota)}`:'';
     const cuando=it.ini===it.fin
       ?(it.ini===hoy?'Solo hoy':Fc(it.ini))+nota
       :`${Fc(it.ini)} al ${fc(it.fin)} · ${it.dias} días · regresa el ${fc(regresa(it.fin))}`;
