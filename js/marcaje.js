@@ -4,11 +4,11 @@
 // desde index.html — no inicializa su propia conexión a Firebase.
 
 export const SEDES = {
-  plantel:      { nombre:'Plantel Central',                     lat:13.688409755143281, lng:-89.27993065477382, radio:115 },
-  gestionmedida:{ nombre:'Plantel Central · Gestión de la medida', lat:13.687696, lng:-89.280831, radio:100 },
-  cucumacayan:  { nombre:'Subestación Cucumacayán',             lat:13.693570433295193, lng:-89.20564341328895, radio:100 },
-  zacatecoluca: { nombre:'Subestación Zacatecoluca',            lat:13.508016211954466, lng:-88.86875891706555, radio:100 },
-  prueba:       { nombre:'Prueba — no usar',                    lat:13.828394851402207, lng:-89.26711982035171, radio:100 },
+  plantel:      { nombre:'Plantel Central',                     corto:'Plantel',      lat:13.688409755143281, lng:-89.27993065477382, radio:115 },
+  gestionmedida:{ nombre:'Plantel Central · Gestión de la medida', corto:'Gestión de la medida', lat:13.687696, lng:-89.280831, radio:100 },
+  cucumacayan:  { nombre:'Subestación Cucumacayán',             corto:'Cucumacayán',  lat:13.693570433295193, lng:-89.20564341328895, radio:100 },
+  zacatecoluca: { nombre:'Subestación Zacatecoluca',            corto:'Zacatecoluca', lat:13.508016211954466, lng:-88.86875891706555, radio:100 },
+  prueba:       { nombre:'Prueba — no usar',                    corto:'Prueba',       lat:13.828394851402207, lng:-89.26711982035171, radio:100 },
 };
 
 // ── Distancia entre dos puntos GPS (fórmula de Haversine) ──
@@ -28,6 +28,22 @@ export function sedeEfectiva(user, hoy){
   }
   if(user.sede && SEDES[user.sede]) return { key:user.sede, ...SEDES[user.sede], temporal:false };
   return null;
+}
+
+// ── Detección automática de sede ──
+// El personal rota entre sedes: quien tiene sede asignada puede marcar (entrada o salida) en
+// cualquiera de las oficiales. 'prueba' solo cuenta para quien la tiene asignada.
+function sedesParaMarcar(user, hoy){
+  const propia=sedeEfectiva(user, hoy);
+  return Object.entries(SEDES).filter(([k])=>k!=='prueba'||propia?.key==='prueba').map(([key,s])=>({key,...s}));
+}
+// { dentro: sede en la que está (o null), cercana: la más cercana con su distancia }
+// Si está dentro de dos a la vez (Plantel y Gestión de la medida), gana la suya; si no, la más cercana.
+export function ubicarSede(user, hoy, lat, lng){
+  const propia=sedeEfectiva(user, hoy);
+  const lista=sedesParaMarcar(user, hoy).map(s=>({...s, dist:haversineMetros(lat,lng,s.lat,s.lng)})).sort((a,b)=>a.dist-b.dist);
+  const dentro=lista.filter(s=>s.dist<=s.radio);
+  return { dentro:dentro.find(s=>s.key===propia?.key)||dentro[0]||null, cercana:lista[0]||null };
 }
 
 // ── Horario oficial de entrada/salida por día ──
@@ -71,7 +87,7 @@ function calcularEstado(tipo, horaStr, fecha){
 // tenga el celular) llegan casi al instante y luego se van afinando. Al tocar
 // "Marcar" se usa la mejor lectura reciente y solo se espera si todavía no
 // alcanza para decidir.
-let _watchId=null, _mejor=null, _errGps=null, _watchHasta=0, _avisar=[];
+let _watchId=null, _mejor=null, _errGps=null, _watchHasta=0, _avisar=[], _alUbicar=null;
 const SEGUIR_MS=3*60*1000;   // seguir la ubicación hasta 3 min sin marcar
 const LECTURA_VIGENTE_MS=60*1000;
 const ESPERA_MAX_MS=15000;   // espera máxima al tocar "Marcar"
@@ -92,6 +108,7 @@ function iniciarSeguimiento(){
     if(!_mejor||pos.coords.accuracy<=_mejor.pos.coords.accuracy||ahora-_mejor.at>20000) _mejor={pos,at:ahora};
     _errGps=null;
     _avisar.slice().forEach(f=>f());
+    if(_alUbicar) try{ _alUbicar(_mejor.pos); }catch(_){}
     if(ahora>_watchHasta) detenerSeguimiento();
   }, err=>{
     _errGps=err;
@@ -102,13 +119,15 @@ function iniciarSeguimiento(){
 }
 
 export function prefetchUbicacion(){ iniciarSeguimiento(); }
+// La tarjeta de marcaje se entera de cada lectura nueva (para decir en qué sede está); null deja de avisar
+export function alUbicar(fn){ _alUbicar=fn; if(fn&&_mejor&&(Date.now()-_mejor.at)<LECTURA_VIGENTE_MS) try{ fn(_mejor.pos); }catch(_){} }
 
 function errorGps(err){
   return new Error(err&&err.code===1?'PERMISO_DENEGADO':(err&&err.code===3?'GPS_TIMEOUT':'GPS_ERROR'));
 }
 
-// Devuelve una posición suficiente para decidir si está dentro del radio de la sede
-function ubicacionParaMarcar(sede){
+// Devuelve una posición suficiente para decidir si está dentro del radio de alguna sede
+function ubicacionParaMarcar(user, hoy){
   if(!navigator.geolocation) return Promise.reject(new Error('SIN_GPS'));
   if(!iniciarSeguimiento()){
     // Navegador sin watchPosition: una lectura que acepta una posición reciente
@@ -123,10 +142,10 @@ function ubicacionParaMarcar(sede){
       if(_errGps&&_errGps.code===1) return fin(reject,errorGps(_errGps));
       const c=_mejor&&(Date.now()-_mejor.at)<LECTURA_VIGENTE_MS?_mejor.pos:null;
       if(c){
-        const dist=haversineMetros(c.coords.latitude,c.coords.longitude,sede.lat,sede.lng);
-        const precisa=c.coords.accuracy<=Math.max(60,sede.radio);
-        // Dentro del radio, o lectura precisa (para bien o para mal), o ya se esperó lo razonable
-        if(dist<=sede.radio||precisa||espera>=ESPERA_AFINAR_MS) return fin(resolve,c);
+        const {dentro,cercana}=ubicarSede(user,hoy,c.coords.latitude,c.coords.longitude);
+        const precisa=c.coords.accuracy<=Math.max(60,cercana?.radio||100);
+        // Dentro de una sede, o lectura precisa (para bien o para mal), o ya se esperó lo razonable
+        if(dentro||precisa||espera>=ESPERA_AFINAR_MS) return fin(resolve,c);
       }
       if(espera>=ESPERA_MAX_MS) return fin(reject,_errGps?errorGps(_errGps):new Error('GPS_TIMEOUT'));
     };
@@ -166,7 +185,7 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
     [dispSnap, snap, pos]=await Promise.all([
       get(ref(db,`users/${user.id}/dispositivoId`)),
       get(ref(db,path)),
-      ubicacionParaMarcar(sede),
+      ubicacionParaMarcar(user, hoy),
     ]);
   }catch(err){
     if(err instanceof Error && ['PERMISO_DENEGADO','GPS_TIMEOUT','GPS_ERROR','SIN_GPS'].includes(err.message)){
@@ -185,13 +204,14 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
     e.code='DISPOSITIVO_NO_COINCIDE'; throw e;
   }
 
-  const dist=haversineMetros(pos.coords.latitude,pos.coords.longitude,sede.lat,sede.lng);
-  if(dist>sede.radio){
-    let msg=`Estás a ${Math.round(dist)}m de ${sede.nombre} — debes estar a menos de ${sede.radio}m.`;
+  const {dentro,cercana}=ubicarSede(user,hoy,pos.coords.latitude,pos.coords.longitude);
+  if(!dentro){
+    const dist=cercana?cercana.dist:Infinity, lejos=cercana||sede;
+    let msg=`Estás a ${Math.round(dist)}m de ${lejos.nombre} — debes estar a menos de ${lejos.radio}m.`;
     if(dist>500){
       msg+=' Si estás físicamente en el lugar, tu celular puede estar dando una ubicación imprecisa. En iPhone: Configuración → Privacidad y seguridad → Localización → busca esta app → activa "Ubicación exacta".';
     }
-    const e=new Error(msg); e.code='FUERA_DE_RANGO'; e.distancia=Math.round(dist); e.sede=sede.nombre; e.radio=sede.radio; throw e;
+    const e=new Error(msg); e.code='FUERA_DE_RANGO'; e.distancia=Math.round(dist); e.sede=lejos.nombre; e.radio=lejos.radio; throw e;
   }
 
   const existente=snap.exists()?snap.val():{};
@@ -203,7 +223,7 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
     lat:pos.coords.latitude,
     lng:pos.coords.longitude,
     precision:Math.round(pos.coords.accuracy||0),
-    sedeUsada:sede.key
+    sedeUsada:dentro.key
   });
 
   // Releer para obtener la hora real que asignó el servidor
@@ -216,7 +236,7 @@ export async function marcarAsistencia(db, fns, user, tipo, hoy){
   await update(ref(db,`${path}/${tipo}`),{ estado, horaStr, minDiff });
   detenerSeguimiento(); // ya marcó: no hace falta seguir usando el GPS
 
-  return { estado, horaStr, minDiff, sede:sede.nombre, tipo };
+  return { estado, horaStr, minDiff, sede:dentro.nombre, tipo };
 }
 
 // ── Obtener el marcaje del día actual para un usuario ──

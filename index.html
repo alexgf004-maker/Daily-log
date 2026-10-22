@@ -59,7 +59,7 @@
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=79">
+<link rel="stylesheet" href="css/styles.css?v=80">
 <link rel="stylesheet" href="css/temas.css?v=29">
 <script>
 // ── Temas de temporada ──
@@ -385,8 +385,8 @@ import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "htt
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { getMessaging, getToken, deleteToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
-import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, justificarMarcaje } from "./js/marcaje.js";
-import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js";
+import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, alUbicar, ubicarSede, justificarMarcaje } from "./js/marcaje.js?v=2";
+import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js?v=2";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { configurarAvisos, estadoAvisos, activarAvisos, refrescarAvisos, quitarAvisosDeEsteTelefono, apagarAvisos, probarAviso, esIOS } from "./js/avisos.js";
 import { iniciarMusica, subirMusica, activarMusica, quitarMusica, esperarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
@@ -2224,6 +2224,8 @@ async function renderMarcajeCard(msgHtml, recien){
   const entrada=marc?.entrada, salida=marc?.salida;
 
   // Línea de tiempo: punto de entrada —— punto de salida
+  // Debajo de cada marca, la sede donde se hizo cuando no es la suya (se puede marcar en cualquiera)
+  const otraSede=dato=>dato.sedeUsada&&dato.sedeUsada!==sede.key&&SEDES[dato.sedeUsada]?`<div class="mk3-s">${SEDES[dato.sedeUsada].corto}</div>`:'';
   const punto=(dato,etiqueta)=>{
     const chip=chipEstado(dato);
     const tono=chip.color==='ba'?'ok':(chip.color==='br'?'mal':'neutro');
@@ -2232,13 +2234,13 @@ async function renderMarcajeCard(msgHtml, recien){
     if(hwTema()) return `<div class="mk3-pt${nuevo?' recien':''}">
       <div class="mk3-dot hw ${tono}">${parcaMini(tono==='mal')}</div>
       ${tono==='mal'?horaPartida(hora):`<div class="mk3-t">${hora}</div>`}
-      <div class="mk3-l">${etiqueta}</div>
+      <div class="mk3-l">${etiqueta}</div>${otraSede(dato)}
       ${etiquetaChip(chip).replace(tono==='mal'?ICO_RELOJ:ICO_CHECK,tono==='mal'?ICO_CORTE_HW:ICO_GUADANA_HW)}
     </div>`;
     return `<div class="mk3-pt${nuevo?' recien':''}">
       <div class="mk3-dot ${tono}">${tono==='mal'?'!':'✓'}</div>
       <div class="mk3-t">${hora}</div>
-      <div class="mk3-l">${etiqueta}</div>
+      <div class="mk3-l">${etiqueta}</div>${otraSede(dato)}
       ${etiquetaChip(chip)}
     </div>`;
   };
@@ -2252,6 +2254,9 @@ async function renderMarcajeCard(msgHtml, recien){
       <div class="mk3-t off">--:--</div>
       <div class="mk3-l">Salida</div>
     </div>`;
+  // Arriba: la sede donde marcó la última vez hoy; mientras falte marcar, la que detecta el GPS
+  const ultima=SEDES[(salida||entrada)?.sedeUsada];
+  const sedeTitulo=ultima?ultima.nombre:`${sede.nombre}${sede.temporal?' · temporal':''}`;
   const avance=salida?100:(entrada?50:0);
   const avanceIni=recien==='entrada'?0:(recien==='salida'?50:avance);
 
@@ -2259,7 +2264,7 @@ async function renderMarcajeCard(msgHtml, recien){
     <div class="mk3">
       <div class="mk3-hd">
         <span class="mk3-k">Mi marcaje</span>
-        <span class="mk3-sede">${sede.nombre}${sede.temporal?' · temporal':''}</span>
+        <span class="mk3-sede">${sedeTitulo}</span>
       </div>
       <div id="marcajeAlert">${msgHtml||''}</div>
       <div class="mk3-row">
@@ -2278,7 +2283,15 @@ async function renderMarcajeCard(msgHtml, recien){
     const barra=cont.querySelector('.mk3-line i');
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(barra) barra.style.width=avance+'%'; }));
   }
-  if(!salida) prefetchUbicacion();
+  if(!salida){
+    prefetchUbicacion();
+    alUbicar(pos=>{
+      const el=document.querySelector('#marcajeCard .mk3-sede'); if(!el){ alUbicar(null); return; }
+      const {dentro}=ubicarSede(me,hoy,pos.coords.latitude,pos.coords.longitude);
+      el.textContent=dentro?`Estás en ${dentro.nombre}`:sedeTitulo;
+      el.classList.toggle('aqui',!!dentro);
+    });
+  } else alUbicar(null);
 }
 
 // Aviso del marcaje (éxito, error o espera) con ícono, título y una línea
@@ -2310,8 +2323,8 @@ window.marcarAsistenciaUI=async function(tipo){
     let html;
     switch(e.code){
       case 'FUERA_DE_RANGO':
-        html=avisoMarcaje('lejos',ICO_PIN,`Estás lejos de ${e.sede||sede?.nombre||'tu sede'}`,
-          `A ${distanciaTexto(e.distancia||0)} · debes estar a menos de ${e.radio||sede?.radio||100} m`, ayudaGPS); break;
+        html=avisoMarcaje('lejos',ICO_PIN,'No estás en ninguna sede',
+          `La más cercana es ${e.sede||sede?.nombre||'tu sede'}, a ${distanciaTexto(e.distancia||0)} · debes estar a menos de ${e.radio||sede?.radio||100} m`, ayudaGPS); break;
       case 'DISPOSITIVO_NO_COINCIDE':
         html=avisoMarcaje('mal',ICO_CEL,'Esta cuenta es de otro celular','Pide a Madelyn que la reactive en este'); break;
       case 'SIN_SEDE':
@@ -5153,8 +5166,13 @@ function diaPersona(f, fecha){
     else if(det?.tipo==='justificado'||(r&&r.tipoDia&&r.tipoDia!=='normal')) nota=`<span class="rg-pill v">${tipos[det?.tipoDia||r?.tipoDia]||'Ausencia justificada'}</span>`;
     else nota=`<span class="as-nolab">${fecha>today()?'Aún no llega':'Día no laboral'}</span>`;
   } else if(!det) nota=`<span class="as-nolab">Día no laboral</span>`;
-  const sede=m?.entrada?.sedeUsada||m?.salida?.sedeUsada;
-  return {m, det, r, nota, sede:sede?(NOMBRE_SEDES[sede]||sede):''};
+  // Dónde marcó (se puede marcar en cualquier sede): "Plantel → Cucumacayán" si salió de otra,
+  // y resaltado (otra) si no es su sede fija ni la temporal
+  const se=m?.entrada?.sedeUsada, ss=m?.salida?.sedeUsada, nom=k=>escHtml(SEDES[k]?.corto||k);
+  const sede=se&&ss&&se!==ss?`${nom(se)} → ${nom(ss)}`:(se||ss?nom(se||ss):'');
+  const propias=[f.sedeFija, f.sedeTemp&&f.sedeTemp.hasta>=fecha?f.sedeTemp.sede:null];
+  const otra=[se,ss].some(k=>k&&!propias.includes(k));
+  return {m, det, r, nota, sede, otra};
 }
 function pintarAsistDia(){
   const cont=$('asistDia'); if(!cont||!asistCache) return;
@@ -5180,7 +5198,7 @@ function pintarAsistDia(){
     <div class="rg-det as-dlist">
       <div class="as-dhd"><span>Colaborador</span><span>Entrada</span><span>Salida</span></div>
       ${filasDia.map(x=>`<div class="as-drow" onclick="abrirAsistEmp('${x.f.uid}');setTimeout(()=>asIrDia('${fe}'),60)">
-        <div class="as-dn"><b>${escHtml(x.f.nombre)}</b>${x.sede?`<span>${x.sede}</span>`:''}</div>
+        <div class="as-dn"><b>${escHtml(x.f.nombre)}</b>${x.sede?`<span${x.otra?' class="as-otra"':''}>${x.sede}</span>`:''}</div>
         ${x.nota&&!x.m?.entrada&&!x.m?.salida?`<div class="as-dnota">${x.nota}</div>`:`${marcaTxt(x.m?.entrada,'entrada')}${marcaTxt(x.m?.salida,'salida')}`}
       </div>`).join('')}
     </div>`;
@@ -5541,7 +5559,7 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
     return `<div class="rg-it as-it" id="asd-${fe}">${fechaCol(fe)}<div class="rg-it-b">
       ${sinMarca?`<div class="as-it-tags" style="margin-top:2px">${x.nota}</div>`
         :`<div class="as-dia"><span class="as-dia-k">Entrada</span>${marcaTxt(x.m?.entrada,'entrada')}<span class="as-dia-k">Salida</span>${marcaTxt(x.m?.salida,'salida')}</div>
-          ${x.sede||x.nota||notas?`<div class="as-it-tags">${x.sede?`<span class="as-it-nota">${x.sede}</span>`:''}${!x.det?x.nota:''}${notas}</div>`:''}`}
+          ${x.sede||x.nota||notas?`<div class="as-it-tags">${x.sede?`<span class="as-it-nota${x.otra?' as-otra':''}">${x.sede}</span>`:''}${!x.det?x.nota:''}${notas}</div>`:''}`}
       ${btns?`<div class="rg-it-acc">${btns}</div>`:''}
     </div></div>`;
   });

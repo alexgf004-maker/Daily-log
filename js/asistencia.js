@@ -129,7 +129,7 @@ export async function resumenMesTodos(mes, empleados, getMarcajesEmpleado, getRe
       getRegsEmpleado(u.id)
     ]);
     const r=resumenMesEmpleado(mes, u.id, marcajesPorFecha, regsPorFecha, sabadosLaborales, hoy);
-    return { ...r, nombre:u.nombre };
+    return { ...r, nombre:u.nombre, sedeFija:u.sede||null, sedeTemp:u.sedeTemporal||null };
   }));
   // Ordenar: primero los que más incidencias tienen
   filas.sort((a,b)=>(b.diasTarde+b.salidasTemp+b.noMarco)-(a.diasTarde+a.salidasTemp+a.noMarco) || a.nombre.localeCompare(b.nombre));

@@ -139,6 +139,14 @@ importante — ver sección 7.**
   override por sede. Las sedes viven en SEDES (js/marcaje.js) y se listan a mano
   en 3 <select> de index.html (uSede, adPerfilSede, sedeTempSede): agregar una
   requiere tocar los 4 lugares.
+- **Detección automática de sede** (el personal rota): quien tiene sede asignada (fija o
+  temporal) puede marcar entrada y salida en CUALQUIER sede oficial; se guarda la que
+  detectó el GPS en `sedeUsada` (`ubicarSede` en js/marcaje.js). Si está dentro de dos
+  a la vez (Plantel y Gestión de la medida) gana la suya; si no, la más cercana.
+  "Prueba" solo vale para quien la tiene asignada. La sede asignada sigue decidiendo
+  quién marca y a quién le llegan los recordatorios. En Asistencia se ve dónde marcó
+  ("Cucumacayán → Zacatecoluca" si salió de otra) y se resalta si no es la suya.
+  Los imports de marcaje.js/asistencia.js llevan `?v=N`: subirlo si cambian sus exports.
 - **Vínculo de dispositivo anti-fraude**: cada empleado queda vinculado a un
   `dispositivoId` (UUID en localStorage); si marca desde otro equipo se bloquea. El admin
   puede reiniciar el vínculo.
