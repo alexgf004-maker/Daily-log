@@ -250,6 +250,18 @@ importante — ver sección 7.**
   3. **Programación**: botón "Avisar al equipo" en Programar (no se manda sola porque la programación
      se guarda con cada cambio). Avisa a cada asignado su campaña, zona, compañeros y vehículo, y dice
      quiénes no tienen los avisos activados.
+  4. **Cierre de mes** (`avisoCierreMes`, todos los días 08:00; solo actúa 3 días antes del último
+     día del mes y el último día, p. ej. 28 y 31 de octubre): cuenta horas extra y solicitudes
+     pendientes con el mismo criterio que `loadPend` (`contarPendientesCierre`), solo con fecha hasta
+     fin de mes (incluye meses anteriores aún pendientes; no las solicitudes de meses futuros). Si hay,
+     avisa a cada admin activa: "Faltan revisar 4 días con horas extra y 2 solicitudes. Octubre se
+     cierra el sábado 31." (el último día: "se cierra mañana"). Fijo, botón "Ver pendientes", abre
+     `./?pend=1` (o con la app abierta el SW manda `ir-pend`) y etiqueta `cierre-YYYY-MM` (el del 31
+     reemplaza al del 28). Botón "Probar aviso de cierre" en Mi Perfil del admin (`probarAvisoCierre`:
+     solo admin, manda ya y solo a quien lo pide; si no hay pendientes responde "No hay pendientes").
+     En la app, Pendientes muestra el aviso fijo "El mes se cierra el [día]…" a la admin en esos mismos
+     días (del 3.er día antes del último al último) si quedan pendientes hasta fin de mes; usa los
+     datos de `loadPend`, sin lecturas extra.
 - Se mandan mensajes "solo datos" y `sw.js` los muestra (igual en Android e iPhone). Los tokens que
   ya no sirven se borran solos.
 - Los recordatorios de marcar son más notorios (Android): se quedan en pantalla hasta que los toquen
