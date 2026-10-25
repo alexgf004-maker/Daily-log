@@ -237,4 +237,70 @@ async function avisarProgramacion(fecha) {
   return { personas, conAvisos, sinAvisos };
 }
 
-module.exports = { enviarA, revisarMarcajes, avisosDeRevision, avisarProgramacion, ahoraSV, horarioOficial, fechaCorta, fmtMin };
+// ── 4) Cierre de mes ──────────────────────────────
+// El mes se cierra solo el día 1 (mesCerrado de js/utils.js): lo que quede sin revisar ya no
+// entra en la planilla exportada. 3 días antes del último día y el último día, a las 08:00,
+// se avisa a la admin cuántas horas extra y solicitudes faltan (mismo criterio que loadPend).
+const DIAS_LARGOS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const DIAS_ANTES_CIERRE = 3;
+
+// ¿Hoy (YYYY-MM-DD) toca avisar? { toca, ultimo: último día del mes, faltan: días hasta el último }
+function tocaAvisoCierre(fecha) {
+  const [y, m, d] = fecha.split('-').map(Number);
+  const dias = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const ultimo = `${fecha.slice(0, 7)}-${String(dias).padStart(2, '0')}`;
+  const faltan = dias - d;
+  return { toca: faltan === 0 || faltan === DIAS_ANTES_CIERRE, ultimo, faltan };
+}
+
+// registros = { uid: { key: registro } }. Solo hasta el último día del mes (no solicitudes de meses
+// futuros); los de meses anteriores que sigan pendientes sí cuentan.
+function contarPendientesCierre(registros, ultimo) {
+  let he = 0, sol = 0;
+  for (const regs of Object.values(registros || {})) {
+    if (!regs || typeof regs !== 'object') continue;
+    for (const r of Object.values(regs)) {
+      if (!r || typeof r !== 'object' || !r.fecha || r.fecha > ultimo) continue;
+      if (r.he && r.estadoHE === 'pendiente') he++;
+      if (r.tipoDia && r.tipoDia !== 'normal' && r.tipoDia !== 'asueto' && r.estadoEspecial === 'pendiente') sol++;
+    }
+  }
+  return { he, sol };
+}
+
+function textoAvisoCierre(he, sol, ultimo, faltan) {
+  const partes = [];
+  if (he) partes.push(`${he} ${he === 1 ? 'día con horas extra' : 'días con horas extra'}`);
+  if (sol) partes.push(`${sol} ${sol === 1 ? 'solicitud' : 'solicitudes'}`);
+  const d = new Date(ultimo + 'T12:00:00');
+  const mes = MESES_LARGOS[d.getMonth()];
+  // El cierre es al empezar el día 1: el último día "se cierra mañana"; antes, se nombra el último día
+  const cuando = faltan === 0 ? 'mañana' : `el ${DIAS_LARGOS[d.getDay()]} ${d.getDate()}`;
+  return {
+    titulo: 'Cierre de mes: quedan pendientes',
+    cuerpo: `${he + sol === 1 ? 'Falta' : 'Faltan'} revisar ${partes.join(' y ')}. ${mes.charAt(0).toUpperCase() + mes.slice(1)} se cierra ${cuando}.`,
+  };
+}
+
+// fecha = hoy en El Salvador. forzar = mandar aunque hoy no toque; soloA = solo a ese admin (botón de prueba).
+async function avisarCierreMes(fecha, { forzar = false, soloA = null } = {}) {
+  const c = tocaAvisoCierre(fecha);
+  if (!c.toca && !forzar) return { toca: false };
+  const [registros, users] = await Promise.all([
+    rtdb().ref('registros').once('value').then(s => s.val() || {}),
+    rtdb().ref('users').once('value').then(s => s.val() || {}),
+  ]);
+  const { he, sol } = contarPendientesCierre(registros, c.ultimo);
+  if (!he && !sol) return { toca: c.toca, he, sol, enviado: false };
+  const aviso = {
+    ...textoAvisoCierre(he, sol, c.ultimo, c.faltan),
+    url: './?pend=1', tag: 'cierre-' + fecha.slice(0, 7), fijo: true, boton: 'Ver pendientes',
+  };
+  const admins = Object.entries(users).filter(([uid, u]) => u && u.role === 'admin' && (u.activo === true || u.activo === 'true') && (!soloA || uid === soloA));
+  let telefonos = 0;
+  for (const [uid] of admins) telefonos += await enviarA(uid, aviso);
+  return { toca: c.toca, he, sol, enviado: true, admins: admins.length, telefonos };
+}
+
+module.exports = { enviarA, revisarMarcajes, avisosDeRevision, avisarProgramacion, tocaAvisoCierre, contarPendientesCierre, textoAvisoCierre, avisarCierreMes, ahoraSV, horarioOficial, fechaCorta, fmtMin };

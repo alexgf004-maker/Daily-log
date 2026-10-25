@@ -11,7 +11,8 @@
  *   - migrarPines:    el admin pasa todos los PIN a la rama protegida.
  *   - Avisos al celular (ver avisos.js): recordatorioMarcaje (entrada y salida, cada 5 min),
  *     avisarAprobacion (al revisar HE, viáticos o días especiales), avisarProgramacion
- *     (botón "Avisar al equipo" en Programar) y probarAviso (botón en el perfil).
+ *     (botón "Avisar al equipo" en Programar), probarAviso (botón en el perfil),
+ *     avisoCierreMes (pendientes antes del cierre de mes) y probarAvisoCierre (botón del admin).
  *
  * Los PIN viven en `pins/{uid}` = { hash, salt } (sha256(salt + pin)). Las
  * reglas de la base deben negar `pins`, `pins_viejos` y `seguridad_intentos` a la app.
@@ -235,6 +236,12 @@ exports.recordatorioMarcaje = onSchedule({ schedule: '*/5 5-7,13-21 * * 1-6', ti
   if (r.revisados) console.log('Recordatorio de marcaje', r);
 });
 
+// Antes del cierre de mes (3 días antes del último y el último, 08:00): pendientes a la admin
+exports.avisoCierreMes = onSchedule({ schedule: '0 8 * * *', timeZone: 'America/El_Salvador' }, async () => {
+  const r = await avisos.avisarCierreMes(avisos.ahoraSV().fecha);
+  if (r.toca) console.log('Aviso de cierre de mes', r);
+});
+
 // Al revisar un registro (HE, viático o día especial), avisar a su dueño
 exports.avisarAprobacion = onValueUpdated('/registros/{uid}/{key}', async ev => {
   const lista = avisos.avisosDeRevision(ev.data.before.val(), ev.data.after.val());
@@ -259,4 +266,13 @@ exports.probarAviso = onCall(async req => {
     tag: 'prueba',
   });
   return { telefonos };
+});
+
+// Botón "Probar aviso de cierre" del perfil del admin: el mismo aviso, ahora y solo a mis teléfonos
+exports.probarAvisoCierre = onCall(async req => {
+  const yo = await quienLlama(req);
+  if (yo.role !== 'admin') throw new HttpsError('permission-denied', 'Solo el admin.');
+  const r = await avisos.avisarCierreMes(avisos.ahoraSV().fecha, { forzar: true, soloA: yo.uid });
+  if (!r.enviado) return { enviado: false, mensaje: 'No hay pendientes' };
+  return { enviado: true, he: r.he, sol: r.sol, telefonos: r.telefonos };
 });

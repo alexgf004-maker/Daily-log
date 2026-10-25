@@ -43,6 +43,7 @@ self.addEventListener('notificationclick', e => {
     const app = abiertas.find(c => c.url.startsWith(self.registration.scope));
     if (app) {
       if (/[?&]marcar=1/.test(url)) app.postMessage({ tipo: 'ir-marcar' });
+      if (/[?&]pend=1/.test(url)) app.postMessage({ tipo: 'ir-pend' });
       return app.focus();
     }
     return self.clients.openWindow(url);
