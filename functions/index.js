@@ -93,11 +93,26 @@ async function guardarPin(uid, pin) {
   });
 }
 
+// Si hubiera dos fichas con el mismo usuario (p. ej. por un doble toque al crearlo), gana la activa
 async function usuarioPorNombre(username) {
   const snap = await rtdb().ref('users').orderByChild('username').equalTo(username).once('value');
   let res = null;
-  snap.forEach(c => { if (!res) res = { uid: c.key, ...c.val() }; });
+  snap.forEach(c => {
+    const u = { uid: c.key, ...c.val() };
+    if (!res || (!activo(res) && activo(u))) res = u;
+  });
   return res;
+}
+
+// Aparta un nombre de usuario mientras se guarda, para que dos solicitudes al mismo tiempo no creen
+// dos fichas (las dos verían que no existe). Devuelve la función para soltarlo, o null si ya está apartado.
+const APARTADO_MS = 60 * 1000;
+async function apartarUsuario(username) {
+  const ref = rtdb().ref(`creando_usuario/${claveSegura(username)}`);
+  const ahora = Date.now();
+  const r = await ref.transaction(v => (v && v.en > ahora - APARTADO_MS ? undefined : { en: ahora }));
+  if (!r.committed) return null;
+  return () => ref.remove().catch(() => {});
 }
 
 async function quienLlama(req) {
@@ -185,27 +200,31 @@ exports.guardarUsuario = onCall(async req => {
   if (!ROLES.includes(role)) throw new HttpsError('invalid-argument', 'Rol no válido.');
   if (!uid && !pinValido(pin)) throw new HttpsError('invalid-argument', 'El PIN debe tener de 4 a 8 números.');
   if (uid && pin && !pinValido(pin)) throw new HttpsError('invalid-argument', 'El PIN debe tener de 4 a 8 números.');
-  const otro = await usuarioPorNombre(username);
-  if (otro && otro.uid !== uid) throw new HttpsError('already-exists', 'Ese usuario ya existe.');
+  const soltar = await apartarUsuario(username);
+  if (!soltar) throw new HttpsError('already-exists', 'Ese usuario ya existe.');
+  try {
+    const otro = await usuarioPorNombre(username);
+    if (otro && otro.uid !== uid) throw new HttpsError('already-exists', 'Ese usuario ya existe.');
 
-  const datos = {
-    nombre, nombreCorto: String(d.nombreCorto || '').trim(), cargo: String(d.cargo || '').trim(),
-    username, role,
-    empleadosAsig: role === 'asistente' && Array.isArray(d.empleadosAsig) ? d.empleadosAsig.map(String) : [],
-    sede: role === 'empleado' ? String(d.sede || '') : '',
-  };
-  let id = uid;
-  if (uid) {
-    const existe = (await rtdb().ref(`users/${uid}`).once('value')).exists();
-    if (!existe) throw new HttpsError('not-found', 'No existe ese usuario.');
-    await rtdb().ref(`users/${uid}`).update(datos);
-  } else {
-    const ref = rtdb().ref('users').push();
-    id = ref.key;
-    await ref.set({ ...datos, activo: true });
-  }
-  if (pin) await guardarPin(id, pin);
-  return { uid: id };
+    const datos = {
+      nombre, nombreCorto: String(d.nombreCorto || '').trim(), cargo: String(d.cargo || '').trim(),
+      username, role,
+      empleadosAsig: role === 'asistente' && Array.isArray(d.empleadosAsig) ? d.empleadosAsig.map(String) : [],
+      sede: role === 'empleado' ? String(d.sede || '') : '',
+    };
+    let id = uid;
+    if (uid) {
+      const existe = (await rtdb().ref(`users/${uid}`).once('value')).exists();
+      if (!existe) throw new HttpsError('not-found', 'No existe ese usuario.');
+      await rtdb().ref(`users/${uid}`).update(datos);
+    } else {
+      const ref = rtdb().ref('users').push();
+      id = ref.key;
+      await ref.set({ ...datos, activo: true });
+    }
+    if (pin) await guardarPin(id, pin);
+    return { uid: id };
+  } finally { await soltar(); }
 });
 
 // ── migrarPines (admin): saca todos los PIN de las fichas de usuario ──
