@@ -50,6 +50,12 @@ técnicos y comerciales de INNOVA.
   - Los PIN viven en `pins/{uid}` = `{hash, salt}` (sha256(salt+pin)). Los del formato viejo
     (`users/{uid}/pin` con salt `INNOVA_SALT_2025_`, o `pins_viejos/{uid}`) se convierten al
     primer login correcto. `pins`, `pins_viejos` y `seguridad_intentos` no los debe leer la app.
+  - **Usuarios repetidos**: un doble toque en "Guardar" llegó a crear dos fichas con el mismo
+    usuario. Ahora el botón se bloquea ("Guardando…", un solo guardado a la vez) y `guardarUsuario`
+    aparta el nombre con una transacción en `creando_usuario/{sha256(usuario)}` mientras guarda (si
+    ya está apartado: "Ese usuario ya existe"; un apartado de más de 1 min se ignora). Si aun así
+    hubiera dos fichas con el mismo usuario, `login` usa la activa (`usuarioPorNombre`), así que
+    desactivar la copia nunca deja a nadie afuera. `creando_usuario` tampoco lo lee la app.
   - La sesión guardada (`innova_session`) solo vale si además hay sesión de Firebase Auth con el
     mismo uid; si no, pide entrar de nuevo ("La app se actualizó").
   - Firebase App Check con reCAPTCHA v3 (site key `6Lfd1bMsAAAAAGk4puMSgSLebxVqffk-qsouUIie`).

@@ -7165,7 +7165,14 @@ window.openModalUser=async(uid)=>{
   $('moUsr').classList.add('open');
 };
 
+// Un solo guardado a la vez: un doble toque creaba el mismo usuario dos veces
+let guardandoUsr=false;
 window.saveUser=async()=>{
+  if(guardandoUsr) return;
+  guardandoUsr=true;
+  try{ await guardarUsuarioForm(); } finally{ guardandoUsr=false; }
+};
+async function guardarUsuarioForm(){
   const al=$('moUsrAlert');
   const nom=$('uNom').value.trim(),usr=$('uUsr').value.trim().toLowerCase(),pin=$('uPin').value.trim();
   const nomCorto=$('uNomCorto')?$('uNomCorto').value.trim():'';
@@ -7184,11 +7191,14 @@ window.saveUser=async()=>{
   const sede=(rol==='empleado'&&$('uSede'))?($('uSede').value||''):'';
   if(editUID&&pin&&pin.length<4){al.innerHTML='<div class="alert ae">PIN mínimo de 4 dígitos.</div>';return;}
   // El servidor guarda la ficha y el PIN (el PIN ya no se guarda en la ficha del usuario)
+  const btn=document.querySelector('#moUsr [onclick="saveUser()"]');
+  if(btn){ btn.disabled=true; btn.textContent='Guardando…'; }
   try{
     await llamar('guardarUsuario',{uid:editUID||null,nombre:nom,nombreCorto:nomCorto,cargo,username:usr,role:rol,empleadosAsig:rol==='asistente'?empleadosAsig:[],sede,pin});
   }catch(e){ al.innerHTML='<div class="alert ae"></div>'; al.firstChild.textContent=e.message; return; }
+  finally{ if(btn){ btn.disabled=false; btn.textContent='Guardar'; } }
   closeModal('moUsr');loadUsrs();
-};
+}
 
 window.closeModal=id=>$(id).classList.remove('open');
 document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
