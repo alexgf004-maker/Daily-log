@@ -230,6 +230,12 @@ importante — ver sección 7.**
   el día por día del perfil del empleado. Sale del grupo de la Programación de ese día y de los nombres escritos
   en las actividades (nombre + apellido, o solo el nombre si es único y va después de "con"/"y"). Tocar a uno
   abre al momento lo que esa persona registró ese día y su marcaje (`verCompanero`).
+- **Actividades prellenadas** (empleado, Nuevo Registro): al elegir el día (Normal o asueto trabajado), si está
+  en la Programación de esa fecha, Actividades empieza con "Campaña en zona, con A y B." (`prellenarActividades`,
+  `textoDeProgramacion`; "e" antes de i/hi). Solo si el campo está vacío o aún tiene el texto de la app: nunca
+  pisa lo que escribió; al cambiar de día se reemplaza (o se vacía si ese día no tiene programación). Aviso
+  "Tomado de tu programación" (`#empActsProg`) mientras no lo edite. Se puede guardar tal cual (decisión de
+  la admin). Lee la programación con `progDelDia` (caché por fecha): una lectura por día elegido.
 
 ### Avisos al celular (notificaciones)
 - Al entrar sale un anuncio a pantalla completa ("Ya te pueden llegar avisos al celular") a todos
