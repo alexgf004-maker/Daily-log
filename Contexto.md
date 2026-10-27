@@ -236,6 +236,15 @@ importante — ver sección 7.**
   pisa lo que escribió; al cambiar de día se reemplaza (o se vacía si ese día no tiene programación). Aviso
   "Tomado de tu programación" (`#empActsProg`) mientras no lo edite. Se puede guardar tal cual (decisión de
   la admin). Lee la programación con `progDelDia` (caché por fecha): una lectura por día elegido.
+- **Viático automático** (mismo momento): si el grupo del técnico en la programación de ese día es de
+  `area:'campo'`, el viático viene encendido ("encendido por tu programación de campo"). Si en Actividades
+  aparece una de `PALABRAS_OFICINA` (sellado, oficina, bodega, "no salí"; palabra completa, sin importar
+  tildes ni mayúsculas) se apaga solo y dice por qué; si la borra, vuelve. Si el técnico toca el interruptor
+  (`viatTocado`), manda él en ese registro. "plantel" no apaga a propósito ("salí del plantel a…").
+- **Pantalla "Novedades en tu registro"** (`#novReg`, estilo del anuncio de avisos): explica las actividades
+  prellenadas y el viático automático; una sola vez por celular (`localStorage.innova_novedad_registro_1`),
+  solo técnicos, "Entendido" a los 6 s. Nunca sale encima del anuncio de avisos (cada uno espera al otro).
+  Para una novedad futura: cambiar el texto y subir el número de la clave.
 
 ### Avisos al celular (notificaciones)
 - Al entrar sale un anuncio a pantalla completa ("Ya te pueden llegar avisos al celular") a todos
