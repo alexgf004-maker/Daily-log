@@ -558,7 +558,7 @@ function renderEmployee(nombre){
           </div>
           <div class="fx-card">
             <label class="fx-k" for="empActs">Actividades</label>
-            <textarea id="empActs" class="fx-ta" placeholder="Describe las actividades del día..." oninput="pintarAvisoPrellenado()"></textarea>
+            <textarea id="empActs" class="fx-ta" placeholder="Describe las actividades del día..." oninput="pintarAvisoPrellenado();aplicarViaticoAuto()"></textarea>
             <div class="fx-prell" id="empActsProg" style="display:none">Tomado de tu programación · corrige o agrega lo que hiciste</div>
           </div>
           <div class="fx-viat-wrap">
@@ -1674,6 +1674,7 @@ window.avActivarInicio=async()=>{
 window.avPosponer=()=>{ try{ localStorage.setItem(AV_POSPUESTO,String(Date.now()+7*864e5)); }catch(_){} pintarAvisosInicio(); };
 function trasEntrarAvisos(){
   if(!me) return;
+  programarNovedadesRegistro();
   // Se abrió desde el botón "Abrir para marcar" de un recordatorio: ir directo al marcaje
   if(/[?&]marcar=1/.test(location.search)){ try{ history.replaceState(null,'',location.pathname); }catch(_){} irAMarcaje(); }
   // Se abrió desde el aviso de cierre de mes: ir a Pendientes
@@ -1714,7 +1715,7 @@ function programarAnuncioAvisos(){
   const probar=async()=>{
     if(!me||$('avAnuncio')) return;
     // Esperar a que no haya otra ventana encima (recorrido de novedades, resúmenes, etc.)
-    if(document.querySelector('#tcCapa,.rm-card,.rm-dim,.mo.open,.nv-pan,.mus-espera')){ if(++intentos<150) setTimeout(probar,800); return; }
+    if(document.querySelector('#tcCapa,#novReg,.rm-card,.rm-dim,.mo.open,.nv-pan,.mus-espera')){ if(++intentos<150) setTimeout(probar,800); return; }
     const est=await estadoAvisos().catch(()=>'no-soportado');
     if(est==='activo' ? leer(AV_ANUNCIO_ACTIVO) : leer(AV_ANUNCIO)===today()) return;
     mostrarAnuncioAvisos(est);
@@ -1774,6 +1775,46 @@ window.avAnActivar=async()=>{
   } else {
     box.innerHTML=`<div class="tc-ojo av-an-ayuda">${est==='bloqueado'?AV_BLOQ:'No se pudieron activar. Puedes intentarlo después desde Mi Perfil → Avisos al celular.'}</div>`;
   }
+};
+
+// ── Novedades en el registro (actividades prellenadas y viático automático) ──
+// Pantalla completa, una sola vez por celular y solo para técnicos; "Entendido" a los 6 s.
+// Si toca el anuncio de avisos, espera a que se cierre (y aquel espera a este).
+const NOV_REG='innova_novedad_registro_1', NOV_REG_ESPERA=6;
+function programarNovedadesRegistro(){
+  if(!me||me.role!=='empleado') return;
+  try{ if(localStorage.getItem(NOV_REG)) return; }catch(_){ return; }
+  let intentos=0;
+  const probar=()=>{
+    if(!me||me.role!=='empleado'||$('novReg')) return;
+    if(document.querySelector('#tcCapa,#avAnuncio,.rm-card,.rm-dim,.mo.open,.nv-pan,.mus-espera')){ if(++intentos<150) setTimeout(probar,800); return; }
+    mostrarNovedadesRegistro();
+  };
+  setTimeout(probar,1200);
+}
+function mostrarNovedadesRegistro(){
+  const items=[['b','📝','Actividades ya llenas','Si estás en la programación del día, se llenan solas. Corrige o agrega lo que hiciste.'],
+    ['g','💵','Viático automático','Si tu programación es de campo, el viático ya viene encendido. Si trabajaste en oficina o en sellado, apágalo, o escríbelo en tus actividades y se apaga solo.']];
+  const capa=document.createElement('div'); capa.id='novReg'; capa.className='av-an';
+  capa.innerHTML=`<div class="av-an-velo"></div>
+    <div class="av-an-card" role="dialog" aria-label="Novedades en tu registro">
+      <div class="av-an-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div>
+      <div class="tc-k">NUEVO</div>
+      <div class="tc-t">Novedades en tu registro</div>
+      <div class="tc-p">Registrar tu día ahora es más rápido:</div>
+      <div class="tc-ej">${items.map(([c,ic,t,d])=>`<div><i class="${c}">${ic}</i><span><b>${t}</b><small>${d}</small></span></div>`).join('')}</div>
+      <button class="av-an-no" id="novRegOk" onclick="cerrarNovedadesRegistro()" disabled>Entendido (${NOV_REG_ESPERA})</button>
+    </div>`;
+  document.body.appendChild(capa);
+  document.body.classList.add('tc-quieto');
+  let falta=NOV_REG_ESPERA;
+  const cuenta=setInterval(()=>{ const b=$('novRegOk'); if(!b){ clearInterval(cuenta); return; }
+    falta--; if(falta>0) b.textContent=`Entendido (${falta})`; else { b.textContent='Entendido'; b.disabled=false; clearInterval(cuenta); } },1000);
+}
+window.cerrarNovedadesRegistro=()=>{
+  try{ localStorage.setItem(NOV_REG,'1'); }catch(_){}
+  $('novReg')?.remove();
+  if(!$('tcCapa')&&!$('avAnuncio')) document.body.classList.remove('tc-quieto');
 };
 
 // EMP TABS
@@ -2101,7 +2142,7 @@ function initForm(){
   ['empActs','heJust','empNota','empNotaOtro'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
   ['vacIni','vacFin'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
   const vacRes=$('vacResumen'); if(vacRes) vacRes.textContent='';
-  setViatico(false);
+  setViatico(false); viatCampo=false; viatTocado=false;
   limpiarErrForm();
   hide('heBox'); hide('heResumen');
   renderFechaChips();
@@ -2166,12 +2207,15 @@ let actsPrellenado='';
 async function prellenarActividades(fecha){
   const el=$('empActs'); if(!el||!me||!fecha) return;
   const libre=()=>!el.value.trim()||el.value===actsPrellenado;
-  if(!libre()) return;
   const g=grupoDeEmpleado(await progDelDia(fecha), me.id);
-  if($('empFecha')?.value!==fecha||!libre()) return; // cambió de día o escribió mientras se leía
-  const txt=g?textoDeProgramacion(g):'';
-  el.value=txt; actsPrellenado=txt;
-  pintarAvisoPrellenado();
+  if($('empFecha')?.value!==fecha) return; // cambió de día mientras se leía
+  viatCampo=g?.area==='campo';
+  if(libre()){ // no pisa lo que escribió
+    const txt=g?textoDeProgramacion(g):'';
+    el.value=txt; actsPrellenado=txt;
+    pintarAvisoPrellenado();
+  }
+  aplicarViaticoAuto();
 }
 function textoDeProgramacion(g){
   let t=String(g.campania||'').trim();
@@ -2189,6 +2233,26 @@ function textoDeProgramacion(g){
 window.pintarAvisoPrellenado=()=>{
   const el=$('empActs'), a=$('empActsProg'); if(!el||!a) return;
   a.style.display=el.value&&el.value===actsPrellenado?'':'none';
+};
+
+// ── Viático automático ──
+// Si la programación del día es de campo, el viático viene encendido; si en Actividades menciona
+// trabajo de oficina (PALABRAS_OFICINA), se apaga solo, y si lo borra, vuelve. Si el técnico toca
+// el interruptor, manda él: la app ya no lo cambia en ese registro.
+let viatCampo=false, viatTocado=false;
+const PALABRAS_OFICINA=[['sellado','sellado'],['oficina','oficina'],['bodega','bodega'],['no sali','no salí']];
+function palabraOficina(txt){
+  const n=' '+normTxt(txt).replace(/\s+/g,' ')+' ';
+  const p=PALABRAS_OFICINA.find(([k])=>n.includes(' '+k+' '));
+  return p?p[1]:null;
+}
+window.aplicarViaticoAuto=()=>{
+  if(viatTocado) return;
+  const pal=viatCampo?palabraOficina($('empActs')?.value):null;
+  setViatico(viatCampo&&!pal);
+  const sub=$('fxViatSub'); if(!sub) return;
+  if(viatCampo&&!pal) sub.textContent='Salí a campo · encendido por tu programación de campo';
+  else if(pal) sub.textContent=`Apagado: mencionas “${pal}”`;
 };
 
 // Etiqueta de estado (tarde / a tiempo) con ícono
@@ -2511,7 +2575,7 @@ window.calcHE = async function(){
 };
 
 window.togF=f=>{
-  if(f==='v') setViatico(!$('togV').classList.contains('on'));
+  if(f==='v'){ viatTocado=true; setViatico(!$('togV').classList.contains('on')); }
 };
 
 // ── Formulario: fecha en botones, viático, resumen y errores junto al botón ──
