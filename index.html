@@ -59,7 +59,7 @@
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=80">
+<link rel="stylesheet" href="css/styles.css?v=81">
 <link rel="stylesheet" href="css/temas.css?v=29">
 <script>
 // ── Temas de temporada ──
@@ -558,7 +558,8 @@ function renderEmployee(nombre){
           </div>
           <div class="fx-card">
             <label class="fx-k" for="empActs">Actividades</label>
-            <textarea id="empActs" class="fx-ta" placeholder="Describe las actividades del día..."></textarea>
+            <textarea id="empActs" class="fx-ta" placeholder="Describe las actividades del día..." oninput="pintarAvisoPrellenado()"></textarea>
+            <div class="fx-prell" id="empActsProg" style="display:none">Tomado de tu programación · corrige o agrega lo que hiciste</div>
           </div>
           <div class="fx-viat-wrap">
             <button type="button" class="fx-viat" id="fxViat" onclick="togF('v')" aria-pressed="false">
@@ -1869,6 +1870,7 @@ window.trabajeEnAsueto=function(nombreAsueto){
     const entrada=$('empEntrada'), salida=$('empSalida');
     if(entrada&&salida){ entrada.value='06:00'; salida.value='14:00'; }
     calcHE();
+    prellenarActividades(f.value);
   }
 };
 
@@ -2156,6 +2158,39 @@ async function renderProgEmpCard(){
   }catch(e){ cont.style.display='none'; }
 }
 
+// ── Actividades prellenadas con la programación del día ──
+// Al elegir el día (Normal o asueto trabajado), si el técnico estaba en la programación de esa
+// fecha, Actividades empieza con "Campaña en zona, con compañeros." Solo si el campo está vacío o
+// aún tiene el texto que puso la app: nunca pisa lo que escribió. Se puede guardar tal cual.
+let actsPrellenado='';
+async function prellenarActividades(fecha){
+  const el=$('empActs'); if(!el||!me||!fecha) return;
+  const libre=()=>!el.value.trim()||el.value===actsPrellenado;
+  if(!libre()) return;
+  const g=grupoDeEmpleado(await progDelDia(fecha), me.id);
+  if($('empFecha')?.value!==fecha||!libre()) return; // cambió de día o escribió mientras se leía
+  const txt=g?textoDeProgramacion(g):'';
+  el.value=txt; actsPrellenado=txt;
+  pintarAvisoPrellenado();
+}
+function textoDeProgramacion(g){
+  let t=String(g.campania||'').trim();
+  if(!t) return '';
+  const ids=g.empleados||[], noms=g.empleadosNombres||[];
+  const comp=ids.map((id,k)=>id===me.id?null:String(noms[k]||'').trim()).filter(Boolean);
+  // "y" antes de i/hi se vuelve "e" (Ana e Isabel)
+  const yo=n=>/^h?i(?![aeiouáéíóú])/i.test(n)?' e ':' y ';
+  const con=comp.length>1?comp.slice(0,-1).join(', ')+yo(comp[comp.length-1])+comp[comp.length-1]:comp[0];
+  const zona=String(g.zona||'').trim();
+  if(zona) t+=' en '+zona;
+  if(con) t+=', con '+con;
+  return t+'.';
+}
+window.pintarAvisoPrellenado=()=>{
+  const el=$('empActs'), a=$('empActsProg'); if(!el||!a) return;
+  a.style.display=el.value&&el.value===actsPrellenado?'':'none';
+};
+
 // Etiqueta de estado (tarde / a tiempo) con ícono
 const ICO_RELOJ='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 const ICO_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17 19 7"/></svg>';
@@ -2434,6 +2469,7 @@ window.onFechaChange = async function(){
     else{ entrada.value=base?.ini||'07:00'; salida.value=base?.fin||(dow===5?'16:00':'17:00'); }
   }
   calcHE();
+  prellenarActividades(f.value);
 };
 
 window.calcHE = async function(){
