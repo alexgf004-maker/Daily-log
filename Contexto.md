@@ -170,6 +170,13 @@ importante — ver sección 7.**
     completa de personal + buscador. Flujo: tocar botón → elegir persona → el botón se
     pone verde "Asignar: X" → tocar la caja del grupo. **No usar drag & drop** (se probó
     y se rechazó; en celular no funciona bien).
+  - **Ausentes y "Copiar de…"**: quien tiene ausencia ese día (vacaciones —también por rango—,
+    incapacidad, permiso, bienestar, injustificado; `ausenciaEnFecha`) no sale en "Libres" y **no se
+    copia** al copiar otro día (`quitarAusentesDeGrupos`): sale un aviso "No se copió a X (vacaciones)…".
+    Si alguien asignado tiene ausencia (p. ej. se registró después de armar), arriba del tablero sale
+    "X está en un grupo pero tiene … este día" con "Quitar" (`progQuitarAusente`). Registrar o quitar
+    una ausencia actualiza el tablero sin recargar (`refrescarAusentesProg`). `progAusTipo` = uid → tipo.
+    Al copiar se conserva la lista "No disponibles" del día destino (no se trae la del otro día).
   - Vehículo se elige DENTRO del grupo (botón "+ Asignar vehículo"): pick-ups y motos
     disponibles en verde, no-disponibles (mantenimiento/prestado/baja) en rojo y no
     seleccionables.

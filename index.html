@@ -5974,6 +5974,7 @@ let progAusentesLista=[];// nombres de no disponibles (para el panel)
 let progVerMas={campo:false,plantel:false}; // "ver más" campañas por área
 let progEmpleados=[];    // empleados activos, cargados una vez por fecha (no en cada clic)
 let progAusentes=[];     // uids ausentes (vacaciones/incapacidad/permiso) para progFecha
+let progAusTipo={};      // uid → tipo de ausencia (vacaciones, incapacidad…) para progFecha
 
 window.progToggleVerMas=(area)=>{ progVerMas[area]=!progVerMas[area]; renderArmar(); };
 let progAbiertas={};     // campañas abiertas/cerradas a mano ("area|nombre" → true/false)
@@ -6026,12 +6027,13 @@ async function cargarProgramacionFecha(fecha){
   const [prog,users]=await Promise.all([
     obtenerProgramacion(db,{ref,get},fecha),
     getUsers(),
-    getRegistrosAll(), // calienta el caché para que empleadosAusentesFecha no espere de nuevo
+    getRegistrosAll(), // calienta el caché para que cargarAusentesProg no espere de nuevo
   ]);
   progGrupos = prog?.grupos ? JSON.parse(JSON.stringify(prog.grupos)) : [];
-  progNoDisp = prog?.noDisponibles ? JSON.parse(JSON.stringify(prog.noDisponibles)) : {personal:[],vehiculos:[]};
+  // La base no guarda listas vacías: si falta una de las dos, se repone vacía
+  progNoDisp = {personal:[...(prog?.noDisponibles?.personal||[])], vehiculos:[...(prog?.noDisponibles?.vehiculos||[])]};
   progEmpleados = users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  progAusentes = await empleadosAusentesFecha(fecha, progEmpleados);
+  await cargarAusentesProg(fecha);
   renderArmar();
 }
 
@@ -6103,10 +6105,17 @@ window.confirmarCopiarProg=async()=>{
   if(!prog||!prog.grupos||!prog.grupos.length){ al.innerHTML='<div class="alert ae" style="font-size:12px">Esa fecha no tiene una programación guardada.</div>'; return; }
   if(progGrupos.length && !confirm('Esto reemplazará lo que tienes ahora con la programación del '+fmt(fecha)+'. ¿Continuar?')) return;
   progGrupos=JSON.parse(JSON.stringify(prog.grupos));
-  progNoDisp=prog.noDisponibles?JSON.parse(JSON.stringify(prog.noDisponibles)):{personal:[],vehiculos:[]};
+  // "No disponibles" es de cada día: se conserva la del día destino (no se trae la del otro día).
+  // Quien tiene ausencia este día no se copia (antes quedaba en un grupo y en Ausencias a la vez).
+  const quitados=quitarAusentesDeGrupos();
   closeModal('moCopiarProg');
   renderArmar();
   await persistProg();
+  if(quitados.length){
+    const ns=quitados.map(nombreConAusencia);
+    const lista=ns.length>1?ns.slice(0,-1).join(', ')+' ni a '+ns[ns.length-1]:ns[0];
+    alert(`No se copió a ${lista}: ${ns.length===1?'tiene':'tienen'} ausencia el ${fechaCortaFx(progFecha)}.`);
+  }
 };
 
 async function persistProg(){
@@ -6125,14 +6134,41 @@ function ausenciaEnFecha(regs, fecha){
 }
 
 // Empleados con vacaciones/incapacidad/permiso aprobado en esa fecha
-async function empleadosAusentesFecha(fecha, empleados){
-  const ausentes=[];
+// Ausentes de la fecha del tablero (uid y tipo), con los registros en caché
+async function cargarAusentesProg(fecha){
   const todos=await getRegistrosAll();
-  empleados.forEach(u=>{
-    if(ausenciaEnFecha(todos[u.id], fecha)) ausentes.push(u.id);
-  });
-  return ausentes;
+  const tipos={};
+  progEmpleados.forEach(u=>{ const r=ausenciaEnFecha(todos[u.id], fecha); if(r) tipos[u.id]=r.tipoDia; });
+  if(fecha!==progFecha) return; // cambió de fecha mientras se leía
+  progAusTipo=tipos; progAusentes=Object.keys(tipos);
 }
+// Al registrar o quitar una ausencia: el tablero se entera sin recargar
+async function refrescarAusentesProg(){
+  if(!progFecha||!progEmpleados.length) return;
+  await cargarAusentesProg(progFecha);
+  renderArmar();
+}
+// Quita de los grupos a quien tiene ausencia ese día. Devuelve a quiénes quitó: [{uid,nombre,tipo}]
+function quitarAusentesDeGrupos(uids=progAusentes){
+  const quitados=new Map();
+  progGrupos.forEach(g=>{
+    const emps=g.empleados||[], noms=g.empleadosNombres||[];
+    const quedan=emps.map((uid,k)=>[uid,noms[k]]).filter(([uid,nom])=>{
+      if(!uids.includes(uid)) return true;
+      const u=progEmpleados.find(e=>e.id===uid);
+      quitados.set(uid,{uid, nombre:(u&&nombreMostrar(u))||nom||'', tipo:progAusTipo[uid]});
+      return false;
+    });
+    if(quedan.length!==emps.length){ g.empleados=quedan.map(x=>x[0]); g.empleadosNombres=quedan.map(x=>x[1]??''); }
+  });
+  return [...quitados.values()];
+}
+const nombreConAusencia=q=>`${q.nombre} (${(AUS_TIPO_LABEL[q.tipo]||'ausencia').toLowerCase()})`;
+window.progQuitarAusente=async(uid)=>{
+  quitarAusentesDeGrupos([uid]);
+  renderArmar();
+  await persistProg();
+};
 
 function renderArmar(){
   const cont=$('progArmarBody');
@@ -6157,6 +6193,10 @@ function renderArmar(){
     .sort((a,b)=>a.nombre.localeCompare(b.nombre));
 
   const conflictos=detectarConflictos(progGrupos, progVehiculos);
+  // Asignados que tienen ausencia ese día (p. ej. la ausencia se registró después de armar)
+  const ausAsignados=[...persAsignadas].filter(uid=>progAusTipo[uid]).map(uid=>{
+    const u=empleados.find(e=>e.id===uid); return {uid, nombre:u?nombreMostrar(u):uid, tipo:progAusTipo[uid]};
+  });
 
 
   // Vehículo del grupo: placa (tocar para quitar) o botón para elegir
@@ -6244,7 +6284,7 @@ function renderArmar(){
 
     ${progSel?`<div class="pg-sel"><span>Asignando a <b>${escHtml(progSel.nombre)}</b>: toca un grupo</span><button onclick="progCancelSel()">Cancelar</button></div>`:''}
 
-    ${conflictos.length?`<div class="pg-avisos">${conflictos.map(a=>`<div class="mk-av lejos"><span class="mk-av-ic">!</span><div class="mk-av-tx"><span style="margin:0">${escHtml(a)}</span></div></div>`).join('')}</div>`:''}
+    ${conflictos.length||ausAsignados.length?`<div class="pg-avisos">${ausAsignados.map(q=>`<div class="mk-av lejos"><span class="mk-av-ic">!</span><div class="mk-av-tx"><span style="margin:0"><b>${escHtml(q.nombre)}</b> está en un grupo pero tiene ${escHtml((AUS_TIPO_LABEL[q.tipo]||'ausencia').toLowerCase())} este día</span></div><button class="btn btn-gh btn-sm" onclick="progQuitarAusente('${q.uid}')">Quitar</button></div>`).join('')}${conflictos.map(a=>`<div class="mk-av lejos"><span class="mk-av-ic">!</span><div class="mk-av-tx"><span style="margin:0">${escHtml(a)}</span></div></div>`).join('')}</div>`:''}
 
     <div class="pg-sec"><span>Campo</span><i></i></div>
     ${bloqueArea('campo')||'<div class="prog-vacio">No hay campañas de campo.</div>'}
@@ -7039,6 +7079,7 @@ window.guardarAusenciaUI=async()=>{
   catch(e){ al.innerHTML='<div class="alert ae" style="font-size:12px">Error al guardar. Revisa tu conexión.</div>'; return; }
 
   invalidarRegsCache();
+  refrescarAusentesProg();
   closeModal('moAusencia');
   let msg=`Se registraron ${escritos} día(s) de ${AUS_TIPO_LABEL[tipo].toLowerCase()} para ${emp?emp.nombre:''}.`;
   if(saltadosExiste) msg+=`\n${saltadosExiste} día(s) ya tenían registro y se respetaron.`;
@@ -7126,6 +7167,7 @@ window.eliminarAusencia=async(keys,uid,nombre)=>{
     await Promise.all(keys.map(k=>set(ref(db,`registros/${uid}/${k}`),null)));
   }catch(e){ alert('Error al quitar. Revisa tu conexión.'); return; }
   invalidarRegsCache();
+  refrescarAusentesProg();
   renderAusencias();
 };
 
