@@ -60,7 +60,7 @@
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
-<link rel="stylesheet" href="css/temas.css?v=33">
+<link rel="stylesheet" href="css/temas.css?v=34">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -292,6 +292,59 @@
   };
   // Día de los Muertos: escena del login (guirnaldas de papel picado, ofrenda con velas, pétalos
   // de cempasúchil cayendo). Solo con el tema activo; sin animación si el teléfono pide menos movimiento.
+  // Día de los Muertos: el xolo (xoloitzcuintle, el perrito que guía a las almas) pasea por la parte de abajo
+  // de las pantallas de adentro, como el fantasma de Halloween: entra por un lado, se detiene a mover la cola
+  // y a mirarte, y se va; regresa al rato. No recibe toques (si lo tocas brinca, pero el toque llega al botón
+  // de abajo) y se esconde mientras hay una ventana abierta encima.
+  function xoloAdentro(){
+    if(document.querySelector('.mu-xolo')) return;
+    var html=document.documentElement;
+    var el=document.createElement('div'); el.className='mu-xolo'; el.setAttribute('aria-hidden','true');
+    el.innerHTML='<div class="mu-xolo-in camina"><svg viewBox="0 0 120 90"><path class="mx-cola" d="M22 40c-10-4-14-14-12-24" stroke="#3f3f46" stroke-width="4.5" fill="none" stroke-linecap="round"/>'+
+      '<rect class="mx-pata b" x="30" y="50" width="6" height="26" rx="3" fill="#3f3f46"/><rect class="mx-pata a" x="78" y="50" width="6" height="26" rx="3" fill="#3f3f46"/>'+
+      '<ellipse cx="56" cy="46" rx="34" ry="15" fill="#52525b"/>'+
+      '<rect class="mx-pata a" x="38" y="52" width="6.5" height="26" rx="3" fill="#52525b"/><rect class="mx-pata b" x="84" y="52" width="6.5" height="26" rx="3" fill="#52525b"/>'+
+      '<g class="mx-cabeza"><path d="M84 38c0-12 8-20 18-20s14 8 14 14-6 10-14 10H90z" fill="#52525b"/><path d="M92 22l-2-18 10 14zM104 20l4-17 4 18z" fill="#3f3f46"/><path d="M112 30c4 0 6 2 6 4s-2 3-5 3" fill="#27272a"/>'+
+      '<circle cx="104" cy="28" r="2.6" fill="#fff"/><circle cx="104.6" cy="28.4" r="1.4" fill="#111"/>'+
+      '<circle cx="86" cy="40" r="3.6" fill="#f97316"/><circle cx="92" cy="43" r="3.6" fill="#facc15"/><circle cx="98" cy="44" r="3.6" fill="#f97316"/></g></svg></div>';
+    document.body.appendChild(el);
+    var inn=el.firstChild, ult=0, ANCHO=86;
+    var g={modo:'fuera',espera:240+Math.random()*360,x:-120,tx:0,dir:1,pausa:0,paradas:0,salto:0};
+    function destino(){
+      var W=window.innerWidth;
+      if(g.paradas-->0){ var t=W*.12+Math.random()*Math.max(40,W*.76-ANCHO); if((t-g.x)*g.dir<40) t=g.x+g.dir*(70+Math.random()*120); g.tx=Math.max(4,Math.min(W-ANCHO-4,t)); }
+      else g.tx=g.dir>0?W+30:-ANCHO-30;
+    }
+    function entrar(){ var W=window.innerWidth; g.dir=Math.random()<.5?1:-1; g.x=g.dir>0?-ANCHO-20:W+20; g.paradas=1+(Math.random()<.45?1:0); destino(); g.modo='camina'; }
+    function poner(cl){ if(inn.className!=='mu-xolo-in '+cl) inn.className='mu-xolo-in '+cl; }
+    document.addEventListener('pointerdown',function(e){
+      if(g.modo==='fuera'||el.style.display==='none') return;
+      var r=el.getBoundingClientRect();
+      if(e.clientX>r.left-8&&e.clientX<r.right+8&&e.clientY>r.top-8&&e.clientY<r.bottom+8) g.salto=26;
+    },{capture:true,passive:true});
+    function encima(){ return document.querySelector('.mo.open,#tcCapa,#avAnuncio,#novReg,.nv-pan,.rm-dim,.rm-card,.mus-espera,.fx-ok.on,.us-sheet.on'); }
+    function cuadro(t){
+      if(!el.isConnected) return;
+      if(!html.classList.contains('tema-muertos')){ el.remove(); return; }   // se apagó el tema
+      requestAnimationFrame(cuadro);
+      var f=Math.max(.2,Math.min(3,(t-(ult||t))/16.7)); ult=t;
+      var adentro=document.querySelector('#employeeScreen.active,#adminScreen.active');
+      if(!adentro||document.hidden||encima()){ el.style.display='none'; return; }
+      if(g.modo==='fuera'){ el.style.display='none'; if((g.espera-=f)<=0) entrar(); return; }
+      el.style.display='';
+      if(g.modo==='camina'){
+        poner('camina'); var d=g.tx-g.x;
+        if(Math.abs(d)<=1.3*f){ g.x=g.tx; var W=window.innerWidth;
+          if(g.x<-ANCHO||g.x>W){ g.modo='fuera'; g.espera=1500+Math.random()*2100; }   // se fue: regresa en 25–60 s
+          else { g.modo='parado'; g.pausa=150+Math.random()*90; }
+        } else { g.dir=d>0?1:-1; g.x+=g.dir*1.3*f; }
+      } else if(g.modo==='parado'){ poner('feliz'); if((g.pausa-=f)<=0){ destino(); g.modo='camina'; } }
+      var alto=0; if(g.salto>0){ g.salto-=f; var k=1-Math.max(0,g.salto)/26; alto=Math.sin(k*Math.PI)*34; if(g.modo==='camina') poner('feliz'); }
+      el.style.transform='translate('+g.x.toFixed(1)+'px,'+(-alto).toFixed(1)+'px)';
+      inn.style.transform=g.dir>0?'':'scaleX(-1)';
+    }
+    requestAnimationFrame(cuadro);
+  }
   window.__escenaMuertos=function(){
     // Dentro de la app: unos pocos pétalos cayendo despacio, siempre (encima del contenido, debajo de
     // la barra, las hojas y las ventanas; no estorban los toques). En el login no salen: tiene su escena.
@@ -300,6 +353,7 @@
       for(var k=0;k<6;k++) pp+='<i style="left:'+(7+k*16)+'%;animation-duration:'+(14+k*2.3).toFixed(1)+'s;animation-delay:-'+(k*3.1).toFixed(1)+'s"></i>';
       amb.innerHTML=pp; document.body.appendChild(amb);
     }
+    if(document.documentElement.classList.contains('tema-muertos')&&document.body&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)) xoloAdentro();
     var ls=document.getElementById('loginScreen');
     if(!ls||!document.documentElement.classList.contains('tema-muertos')||document.querySelector('.mu-capa')) return;
     var COL=['#f97316','#db2777','#7e22ce','#16a34a','#facc15','#0ea5e9'];
@@ -3930,7 +3984,7 @@ function aplicarTema(){
     T.activo=nuevo;
     if(nuevo){ nuevo.clases.forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); window.__escenaMuertos&&window.__escenaMuertos(); }
     if(nuevo?.id!=='halloween') document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());
-    if(nuevo?.id!=='muertos') document.querySelectorAll('.mu-capa,.mu-amb').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
+    if(nuevo?.id!=='muertos') document.querySelectorAll('.mu-capa,.mu-amb,.mu-xolo').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
     renderMarcajeCard();   // la tarjeta de marcaje cambia de figuras con el tema
   }
   pintarTema();
