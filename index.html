@@ -60,7 +60,7 @@
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
-<link rel="stylesheet" href="css/temas.css?v=29">
+<link rel="stylesheet" href="css/temas.css?v=30">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -70,19 +70,23 @@
 // en este teléfono ('innova_tema_global') para aplicarlo al abrir, sin parpadeo.
 // Prioridad: este dispositivo (Ver ahora / Apagado) > para todos > por fecha.
 (function(){
-  var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte']}];
+  var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte']},
+             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-03',clases:['tema-muertos']}];
   var d=new Date(), md=('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var modo='auto', global=null; try{ modo=localStorage.getItem('innova_tema')||'auto'; global=JSON.parse(localStorage.getItem('innova_tema_global')||'null'); }catch(e){}
   var porFecha=null; for(var i=0;i<TEMAS.length;i++){ if(md>=TEMAS[i].desde&&md<=TEMAS[i].hasta) porFecha=TEMAS[i]; }
+  // Tema de referencia para Mi Perfil y "Ver ahora": el de la fecha o, si no hay, el próximo del año
+  var proximo=null; for(var p=0;p<TEMAS.length;p++){ if(TEMAS[p].desde>md&&(!proximo||TEMAS[p].desde<proximo.desde)) proximo=TEMAS[p]; }
+  if(!proximo) for(var q=0;q<TEMAS.length;q++){ if(!proximo||TEMAS[q].desde<proximo.desde) proximo=TEMAS[q]; }
   function efectivo(T){
     if(T.modo==='off') return null;
-    if(T.modo==='ver') return T.porFecha||T.lista[0];
+    if(T.modo==='ver') return T.ref;
     var g=T.global;
     if(g&&g.modo==='off') return null;
     if(g&&g.modo==='on'){ for(var k=0;k<T.lista.length;k++) if(T.lista[k].id===g.tema) return T.lista[k]; return T.lista[0]; }
     return T.porFecha;
   }
-  var T={lista:TEMAS,porFecha:porFecha,modo:modo,global:global,efectivo:efectivo};
+  var T={lista:TEMAS,porFecha:porFecha,ref:porFecha||proximo,modo:modo,global:global,efectivo:efectivo};
   var t=efectivo(T); T.activo=t;
   if(t) for(var j=0;j<t.clases.length;j++) document.documentElement.classList.add(t.clases[j]);
   window.__temas=T;
@@ -3780,7 +3784,7 @@ window.cargarPerfilEmpleado=async()=>{
 // Tema de temporada: Automático (por fecha) → Ver ahora → Apagado. Solo en este dispositivo.
 function pintarTema(){
   const T=window.__temas; if(!T) return;
-  const sig=T.lista[0], fc=md=>{ const [m,d]=md.split('-').map(Number); return `${d} ${MESES_FX[m-1]}`; };
+  const sig=T.ref, fc=md=>{ const [m,d]=md.split('-').map(Number); return `${d} ${MESES_FX[m-1]}`; };
   const g=T.global, st=$('temaStatus'), md=$('temaModo');
   if(st) st.textContent=T.modo==='off'?'Apagado en este dispositivo'
     :T.activo?`${T.activo.nombre} activo${T.modo==='ver'&&!T.porFecha&&g?.modo!=='on'?' (vista previa)':''}`
@@ -3788,7 +3792,8 @@ function pintarTema(){
     :`${sig.nombre}: del ${fc(sig.desde)} al ${fc(sig.hasta)}`;
   if(md) md.textContent={auto:'Automático',ver:'Ver ahora',off:'Apagado'}[T.modo];
   const gs=$('temaGlobalStatus'), gm=$('temaGlobalModo');
-  if(gs) gs.textContent=g?.modo==='on'?`${sig.nombre} encendido para todos, aunque no sea la fecha`
+  const gt=g?.modo==='on'?(T.lista.find(x=>x.id===g.tema)||sig):sig; // el que se encendió para todos
+  if(gs) gs.textContent=g?.modo==='on'?`${gt.nombre} encendido para todos, aunque no sea la fecha`
     :g?.modo==='off'?`${sig.nombre} apagado para todos, aunque sea la fecha`
     :`Solo en sus fechas (del ${fc(sig.desde)} al ${fc(sig.hasta)})`;
   if(gm) gm.textContent=g?.modo==='on'?'Encendido':g?.modo==='off'?'Apagado':'Por fecha';
@@ -3802,7 +3807,7 @@ function aplicarTema(){
     T.lista.forEach(t=>t.clases.forEach(c=>html.classList.remove(c)));
     T.activo=nuevo;
     if(nuevo){ nuevo.clases.forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); }
-    else document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
+    if(nuevo?.id!=='halloween') document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
     renderMarcajeCard();   // la tarjeta de marcaje cambia de figuras con el tema
   }
   pintarTema();
@@ -3818,17 +3823,17 @@ window.cicloTemaGlobal=async()=>{
   const T=window.__temas; if(!T) return;
   const act=T.global?.modo||'auto';
   const sig={auto:'on',on:'off',off:'auto'}[act];
-  const nombre=T.lista[0].nombre;
+  const nombre=T.ref.nombre;
   if(sig==='on'&&!confirm(`¿Encender el tema de ${nombre} para todos? Lo verán en el login y en la app desde ya.`)) return;
   if(sig==='off'&&!confirm(`¿Apagar el tema de ${nombre} para todos, aunque sea su fecha?`)) return;
-  try{ await set(ref(db,'config/tema'), sig==='auto'?null:{modo:sig,tema:T.lista[0].id,por:me?.nombre||'',en:Date.now()}); }
+  try{ await set(ref(db,'config/tema'), sig==='auto'?null:{modo:sig,tema:T.ref.id,por:me?.nombre||'',en:Date.now()}); }
   catch(e){ alert('No se pudo guardar: '+e.message); }
 };
 // Escucha config/tema (también en el login): si el admin lo cambia, se aplica solo en todos los teléfonos
 try{
   onValue(refFirebase(db,'config/tema'), sn=>{
     const T=window.__temas; if(!T) return;
-    const v=sn.val(); const g=v&&(v.modo==='on'||v.modo==='off')?{modo:v.modo,tema:v.tema||T.lista[0].id}:null;
+    const v=sn.val(); const g=v&&(v.modo==='on'||v.modo==='off')?{modo:v.modo,tema:v.tema||T.ref.id}:null;
     T.global=g;
     try{ if(g) localStorage.setItem('innova_tema_global',JSON.stringify(g)); else localStorage.removeItem('innova_tema_global'); }catch(_){}
     aplicarTema();
