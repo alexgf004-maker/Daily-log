@@ -347,7 +347,9 @@ con un temblor y confeti de papel picado, y guiña; se cierra a los 4.2 s. El xo
 fantasma de Halloween) pasea por la parte de abajo de las pantallas de adentro: llega como perrito normal (capa
 `.mx-normal`) y al detenerse se transforma en alebrije (`transformar`: destello y chispas `.mx-chispas`, capa
 `.mx-alebrije` de diseño propio con cuerpo de colores, puntos, rayas y lunitas, orejas de distinto color, lengua de
-fuera y alas de plumas que brotan y aletean); luego se va volando y regresa en 25–60 s, otra vez normal. Si lo tocan
+fuera y alas de plumas que brotan y aletean); luego vuela 15–25 s por toda la pantalla (`volar`/`sigVuelo`: 5–8
+puntos al azar en el aire, a veces fuera de la pantalla, así que sale y vuelve a entrar), se va y regresa en
+25–60 s, otra vez normal. Si lo tocan
 brinca y, si aún no, se transforma (sin quitar el toque al botón de abajo); se esconde con ventanas abiertas y no sale en el login ni con "reducir movimiento". No cambia marcaje, "¡Listo,
 guardado!" ni colores de estado).
 Sus colores los genera `herramientas/tema-colores.py` (bloque `AUTO-COLORES-MUERTOS`, solo azules).

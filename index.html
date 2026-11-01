@@ -60,7 +60,7 @@
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
-<link rel="stylesheet" href="css/temas.css?v=36">
+<link rel="stylesheet" href="css/temas.css?v=37">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -295,7 +295,8 @@
   // Día de los Muertos: el xolo (xoloitzcuintle, el perrito que guía a las almas) pasea por la parte de abajo
   // de las pantallas de adentro, como el fantasma de Halloween. Llega como perrito normal; al detenerse se
   // transforma en alebrije (destello de chispas, se pinta de colores y le brotan alas de plumas; diseño propio)
-  // y se va volando. En la siguiente visita llega normal otra vez. No recibe toques (si lo tocas brinca, pero el toque llega al botón
+  // y vuela un rato por toda la pantalla, saliendo y volviendo a entrar, antes de irse. En la siguiente visita
+  // llega normal otra vez. No recibe toques (si lo tocas brinca, pero el toque llega al botón
   // de abajo) y se esconde mientras hay una ventana abierta encima.
   function xoloAdentro(){
     if(document.querySelector('.mu-xolo')) return;
@@ -305,7 +306,7 @@
       '<svg viewBox="0 0 140 110"><defs><clipPath id="mxCuerpo"><ellipse cx="62" cy="66" rx="36" ry="16"/></clipPath><linearGradient id="mxColaG" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#facc15"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs><g class="mx-normal"><path class="mx-cola" d="M27 60c-11-3-16-12-13-21" stroke="#3f3f46" stroke-width="5" fill="none" stroke-linecap="round"/><rect class="mx-pata b" x="34" y="70" width="7" height="28" rx="3.5" fill="#3f3f46"/><rect class="mx-pata a" x="82" y="70" width="7" height="28" rx="3.5" fill="#3f3f46"/><ellipse cx="62" cy="66" rx="36" ry="16" fill="#52525b"/><rect class="mx-pata a" x="42" y="72" width="7.5" height="28" rx="3.7" fill="#52525b"/><rect class="mx-pata b" x="88" y="72" width="7.5" height="28" rx="3.7" fill="#52525b"/><g class="mx-cabeza"><path d="M100 43c-3-9-2-19 3-25 3 8 4 17 2 25z" fill="#3f3f46"/><path d="M94 56c0-12 8-19 17-19 8 0 12 6 13 9l7 3c3 1 3 6 0 7l-9 2c-3 2-7 3-11 3H98z" fill="#52525b"/><path d="M104 40c-1-10 2-20 8-26 3 9 3 19 0 26z" fill="#3f3f46"/><ellipse cx="131" cy="51" rx="3" ry="2.4" fill="#18181b"/><circle cx="113" cy="47" r="3.2" fill="#fff"/><circle cx="113.6" cy="47.4" r="1.7" fill="#111"/><path d="M116 58c4 1 8 0 12-2" stroke="#27272a" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="97" cy="60" r="3.8" fill="#f97316"/><circle cx="102" cy="63" r="3.8" fill="#facc15"/><circle cx="108" cy="64" r="3.8" fill="#f97316"/></g></g><g class="mx-alebrije"><g class="mx-alas atras"><g class="mx-ala atras"><path d="M56 56Q45.0 48.2 31.6 47.1Q42.6 54.9 56 56Z" fill="#f9a8d4" stroke="#7c3aed" stroke-width=".8"/><path d="M56 56Q45.8 44.4 31.4 38.8Q41.6 50.3 56 56Z" fill="#fdba74" stroke="#7c3aed" stroke-width=".8"/><path d="M56 56Q49.8 43.0 38.0 34.6Q44.2 47.6 56 56Z" fill="#fde68a" stroke="#7c3aed" stroke-width=".8"/></g></g><path class="mx-cola" d="M27 60c-12-2-18-12-14-22 3-7 12-6 12 1 0 5-6 6-7 2" stroke="url(#mxColaG)" stroke-width="5" fill="none" stroke-linecap="round"/><rect class="mx-pata b" x="34" y="70" width="7" height="28" rx="3.5" fill="#a3e635"/><rect class="mx-pata a" x="82" y="70" width="7" height="28" rx="3.5" fill="#fb923c"/><g clip-path="url(#mxCuerpo)"><rect x="20" y="48" width="30" height="40" fill="#22d3ee"/><rect x="50" y="48" width="22" height="40" fill="#f97316"/><rect x="72" y="48" width="30" height="40" fill="#ec4899"/><path d="M50 48v40M72 48v40" stroke="#fde047" stroke-width="2.2"/><g fill="#fff" opacity=".9"><circle cx="32" cy="60" r="1.8"/><circle cx="40" cy="68" r="1.8"/><circle cx="30" cy="72" r="1.8"/><circle cx="85" cy="62" r="1.6"/><circle cx="92" cy="70" r="1.6"/></g><g fill="none" stroke="#fde047" stroke-width="1.8" stroke-linecap="round"><path d="M55 58c3 3 7 3 10 0M55 66c3 3 7 3 10 0M55 74c3 3 7 3 10 0"/></g><g fill="#7c3aed"><path d="M80 72a4 4 0 1 0 6 0 3 3 0 1 1-6 0z"/><path d="M88 58a4 4 0 1 0 6 0 3 3 0 1 1-6 0z"/></g></g><ellipse cx="62" cy="66" rx="36" ry="16" fill="none" stroke="#7c3aed" stroke-width="1.6"/><rect class="mx-pata a" x="42" y="72" width="7.5" height="28" rx="3.7" fill="#facc15"/><rect class="mx-pata b" x="88" y="72" width="7.5" height="28" rx="3.7" fill="#ec4899"/><g class="mx-alas"><g class="mx-ala"><path d="M62 56Q48.6 48.1 33.0 48.2Q46.4 56.2 62 56Z" fill="#ec4899" stroke="#7c3aed" stroke-width=".8"/><circle cx="41.1" cy="50.4" r="1.2" fill="#fff"/><path d="M62 56Q48.5 43.4 30.8 38.0Q44.3 50.6 62 56Z" fill="#f97316" stroke="#7c3aed" stroke-width=".8"/><circle cx="39.6" cy="43.0" r="1.2" fill="#fff"/><path d="M62 56Q51.5 39.6 35.1 29.1Q45.6 45.5 62 56Z" fill="#facc15" stroke="#7c3aed" stroke-width=".8"/><circle cx="42.7" cy="36.7" r="1.2" fill="#fff"/><path d="M62 56Q57.1 39.2 45.0 26.6Q49.9 43.4 62 56Z" fill="#a3e635" stroke="#7c3aed" stroke-width=".8"/><circle cx="49.8" cy="34.8" r="1.2" fill="#fff"/><path d="M62 56Q62.7 42.4 55.3 30.9Q54.6 44.5 62 56Z" fill="#22d3ee" stroke="#7c3aed" stroke-width=".8"/><circle cx="57.2" cy="37.9" r="1.2" fill="#fff"/></g></g><g class="mx-cabeza"><path class="mx-oreja2" d="M99 41c-8 1-13 9-13 20 0 4 2 6 4 5 5-4 8-12 10-19z" fill="#38bdf8" stroke="#0284c7" stroke-width="1.2"/><g fill="#fff"><circle cx="92" cy="54" r="1.1"/><circle cx="95" cy="48" r="1.1"/></g><path d="M94 56c0-12 8-19 17-19 8 0 12 6 13 9l7 3c3 1 3 6 0 7l-9 2c-3 2-7 3-11 3H98z" fill="#ec4899" stroke="#7c3aed" stroke-width="1.2"/><path d="M104 40c-1-10 2-20 8-26 3 9 3 19 0 26z" fill="#f472b6" stroke="#facc15" stroke-width="2"/><ellipse cx="131" cy="51" rx="3.2" ry="2.6" fill="#a3e635" stroke="#4d7c0f" stroke-width=".8"/><circle cx="113" cy="47" r="5" fill="#fff" stroke="#7c3aed" stroke-width="1.1"/><circle cx="114" cy="47.4" r="2.7" fill="#84cc16"/><circle cx="114.4" cy="47.7" r="1.3" fill="#111"/><g fill="#fde047"><circle cx="104" cy="50" r="1.2"/><circle cx="108" cy="55" r="1.2"/><circle cx="120" cy="44" r="1.1"/><circle cx="124" cy="48" r="1.1"/></g><path d="M116 58c4 1 8 0 12-2" stroke="#7c3aed" stroke-width="1.5" fill="none" stroke-linecap="round"/><path class="mx-lengua" d="M120 58c2 6 1 12-3 13s-5-5-4-12z" fill="#4ade80" stroke="#16a34a" stroke-width="1"/><circle cx="97" cy="60" r="3.8" fill="#f97316"/><circle cx="102" cy="63" r="3.8" fill="#facc15"/><circle cx="108" cy="64" r="3.8" fill="#f97316"/></g></g></svg></div><div class="mx-chispas"></div>';
     document.body.appendChild(el);
     var inn=el.firstChild, ult=0, ANCHO=100;
-    var g={modo:'fuera',espera:240+Math.random()*360,x:-120,tx:0,dir:1,pausa:0,paradas:0,salto:0,forma:'normal',transf:0,volar:0};
+    var g={modo:'fuera',espera:240+Math.random()*360,x:-120,tx:0,dir:1,pausa:0,paradas:0,salto:0,forma:'normal',transf:0,alt:0,talt:0,vuelos:0};
     var COLS=['#f97316','#ec4899','#facc15','#22d3ee','#a3e635','#a855f7'];
     function transformar(){
       if(g.forma==='alebrije') return;
@@ -319,7 +320,16 @@
       if(g.paradas-->0){ var t=W*.12+Math.random()*Math.max(40,W*.76-ANCHO); if((t-g.x)*g.dir<40) t=g.x+g.dir*(70+Math.random()*120); g.tx=Math.max(4,Math.min(W-ANCHO-4,t)); }
       else g.tx=g.dir>0?W+30:-ANCHO-30;
     }
-    function entrar(){ var W=window.innerWidth; g.dir=Math.random()<.5?1:-1; g.x=g.dir>0?-ANCHO-20:W+20; g.paradas=1+(Math.random()<.45?1:0); g.forma='normal'; g.volar=0; destino(); g.modo='camina'; }
+    function entrar(){ var W=window.innerWidth; g.dir=Math.random()<.5?1:-1; g.x=g.dir>0?-ANCHO-20:W+20; g.paradas=1+(Math.random()<.45?1:0); g.forma='normal'; g.alt=0; destino(); g.modo='camina'; }
+    // Vuelo: puntos al azar en el aire; a veces fuera de la pantalla (sale y vuelve a entrar). Al final se va.
+    function sigVuelo(){
+      var W=window.innerWidth, H=window.innerHeight, techo=Math.max(140,H-230);
+      if(g.vuelos-->0){
+        if(Math.random()<.35){ g.tx=Math.random()<.5?-ANCHO-60:W+60; g.talt=60+Math.random()*(techo-60); }
+        else { g.tx=W*.05+Math.random()*Math.max(40,W*.9-ANCHO); g.talt=40+Math.random()*(techo-40); }
+      } else { g.tx=g.x<W/2?-ANCHO-60:W+60; g.talt=Math.min(techo,g.alt+80); g.vuelos=-99; }
+    }
+    function volar(){ g.modo='vuela'; g.vuelos=5+Math.floor(Math.random()*4); sigVuelo(); }
     function poner(cl){ var n='mu-xolo-in '+cl+(g.forma==='alebrije'?' alebrije':'')+(g.transf>0?' transforma':''); if(inn.className!==n) inn.className=n; }
     document.addEventListener('pointerdown',function(e){
       if(g.modo==='fuera'||el.style.display==='none') return;
@@ -342,11 +352,16 @@
           if(g.x<-ANCHO||g.x>W){ g.modo='fuera'; g.espera=1500+Math.random()*2100; }   // se fue: regresa en 25–60 s
           else { g.modo='parado'; g.pausa=150+Math.random()*90; transformar(); }   // al detenerse se vuelve alebrije
         } else { g.dir=d>0?1:-1; g.x+=g.dir*1.3*f; }
-        // ya alebrije y de salida: alza el vuelo
-        var Wv=window.innerWidth; if(g.forma==='alebrije'&&(g.tx<-ANCHO||g.tx>Wv)) g.volar=Math.min(90,g.volar+.55*f);
-      } else if(g.modo==='parado'){ poner('feliz'); if((g.pausa-=f)<=0){ destino(); g.modo='camina'; } }
+      } else if(g.modo==='parado'){ poner('feliz'); if((g.pausa-=f)<=0){ if(g.forma==='alebrije'&&g.paradas<=0) volar(); else { destino(); g.modo='camina'; } } }
+      else if(g.modo==='vuela'){
+        poner('vuela'); var vx=g.tx-g.x, va=g.talt-g.alt, dv=Math.hypot(vx,va), v=2.3*f;
+        if(dv<=v){ g.x=g.tx; g.alt=g.talt;
+          if(g.vuelos===-99){ g.modo='fuera'; g.alt=0; g.espera=1500+Math.random()*2100; }   // se fue: regresa en 25–60 s
+          else sigVuelo();
+        } else { g.x+=vx/dv*v; g.alt+=va/dv*v; if(Math.abs(vx)>2) g.dir=vx>0?1:-1; }
+      }
       if(g.transf>0) g.transf-=f;
-      var alto=g.volar; if(g.salto>0){ g.salto-=f; var k=1-Math.max(0,g.salto)/26; alto+=Math.sin(k*Math.PI)*34; if(g.modo==='camina') poner('feliz'); }
+      var alto=g.alt+(g.modo==='vuela'?Math.sin(t/260)*6:0); if(g.salto>0){ g.salto-=f; var k=1-Math.max(0,g.salto)/26; alto+=Math.sin(k*Math.PI)*34; if(g.modo==='camina') poner('feliz'); }
       el.style.transform='translate('+g.x.toFixed(1)+'px,'+(-alto).toFixed(1)+'px)';
       inn.style.transform=g.dir>0?'':'scaleX(-1)';
     }

@@ -680,7 +680,9 @@ body:has(#loginScreen.active) .mu-amb{display:none}
 .mu-xolo .mx-cabeza{transform-box:fill-box;transform-origin:30% 80%;transition:transform .4s}.mu-xolo .feliz .mx-cabeza{transform:rotate(-10deg)}
 .mu-xolo .mx-ala{transform-box:view-box;transform-origin:62px 56px;animation:mxAla .5s ease-in-out infinite alternate}
 .mu-xolo .mx-ala.atras{transform-origin:56px 56px;animation-delay:-.25s}
-.mu-xolo .feliz .mx-ala{animation-duration:.18s}
+.mu-xolo .feliz .mx-ala,.mu-xolo .vuela .mx-ala{animation-duration:.18s}
+.mu-xolo .vuela .mx-pata{transform:rotate(-28deg)}
+.mu-xolo .vuela .mx-cola{animation-duration:.25s}
 @keyframes mxAla{from{transform:rotate(-8deg)}to{transform:rotate(12deg)}}
 .mu-xolo .mx-lengua{transform-box:fill-box;transform-origin:50% 0;animation:mxLengua .36s ease-in-out infinite alternate}
 @keyframes mxLengua{from{transform:rotate(-6deg)}to{transform:rotate(8deg)}}
