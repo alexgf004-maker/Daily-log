@@ -337,7 +337,9 @@ Día de los Muertos: 1 – 3 nov, clase `tema-muertos`; sencillo: fondo claro de
 degradados de ciruela a cempasúchil y papel picado en el borde de los encabezados de color. El login tiene su escena
 (`__escenaMuertos`, capa `.mu-capa`): dos guirnaldas de papel picado con vaivén, ofrenda abajo con velas que titilan,
 flores, pan de muerto y calaverita (en PC va en la esquina), pétalos de cempasúchil cayendo, coronita de flores en el
-logo y la leyenda "Día de los Muertos"; sin animación con `prefers-reduced-motion`. No cambia marcaje, "¡Listo,
+logo y la leyenda "Día de los Muertos"; sin animación con `prefers-reduced-motion`. Dentro de la app caen
+siempre 6 pétalos lentos y transparentes (`.mu-amb`, z-index 90: debajo de la barra, hojas y ventanas; sin toques;
+no salen en el login). Se probaron y descartaron animaciones al marcar y en "¡Listo, guardado!". No cambia marcaje, "¡Listo,
 guardado!" ni colores de estado).
 Sus colores los genera `herramientas/tema-colores.py` (bloque `AUTO-COLORES-MUERTOS`, solo azules).
 Mi Perfil y "Ver ahora" usan el tema de la fecha o, si no hay, el próximo del año (`__temas.ref`). En Mi Perfil del admin,

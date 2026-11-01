@@ -60,7 +60,7 @@
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
-<link rel="stylesheet" href="css/temas.css?v=31">
+<link rel="stylesheet" href="css/temas.css?v=32">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -293,6 +293,13 @@
   // Día de los Muertos: escena del login (guirnaldas de papel picado, ofrenda con velas, pétalos
   // de cempasúchil cayendo). Solo con el tema activo; sin animación si el teléfono pide menos movimiento.
   window.__escenaMuertos=function(){
+    // Dentro de la app: unos pocos pétalos cayendo despacio, siempre (encima del contenido, debajo de
+    // la barra, las hojas y las ventanas; no estorban los toques). En el login no salen: tiene su escena.
+    if(document.documentElement.classList.contains('tema-muertos')&&document.body&&!document.querySelector('.mu-amb')){
+      var amb=document.createElement('div'), pp=''; amb.className='mu-amb'; amb.setAttribute('aria-hidden','true');
+      for(var k=0;k<6;k++) pp+='<i style="left:'+(7+k*16)+'%;animation-duration:'+(14+k*2.3).toFixed(1)+'s;animation-delay:-'+(k*3.1).toFixed(1)+'s"></i>';
+      amb.innerHTML=pp; document.body.appendChild(amb);
+    }
     var ls=document.getElementById('loginScreen');
     if(!ls||!document.documentElement.classList.contains('tema-muertos')||document.querySelector('.mu-capa')) return;
     var COL=['#f97316','#db2777','#7e22ce','#16a34a','#facc15','#0ea5e9'];
@@ -3858,7 +3865,7 @@ function aplicarTema(){
     T.activo=nuevo;
     if(nuevo){ nuevo.clases.forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); window.__escenaMuertos&&window.__escenaMuertos(); }
     if(nuevo?.id!=='halloween') document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());
-    if(nuevo?.id!=='muertos') document.querySelectorAll('.mu-capa').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
+    if(nuevo?.id!=='muertos') document.querySelectorAll('.mu-capa,.mu-amb').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
     renderMarcajeCard();   // la tarjeta de marcaje cambia de figuras con el tema
   }
   pintarTema();
