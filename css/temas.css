@@ -668,7 +668,7 @@ body:has(#loginScreen.active) .mu-amb{display:none}
 .fx-ok.mu .fx-ok-t{transition-delay:1.4s}.fx-ok.mu .fx-ok-s{transition-delay:1.5s}.fx-ok.mu .fx-ok-pills{transition-delay:1.6s}
 .fxm-cf{position:fixed;width:9px;height:5px;pointer-events:none;z-index:3}
 /* El xolo que pasea abajo en las pantallas de adentro (xoloAdentro en index.html) */
-.mu-xolo{position:fixed;left:0;bottom:calc(env(safe-area-inset-bottom) + 4px);width:86px;z-index:90;pointer-events:none;will-change:transform}
+.mu-xolo{position:fixed;left:0;bottom:calc(env(safe-area-inset-bottom) + 2px);width:100px;z-index:90;pointer-events:none;will-change:transform}
 .mu-xolo-in svg{display:block;width:100%;overflow:visible}
 .mu-xolo .mx-pata{transform-box:fill-box;transform-origin:50% 0}
 .mu-xolo .camina .mx-pata.a{animation:mxPaso .36s ease-in-out infinite alternate}.mu-xolo .camina .mx-pata.b{animation:mxPaso .36s ease-in-out infinite alternate-reverse}
@@ -678,6 +678,12 @@ body:has(#loginScreen.active) .mu-amb{display:none}
 .mu-xolo .mx-cola{transform-box:fill-box;transform-origin:0% 100%;animation:mxCola .5s ease-in-out infinite alternate}.mu-xolo .feliz .mx-cola{animation-duration:.14s}
 @keyframes mxCola{from{transform:rotate(-10deg)}to{transform:rotate(18deg)}}
 .mu-xolo .mx-cabeza{transform-box:fill-box;transform-origin:30% 80%;transition:transform .4s}.mu-xolo .feliz .mx-cabeza{transform:rotate(-10deg)}
+.mu-xolo .mx-ala{transform-box:view-box;transform-origin:62px 56px;animation:mxAla .5s ease-in-out infinite alternate}
+.mu-xolo .mx-ala.atras{transform-origin:56px 56px;animation-delay:-.25s}
+.mu-xolo .feliz .mx-ala{animation-duration:.18s}
+@keyframes mxAla{from{transform:rotate(-8deg)}to{transform:rotate(12deg)}}
+.mu-xolo .mx-lengua{transform-box:fill-box;transform-origin:50% 0;animation:mxLengua .36s ease-in-out infinite alternate}
+@keyframes mxLengua{from{transform:rotate(-6deg)}to{transform:rotate(8deg)}}
 @media (prefers-reduced-motion:reduce){.mu-xolo{display:none!important}}
 /* PC: la ofrenda va en la esquina (la tarjeta está al centro); celular bajo: más chica */
 @media(min-width:900px){.mu-ofrenda{left:28px;transform:none;width:440px}}
