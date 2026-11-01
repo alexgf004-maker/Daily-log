@@ -354,6 +354,9 @@ brinca y, si aún no, se transforma (sin quitar el toque al botón de abajo); se
 guardado!" ni colores de estado).
 Sus colores los genera `herramientas/tema-colores.py` (bloque `AUTO-COLORES-MUERTOS`, solo azules).
 Mi Perfil y "Ver ahora" usan el tema de la fecha o, si no hay, el próximo del año (`__temas.ref`).
+"Probar animaciones" (Mi Perfil del técnico y de la admin, solo con tema): vista previa con datos de ejemplo, sin
+marcar ni guardar (`probarMarcajeTema`): marcaje a tiempo / tarde, "¡Listo, guardado!" (si la pantalla no lo tiene,
+como en la oficina, inserta `FX_OK_HTML`) y, en el Día de los Muertos, "Llamar al xolo" (`__llamarXolo`).
 Las barras del celular (hora/batería arriba y navegación abajo) las pinta Android con `<meta name="theme-color">`:
 cada tema tiene su `barra` y `__temas.colorBarra` la aplica al abrir y al cambiar de tema (sin tema, `#1e3a5f`). En Mi Perfil del admin,
 "Tema de temporada" cambia entre Automático / Ver ahora / Apagado, solo en ese dispositivo
