@@ -353,7 +353,9 @@ puntos al azar en el aire, a veces fuera de la pantalla, así que sale y vuelve 
 brinca y, si aún no, se transforma (sin quitar el toque al botón de abajo); se esconde con ventanas abiertas y no sale en el login ni con "reducir movimiento". No cambia marcaje, "¡Listo,
 guardado!" ni colores de estado).
 Sus colores los genera `herramientas/tema-colores.py` (bloque `AUTO-COLORES-MUERTOS`, solo azules).
-Mi Perfil y "Ver ahora" usan el tema de la fecha o, si no hay, el próximo del año (`__temas.ref`). En Mi Perfil del admin,
+Mi Perfil y "Ver ahora" usan el tema de la fecha o, si no hay, el próximo del año (`__temas.ref`).
+Las barras del celular (hora/batería arriba y navegación abajo) las pinta Android con `<meta name="theme-color">`:
+cada tema tiene su `barra` y `__temas.colorBarra` la aplica al abrir y al cambiar de tema (sin tema, `#1e3a5f`). En Mi Perfil del admin,
 "Tema de temporada" cambia entre Automático / Ver ahora / Apagado, solo en ese dispositivo
 (`localStorage.innova_tema`). Para un tema nuevo: agregar la entrada en `TEMAS` y sus estilos.
 Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los temas.

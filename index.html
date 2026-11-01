@@ -70,8 +70,9 @@
 // en este teléfono ('innova_tema_global') para aplicarlo al abrir, sin parpadeo.
 // Prioridad: este dispositivo (Ver ahora / Apagado) > para todos > por fecha.
 (function(){
-  var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte']},
-             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-05',clases:['tema-muertos']}];
+  // barra: color de las barras del celular (hora y batería arriba, navegación abajo; <meta name="theme-color">)
+  var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte'],barra:'#050307'},
+             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-05',clases:['tema-muertos'],barra:'#4a044e'}];
   var d=new Date(), md=('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var modo='auto', global=null; try{ modo=localStorage.getItem('innova_tema')||'auto'; global=JSON.parse(localStorage.getItem('innova_tema_global')||'null'); }catch(e){}
   var porFecha=null; for(var i=0;i<TEMAS.length;i++){ if(md>=TEMAS[i].desde&&md<=TEMAS[i].hasta) porFecha=TEMAS[i]; }
@@ -89,6 +90,9 @@
   var T={lista:TEMAS,porFecha:porFecha,ref:porFecha||proximo,modo:modo,global:global,efectivo:efectivo};
   var t=efectivo(T); T.activo=t;
   if(t) for(var j=0;j<t.clases.length;j++) document.documentElement.classList.add(t.clases[j]);
+  // Las barras del celular las pinta Android con theme-color: que sigan al tema (sin tema, el azul de la app)
+  T.colorBarra=function(tema){ var m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content',(tema&&tema.barra)||'#1e3a5f'); };
+  T.colorBarra(t);
   window.__temas=T;
   // Halloween: escena animada del login (murciélagos que salen de la luna, relámpago,
   // fantasma, ojos en la oscuridad y sangre). Solo se arma si el tema está activo.
@@ -4005,6 +4009,7 @@ function aplicarTema(){
     T.lista.forEach(t=>t.clases.forEach(c=>html.classList.remove(c)));
     T.activo=nuevo;
     if(nuevo){ nuevo.clases.forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); window.__escenaMuertos&&window.__escenaMuertos(); }
+    T.colorBarra&&T.colorBarra(nuevo);
     if(nuevo?.id!=='halloween') document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());
     if(nuevo?.id!=='muertos') document.querySelectorAll('.mu-capa,.mu-amb,.mu-xolo').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
     renderMarcajeCard();   // la tarjeta de marcaje cambia de figuras con el tema
