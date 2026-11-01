@@ -597,7 +597,7 @@ html.tema-halloween .mus-espera-c button{color:#c2410c}
 .hw-fantasma-in svg{filter:drop-shadow(0 6px 10px rgba(60,10,20,.28))}
 .hw-fantasma-in::before{background:radial-gradient(closest-side,rgba(255,240,240,.55),rgba(255,235,235,.18) 55%,transparent)}
 
-/* ── Tema Día de los Muertos (sencillo, 1 al 3 de noviembre) ──
+/* ── Tema Día de los Muertos (sencillo, 1 al 5 de noviembre) ──
    La app conserva su fondo claro: rosa mexicano en los acentos, degradados de ciruela a cempasúchil
    (los genera herramientas/tema-colores.py), papel picado bajo la barra y flores en el login.
    No cambia el marcaje, el "¡Listo, guardado!" ni los colores de estado. */

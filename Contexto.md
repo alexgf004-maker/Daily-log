@@ -333,7 +333,7 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
 `css/temas.css` + un script corto en el `<head>` de `index.html` (lista `TEMAS`). Cada tema
 tiene fechas `desde`/`hasta` en formato mes-día y se aplica solo cada año poniendo clases en
 `<html>` (Halloween: 26 – 31 oct, clases `tema-halloween fuerte`; versión "terror": negro y rojo sangre, luna roja, cementerio, cuervos, sangre en los encabezados.
-Día de los Muertos: 1 – 3 nov, clase `tema-muertos`; sencillo: fondo claro de siempre, rosa mexicano en los acentos,
+Día de los Muertos: 1 – 5 nov, clase `tema-muertos`; sencillo: fondo claro de siempre, rosa mexicano en los acentos,
 degradados de ciruela a cempasúchil y papel picado en el borde de los encabezados de color. El login tiene su escena
 (`__escenaMuertos`, capa `.mu-capa`): dos guirnaldas de papel picado con vaivén, ofrenda abajo con velas que titilan,
 flores, pan de muerto y calaverita (en PC va en la esquina), pétalos de cempasúchil cayendo, coronita de flores en el
