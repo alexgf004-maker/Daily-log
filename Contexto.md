@@ -334,8 +334,11 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
 tiene fechas `desde`/`hasta` en formato mes-día y se aplica solo cada año poniendo clases en
 `<html>` (Halloween: 26 – 31 oct, clases `tema-halloween fuerte`; versión "terror": negro y rojo sangre, luna roja, cementerio, cuervos, sangre en los encabezados.
 Día de los Muertos: 1 – 3 nov, clase `tema-muertos`; sencillo: fondo claro de siempre, rosa mexicano en los acentos,
-degradados de ciruela a cempasúchil, papel picado en el borde de los encabezados de color y en el login, flores de
-cempasúchil y una calaverita en las esquinas del login; no cambia marcaje, "¡Listo, guardado!" ni colores de estado).
+degradados de ciruela a cempasúchil y papel picado en el borde de los encabezados de color. El login tiene su escena
+(`__escenaMuertos`, capa `.mu-capa`): dos guirnaldas de papel picado con vaivén, ofrenda abajo con velas que titilan,
+flores, pan de muerto y calaverita (en PC va en la esquina), pétalos de cempasúchil cayendo, coronita de flores en el
+logo y la leyenda "Día de los Muertos"; sin animación con `prefers-reduced-motion`. No cambia marcaje, "¡Listo,
+guardado!" ni colores de estado).
 Sus colores los genera `herramientas/tema-colores.py` (bloque `AUTO-COLORES-MUERTOS`, solo azules).
 Mi Perfil y "Ver ahora" usan el tema de la fecha o, si no hay, el próximo del año (`__temas.ref`). En Mi Perfil del admin,
 "Tema de temporada" cambia entre Automático / Ver ahora / Apagado, solo en ese dispositivo
