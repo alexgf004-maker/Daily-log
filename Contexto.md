@@ -333,13 +333,17 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
 `css/temas.css` + un script corto en el `<head>` de `index.html` (lista `TEMAS`). Cada tema
 tiene fechas `desde`/`hasta` en formato mes-día y se aplica solo cada año poniendo clases en
 `<html>` (Halloween: 26 – 31 oct, clases `tema-halloween fuerte`; versión "terror": negro y rojo sangre, luna roja, cementerio, cuervos, sangre en los encabezados.
-Día de los Muertos: 1 – 3 nov, clase `tema-muertos`; sencillo: fondo claro de siempre, rosa mexicano en los acentos,
+Día de los Muertos: 1 – 5 nov, clase `tema-muertos`; sencillo: fondo claro de siempre, rosa mexicano en los acentos,
 degradados de ciruela a cempasúchil y papel picado en el borde de los encabezados de color. El login tiene su escena
 (`__escenaMuertos`, capa `.mu-capa`): dos guirnaldas de papel picado con vaivén, ofrenda abajo con velas que titilan,
 flores, pan de muerto y calaverita (en PC va en la esquina), pétalos de cempasúchil cayendo, coronita de flores en el
 logo y la leyenda "Día de los Muertos"; sin animación con `prefers-reduced-motion`. Dentro de la app caen
 siempre 6 pétalos lentos y transparentes (`.mu-amb`, z-index 90: debajo de la barra, hojas y ventanas; sin toques;
-no salen en el login). Se probaron y descartaron animaciones al marcar y en "¡Listo, guardado!". No cambia marcaje, "¡Listo,
+no salen en el login). Marcaje "camino de cempasúchil" (`florMarcajeMU`, `petalosLineaMU`, `petalosCaenMU`): el punto
+es una flor fresca con cheque si llegó a tiempo; si llegó tarde se marchita, suelta dos pétalos y lleva ✕; la línea se
+llena de 9 pétalos (4 apagados si fue tarde) por tramo (entrada 0–50 %, salida 50–100 %). "¡Listo, guardado!"
+(`ESCENA_GUARDADO_MU`, `confetiGuardadoMU`, clase `.fx-ok.mu`): cae una calaverita, le estampan el sello "✓ GUARDADO"
+con un temblor y confeti de papel picado, y guiña; se cierra a los 4.2 s. No cambia marcaje, "¡Listo,
 guardado!" ni colores de estado).
 Sus colores los genera `herramientas/tema-colores.py` (bloque `AUTO-COLORES-MUERTOS`, solo azules).
 Mi Perfil y "Ver ahora" usan el tema de la fecha o, si no hay, el próximo del año (`__temas.ref`). En Mi Perfil del admin,

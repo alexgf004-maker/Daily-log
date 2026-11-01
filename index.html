@@ -60,7 +60,7 @@
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
-<link rel="stylesheet" href="css/temas.css?v=32">
+<link rel="stylesheet" href="css/temas.css?v=33">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -71,7 +71,7 @@
 // Prioridad: este dispositivo (Ver ahora / Apagado) > para todos > por fecha.
 (function(){
   var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte']},
-             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-03',clases:['tema-muertos']}];
+             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-05',clases:['tema-muertos']}];
   var d=new Date(), md=('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var modo='auto', global=null; try{ modo=localStorage.getItem('innova_tema')||'auto'; global=JSON.parse(localStorage.getItem('innova_tema_global')||'null'); }catch(e){}
   var porFecha=null; for(var i=0;i<TEMAS.length;i++){ if(md>=TEMAS[i].desde&&md<=TEMAS[i].hasta) porFecha=TEMAS[i]; }
@@ -2331,6 +2331,44 @@ function etiquetaChip(chip,extra){
 // Halloween: en el marcaje la Muerte ocupa el punto y, al marcar, una guadaña cruza la tarjeta.
 // A tiempo la hora se agacha y la hoja pasa por encima; tarde (o salida antes) la hora queda partida.
 const hwTema=()=>document.documentElement.classList.contains('tema-halloween');
+const muTema=()=>document.documentElement.classList.contains('tema-muertos');
+// ── Día de los Muertos: marcaje "camino de cempasúchil" ──
+// El punto es una flor de cempasúchil: fresca con cheque si llegó a tiempo; si llegó tarde se marchita
+// (pierde color, se encoge y se ladea), suelta pétalos y lleva una ✕. La línea hacia la salida se llena
+// de pétalos (pocos y apagados si fue tarde). La hora y la etiqueta de estado no cambian.
+function florMarcajeMU(tono){
+  const capas=[[20,'#ea580c'],[14.8,'#f97316'],[10,'#fb923c']].map(([r,c])=>{
+    let g=''; for(let k=0;k<12;k++){ const a=Math.PI*2*k/12; g+=`<circle cx="${(20+Math.cos(a)*r*.62).toFixed(1)}" cy="${(20+Math.sin(a)*r*.62).toFixed(1)}" r="${(r*.4).toFixed(1)}" fill="${c}"/>`; }
+    return `<g>${g}</g>`; }).join('');
+  const centro=tono==='mal'?'#dc2626':tono==='ok'?'#16a34a':'#94a3b8';
+  const marca=tono==='mal'?'<path d="M17 17l6 6M23 17l-6 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>'
+    :'<path d="M16 20l3 3 5-6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
+  return `<svg viewBox="0 0 40 40" width="40" height="40">${capas}<circle cx="20" cy="20" r="7" fill="${centro}"/>${marca}</svg>`;
+}
+// Pétalos sobre la línea: tramo de la entrada (0–50 %) y de la salida (50–100 %). Solo el recién
+// marcado se anima. Tarde: 4 pétalos apagados; a tiempo: 9.
+function petalosLineaMU(entrada,salida,recien){
+  const tramo=(dato,desde,nuevo)=>{
+    if(!dato) return '';
+    const tarde=chipEstado(dato).color==='br', n=tarde?4:9; let s='';
+    for(let i=0;i<n;i++) s+=`<i class="mk3-pc${tarde?' mal':''}${nuevo?' nuevo':''}" style="left:${(desde+(i+.5)*50/n).toFixed(1)}%;animation-delay:${(.35+i*.11).toFixed(2)}s"></i>`;
+    return s;
+  };
+  return tramo(entrada,0,recien==='entrada')+tramo(salida,50,recien==='salida');
+}
+// Tarde: la flor recién marcada suelta dos pétalos que caen
+function petalosCaenMU(card,pt){
+  if(!card||!pt||!pt.querySelector('.mk3-dot.mal')) return;
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c=card.getBoundingClientRect(), b=pt.querySelector('.mk3-dot').getBoundingClientRect();
+  [0,1].forEach(k=>{
+    const q=document.createElement('i'); q.className='mk3-pcae';
+    q.style.left=(b.left-c.left+b.width/2-6+k*10)+'px'; q.style.top=(b.top-c.top+b.height-12)+'px';
+    card.appendChild(q);
+    q.animate([{transform:'translate(0,0) rotate(0)',opacity:0},{opacity:1,offset:.1},{transform:`translate(${k?14:-10}px,70px) rotate(${k?220:-200}deg)`,opacity:0}],
+      {duration:1600,delay:1300+k*350,easing:'ease-in',fill:'forwards'}).onfinish=()=>q.remove();
+  });
+}
 const ICO_GUADANA_HW='<svg viewBox="0 0 24 24"><path d="M18 2 14 22" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M18.5 2.5C13 .5 6 1.5 1.5 6.5 6 4.5 12 4 17 6Z" fill="currentColor"/></svg>';
 const ICO_CORTE_HW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 20 20 4"/><path d="M9 18v3M14 13v4"/></svg>';
 let hwParcaN=0;
@@ -2400,6 +2438,12 @@ async function renderMarcajeCard(msgHtml, recien){
     const tono=chip.color==='ba'?'ok':(chip.color==='br'?'mal':'neutro');
     const nuevo=recien&&etiqueta.toLowerCase()===recien;
     const hora=dato.horaStr||'--:--';
+    if(muTema()) return `<div class="mk3-pt${nuevo?' recien':''}">
+      <div class="mk3-dot mu ${tono}">${florMarcajeMU(tono)}</div>
+      <div class="mk3-t">${hora}</div>
+      <div class="mk3-l">${etiqueta}</div>${otraSede(dato)}
+      ${etiquetaChip(chip)}
+    </div>`;
     if(hwTema()) return `<div class="mk3-pt${nuevo?' recien':''}">
       <div class="mk3-dot hw ${tono}">${parcaMini(tono==='mal')}</div>
       ${tono==='mal'?horaPartida(hora):`<div class="mk3-t">${hora}</div>`}
@@ -2438,7 +2482,7 @@ async function renderMarcajeCard(msgHtml, recien){
       <div id="marcajeAlert">${msgHtml||''}</div>
       <div class="mk3-row">
         ${entrada?punto(entrada,'Entrada'):boton('entrada','Entrada')}
-        <div class="mk3-line"><i style="width:${avanceIni}%"></i></div>
+        <div class="mk3-line"><i style="width:${avanceIni}%"></i>${muTema()?petalosLineaMU(entrada,salida,recien):''}</div>
         ${salida?punto(salida,'Salida'):(entrada?boton('salida','Salida'):espera)}
       </div>
     </div>`;
@@ -2447,6 +2491,7 @@ async function renderMarcajeCard(msgHtml, recien){
   // pantalla, para que al tocar "Marcar" la ubicación ya esté lista o casi.
   // Solo si falta algo por marcar (si ya marcó salida, no hace falta GPS).
   if(recien&&hwTema()) tajoHalloween(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
+  if(recien&&muTema()) petalosCaenMU(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
   if(avanceIni!==avance){
     // La línea avanza hasta el punto recién marcado
     const barra=cont.querySelector('.mk3-line i');
@@ -2702,8 +2747,28 @@ function mostrarGuardadoOK(pills){
   const sub=o.querySelector('.fx-ok-s'); if(sub) sub.textContent=hw?'La Muerte ya tomó nota':'Ya quedó en tu historial';
   if(hw&&!o.querySelector('.fxh')) o.insertAdjacentHTML('afterbegin',ESCENA_GUARDADO_HW);
   if(hw) o.querySelector('.fxh-sangre').innerHTML=sangreTopHW();   // al ancho real de la pantalla
+  // Día de los Muertos: cae una calaverita y le estampan el sello "✓ GUARDADO", con confeti de papel picado
+  const mu=!hw&&muTema(); o.classList.toggle('mu',mu);
+  if(mu&&!o.querySelector('.fxm')) o.insertAdjacentHTML('afterbegin',ESCENA_GUARDADO_MU);
+  o.querySelectorAll('.fxm-cf').forEach(e=>e.remove());
   o.classList.remove('on'); void o.offsetWidth; o.classList.add('on');
-  clearTimeout(_fxOkTimer); _fxOkTimer=setTimeout(cerrarGuardadoOK,hw?4400:3200);
+  if(mu) confetiGuardadoMU(o);
+  clearTimeout(_fxOkTimer); _fxOkTimer=setTimeout(cerrarGuardadoOK,hw?4400:mu?4200:3200);
+}
+const ESCENA_GUARDADO_MU=`<div class="fxm" aria-hidden="true"><div class="fxm-cal"><svg viewBox="0 0 120 130"><path fill="#fff7ed" d="M60 8C31 8 12 28 12 56c0 17 8 30 20 37v14c0 6 5 10 10 10h36c5 0 10-4 10-10V93c12-7 20-20 20-37C108 28 89 8 60 8z"/><g class="fxm-guino"><circle cx="40" cy="58" r="14" fill="#7e22ce"/><circle cx="40" cy="58" r="6" fill="#facc15"/></g><circle cx="80" cy="58" r="14" fill="#db2777"/><circle cx="80" cy="58" r="6" fill="#f97316"/><path fill="#4a044e" d="M60 72l-6 12h12z"/><path stroke="#4a044e" stroke-width="2.6" stroke-linecap="round" fill="none" d="M38 98h44M46 92v12M54 92v12M62 92v12M70 92v12M78 92v12"/><path fill="#16a34a" d="M60 20c-6 6-6 12 0 16 6-4 6-10 0-16z"/><circle cx="46" cy="28" r="3.5" fill="#f97316"/><circle cx="74" cy="28" r="3.5" fill="#db2777"/><path fill="none" stroke="#db2777" stroke-width="2.4" d="M22 70c4 4 8 4 12 0M86 70c4 4 8 4 12 0"/></svg></div><div class="fxm-sello">✓ GUARDADO</div></div>`;
+function confetiGuardadoMU(o){
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const COL=['#f97316','#db2777','#7e22ce','#16a34a','#facc15','#0ea5e9'], s=o.querySelector('.fxm-sello');
+  setTimeout(()=>{
+    if(!o.classList.contains('on')||!s) return;
+    const r=s.getBoundingClientRect(), x=r.left+r.width/2, y=r.top+r.height/2;
+    for(let i=0;i<40;i++){
+      const f=document.createElement('i'); f.className='fxm-cf'; f.style.background=COL[i%6]; f.style.left=x+'px'; f.style.top=y+'px'; o.appendChild(f);
+      const a=Math.random()*Math.PI*2, v=120+Math.random()*170;
+      f.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*v}px,${Math.sin(a)*v}px) rotate(${400+Math.random()*400}deg)`,opacity:1,offset:.45},
+        {transform:`translate(${Math.cos(a)*v*1.2}px,${Math.sin(a)*v*.6+260}px) rotate(900deg)`,opacity:0}],{duration:2200,easing:'cubic-bezier(.15,.7,.4,1)',fill:'forwards'}).onfinish=()=>f.remove();
+    }
+  },1250);
 }
 // Escena de Halloween para "¡Listo, guardado!": latido rojo, la Muerte (calavera bajo la capucha) da un tajo
 // que abre una herida en forma de cheque, salpica y gotea; la pantalla también sangra desde arriba.
