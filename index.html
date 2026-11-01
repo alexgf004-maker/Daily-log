@@ -60,7 +60,7 @@
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
-<link rel="stylesheet" href="css/temas.css?v=29">
+<link rel="stylesheet" href="css/temas.css?v=31">
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -70,19 +70,23 @@
 // en este teléfono ('innova_tema_global') para aplicarlo al abrir, sin parpadeo.
 // Prioridad: este dispositivo (Ver ahora / Apagado) > para todos > por fecha.
 (function(){
-  var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte']}];
+  var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte']},
+             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-03',clases:['tema-muertos']}];
   var d=new Date(), md=('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var modo='auto', global=null; try{ modo=localStorage.getItem('innova_tema')||'auto'; global=JSON.parse(localStorage.getItem('innova_tema_global')||'null'); }catch(e){}
   var porFecha=null; for(var i=0;i<TEMAS.length;i++){ if(md>=TEMAS[i].desde&&md<=TEMAS[i].hasta) porFecha=TEMAS[i]; }
+  // Tema de referencia para Mi Perfil y "Ver ahora": el de la fecha o, si no hay, el próximo del año
+  var proximo=null; for(var p=0;p<TEMAS.length;p++){ if(TEMAS[p].desde>md&&(!proximo||TEMAS[p].desde<proximo.desde)) proximo=TEMAS[p]; }
+  if(!proximo) for(var q=0;q<TEMAS.length;q++){ if(!proximo||TEMAS[q].desde<proximo.desde) proximo=TEMAS[q]; }
   function efectivo(T){
     if(T.modo==='off') return null;
-    if(T.modo==='ver') return T.porFecha||T.lista[0];
+    if(T.modo==='ver') return T.ref;
     var g=T.global;
     if(g&&g.modo==='off') return null;
     if(g&&g.modo==='on'){ for(var k=0;k<T.lista.length;k++) if(T.lista[k].id===g.tema) return T.lista[k]; return T.lista[0]; }
     return T.porFecha;
   }
-  var T={lista:TEMAS,porFecha:porFecha,modo:modo,global:global,efectivo:efectivo};
+  var T={lista:TEMAS,porFecha:porFecha,ref:porFecha||proximo,modo:modo,global:global,efectivo:efectivo};
   var t=efectivo(T); T.activo=t;
   if(t) for(var j=0;j<t.clases.length;j++) document.documentElement.classList.add(t.clases[j]);
   window.__temas=T;
@@ -286,7 +290,57 @@
     var panel=ls.querySelector('.login-panel');
     if(panel) [['17%','58px',9,0],['88%','76px',11,4],['47%','30px',13,7.5]].forEach(function(o){ var e=document.createElement('div'); e.className='hw-ojos'; e.style.cssText='left:'+o[0]+';bottom:'+o[1]+';--dur:'+o[2]+'s;--del:'+o[3]+'s'; panel.appendChild(e); });
   };
-  document.addEventListener('DOMContentLoaded',function(){ window.__escenaHalloween(); });
+  // Día de los Muertos: escena del login (guirnaldas de papel picado, ofrenda con velas, pétalos
+  // de cempasúchil cayendo). Solo con el tema activo; sin animación si el teléfono pide menos movimiento.
+  window.__escenaMuertos=function(){
+    var ls=document.getElementById('loginScreen');
+    if(!ls||!document.documentElement.classList.contains('tema-muertos')||document.querySelector('.mu-capa')) return;
+    var COL=['#f97316','#db2777','#7e22ce','#16a34a','#facc15','#0ea5e9'];
+    // Guirnalda: banderitas a lo largo de una curva que cuelga (y de 0 a w)
+    function guirnalda(w,y0,cae,desfase,clase){
+      var n=Math.max(6,Math.round(w/36)), s='', i;
+      var curva='M0 '+y0+' Q'+(w/2)+' '+(y0+cae*2)+' '+w+' '+y0;
+      for(i=0;i<n;i++){
+        var tt=(i+.5)/n, x=tt*w, y=y0+cae*4*tt*(1-tt), ang=(1-2*tt)*cae*-0.9, c=COL[(i+desfase)%COL.length];
+        s+='<g transform="translate('+x.toFixed(1)+' '+y.toFixed(1)+') rotate('+ang.toFixed(1)+')"><path fill="'+c+'" d="M-13 0H13V24L10.4 28 7.8 24 5.2 28 2.6 24 0 28-2.6 24-5.2 28-7.8 24-10.4 28-13 24Z"/>'+
+           '<g fill="#fff" opacity=".55"><circle cy="8" r="3.4"/><path d="M-9 6l2.2-2.2 2.2 2.2-2.2 2.2zM5 6l2.2-2.2 2.2 2.2-2.2 2.2zM-6 15H6L0 20z"/></g></g>';
+      }
+      return '<svg class="mu-guirnalda '+clase+'" viewBox="0 0 '+w+' '+(y0+cae+34)+'" preserveAspectRatio="none" style="height:'+(y0+cae+34)+'px"><path d="'+curva+'" stroke="#fde68a" stroke-opacity=".7" stroke-width="1.2" fill="none"/>'+s+'</svg>';
+    }
+    function flor(x,y,r){
+      var s='', capas=[[r,'#ea580c'],[r*.76,'#f97316'],[r*.52,'#fb923c'],[r*.3,'#fdba74']];
+      capas.forEach(function(cp,k){ for(var j=0;j<11;j++){ var a=Math.PI*2*j/11+k*.3; s+='<circle cx="'+(x+Math.cos(a)*cp[0]*.6).toFixed(1)+'" cy="'+(y+Math.sin(a)*cp[0]*.6).toFixed(1)+'" r="'+(cp[0]*.42).toFixed(1)+'" fill="'+cp[1]+'"/>'; } });
+      return s+'<circle cx="'+x+'" cy="'+y+'" r="'+(r*.15).toFixed(1)+'" fill="#c2410c"/>';
+    }
+    function vela(x,alto,d){
+      return '<rect x="'+(x-7)+'" y="'+(112-alto)+'" width="14" height="'+alto+'" rx="3" fill="#fff7ed"/><rect x="'+(x-7)+'" y="'+(112-alto)+'" width="5" height="'+alto+'" rx="2" fill="#fed7aa"/>'+
+        '<path d="M'+x+' '+(112-alto)+'v-4" stroke="#44403c" stroke-width="1.4"/>'+
+        '<g class="mu-llama" style="animation-delay:'+d+'s"><ellipse cx="'+x+'" cy="'+(112-alto-11)+'" rx="5.5" ry="10" fill="#fbbf24"/><ellipse cx="'+x+'" cy="'+(112-alto-8)+'" rx="2.8" ry="5.5" fill="#fff7ed"/></g>'+
+        '<circle class="mu-halo" style="animation-delay:'+d+'s" cx="'+x+'" cy="'+(112-alto-10)+'" r="22" fill="url(#muHalo)"/>';
+    }
+    var ofrenda='<svg class="mu-ofrenda" viewBox="0 0 400 140" preserveAspectRatio="xMidYMax meet"><defs><radialGradient id="muHalo"><stop offset="0" stop-color="#fde68a" stop-opacity=".55"/><stop offset="1" stop-color="#fde68a" stop-opacity="0"/></radialGradient></defs>'+
+      '<path fill="#6b21a8" d="M0 112H400V140H0Z"/><path fill="#db2777" d="M0 112H400V118H0Z"/>'+
+      (function(){ var z=''; for(var i=0;i<20;i++) z+='<path fill="#f97316" d="M'+(i*20)+' 118h20l-10 9z"/>'; return z; })()+
+      vela(64,40,0)+vela(98,28,.6)+vela(302,34,.3)+vela(336,46,.9)+
+      // pan de muerto
+      '<path fill="#d97706" d="M150 112c0-22 14-34 30-34s30 12 30 34z"/><path fill="#fbbf24" opacity=".55" d="M160 104c4-14 12-20 20-20"/>'+
+      '<path stroke="#92400e" stroke-width="5" stroke-linecap="round" fill="none" d="M160 98c12-4 28-4 40 0M180 82v22"/><circle cx="180" cy="80" r="5" fill="#92400e"/>'+
+      // calaverita
+      '<g transform="translate(212 58) scale(.42)"><path fill="#fff7ed" d="M60 8C31 8 12 28 12 56c0 17 8 30 20 37v14c0 6 5 10 10 10h36c5 0 10-4 10-10V93c12-7 20-20 20-37C108 28 89 8 60 8z"/><circle cx="40" cy="58" r="14" fill="#7e22ce"/><circle cx="80" cy="58" r="14" fill="#db2777"/><circle cx="40" cy="58" r="6" fill="#facc15"/><circle cx="80" cy="58" r="6" fill="#f97316"/><path fill="#4a044e" d="M60 72l-6 12h12z"/><path stroke="#4a044e" stroke-width="2.4" stroke-linecap="round" fill="none" d="M38 98h44M46 92v12M54 92v12M62 92v12M70 92v12M78 92v12"/><path fill="#16a34a" d="M60 20c-6 6-6 12 0 16 6-4 6-10 0-16z"/></g>'+
+      flor(22,104,18)+flor(128,106,14)+flor(268,104,16)+flor(378,102,19)+flor(40,92,11)+flor(360,88,12)+'</svg>';
+    var capa=document.createElement('div'); capa.className='mu-capa';
+    function armarGuirnaldas(){
+      var w=Math.max(320,Math.round(window.innerWidth||400));
+      var g=capa.querySelector('.mu-guirnaldas'); if(!g) return;
+      g.innerHTML=guirnalda(w,6,22,0,'una')+guirnalda(w,-8,46,3,'dos');
+    }
+    var petalos=''; for(var i=0;i<12;i++) petalos+='<i class="mu-petalo" style="left:'+(4+((i*37)%92))+'%;animation-duration:'+(10+(i*7)%8)+'s;animation-delay:-'+((i*13)%15)+'s"></i>';
+    capa.innerHTML='<div class="mu-guirnaldas"></div>'+petalos+ofrenda;
+    ls.insertBefore(capa,ls.firstChild);
+    armarGuirnaldas();
+    var tm=null; window.addEventListener('resize',function(){ clearTimeout(tm); tm=setTimeout(armarGuirnaldas,200); });
+  };
+  document.addEventListener('DOMContentLoaded',function(){ window.__escenaHalloween(); window.__escenaMuertos(); });
 })();
 </script>
 </head>
@@ -3780,7 +3834,7 @@ window.cargarPerfilEmpleado=async()=>{
 // Tema de temporada: Automático (por fecha) → Ver ahora → Apagado. Solo en este dispositivo.
 function pintarTema(){
   const T=window.__temas; if(!T) return;
-  const sig=T.lista[0], fc=md=>{ const [m,d]=md.split('-').map(Number); return `${d} ${MESES_FX[m-1]}`; };
+  const sig=T.ref, fc=md=>{ const [m,d]=md.split('-').map(Number); return `${d} ${MESES_FX[m-1]}`; };
   const g=T.global, st=$('temaStatus'), md=$('temaModo');
   if(st) st.textContent=T.modo==='off'?'Apagado en este dispositivo'
     :T.activo?`${T.activo.nombre} activo${T.modo==='ver'&&!T.porFecha&&g?.modo!=='on'?' (vista previa)':''}`
@@ -3788,7 +3842,8 @@ function pintarTema(){
     :`${sig.nombre}: del ${fc(sig.desde)} al ${fc(sig.hasta)}`;
   if(md) md.textContent={auto:'Automático',ver:'Ver ahora',off:'Apagado'}[T.modo];
   const gs=$('temaGlobalStatus'), gm=$('temaGlobalModo');
-  if(gs) gs.textContent=g?.modo==='on'?`${sig.nombre} encendido para todos, aunque no sea la fecha`
+  const gt=g?.modo==='on'?(T.lista.find(x=>x.id===g.tema)||sig):sig; // el que se encendió para todos
+  if(gs) gs.textContent=g?.modo==='on'?`${gt.nombre} encendido para todos, aunque no sea la fecha`
     :g?.modo==='off'?`${sig.nombre} apagado para todos, aunque sea la fecha`
     :`Solo en sus fechas (del ${fc(sig.desde)} al ${fc(sig.hasta)})`;
   if(gm) gm.textContent=g?.modo==='on'?'Encendido':g?.modo==='off'?'Apagado':'Por fecha';
@@ -3801,8 +3856,9 @@ function aplicarTema(){
   if(nuevo!==T.activo){
     T.lista.forEach(t=>t.clases.forEach(c=>html.classList.remove(c)));
     T.activo=nuevo;
-    if(nuevo){ nuevo.clases.forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); }
-    else document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
+    if(nuevo){ nuevo.clases.forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); window.__escenaMuertos&&window.__escenaMuertos(); }
+    if(nuevo?.id!=='halloween') document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());
+    if(nuevo?.id!=='muertos') document.querySelectorAll('.mu-capa').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
     renderMarcajeCard();   // la tarjeta de marcaje cambia de figuras con el tema
   }
   pintarTema();
@@ -3818,17 +3874,17 @@ window.cicloTemaGlobal=async()=>{
   const T=window.__temas; if(!T) return;
   const act=T.global?.modo||'auto';
   const sig={auto:'on',on:'off',off:'auto'}[act];
-  const nombre=T.lista[0].nombre;
+  const nombre=T.ref.nombre;
   if(sig==='on'&&!confirm(`¿Encender el tema de ${nombre} para todos? Lo verán en el login y en la app desde ya.`)) return;
   if(sig==='off'&&!confirm(`¿Apagar el tema de ${nombre} para todos, aunque sea su fecha?`)) return;
-  try{ await set(ref(db,'config/tema'), sig==='auto'?null:{modo:sig,tema:T.lista[0].id,por:me?.nombre||'',en:Date.now()}); }
+  try{ await set(ref(db,'config/tema'), sig==='auto'?null:{modo:sig,tema:T.ref.id,por:me?.nombre||'',en:Date.now()}); }
   catch(e){ alert('No se pudo guardar: '+e.message); }
 };
 // Escucha config/tema (también en el login): si el admin lo cambia, se aplica solo en todos los teléfonos
 try{
   onValue(refFirebase(db,'config/tema'), sn=>{
     const T=window.__temas; if(!T) return;
-    const v=sn.val(); const g=v&&(v.modo==='on'||v.modo==='off')?{modo:v.modo,tema:v.tema||T.lista[0].id}:null;
+    const v=sn.val(); const g=v&&(v.modo==='on'||v.modo==='off')?{modo:v.modo,tema:v.tema||T.ref.id}:null;
     T.global=g;
     try{ if(g) localStorage.setItem('innova_tema_global',JSON.stringify(g)); else localStorage.removeItem('innova_tema_global'); }catch(_){}
     aplicarTema();

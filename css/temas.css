@@ -596,3 +596,169 @@ html.tema-halloween .mus-espera-c button{color:#c2410c}
 .hw-fantasma-in{position:absolute;filter:none}
 .hw-fantasma-in svg{filter:drop-shadow(0 6px 10px rgba(60,10,20,.28))}
 .hw-fantasma-in::before{background:radial-gradient(closest-side,rgba(255,240,240,.55),rgba(255,235,235,.18) 55%,transparent)}
+
+/* ── Tema Día de los Muertos (sencillo, 1 al 3 de noviembre) ──
+   La app conserva su fondo claro: rosa mexicano en los acentos, degradados de ciruela a cempasúchil
+   (los genera herramientas/tema-colores.py), papel picado bajo la barra y flores en el login.
+   No cambia el marcaje, el "¡Listo, guardado!" ni los colores de estado. */
+.tema-muertos{--blue:#db2777;--blue2:#ec4899;--bluedk:#be185d;--bluelt:#fdf2f8;--bluemid:#fbcfe8}
+.tema-muertos .tb-bar{background:#f97316!important}
+.tema-muertos .inn{color:#fdba74!important}
+.tema-muertos :is(.dash-hero,.rg-hero,.pg-hero,.ps-hero,.page-header,.pe,.ph-det-hd,.rm-hd){background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 28'%3E%3Cpath d='M0 3H150' stroke='%237c2d12' stroke-width='1.2'/%3E%3Cpath fill='%23f97316' d='M2 3h26v19 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4z'/%3E%3Cg fill='%23fff' opacity='.55'%3E%3Ccircle cx='15' cy='10' r='3.2'/%3E%3Cpath d='M7 9l2-2 2 2-2 2z M19 9l2-2 2 2-2 2z M9 16h12l-6 4z'/%3E%3C/g%3E%3Cpath fill='%23db2777' d='M32 3h26v19 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4z'/%3E%3Cg fill='%23fff' opacity='.55'%3E%3Ccircle cx='45' cy='10' r='3.2'/%3E%3Cpath d='M37 9l2-2 2 2-2 2z M49 9l2-2 2 2-2 2z M39 16h12l-6 4z'/%3E%3C/g%3E%3Cpath fill='%237e22ce' d='M62 3h26v19 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4z'/%3E%3Cg fill='%23fff' opacity='.55'%3E%3Ccircle cx='75' cy='10' r='3.2'/%3E%3Cpath d='M67 9l2-2 2 2-2 2z M79 9l2-2 2 2-2 2z M69 16h12l-6 4z'/%3E%3C/g%3E%3Cpath fill='%2316a34a' d='M92 3h26v19 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4z'/%3E%3Cg fill='%23fff' opacity='.55'%3E%3Ccircle cx='105' cy='10' r='3.2'/%3E%3Cpath d='M97 9l2-2 2 2-2 2z M109 9l2-2 2 2-2 2z M99 16h12l-6 4z'/%3E%3C/g%3E%3Cpath fill='%23facc15' d='M122 3h26v19 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4 l-2.6 4 -2.6 -4z'/%3E%3Cg fill='%23fff' opacity='.55'%3E%3Ccircle cx='135' cy='10' r='3.2'/%3E%3Cpath d='M127 9l2-2 2 2-2 2z M139 9l2-2 2 2-2 2z M129 16h12l-6 4z'/%3E%3C/g%3E%3C/svg%3E") top left/120px 22px repeat-x,linear-gradient(120deg,#4a044e 0%,#9d174d 55%,#ea580c 100%)!important;padding-top:28px}
+/* Login: escena (guirnaldas, ofrenda y pétalos; la arma __escenaMuertos en index.html) */
+.mu-capa{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.mu-guirnaldas{position:absolute;left:0;right:0;top:0}
+.mu-guirnalda{position:absolute;left:0;top:0;width:100%;transform-origin:50% 0;animation:muVaiven 7s ease-in-out infinite alternate}
+.mu-guirnalda.dos{animation-duration:9s;animation-delay:-3s;opacity:.92}
+@keyframes muVaiven{from{transform:rotate(-.6deg) translateY(0)}to{transform:rotate(.6deg) translateY(3px)}}
+.mu-ofrenda{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(560px,100%);height:auto}
+.mu-llama{transform-box:fill-box;transform-origin:50% 100%;animation:muLlama 1.6s ease-in-out infinite alternate}
+.mu-halo{animation:muHalo 1.6s ease-in-out infinite alternate}
+@keyframes muLlama{0%{transform:scale(1,1) rotate(-2deg)}50%{transform:scale(.92,1.12) rotate(2deg)}100%{transform:scale(1.04,.94) rotate(-1deg)}}
+@keyframes muHalo{from{opacity:.7}to{opacity:1}}
+.mu-petalo{position:absolute;top:-24px;width:10px;height:13px;border-radius:70% 10% 70% 10%;background:linear-gradient(135deg,#fdba74,#ea580c);opacity:.85;animation:muCae 12s linear infinite}
+.mu-petalo:nth-child(3n){width:8px;height:10px;background:linear-gradient(135deg,#f9a8d4,#db2777)}
+@keyframes muCae{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(22px,25vh) rotate(130deg)}50%{transform:translate(-12px,52vh) rotate(260deg)}75%{transform:translate(16px,80vh) rotate(400deg)}100%{transform:translate(0,112vh) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){.mu-guirnalda,.mu-llama,.mu-halo{animation:none}.mu-petalo{display:none}}
+/* PC: la ofrenda va en la esquina (la tarjeta está al centro); celular bajo: más chica */
+@media(min-width:900px){.mu-ofrenda{left:28px;transform:none;width:440px}}
+@media(max-width:899px) and (max-height:760px){.mu-ofrenda{width:290px}}
+.tema-muertos .login-footer{text-shadow:0 1px 3px rgba(46,5,48,.9)}
+.tema-muertos .login-logo{position:relative}
+.tema-muertos .login-logo::after{content:'';position:absolute;left:50%;top:-22px;width:70px;height:44px;transform:translateX(-50%);pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Cpath fill='%2316a34a' d='M6 30c8-6 16-8 24-6-8 2-14 6-18 12zM58 30c-8-6-16-8-24-6 8 2 14 6 18 12z'/%3E%3Ccircle cx='20.6' cy='26.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='19.6' cy='29.6' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='16.7' cy='32.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='13.1' cy='32.5' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='9.7' cy='31.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='7.7' cy='27.9' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='7.7' cy='24.1' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='9.7' cy='21.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='13.1' cy='19.5' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='16.7' cy='20.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='19.6' cy='22.4' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='18.8' cy='27.5' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='17.2' cy='29.8' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='14.6' cy='31.0' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='11.9' cy='30.5' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='9.7' cy='28.7' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='9.0' cy='25.9' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='9.8' cy='23.2' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='12.0' cy='21.4' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='14.8' cy='21.0' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='17.3' cy='22.3' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='18.8' cy='24.7' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='16.8' cy='27.9' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='15.3' cy='29.2' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='13.4' cy='29.4' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='11.7' cy='28.5' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='10.7' cy='26.9' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='10.7' cy='24.9' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='11.8' cy='23.3' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='13.6' cy='22.6' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='15.5' cy='22.9' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='16.9' cy='24.2' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='17.4' cy='26.1' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='15.2' cy='27.6' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='14.2' cy='28.0' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='13.1' cy='27.8' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='12.3' cy='27.0' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='12.0' cy='25.9' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='12.4' cy='24.9' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='13.3' cy='24.2' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='14.4' cy='24.1' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='15.4' cy='24.6' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='15.9' cy='25.5' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='15.9' cy='26.6' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='14' cy='26' r='1.6' fill='%23c2410c'/%3E%3Ccircle cx='56.6' cy='26.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='55.6' cy='29.6' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='52.7' cy='32.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='49.1' cy='32.5' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='45.7' cy='31.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='43.7' cy='27.9' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='43.7' cy='24.1' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='45.7' cy='21.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='49.1' cy='19.5' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='52.7' cy='20.0' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='55.6' cy='22.4' r='4.6' fill='%23ea580c'/%3E%3Ccircle cx='54.8' cy='27.5' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='53.2' cy='29.8' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='50.6' cy='31.0' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='47.9' cy='30.5' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='45.7' cy='28.7' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='45.0' cy='25.9' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='45.8' cy='23.2' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='48.0' cy='21.4' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='50.8' cy='21.0' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='53.3' cy='22.3' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='54.8' cy='24.7' r='3.5' fill='%23f97316'/%3E%3Ccircle cx='52.8' cy='27.9' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='51.3' cy='29.2' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='49.4' cy='29.4' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='47.7' cy='28.5' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='46.7' cy='26.9' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='46.7' cy='24.9' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='47.8' cy='23.3' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='49.6' cy='22.6' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='51.5' cy='22.9' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='52.9' cy='24.2' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='53.4' cy='26.1' r='2.4' fill='%23fb923c'/%3E%3Ccircle cx='51.2' cy='27.6' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='50.2' cy='28.0' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='49.1' cy='27.8' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='48.3' cy='27.0' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='48.0' cy='25.9' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='48.4' cy='24.9' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='49.3' cy='24.2' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='50.4' cy='24.1' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='51.4' cy='24.6' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='51.9' cy='25.5' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='51.9' cy='26.6' r='1.4' fill='%23fdba74'/%3E%3Ccircle cx='50' cy='26' r='1.6' fill='%23c2410c'/%3E%3Ccircle cx='40.4' cy='18.0' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='39.1' cy='22.5' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='35.5' cy='25.6' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='30.8' cy='26.3' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='26.5' cy='24.3' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='23.9' cy='20.4' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='23.9' cy='15.6' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='26.5' cy='11.7' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='30.8' cy='9.7' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='35.5' cy='10.4' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='39.1' cy='13.5' r='5.9' fill='%23ea580c'/%3E%3Ccircle cx='38.1' cy='19.9' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='36.1' cy='22.9' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='32.8' cy='24.3' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='29.3' cy='23.8' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='26.6' cy='21.4' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='25.6' cy='17.9' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='26.7' cy='14.5' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='29.4' cy='12.2' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='33.0' cy='11.7' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='36.2' cy='13.2' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='38.2' cy='16.3' r='4.5' fill='%23f97316'/%3E%3Ccircle cx='35.6' cy='20.5' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='33.7' cy='22.0' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='31.3' cy='22.3' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='29.0' cy='21.2' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='27.8' cy='19.1' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='27.8' cy='16.6' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='29.2' cy='14.6' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='31.5' cy='13.7' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='33.9' cy='14.1' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='35.7' cy='15.7' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='36.4' cy='18.1' r='3.1' fill='%23fb923c'/%3E%3Ccircle cx='33.6' cy='20.0' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='32.3' cy='20.5' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='30.9' cy='20.2' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='29.8' cy='19.3' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='29.5' cy='17.9' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='29.9' cy='16.5' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='31.1' cy='15.7' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='32.5' cy='15.5' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='33.7' cy='16.2' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='34.4' cy='17.4' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='34.4' cy='18.8' r='1.8' fill='%23fdba74'/%3E%3Ccircle cx='32' cy='18' r='2.1' fill='%23c2410c'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}
+.tema-muertos .login-brand-sub::after{content:'✿  Día de los Muertos  ✿';display:block;margin-top:8px;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#fdba74}
+
+/* AUTO-COLORES-MUERTOS:INICIO (no editar a mano: herramientas/tema-colores.py) */
+:where(.tema-muertos) #loginScreen{background:linear-gradient(160deg,#2e0530 0%,#4a044e 45%,#c2410c 100%)}
+:where(.tema-muertos) .login-form input:focus{box-shadow:0 0 0 4px rgba(219,39,119,.12)}
+:where(.tema-muertos) .btn-login{background:linear-gradient(135deg,#701a75 0%,#ea580c 55%,#f97316 100%);box-shadow:0 12px 24px -10px rgba(219,39,119,.7)}
+:where(.tema-muertos) .btn-login:hover{box-shadow:0 14px 28px -10px rgba(219,39,119,.85)}
+:where(.tema-muertos) .topbar{background:linear-gradient(110deg,#4a044e 0%,#4a044e 30%,#ea580c 100%)}
+:where(.tema-muertos) .tb-bar{background:#f472b6}
+:where(.tema-muertos) .tb-name .inn{color:#f472b6}
+:where(.tema-muertos) .role-a{color:#f472b6}
+:where(.tema-muertos) .page-header{background:linear-gradient(120deg,#4a044e 0%,#ea580c 100%);box-shadow:0 10px 24px -10px rgba(219,39,119,.5)}
+:where(.tema-muertos) .stat-card{box-shadow:0 6px 16px -8px rgba(219,39,119,.5)}
+:where(.tema-muertos) input:focus,:where(.tema-muertos) textarea:focus,:where(.tema-muertos) select:focus{box-shadow:0 0 0 3px rgba(219,39,119,.1)}
+:where(.tema-muertos) .btn-p:hover{box-shadow:0 3px 10px rgba(219,39,119,.3)}
+:where(.tema-muertos) .btn-personal-flot{box-shadow:0 6px 20px -4px rgba(219,39,119,.55)}
+:where(.tema-muertos) .dash-hero{background:linear-gradient(120deg,#4a044e 0%,#ea580c 100%);box-shadow:0 10px 24px -10px rgba(219,39,119,.5)}
+:where(.tema-muertos) .mk3-btn{background:linear-gradient(135deg,#4a044e,#ea580c);box-shadow:0 8px 16px -8px rgba(219,39,119,.7)}
+:where(.tema-muertos) .dtile.t-b{background:linear-gradient(135deg,#4a044e,#ea580c);color:#db2777}
+:where(.tema-muertos) .pe{background:linear-gradient(120deg,#4a044e 0%,#ea580c 100%)}
+:where(.tema-muertos) #maintenanceScreen{background:linear-gradient(160deg,#2e0530 0%,#4a044e 45%,#c2410c 100%)}
+:where(.tema-muertos) .mt-doc i:nth-child(1){background:#db2777}
+:where(.tema-muertos) .mt-g1{color:#f472b6}
+:where(.tema-muertos) .mt-bar b{background:linear-gradient(90deg,transparent,#fb923c,transparent)}
+:where(.tema-muertos) .mt-av{color:#4a044e}
+:where(.tema-muertos) .rg-hero{background:linear-gradient(120deg,#4a044e 0%,#ea580c 100%);box-shadow:0 10px 24px -12px rgba(219,39,119,.5)}
+:where(.tema-muertos) .rg-st.b{background:linear-gradient(135deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .rg-emp-n{background:linear-gradient(160deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .rg-pill.b{color:#be185d;background:#fdf2f8;border-color:#fbcfe8}
+:where(.tema-muertos) .rg-av{background:linear-gradient(135deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .rg-cd.ok{background:#4a044e}
+:where(.tema-muertos) .rg-cd.hoy{box-shadow:0 0 0 2px #fff,0 0 0 4px #4a044e}
+:where(.tema-muertos) .rg-cal-ley i.ok{background:#4a044e}
+:where(.tema-muertos) .fx-chip.on{border-color:#db2777;background:#fdf2f8;color:#be185d}
+:where(.tema-muertos) .fx-chip.on small{color:#db2777}
+:where(.tema-muertos) .fx-tipo .tipo-btn.active{color:#be185d}
+:where(.tema-muertos) .fx-vo.no.on{border-color:#db2777;background:#fdf2f8}
+:where(.tema-muertos) .fx-vo.no.on b{color:#be185d}
+:where(.tema-muertos) .fx-save{box-shadow:0 10px 20px -10px rgba(219,39,119,.8)}
+:where(.tema-muertos) .fx-ok{background:linear-gradient(135deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .mk-av.info{background:#fdf2f8;border-color:#fbcfe8}
+:where(.tema-muertos) .mk-av.info .mk-av-ic{background:#db2777}
+:where(.tema-muertos) .mk-av.info b{color:#4a044e}
+:where(.tema-muertos) .mk-av-spin{border:2.5px solid #fbcfe8;border-top-color:#db2777}
+:where(.tema-muertos) .cl-mon:focus-within{box-shadow:0 0 0 3px rgba(219,39,119,.15)}
+:where(.tema-muertos) .cl-bol-tot b{color:#4a044e}
+:where(.tema-muertos) .cl-formula{color:#4a044e}
+:where(.tema-muertos) .pf-gafete-top{background:linear-gradient(120deg,#4a044e 0%,#ea580c 100%)}
+:where(.tema-muertos) .pf-av{background:linear-gradient(135deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .pf-marca{color:#db2777}
+:where(.tema-muertos) .pf-ic.b{background:#fdf2f8;color:#db2777}
+:where(.tema-muertos) .pf-inp:focus-within{box-shadow:0 0 0 3px rgba(219,39,119,.15)}
+:where(.tema-muertos) .us-nuevo{color:#be185d}
+:where(.tema-muertos) .us-fil button.on{border-color:#db2777;background:#fdf2f8;color:#be185d}
+:where(.tema-muertos) .us-av{background:linear-gradient(135deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .us-t.b{color:#be185d;background:#fdf2f8;border-color:#fbcfe8}
+:where(.tema-muertos) .us-aic.b{background:#fdf2f8;color:#db2777}
+:where(.tema-muertos) .lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0 0 3px rgba(219,39,119,.25)}
+:where(.tema-muertos) .rm-hd{background:linear-gradient(120deg,#4a044e 0%,#ea580c 100%)}
+:where(.tema-muertos) .prog-subtab.active{color:#be185d}
+:where(.tema-muertos) .pg-hero{background:linear-gradient(120deg,#4a044e 0%,#ea580c 100%);box-shadow:0 10px 24px -12px rgba(219,39,119,.5)}
+:where(.tema-muertos) .pg-acts button.w{color:#be185d}
+:where(.tema-muertos) .pg-sel{background:#fdf2f8;border:1px solid #fbcfe8;color:#4a044e}
+:where(.tema-muertos) .pg-sel button{color:#be185d}
+:where(.tema-muertos) .pg-c-add{color:#db2777}
+:where(.tema-muertos) .pg-g.destino{border-color:#f9a8d4;box-shadow:0 0 0 3px rgba(219,39,119,.12)}
+:where(.tema-muertos) .pg-placa{border:1.5px solid #4a044e;box-shadow:inset 0 2px 0 #db2777}
+:where(.tema-muertos) .pg-vadd{color:#db2777;border:1.5px dashed #f9a8d4}
+:where(.tema-muertos) .pg-p{background:#fdf2f8;border:1px solid #fbcfe8;color:#4a044e}
+:where(.tema-muertos) .pg-p i{background:#4a044e}
+:where(.tema-muertos) .pg-add{border:1.5px dashed #f9a8d4;color:#db2777}
+:where(.tema-muertos) .hl-it:before{background:#db2777}
+:where(.tema-muertos) .hl-f{color:#4a044e}
+:where(.tema-muertos) .ds-emp{color:#db2777}
+:where(.tema-muertos) .tb-bell i{border:2px solid #4a044e}
+:where(.tema-muertos) .pd-seg button.on{color:#4a044e}
+:where(.tema-muertos) .pd-av{background:linear-gradient(135deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .pd-dia b{color:#4a044e}
+@media(max-width:899px){:where(.tema-muertos) #adminScreen .tab.active{background:linear-gradient(120deg,#4a044e,#ea580c);box-shadow:0 4px 10px rgba(219,39,119,.28)}}
+@media(min-width:900px){:where(.tema-muertos) #adminScreen .tabs{background:linear-gradient(180deg,#4a044e 0%,#4a044e 60%,#ea580c 140%)}:where(.tema-muertos) #adminScreen .tab.active{color:#4a044e}}
+:where(.tema-muertos) .tc-k{color:#db2777}
+:where(.tema-muertos) .tc-ej i.b{background:#db2777}
+:where(.tema-muertos) .tc-ley i.ok{background:#db2777}
+:where(.tema-muertos) .tc-dots i.on{background:#db2777}
+:where(.tema-muertos) .ps-hero{background:linear-gradient(120deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .ps-hero-btn{color:#4a044e}
+:where(.tema-muertos) .ps-sec.campo{color:#db2777}
+:where(.tema-muertos) .ps-sec.campo:after{background:#fbcfe8}
+:where(.tema-muertos) .au-tiles .b{background:linear-gradient(135deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .ph-it.on{background:#fdf2f8;box-shadow:inset 3px 0 0 #db2777}
+:where(.tema-muertos) .ph-it.on .ph-dd{background:linear-gradient(135deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .ph-it.on .ph-dd span{color:#fbcfe8}
+:where(.tema-muertos) .ph-det-hd{background:linear-gradient(120deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .ph-g-bar{background:#db2777}
+:where(.tema-muertos) .ph-zona{color:#be185d;background:#fdf2f8}
+:where(.tema-muertos) .ph-placa{border:1.5px solid #4a044e;border-top:3px solid #db2777}
+:where(.tema-muertos) .ct-placa{border:2px solid #4a044e;border-top:5px solid #db2777}
+:where(.tema-muertos) .ct-add{color:#db2777}
+:where(.tema-muertos) .ct-col-hd.campo{background:linear-gradient(120deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .ct-camp-add{color:#db2777}
+:where(.tema-muertos) .cp-k{color:#db2777}
+:where(.tema-muertos) .cp-it.on{background:#fdf2f8;box-shadow:inset 3px 0 0 #db2777}
+:where(.tema-muertos) .cp-it.on .ph-dd{background:linear-gradient(135deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .cp-it.on .ph-dd span{color:#fbcfe8}
+:where(.tema-muertos) .on>.cp-ck{border-color:#db2777;background:#db2777 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L19 7'/%3E%3C/svg%3E") center/13px no-repeat}
+:where(.tema-muertos) .cp-otra.on{border-color:#db2777;background:#fdf2f8}
+:where(.tema-muertos) .cp-otra-ic{color:#db2777}
+:where(.tema-muertos) .he-k{color:#db2777}
+:where(.tema-muertos) .he-bt{color:#4a044e}
+:where(.tema-muertos) .he-val{background:linear-gradient(120deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .he-chips button.on{background:#fdf2f8;border-color:#f9a8d4;color:#be185d}
+:where(.tema-muertos) .ag-c:not(.off):hover{outline:2px solid #4a044e}
+:where(.tema-muertos) .ag-mini button.on{color:#4a044e}
+:where(.tema-muertos) .ag-chip:hover{border-color:#f9a8d4}
+:where(.tema-muertos) .ag-av{color:#4a044e}
+:where(.tema-muertos) .ag-chip.on{background:linear-gradient(120deg,#4a044e,#ea580c);box-shadow:0 4px 10px rgba(219,39,119,.25)}
+:where(.tema-muertos) .ag-yl.cero{border-top:2px dashed #4a044e}
+:where(.tema-muertos) .ag-yl.cero span{color:#4a044e}
+:where(.tema-muertos) .he-b1.b{background:#db2777}
+:where(.tema-muertos) .sx-op:hover{border-color:#f9a8d4}
+:where(.tema-muertos) .sx-op.on,:where(.tema-muertos) .sx-op.active{border-color:#db2777;background:#fdf2f8;color:#4a044e}
+:where(.tema-muertos) .sx-op.on i,:where(.tema-muertos) .sx-op.active i{background:linear-gradient(120deg,#4a044e,#ea580c)}
+:where(.tema-muertos) .sx-op i.dot.b,:where(.tema-muertos) .sx-op.on i.dot.b{background:#4a044e}
+:where(.tema-muertos) .sx-res{background:#fdf2f8;color:#4a044e}
+:where(.tema-muertos) .sx-res svg,:where(.tema-muertos) .sx-aviso svg{stroke:#db2777}
+:where(.tema-muertos) .sx-mini button{color:#4a044e}
+:where(.tema-muertos) .sx-mini:focus-within{box-shadow:0 0 0 3px rgba(219,39,119,.1)}
+:where(.tema-muertos) .sx-chk input:checked{background:#db2777;border-color:#db2777}
+:where(.tema-muertos) .sx-chk:has(input:checked){background:#fdf2f8}
+:where(.tema-muertos) .sx-k2r .he-k2 span{color:#db2777}
+:where(.tema-muertos) .sx-sw input:checked~i{background:#db2777}
+:where(.tema-muertos) .mus-espera-ic{background:var(--blue,#db2777)}
+:where(.tema-muertos) .mus-espera-bar i{background:var(--blue,#db2777)}
+:where(.tema-muertos) .mus-espera-c button{color:var(--blue,#db2777)}
+:where(.tema-muertos) .av-an-ayuda.info{color:#4a044e}
+/* AUTO-COLORES-MUERTOS:FIN */

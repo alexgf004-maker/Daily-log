@@ -1,4 +1,6 @@
-# Genera los colores del tema Halloween a partir de css/styles.css.
+# Genera los colores de los temas (Halloween y Día de los Muertos) a partir de css/styles.css.
+# Día de los Muertos es más sencillo: solo cambia los azules (a rosa mexicano, y los degradados de
+# ciruela a cempasúchil); no toca los colores de estado.
 # Busca cada regla que usa los azules de la app (y los colores de estado: verde, rojo, ámbar y
 # morado) y escribe su versión en tonos del tema: azul → rojo sangre/negro, verde → verde veneno,
 # rojo → sangre, ámbar → calabaza, morado → morado bruja. En degradados, el primer tono sale de la
@@ -51,16 +53,18 @@ EST_PLANO={
 EST_GRAD={'059669':'#10240a','047857':'#10240a','10b981':'#3a9d23','dc2626':'#3b0609','b91c1c':'#3b0609','991b1b':'#2a0406','ef4444':'#b31b1b',
  'd97706':'#3b1503','b45309':'#2b0e02','f59e0b':'#d4590a','6d28d9':'#1f0a33','7c3aed':'#2a0d45','8b5cf6':'#6b2fa8'}
 ES=re.compile(r'#('+'|'.join(sorted(set(EST_PLANO)|set(EST_GRAD),key=len,reverse=True))+r')\b',re.I)
+TEMA='tema-halloween'; CON_ESTADOS=True; RGBA='rgba(185,28,28'; DATO_COLOR=('#3f0d12','rgba(63,13,18')
 def mapear_estado(decl):
+    if not CON_ESTADOS: return decl
     g='gradient' in decl
     return ES.sub(lambda m:(EST_GRAD.get(m.group(1).lower()) if g else None) or EST_PLANO.get(m.group(1).lower()) or m.group(0),decl)
-def toca(t): return AZ.search(t) or ES.search(t)
+def toca(t): return AZ.search(t) or (CON_ESTADOS and ES.search(t))
 def mapear(decl,sel):
     decl=mapear_estado(decl)
-    if DATO.search(sel): return AZ.sub(lambda m:'#3f0d12' if m.group(1) else 'rgba(63,13,18',decl)
+    if DATO.search(sel): return AZ.sub(lambda m:DATO_COLOR[0] if m.group(1) else DATO_COLOR[1],decl)
     g='gradient' in decl
     def f(m):
-        if not m.group(1): return 'rgba(185,28,28'
+        if not m.group(1): return RGBA
         k=m.group(1).lower()
         return (GRAD.get(k) or PLANO[k]) if g else PLANO[k]
     return AZ.sub(f,decl)
@@ -84,8 +88,7 @@ def pref(sel):
     for s in re.split(r',(?![^(]*\))',sel):
         s=s.strip()
         if s.startswith(':root') or s.startswith('html'): continue
-        if s.startswith('body'): parts.append(':where(.tema-halloween) '+s)
-        else: parts.append(':where(.tema-halloween) '+s)
+        parts.append(':where(.'+TEMA+') '+s)
     return ','.join(parts)
 def emit(nodes):
     res=[]
@@ -102,10 +105,17 @@ def emit(nodes):
         if not p: continue
         res.append(p+'{'+';'.join(ds)+'}')
     return res
-reglas=emit(tree)
 ruta=os.path.join(RAIZ,'css/temas.css'); t=open(ruta).read()
-A,B='/* AUTO-COLORES:INICIO (no editar a mano: herramientas/tema-colores.py) */','/* AUTO-COLORES:FIN */'
-bloque=A+'\n'+'\n'.join(reglas)+'\n'+B
-t=t[:t.index(A)]+bloque+t[t.index(B)+len(B):] if A in t else t.rstrip('\n')+'\n\n'+bloque+'\n'
+def escribir(t,A,B,reglas):
+    bloque=A+'\n'+'\n'.join(reglas)+'\n'+B
+    return t[:t.index(A)]+bloque+t[t.index(B)+len(B):] if A in t else t.rstrip('\n')+'\n\n'+bloque+'\n'
+reglas=emit(tree)
+t=escribir(t,'/* AUTO-COLORES:INICIO (no editar a mano: herramientas/tema-colores.py) */','/* AUTO-COLORES:FIN */',reglas)
+# Día de los Muertos: azul → rosa mexicano; degradados de ciruela a cempasúchil
+TEMA='tema-muertos'; CON_ESTADOS=False; RGBA='rgba(219,39,119'; DATO_COLOR=('#4a044e','rgba(74,4,78')
+PLANO={'2563eb':'#db2777','1d4ed8':'#be185d','3b82f6':'#ec4899','60a5fa':'#f472b6','93c5fd':'#f9a8d4','bfdbfe':'#fbcfe8','dbeafe':'#fce7f3','eff6ff':'#fdf2f8','1e3a5f':'#4a044e','1e40af':'#701a75','1e3a8a':'#4a044e','081428':'#2e0530','12284a':'#4a044e'}
+GRAD={'1e3a5f':'#4a044e','2563eb':'#ea580c','1d4ed8':'#c2410c','3b82f6':'#f97316','1e40af':'#701a75','1e3a8a':'#4a044e','60a5fa':'#fb923c','081428':'#2e0530','12284a':'#4a044e'}
+reglas_m=emit(tree)
+t=escribir(t,'/* AUTO-COLORES-MUERTOS:INICIO (no editar a mano: herramientas/tema-colores.py) */','/* AUTO-COLORES-MUERTOS:FIN */',reglas_m)
 open(ruta,'w').write(t)
-print(f'{len(reglas)} reglas escritas en css/temas.css')
+print(f'{len(reglas)} reglas de Halloween y {len(reglas_m)} del Día de los Muertos escritas en css/temas.css')
