@@ -684,6 +684,20 @@ body:has(#loginScreen.active) .mu-amb{display:none}
 @keyframes mxAla{from{transform:rotate(-8deg)}to{transform:rotate(12deg)}}
 .mu-xolo .mx-lengua{transform-box:fill-box;transform-origin:50% 0;animation:mxLengua .36s ease-in-out infinite alternate}
 @keyframes mxLengua{from{transform:rotate(-6deg)}to{transform:rotate(8deg)}}
+/* Normal → alebrije: cambia de capa, le brotan las alas, destello de chispas */
+.mu-xolo .mx-alebrije{opacity:0;transition:opacity .45s .15s}.mu-xolo .alebrije .mx-alebrije{opacity:1}
+.mu-xolo .mx-normal{transition:opacity .45s .15s}.mu-xolo .alebrije .mx-normal{opacity:0}
+.mu-xolo .mx-alas{transform-box:view-box;transform-origin:60px 56px;transform:scale(0);transition:transform .55s .35s cubic-bezier(.3,1.6,.5,1)}
+.mu-xolo .alebrije .mx-alas{transform:scale(1)}
+.mu-xolo .transforma svg{animation:mxPop .65s ease-out}
+@keyframes mxPop{0%{transform:scale(1);filter:none}35%{transform:scale(1.18);filter:brightness(1.8) saturate(1.4)}100%{transform:scale(1);filter:none}}
+.mx-chispas{position:absolute;left:50%;top:55%;width:0;height:0;pointer-events:none}
+.mx-chispas b{position:absolute;left:-40px;top:-40px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(253,230,138,.8) 35%,rgba(253,230,138,0) 70%);opacity:0;transform:scale(.2)}
+.mx-chispas i{position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;opacity:0}
+.mx-chispas.on b{animation:mxDestello .6s ease-out}
+.mx-chispas.on i{animation:mxChispa .75s ease-out both}
+@keyframes mxDestello{0%{opacity:0;transform:scale(.2)}30%{opacity:1;transform:scale(1.1)}100%{opacity:0;transform:scale(1.5)}}
+@keyframes mxChispa{0%{opacity:1;transform:rotate(var(--a)) translateY(0) scale(1)}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(-1*var(--d))) scale(.4)}}
 @media (prefers-reduced-motion:reduce){.mu-xolo{display:none!important}}
 /* PC: la ofrenda va en la esquina (la tarjeta está al centro); celular bajo: más chica */
 @media(min-width:900px){.mu-ofrenda{left:28px;transform:none;width:440px}}

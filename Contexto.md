@@ -343,11 +343,12 @@ no salen en el login). Marcaje "camino de cempasúchil" (`florMarcajeMU`, `petal
 es una flor fresca con cheque si llegó a tiempo; si llegó tarde se marchita, suelta dos pétalos y lleva ✕; la línea se
 llena de 9 pétalos (4 apagados si fue tarde) por tramo (entrada 0–50 %, salida 50–100 %). "¡Listo, guardado!"
 (`ESCENA_GUARDADO_MU`, `confetiGuardadoMU`, clase `.fx-ok.mu`): cae una calaverita, le estampan el sello "✓ GUARDADO"
-con un temblor y confeti de papel picado, y guiña; se cierra a los 4.2 s. El xolo alebrije (`xoloAdentro`, `.mu-xolo`, el
-equivalente al fantasma de Halloween; diseño propio: cuerpo de colores con puntos, rayas y lunitas, orejas de distinto
-color, alas de plumas que aletean, lengua de fuera y collar de cempasúchil) pasea por la parte de abajo de las pantallas de adentro: entra por un lado, se
-detiene 1–2 veces a mover la cola y ladear la cabeza, se va y regresa en 25–60 s; brinca si lo tocan (sin quitar el
-toque al botón de abajo), se esconde con ventanas abiertas y no sale en el login ni con "reducir movimiento". No cambia marcaje, "¡Listo,
+con un temblor y confeti de papel picado, y guiña; se cierra a los 4.2 s. El xolo (`xoloAdentro`, `.mu-xolo`, el equivalente al
+fantasma de Halloween) pasea por la parte de abajo de las pantallas de adentro: llega como perrito normal (capa
+`.mx-normal`) y al detenerse se transforma en alebrije (`transformar`: destello y chispas `.mx-chispas`, capa
+`.mx-alebrije` de diseño propio con cuerpo de colores, puntos, rayas y lunitas, orejas de distinto color, lengua de
+fuera y alas de plumas que brotan y aletean); luego se va volando y regresa en 25–60 s, otra vez normal. Si lo tocan
+brinca y, si aún no, se transforma (sin quitar el toque al botón de abajo); se esconde con ventanas abiertas y no sale en el login ni con "reducir movimiento". No cambia marcaje, "¡Listo,
 guardado!" ni colores de estado).
 Sus colores los genera `herramientas/tema-colores.py` (bloque `AUTO-COLORES-MUERTOS`, solo azules).
 Mi Perfil y "Ver ahora" usan el tema de la fecha o, si no hay, el próximo del año (`__temas.ref`). En Mi Perfil del admin,
