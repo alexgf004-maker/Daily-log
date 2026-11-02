@@ -342,6 +342,11 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     pantalla, pinos con moños y esferas rojas, trineo; cordón de foquitos congelados que prenden más cada día (el
     17 todos); casita a lo lejos que se acerca y enciende ventanas; camino "Rumbo a Navidad" (24 huellitas y el
     trineo en el día de hoy) bajo el nombre de la app; tarjeta envuelta con cinta, moño y "Se abre el 24".
+  - Detalles del login en `pre`: "Recordar mi usuario" en rojo con copito; campos con borde escarcha y brillo helado;
+    avisos (`#loginAlert .mk-av`) escarchados con foquito apagado (error) o copo (info); con un error la tarjeta tiembla
+    (`form.animate`, para no reiniciar `.lg-anim`) y un foquito encendido falla; botón con destello y chispitas al
+    tocarlo; escarcha en dos esquinas; los foquitos se pueden tocar; al entrar, foquitos y copos de bienvenida sobre la
+    app (`.nv-bienvenida`, ~1 s). Nada de esto toca la lógica del login.
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
     (la primera con el nombre del usuario recordado). El 24 la tarjeta se "abre" (moño y cinta caen, confeti) una
     vez por teléfono (`innova_nav_regalo`).

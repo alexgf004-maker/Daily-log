@@ -156,7 +156,55 @@
 
     // tarjeta envuelta como regalo: cinta, moño y etiqueta
     envolverTarjeta('Se abre el <b>24</b>');
+    detallesPre(capa);
   }
+
+  /* ── Pre-Navidad: detalles del login (escarcha, foquitos que se tocan, errores con "brrr", bienvenida) ── */
+  var SVG_ESC=(function(){ var g=''; for(var i=0;i<9;i++){ var a=(180+i*11)*Math.PI/180, L=40+((i*23)%40), x=120+Math.cos(a)*L, y=Math.sin(a)*L*-.8;
+      g+='<path d="M120 0 L'+x.toFixed(1)+' '+(-y).toFixed(1)+'"/>'; [.35,.6,.8].forEach(function(f,k){ var px=120+(x-120)*f, py=-y*f; g+='<path d="M'+px.toFixed(1)+' '+py.toFixed(1)+' l-6 '+(((i+k)%3)*4-4)+' M'+px.toFixed(1)+' '+py.toFixed(1)+' l'+(((i*k)%3)-1)+' 7"/>'; }); }
+    return '<svg viewBox="0 0 120 90"><g stroke="#bfe6ff" stroke-width="1.4" fill="none" stroke-linecap="round">'+g+'</g></svg>'; })();
+  function chispas(x,y,n,cols){ for(var i=0;i<n;i++){ var c=document.createElement('i'); c.className='nv-extra nv-chispa'; c.style.left=x+'px'; c.style.top=y+'px';
+      c.style.background=cols[i%cols.length]; var a=Math.random()*6.283, r=R(30,90); c.style.setProperty('--tx',(Math.cos(a)*r).toFixed(0)+'px'); c.style.setProperty('--ty',(Math.sin(a)*r).toFixed(0)+'px');
+      document.body.appendChild(c); (function(e){ setTimeout(function(){ e.remove(); },900); })(c); } }
+  function detallesPre(capa){
+    var form=$('#loginScreen .login-form');
+    // escarcha en dos esquinas de la tarjeta (las otras tienen el moño y la etiqueta)
+    if(form) form.insertAdjacentHTML('afterbegin','<div class="nv-extra nv-escarcha a">'+SVG_ESC+'</div><div class="nv-extra nv-escarcha b">'+SVG_ESC+'</div>');
+    // foquitos que se pueden tocar: el congelado titila, el encendido destella
+    capa.querySelectorAll('.nv-fq').forEach(function(f){ f.addEventListener('pointerdown',function(e){ e.stopPropagation();
+      var cl=f.classList.contains('on')?'destella':'intenta'; f.classList.remove(cl); void f.getBoundingClientRect(); f.classList.add(cl); setTimeout(function(){ f.classList.remove(cl); },900); }); });
+    // botón: chispitas blancas al tocarlo
+    var btn=$('#loginScreen .btn-login');
+    if(btn&&!btn.__nv){ btn.__nv=1; btn.addEventListener('pointerdown',function(e){ if(armada!=='pre'||reducido) return; chispas(e.clientX,e.clientY,14,['#fff','#e8f8ff','#ffd9de']); }); }
+  }
+  // Una sola vez: avisos del login y la bienvenida al entrar
+  (function(){
+    function enPre(){ return armada==='pre'; }
+    function falla(){ // el aviso de error: la tarjeta tiembla de frío y un foquito no prende
+      var form=$('#loginScreen .login-form');
+      // con la Web Animations API para no reiniciar la animación de entrada de la tarjeta (.lg-anim)
+      if(form&&!reducido&&form.animate) form.animate([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-5px)'},{transform:'translateX(4px)'},{transform:'translateX(-2px)'},{transform:'translateX(0)'}],{duration:520,easing:'cubic-bezier(.36,.07,.19,.97)'});
+      var on=document.querySelectorAll('.nv-fq.on'); if(on.length){ var f=on[(Math.random()*on.length)|0]; f.classList.add('falla'); setTimeout(function(){ f.classList.remove('falla'); },1600); }
+    }
+    function vigilar(){
+      var al=document.getElementById('loginAlert'), ls=document.getElementById('loginScreen'); if(!al||!ls) return;
+      new MutationObserver(function(){ if(enPre()&&al.querySelector('.mk-av.mal')) falla(); }).observe(al,{childList:true});
+      var antes=ls.classList.contains('active');
+      new MutationObserver(function(){ var ahora=ls.classList.contains('active');
+        if(antes&&!ahora&&enPre()&&!reducido){ var m=document.getElementById('maintenanceScreen'); if(!(m&&m.classList.contains('active'))) bienvenida(); }
+        antes=ahora; }).observe(ls,{attributes:true,attributeFilter:['class']});
+    }
+    // al entrar: una guirnalda de foquitos se enciende arriba y caen copos, menos de un segundo
+    function bienvenida(){
+      var b=document.createElement('div'); b.className='nv-extra nv-bienvenida'; b.setAttribute('aria-hidden','true');
+      var focos='', cols=['#e3263c','#f2c45a','#e3263c','#2bb38a','#e3263c','#fff'];
+      for(var i=0;i<14;i++) focos+='<i style="left:'+(3+i*7.2).toFixed(1)+'%;background:'+cols[i%cols.length]+';animation-delay:'+(i*.03).toFixed(2)+'s"></i>';
+      var copos=''; for(i=0;i<22;i++) copos+='<b style="left:'+R(0,100).toFixed(0)+'%;animation-delay:'+R(0,.25).toFixed(2)+'s;width:'+R(4,9).toFixed(0)+'px;height:'+R(4,9).toFixed(0)+'px"></b>';
+      b.innerHTML='<div class="nv-bv-focos">'+focos+'</div>'+copos; document.body.appendChild(b);
+      setTimeout(function(){ b.remove(); },1300);
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',vigilar); else vigilar();
+  })();
   function envolverTarjeta(etq){
     var form=$('#loginScreen .login-form'); if(!form) return null;
     form.insertAdjacentHTML('afterbegin','<div class="nv-extra nv-cinta"></div><svg class="nv-extra nv-mono" viewBox="-40 -30 80 56"><path d="M0 0 C-14 -22 -36 -14 -26 -2 C-20 6 -8 4 0 0Z" fill="#e3263c"/><path d="M0 0 C14 -22 36 -14 26 -2 C20 6 8 4 0 0Z" fill="#e3263c"/><path d="M0 0 C-10 -14 -26 -10 -20 -3" stroke="#a3132a" stroke-width="1.6" fill="none"/><path d="M0 0 C10 -14 26 -10 20 -3" stroke="#a3132a" stroke-width="1.6" fill="none"/><path d="M-2 2 L-12 24 L-6 21 L-3 26Z M2 2 L12 24 L6 21 L3 26Z" fill="#c4152c"/><ellipse rx="6" ry="5" fill="#f24a5c"/><ellipse cx="-2" cy="-1.5" rx="2" ry="1.2" fill="#fff" opacity=".55"/></svg>'+

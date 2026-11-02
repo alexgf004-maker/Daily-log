@@ -897,6 +897,59 @@ body:has(#loginScreen.active) .mu-amb{display:none}
 .nv-etiqueta::before{content:'';position:absolute;left:4px;top:50%;width:4px;height:4px;margin-top:-2px;border-radius:50%;background:#c9b48a}
 .nv-etiqueta b{font-size:12.5px}
 
+/* Pre-Navidad: todo el login a juego */
+/* "Recordar mi usuario": rojo navideño y la bolita con un copito */
+.nav-pre .lg-rec{color:#2a4a6a}
+.nav-pre .lg-rec-sw{background:#c9dcec}
+.nav-pre .lg-rec input:checked+.lg-rec-sw{background:linear-gradient(135deg,#e3263c,#a3132a)}
+.nav-pre .lg-rec-sw i::after{content:'';position:absolute;inset:3px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-12 -12 24 24'%3E%3Cg stroke='%231b84c9' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M0-10V10M-8.7-5L8.7 5M-8.7 5L8.7-5'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;opacity:.35;transition:opacity .2s}
+.nav-pre .lg-rec input:checked+.lg-rec-sw i::after{opacity:1}
+.nav-pre .lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0 0 3px rgba(227,38,60,.28)}
+/* campos: borde escarcha y brillo helado al escribir */
+.nav-pre .login-form input{background:#fff;border-color:#cfe6f6;color:#0b2d55}
+.nav-pre .login-form input:focus{border-color:#7cc9f0;box-shadow:0 0 0 4px rgba(124,201,240,.28),0 0 18px rgba(160,230,255,.5)}
+.nav-pre .lg-ico,.nav-pre .lg-ver{color:#5a87ad}
+.nav-pre .lg-wrap:focus-within .lg-ico{color:#1b84c9}
+.nav-pre .login-form .fl{color:#2a4a6a}
+/* avisos: el error como tarjetita escarchada con foquito apagado; el informativo en azul hielo con copo */
+.nav-pre #loginAlert .mk-av{position:relative;overflow:hidden;box-shadow:0 6px 16px -10px rgba(10,50,90,.35)}
+.nav-pre #loginAlert .mk-av.mal{background:linear-gradient(180deg,#fff,#f2f9ff);border-color:#f5b5be}
+.nav-pre #loginAlert .mk-av.mal .mk-av-ic{background:linear-gradient(135deg,#e3263c,#a3132a)}
+.nav-pre #loginAlert .mk-av.mal b{color:#8a0f1f}.nav-pre #loginAlert .mk-av.mal .mk-av-tx>span{color:#5a7590}
+.nav-pre #loginAlert .mk-av.info{background:linear-gradient(180deg,#fff,#eef8ff);border-color:#bae6fd}
+.nav-pre #loginAlert .mk-av.info .mk-av-ic{background:linear-gradient(135deg,#2aa7e8,#155f96)}
+.nav-pre #loginAlert .mk-av.info b{color:#0b3a6a}
+.nav-pre #loginAlert .mk-av-ic svg{display:none}
+.nav-pre #loginAlert .mk-av-ic::before{content:'';width:20px;height:20px;background:center/contain no-repeat}
+.nav-pre #loginAlert .mk-av.mal .mk-av-ic::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='9' y='2' width='6' height='4' rx='1' fill='%23fff' opacity='.85'/%3E%3Cpath d='M12 6C7 8 7 18 12 21C17 18 17 8 12 6Z' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M9 11C10 10 14 10 15 11' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M5 4L19 20' stroke='%23fff' stroke-width='2' stroke-linecap='round' opacity='.9'/%3E%3C/svg%3E")}
+.nav-pre #loginAlert .mk-av.info .mk-av-ic::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-12 -12 24 24'%3E%3Cg stroke='%23fff' stroke-width='2' stroke-linecap='round' fill='none'%3E%3Cpath d='M0-10V10M-8.7-5L8.7 5M-8.7 5L8.7-5M0-6L-3-9M0-6L3-9M0 6L-3 9M0 6L3 9'/%3E%3C/g%3E%3C/svg%3E")}
+.nav-pre #loginAlert .mk-av::after{content:'';position:absolute;right:-6px;top:-6px;width:56px;height:40px;opacity:.7;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 56 40'%3E%3Cg stroke='%23bfe6ff' stroke-width='1.2' fill='none' stroke-linecap='round'%3E%3Cpath d='M56 0L30 14M56 0L38 26M56 0L50 34M42 7l-4-5M44 18l-6 1M50 22l-6 3'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
+/* (el temblor de frío de la tarjeta lo hace js/navidad.js con form.animate) */
+.nv-fq.falla .vid{animation:nvFalla 1.5s steps(1) 1}
+@keyframes nvFalla{0%{opacity:1}12%{opacity:.25}20%{opacity:1}30%{opacity:.2}45%,100%{opacity:.35}}
+/* botón: destello de escarcha que lo cruza y chispitas al tocarlo */
+.nav-pre .btn-login{position:relative;overflow:hidden}
+.nav-pre .btn-login::before{content:'';position:absolute;top:0;bottom:0;width:55%;left:-70%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-18deg);animation:nvBrilloBtn 4.2s ease-in-out infinite;pointer-events:none}
+@keyframes nvBrilloBtn{0%,62%{left:-70%}100%{left:130%}}
+.nv-chispa{position:fixed;z-index:70;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;pointer-events:none;box-shadow:0 0 6px rgba(255,255,255,.9);animation:nvChispa .85s ease-out forwards}
+@keyframes nvChispa{to{transform:translate(var(--tx),var(--ty)) scale(.2);opacity:0}}
+/* escarcha en las esquinas de la tarjeta */
+.nv-escarcha{position:absolute;width:104px;height:78px;pointer-events:none;z-index:0;opacity:.85}
+.nv-escarcha svg{width:100%;height:100%}
+.nv-escarcha.a{left:-2px;top:-2px;transform:scaleX(-1)}
+.nv-escarcha.b{right:-2px;bottom:-2px;transform:scaleY(-1)}
+/* foquitos que se pueden tocar */
+.nav-pre .nv-fq{pointer-events:auto;cursor:pointer}
+.nv-fq.destella .vid{animation:nvDestella .8s ease-out 1}
+@keyframes nvDestella{0%{opacity:1;filter:brightness(1)}30%{opacity:1;filter:brightness(1.9) drop-shadow(0 0 6px #fff)}100%{opacity:1;filter:brightness(1)}}
+/* bienvenida al entrar: foquitos que se encienden arriba y copos que caen */
+.nv-bienvenida{position:fixed;inset:0;z-index:9000;pointer-events:none;overflow:hidden}
+.nv-bv-focos{position:absolute;left:0;right:0;top:0;height:30px}
+.nv-bv-focos i{position:absolute;top:6px;width:11px;height:16px;border-radius:50% 50% 50% 50%/40% 40% 60% 60%;opacity:0;box-shadow:0 0 12px currentColor;animation:nvBvFoco 1.2s ease-out forwards}
+@keyframes nvBvFoco{0%{opacity:0;transform:scale(.6)}20%{opacity:1;transform:scale(1.15);filter:brightness(1.6)}70%{opacity:1}100%{opacity:0}}
+.nv-bienvenida b{position:absolute;top:-10px;border-radius:50%;background:#fff;opacity:.95;box-shadow:0 0 0 1px rgba(27,132,201,.28),0 0 8px rgba(27,132,201,.45);animation:nvBvCopo 1.2s ease-in forwards}
+@keyframes nvBvCopo{to{transform:translateY(55vh);opacity:0}}
+
 /* ═ Navidad en casa ═ */
 .nav-casa #loginScreen{background:radial-gradient(90% 60% at 80% 100%,#7a2a12 0%,transparent 60%),radial-gradient(70% 50% at 15% 40%,rgba(255,170,80,.18),transparent 70%),linear-gradient(180deg,#2b0d0a 0%,#3d140e 45%,#2a0c08 100%)!important}
 .nv-tapiz{position:absolute;inset:0;opacity:.14;background:radial-gradient(circle at 25% 25%,#e8b25a 0 2px,transparent 3px) 0 0/44px 44px,radial-gradient(circle at 75% 75%,#e8b25a 0 2px,transparent 3px) 0 0/44px 44px,repeating-linear-gradient(90deg,transparent 0 21px,rgba(232,178,90,.35) 21px 22px)}
