@@ -366,6 +366,9 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   (Pre-Navidad), corona navideña (Sala), cohete que estalla (Año Nuevo), luna con murciélagos (Halloween). Sin tema,
   presentación de la marca (`.boot-marca`): con los colores del login, el logo se dibuja solo (la I crece, la N se
   traza, el punto verde aparece con una onda), luego "INNOVA" y "Registro de Planilla", y luces suaves que flotan detrás. La pantalla del sistema al tocar el ícono (Android, `manifest.json`) no se puede cambiar por tema.
+- **Imagen de la programación con el tema** (`progGenerarImagen`): además de Halloween, tiene versión de Día de los
+  Muertos y de cada etapa de Navidad (paletas en `PALETAS`; encabezado en `encabezadoTemaProg`, con una franja de
+  abajo solo para los adornos para no tapar fecha ni cifras; detalle del pie en `pieTemaProg`). Mismos datos y orden.
 - **El tema por fecha se recalcula** (`__temas.recalcular()`) en cada `aplicarTema`: al volver a la app
   (`visibilitychange`), cada 30 min y al cerrar la sesión a todos. Antes se calculaba solo al abrir, y un
   teléfono con la app abierta desde octubre seguía con Halloween en noviembre.
