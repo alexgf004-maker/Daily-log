@@ -376,6 +376,10 @@
     capa.className='nv-capa nv-'+et.id; capa.setAttribute('aria-hidden','true');
     ls.insertBefore(capa,ls.firstChild);
     if(et.id==='pre') armarPre(capa,f); else if(et.id==='casa'){ armarCasa(capa,f); cuenta(et,f); } else { armarAno(capa,f); cuenta(et,f); }
+    // Pre-Navidad: nieve suave dentro de la app (CSS la esconde mientras el login está a la vista)
+    if(et.id==='pre'&&!reducido&&document.body){ var amb=document.createElement('div'), cc=''; amb.className='nv-extra nv-amb'; amb.setAttribute('aria-hidden','true');
+      for(var k=0;k<10;k++) cc+='<i style="left:'+(4+k*9.6).toFixed(1)+'%;animation-duration:'+(15+(k*7)%9)+'s;animation-delay:-'+((k*5.3)%17).toFixed(1)+'s"></i>';
+      amb.innerHTML=cc; document.body.appendChild(amb); }
     armada=et.id;
     window.__pintarSaludo&&window.__pintarSaludo();
   };

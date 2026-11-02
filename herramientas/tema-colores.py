@@ -1,4 +1,4 @@
-# Genera los colores de los temas (Halloween y Día de los Muertos) a partir de css/styles.css.
+# Genera los colores de los temas (Halloween, Día de los Muertos y Pre-Navidad) a partir de css/styles.css.
 # Día de los Muertos es más sencillo: solo cambia los azules (a rosa mexicano, y los degradados de
 # ciruela a cempasúchil); no toca los colores de estado.
 # Busca cada regla que usa los azules de la app (y los colores de estado: verde, rojo, ámbar y
@@ -120,4 +120,14 @@ GRAD={'1e3a5f':'#4a044e','2563eb':'#ea580c','1d4ed8':'#c2410c','3b82f6':'#f97316
 reglas_m=emit(tree)
 t=escribir(t,'/* AUTO-COLORES-MUERTOS:INICIO (no editar a mano: herramientas/tema-colores.py) */','/* AUTO-COLORES-MUERTOS:FIN */',reglas_m)
 open(ruta,'w').write(t)
-print(f'{len(reglas)} reglas de Halloween (css/temas/halloween.css) y {len(reglas_m)} del Día de los Muertos (css/temas/muertos.css)')
+# Navidad · Pre-Navidad (1–21 dic): noche de invierno y cinta roja. Los encabezados (degradados) van de
+# azul noche a azul hielo; los acentos (botones, chips, pestañas) en rojo navideño. Los datos del calendario
+# en azul noche, para no confundirlos con "tarde". No toca los colores de estado.
+TEMA='nav-pre'; CON_ESTADOS=False; RGBA='rgba(196,21,44'; DATO_COLOR=('#0b3a6a','rgba(11,58,106')
+PLANO={'2563eb':'#c4152c','1d4ed8':'#a3132a','3b82f6':'#e3263c','60a5fa':'#f26b7a','93c5fd':'#f7a8b2','bfdbfe':'#fbd0d6','dbeafe':'#fde4e7','eff6ff':'#fff4f5','1e3a5f':'#0a2d55','1e40af':'#8a0f22','1e3a8a':'#0a2d55','081428':'#031428','12284a':'#0a2d55'}
+GRAD={'1e3a5f':'#031428','2563eb':'#0b3a6a','1d4ed8':'#0a2d55','3b82f6':'#155f96','1e40af':'#0a2d55','1e3a8a':'#031428','60a5fa':'#1b84c9','081428':'#031428','12284a':'#0a2d55'}
+reglas_n=emit(tree)
+ruta=os.path.join(RAIZ,'css/temas/navidad.css'); t=open(ruta).read()
+t=escribir(t,'/* AUTO-COLORES-NAVIDAD:INICIO (no editar a mano: herramientas/tema-colores.py) */','/* AUTO-COLORES-NAVIDAD:FIN */',reglas_n)
+open(ruta,'w').write(t)
+print(f'{len(reglas)} reglas de Halloween (css/temas/halloween.css), {len(reglas_m)} del Día de los Muertos (css/temas/muertos.css) y {len(reglas_n)} de la Pre-Navidad (css/temas/navidad.css)')
