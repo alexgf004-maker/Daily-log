@@ -61,7 +61,11 @@
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
 <link rel="stylesheet" href="css/temas.css?v=41">
+<link rel="stylesheet" href="css/navidad-mascota.css?v=2">
 <script src="js/navidad.js?v=3" defer></script>
+<script src="js/green-actor.js?v=1" defer></script>
+<script src="js/navidad-hielo.js?v=1" defer></script>
+<script src="js/navidad-mascota.js?v=2" defer></script>
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -469,7 +473,7 @@
     armarGuirnaldas();
     var tm=null; window.addEventListener('resize',function(){ clearTimeout(tm); tm=setTimeout(armarGuirnaldas,200); });
   };
-  document.addEventListener('DOMContentLoaded',function(){ window.__escenaHalloween(); window.__escenaMuertos(); window.__escenaNavidad&&window.__escenaNavidad(); });
+  document.addEventListener('DOMContentLoaded',function(){ window.__escenaHalloween(); window.__escenaMuertos(); window.__escenaNavidad&&window.__escenaNavidad(); window.__mascotaNavidadSync&&window.__mascotaNavidadSync(); });
 })();
 </script>
 </head>
@@ -4065,7 +4069,7 @@ function aplicarTema(){
     T.todasClases().forEach(c=>html.classList.remove(c));
     T.activo=nuevo; T.activoClave=clave;
     if(nuevo){ T.clasesDe(nuevo).forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); window.__escenaMuertos&&window.__escenaMuertos(); }
-    window.__escenaNavidad&&window.__escenaNavidad();   // arma la etapa que toca o quita la escena si ya no es Navidad
+    window.__escenaNavidad&&window.__escenaNavidad(); window.__mascotaNavidadSync&&window.__mascotaNavidadSync();   // arma la etapa que toca o quita la escena si ya no es Navidad
     T.colorBarra&&T.colorBarra(nuevo);
     if(nuevo?.id!=='halloween') document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());
     if(nuevo?.id!=='muertos') document.querySelectorAll('.mu-capa,.mu-amb,.mu-xolo').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
