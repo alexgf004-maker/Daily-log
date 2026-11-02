@@ -60,9 +60,9 @@
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
-<link rel="stylesheet" href="css/temas.css?v=45">
+<link rel="stylesheet" href="css/temas/comun.css?v=46">
 <link rel="stylesheet" href="css/navidad-mascota.css?v=3">
-<script src="js/navidad.js?v=3" defer></script>
+<script src="js/navidad.js?v=4" defer></script>
 <script src="js/navidad-sprite.js?v=1" defer></script>
 <script src="js/green-actor.js?v=1" defer></script>
 <script src="js/navidad-hielo.js?v=1" defer></script>
@@ -70,17 +70,17 @@
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
-// sumar una entrada aquí y sus estilos en css/temas.css. Desde Mi Perfil del admin
+// sumar una entrada aquí (con css:) y sus estilos en css/temas/<tema>.css. Desde Mi Perfil del admin
 // se puede ver antes o apagar, solo en ese dispositivo (localStorage 'innova_tema'),
 // o encender/apagar para TODOS (config/tema en la base). Lo de la base se guarda
 // en este teléfono ('innova_tema_global') para aplicarlo al abrir, sin parpadeo.
 // Prioridad: este dispositivo (Ver ahora / Apagado) > para todos > por fecha.
 (function(){
   // barra: color de las barras del celular (hora y batería arriba, navegación abajo; <meta name="theme-color">)
-  var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte'],barra:'#050307'},
-             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-05',clases:['tema-muertos'],barra:'#4a044e'},
+  var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte'],barra:'#050307',css:'css/temas/halloween.css'},
+             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-05',clases:['tema-muertos'],barra:'#4a044e',css:'css/temas/muertos.css'},
              // Navidad: una temporada que cruza el año, en tres etapas con su propia escena (js/navidad.js)
-             {id:'navidad',nombre:'Navidad',desde:'12-01',hasta:'01-04',clases:['tema-navidad'],barra:'#0a2d55',
+             {id:'navidad',nombre:'Navidad',desde:'12-01',hasta:'01-04',clases:['tema-navidad'],barra:'#0a2d55',css:'css/temas/navidad.css',
               etapas:[{id:'pre', nombre:'Pre-Navidad',desde:'12-01',hasta:'12-21',clases:['nav-pre'], barra:'#0a2d55'},
                       {id:'casa',nombre:'Navidad',    desde:'12-22',hasta:'12-27',clases:['nav-casa'],barra:'#2b0d0a'},
                       {id:'ano', nombre:'Año Nuevo',  desde:'12-28',hasta:'01-04',clases:['nav-ano'], barra:'#120a2e'}]}];
@@ -139,6 +139,20 @@
   // Las barras del celular las pinta Android con theme-color: que sigan al tema (sin tema, el azul de la app)
   T.colorBarra=function(tema){ var m=document.querySelector('meta[name="theme-color"]'), e=T.etapaDe(tema); if(m) m.setAttribute('content',(e&&e.barra)||(tema&&tema.barra)||'#1e3a5f'); };
   T.colorBarra(t);
+  // Cada tema trae sus estilos en su propio archivo (css/temas/<tema>.css) y solo se descarga el del tema
+  // activo. Al abrir se escribe aquí mismo, en el <head>, para que cargue antes de pintar (sin parpadeo);
+  // si el tema cambia con la app abierta (fecha, "Ver ahora", "Tema para todos"), aplicarTema llama a
+  // cargarCss. Subir TEMAS_V al cambiar cualquiera de esos archivos.
+  var TEMAS_V='46';
+  T.cssDe=function(tema){ return tema&&tema.css?tema.css+'?v='+TEMAS_V:null; };
+  if(t&&t.css) document.write('<link rel="stylesheet" data-tema-css="'+t.id+'" href="'+T.cssDe(t)+'">');
+  T.cargarCss=function(tema){
+    var ls=document.querySelectorAll('link[data-tema-css]');
+    for(var i=0;i<ls.length;i++) if(!tema||ls[i].getAttribute('data-tema-css')!==tema.id) ls[i].parentNode.removeChild(ls[i]);
+    if(tema&&tema.css&&!document.querySelector('link[data-tema-css="'+tema.id+'"]')){
+      var l=document.createElement('link'); l.rel='stylesheet'; l.setAttribute('data-tema-css',tema.id); l.href=T.cssDe(tema); document.head.appendChild(l);
+    }
+  };
   window.__temas=T;
   // Halloween: escena animada del login (murciélagos que salen de la luna, relámpago,
   // fantasma, ojos en la oscuridad y sangre). Solo se arma si el tema está activo.
@@ -510,7 +524,7 @@
 <!-- BOOT: se muestra mientras se verifica sesión/mantenimiento, evita el parpadeo del login -->
 <div id="bootScreen" class="screen active" style="background:linear-gradient(160deg,#081428 0%,#12284a 45%,#1d4ed8 100%);align-items:center;justify-content:center;min-height:100vh">
   <div class="boot-spin"></div>
-  <!-- La carga lleva el logo y, con tema de temporada, un detalle del tema (estilos en css/temas.css) -->
+  <!-- La carga lleva el logo y, con tema de temporada, un detalle del tema (estilos en css/temas/comun.css y en el archivo de cada tema) -->
   <div class="boot-tema" aria-hidden="true">
     <div class="bt-escena"><div class="bt-arte"></div><div class="bt-logo"><svg viewBox='80 108 352 296' fill='none'><rect x='112' y='140' width='62' height='232' rx='31' fill='#fff'/><path d='M240 341V171c0-17 21-25 33-12l96 104c12 13 33 5 33-12V171' stroke='#fff' stroke-width='62' stroke-linecap='round' stroke-linejoin='round'/><circle cx='400' cy='372' r='30' fill='#4ade80'/></svg></div><i class="bt-p p1"></i><i class="bt-p p2"></i><i class="bt-p p3"></i><i class="bt-p p4"></i><i class="bt-p p5"></i><i class="bt-p p6"></i></div>
     <div class="bt-txt">INNOVA</div>
@@ -4090,6 +4104,7 @@ function aplicarTema(){
   const clave=T.claveDe(nuevo);
   if(clave!==T.activoClave){
     T.todasClases().forEach(c=>html.classList.remove(c));
+    T.cargarCss&&T.cargarCss(nuevo);   // estilos del tema nuevo (y fuera los del anterior)
     T.activo=nuevo; T.activoClave=clave;
     if(nuevo){ T.clasesDe(nuevo).forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); window.__escenaMuertos&&window.__escenaMuertos(); }
     window.__escenaNavidad&&window.__escenaNavidad(); window.__mascotaNavidadSync&&window.__mascotaNavidadSync();   // arma la etapa que toca o quita la escena si ya no es Navidad

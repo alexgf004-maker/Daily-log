@@ -6,7 +6,7 @@
 # rojo → sangre, ámbar → calabaza, morado → morado bruja. En degradados, el primer tono sale de la
 # oscuridad para que los bloques de color no se vean planos sobre la noche.
 # Escribe
-# entre las marcas AUTO-COLORES de css/temas.css. Correr después de cambiar styles.css:
+# entre las marcas AUTO-COLORES de css/temas/halloween.css y css/temas/muertos.css. Correr después de cambiar styles.css:
 #   python3 herramientas/tema-colores.py
 # Se usa :where(.tema-halloween) para no subir la especificidad: así las reglas más
 # específicas de la app (p. ej. .pd-av.v morado) y las hechas a mano del tema siguen ganando.
@@ -105,12 +105,14 @@ def emit(nodes):
         if not p: continue
         res.append(p+'{'+';'.join(ds)+'}')
     return res
-ruta=os.path.join(RAIZ,'css/temas.css'); t=open(ruta).read()
+ruta=os.path.join(RAIZ,'css/temas/halloween.css'); t=open(ruta).read()
 def escribir(t,A,B,reglas):
     bloque=A+'\n'+'\n'.join(reglas)+'\n'+B
     return t[:t.index(A)]+bloque+t[t.index(B)+len(B):] if A in t else t.rstrip('\n')+'\n\n'+bloque+'\n'
 reglas=emit(tree)
 t=escribir(t,'/* AUTO-COLORES:INICIO (no editar a mano: herramientas/tema-colores.py) */','/* AUTO-COLORES:FIN */',reglas)
+open(ruta,'w').write(t)
+ruta=os.path.join(RAIZ,'css/temas/muertos.css'); t=open(ruta).read()
 # Día de los Muertos: azul → rosa mexicano; degradados de ciruela a cempasúchil
 TEMA='tema-muertos'; CON_ESTADOS=False; RGBA='rgba(219,39,119'; DATO_COLOR=('#4a044e','rgba(74,4,78')
 PLANO={'2563eb':'#db2777','1d4ed8':'#be185d','3b82f6':'#ec4899','60a5fa':'#f472b6','93c5fd':'#f9a8d4','bfdbfe':'#fbcfe8','dbeafe':'#fce7f3','eff6ff':'#fdf2f8','1e3a5f':'#4a044e','1e40af':'#701a75','1e3a8a':'#4a044e','081428':'#2e0530','12284a':'#4a044e'}
@@ -118,4 +120,4 @@ GRAD={'1e3a5f':'#4a044e','2563eb':'#ea580c','1d4ed8':'#c2410c','3b82f6':'#f97316
 reglas_m=emit(tree)
 t=escribir(t,'/* AUTO-COLORES-MUERTOS:INICIO (no editar a mano: herramientas/tema-colores.py) */','/* AUTO-COLORES-MUERTOS:FIN */',reglas_m)
 open(ruta,'w').write(t)
-print(f'{len(reglas)} reglas de Halloween y {len(reglas_m)} del Día de los Muertos escritas en css/temas.css')
+print(f'{len(reglas)} reglas de Halloween (css/temas/halloween.css) y {len(reglas_m)} del Día de los Muertos (css/temas/muertos.css)')
