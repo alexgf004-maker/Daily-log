@@ -369,6 +369,10 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
 - **Imagen de la programación con el tema** (`progGenerarImagen`): además de Halloween, tiene versión de Día de los
   Muertos y de cada etapa de Navidad (paletas en `PALETAS`; encabezado en `encabezadoTemaProg`, con una franja de
   abajo solo para los adornos para no tapar fecha ni cifras; detalle del pie en `pieTemaProg`). Mismos datos y orden.
+  La de Muertos es la más trabajada (`ofrendaProg`): papel picado en dos hileras con recortes de calaverita, flor y
+  rombo (`papelPicadoProg`, cada banderita en su propia capa para que los recortes dejen ver el fondo), con su
+  propio espacio arriba (`TOPB`, el texto baja), y abajo una ofrenda con arco de cempasúchil (`cempasuchilProg`),
+  velas, pan de muerto, floreros, calaverita de azúcar al centro (`calaveritaProg`), mantel con picos y pétalos.
 - **El tema por fecha se recalcula** (`__temas.recalcular()`) en cada `aplicarTema`: al volver a la app
   (`visibilitychange`), cada 30 min y al cerrar la sesión a todos. Antes se calculaba solo al abrir, y un
   teléfono con la app abierta desde octubre seguía con Halloween en noviembre.
