@@ -11,6 +11,6 @@
 .nv-mascota-hielo.nv-hielo-golpe{animation:nvHieloGolpe .55s ease-out;}
 @keyframes nvHieloGota{0%,60%{transform:translateY(0);opacity:0}65%{opacity:1}94%{opacity:.35}100%{transform:translateY(120px);opacity:0}}
 @keyframes nvHieloGolpe{0%,100%{transform:translateX(0)}23%{transform:translateX(-3px)}52%{transform:translateX(3px)}77%{transform:translateX(-1px)}}
-@media(max-width:720px){#loginScreen>.nv-mascota{left:2px;bottom:calc(100% - 132px);width:90px;opacity:.95}}
-@media(max-width:370px){#loginScreen>.nv-mascota{width:65px;bottom:calc(100% - 105px)}}
+@media(max-width:720px){#loginScreen>.nv-mascota{left:auto;right:4%;bottom:30px;width:clamp(100px,24vw,150px);z-index:5;opacity:1}}
+@media(max-width:370px){#loginScreen>.nv-mascota{width:98px;right:2%;bottom:22px}}
 @media(prefers-reduced-motion:reduce){.nv-mascota,.nv-mascota *{animation:none!important;transition:none!important}}
