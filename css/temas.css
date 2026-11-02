@@ -1077,8 +1077,17 @@ body:has(#loginScreen.active) .mu-amb{display:none}
 .bt-txt{font-size:11px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,255,255,.7);padding-left:.32em}
 .bt-txt::after{content:'';display:block;width:42px;height:2px;margin:9px auto 0;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden;background-image:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);background-size:50% 100%;background-repeat:no-repeat;animation:btCarga 1.1s ease-in-out infinite}
 @keyframes btCarga{from{background-position:-60% 0}to{background-position:160% 0}}
-:is(.tema-muertos,.tema-navidad,.tema-halloween) #bootScreen .boot-spin{display:none}
-:is(.tema-muertos,.tema-navidad,.tema-halloween) #bootScreen .boot-tema{display:flex}
+#bootScreen .boot-spin{display:none}
+#bootScreen .boot-tema{display:flex}
+/* Sin tema: los colores actuales de la app (los mismos del login, para pasar de una a otra sin salto),
+   el logo de vidrio con su pulso y un arco de carga fino que gira alrededor */
+#bootScreen{background:radial-gradient(circle at 85% 8%,rgba(96,165,250,.35) 0%,transparent 38%),radial-gradient(circle at 5% 95%,rgba(16,185,129,.22) 0%,transparent 40%),linear-gradient(160deg,#081428 0%,#12284a 45%,#1d4ed8 100%)!important}
+html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) .bt-arte{inset:26px;border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(147,197,253,0) 0deg,rgba(147,197,253,0) 200deg,rgba(191,219,254,.95) 360deg);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));
+  animation:btGira 1.1s linear infinite}
+html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) .bt-logo::before{content:'';position:absolute;inset:-7px;border-radius:25px;border:1px solid rgba(255,255,255,.3);animation:pulseRing 2.6s ease-out infinite}
+html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) .bt-p{display:none}
 
 /* Día de Muertos: noche ciruela; un cempasúchil gira detrás del logo y caen pétalos */
 .tema-muertos #bootScreen{background:radial-gradient(70% 50% at 50% 46%,rgba(249,115,22,.28),transparent 70%),linear-gradient(160deg,#2e0530 0%,#4a044e 55%,#2a0a2c 100%)!important}
@@ -1130,4 +1139,4 @@ body:has(#loginScreen.active) .mu-amb{display:none}
 @keyframes btOrbita{from{transform:rotate(0) translateX(84px) rotate(0) scale(.8)}50%{transform:rotate(180deg) translateX(84px) rotate(-180deg) scale(1.1)}to{transform:rotate(360deg) translateX(84px) rotate(-360deg) scale(.8)}}
 
 @keyframes btGira{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){#bootScreen .boot-tema *,#bootScreen .bt-txt::after{animation:none!important}#bootScreen .bt-p{display:none!important}}
+@media (prefers-reduced-motion:reduce){#bootScreen .boot-tema *,#bootScreen .boot-tema *::before,#bootScreen .bt-txt::after{animation:none!important}#bootScreen .bt-p{display:none!important}}
