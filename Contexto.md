@@ -337,7 +337,7 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   la clase del tema más la de la etapa (`tema-navidad nav-pre`). `aplicarTema` compara por clave (tema + etapa),
   así el cambio de etapa (21→22 dic) se aplica solo. Fuera de temporada ("Ver ahora"), la etapa es la guardada en
   `localStorage.innova_tema_etapa` o la primera.
-- **Tema Navidad** (1 dic – 4 ene, `js/navidad.js` + bloque "Tema Navidad" de `css/temas.css`). Login por etapa:
+- **Tema Navidad** (1 dic – 4 ene, `js/navidad.js` + `css/temas/navidad.css`). Login por etapa:
   - `pre` (1–21 dic) invierno mágico: aurora (canvas), copos de cristal, montañas y lago al ancho real de la
     pantalla, pinos con moños y esferas rojas, trineo; cordón de foquitos congelados que prenden más cada día (el
     17 todos); casita a lo lejos que se acerca y enciende ventanas; camino "Rumbo a Navidad" (24 huellitas y el
@@ -357,7 +357,7 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     enero cambia ("Feliz Nochebuena"…). Cuenta regresiva bajo el nombre de la app en `casa` y `ano`.
   - El canvas solo dibuja con el login a la vista y la app en primer plano; con movimiento reducido no anima.
     Todo vive en `.nv-capa` / `.nv-extra` y se quita al cambiar de etapa o de tema.
-- **Pantalla de carga con el tema** (`#bootScreen`, solo CSS en `css/temas.css`, bloque "Pantalla de carga"): con tema,
+- **Pantalla de carga con el tema** (`#bootScreen`, solo CSS en `css/temas/comun.css`): con tema,
   en vez de la ruedita va el logo con un detalle animado: cempasúchil que gira y pétalos (Muertos), copo de nieve
   (Pre-Navidad), corona navideña (Sala), cohete que estalla (Año Nuevo), luna con murciélagos (Halloween). Sin tema,
   presentación de la marca (`.boot-marca`): con los colores del login, el logo se dibuja solo (la I crece, la N se
@@ -366,7 +366,7 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   (`visibilitychange`), cada 30 min y al cerrar la sesión a todos. Antes se calculaba solo al abrir, y un
   teléfono con la app abierta desde octubre seguía con Halloween en noviembre.
 
-`css/temas.css` + un script corto en el `<head>` de `index.html` (lista `TEMAS`). Cada tema
+`css/temas/<tema>.css` (uno por tema; solo se descarga el del tema activo) + `css/temas/comun.css` (lo que va siempre: pantalla de carga, "Probar animaciones" y reglas compartidas) + un script corto en el `<head>` de `index.html` (lista `TEMAS`, cada tema con `css:`; `TEMAS_V` es el número de versión de esos archivos). Cada tema
 tiene fechas `desde`/`hasta` en formato mes-día y se aplica solo cada año poniendo clases en
 `<html>` (Halloween: 26 – 31 oct, clases `tema-halloween fuerte`; versión "terror": negro y rojo sangre, luna roja, cementerio, cuervos, sangre en los encabezados.
 Día de los Muertos: 1 – 5 nov, clase `tema-muertos`; sencillo: fondo claro de siempre, rosa mexicano en los acentos,
@@ -420,7 +420,7 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   `#fxOk` (clase `hw`): latido rojo, la Muerte con calavera bajo la capucha da un tajo que abre una herida en forma
   de cheque, salpica y gotea, y la pantalla sangra desde arriba (`sangreTopHW`, armada al ancho de la pantalla). La sangre pasa por un filtro
   de líquido con brillo (`FILTRO_SANGRE_HW`): tallos que se alargan y cabezas que bajan (`chorroHW`) se unen como gotas. Dura ~4.4 s. `#fxOk` se mueve a
-  `body` al mostrarse para quedar encima de la barra y la niebla del tema. Estilos `.fxh-*` en `css/temas.css`.
+  `body` al mostrarse para quedar encima de la barra y la niebla del tema. Estilos `.fxh-*` en `css/temas/halloween.css`.
 - **Halloween, coherencia (revisión)**: dentro de la app no hay telarañas ni arañazos en los encabezados (esa
   capa se salía del encabezado y dibujaba arañazos al fondo de la página); la niebla y el oscurecido de orillas
   solo van en el login (encima de la app ensuciaban las tarjetas). Sin morados fuera de estados (perfil, "Ver
@@ -439,14 +439,14 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   pálidos a tiempo y rojos si es tarde o salida antes) y, si fue tarde, la hora queda partida en dos con una
   herida (`horaPartida`). Al marcar, `tajoHalloween` oscurece la tarjeta y cruza una guadaña a la altura de la
   hora: a tiempo la hora se agacha; tarde la parte y la tarjeta tiembla. Estilos `.hw-tajo`, `.hw-parca`,
-  `.hw-partida` en `css/temas.css`. Fuera del tema todo sigue igual (cheque verde / signo de alerta).
+  `.hw-partida` en `css/temas/halloween.css`. Fuera del tema todo sigue igual (cheque verde / signo de alerta).
   Para verla sin marcar: Perfil (técnico o admin) → "Probar animación de marcaje" (`probarMarcajeTema`, `.tema-probar` solo se ve con el tema activo;
   usa datos de ejemplo y no guarda nada). Al cambiar el tema se vuelve a dibujar la tarjeta de marcaje.
 - **Colores del tema sobre lo nuevo**: `herramientas/tema-colores.py` lee `css/styles.css`, toma cada
   regla que usa los azules de la app y escribe su versión en tonos del tema entre las marcas
-  `AUTO-COLORES` de `css/temas.css` (con `:where(.tema-halloween)` para no subir especificidad).
-  **Correrlo después de cambiar styles.css** (`python3 herramientas/tema-colores.py`) y subir `temas.css?v=`.
-  Lo decorativo hecho a mano (login, sangre en encabezados, barra, cementerio) va arriba en temas.css.
+  `AUTO-COLORES` de `css/temas/halloween.css` y `css/temas/muertos.css` (con `:where(.tema-halloween)` para no subir especificidad).
+  **Correrlo después de cambiar styles.css** (`python3 herramientas/tema-colores.py`) y subir `TEMAS_V` en el `<head>` de `index.html`.
+  Lo decorativo hecho a mano (login, sangre en encabezados, barra, cementerio) va arriba en `css/temas/halloween.css`.
 
 ## 7. Carencias conocidas / deuda técnica (buenos objetivos de auditoría)
 

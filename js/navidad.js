@@ -5,7 +5,7 @@
 //   casa (22–27 dic) Nochebuena en casa: árbol, chimenea, ventana nevada y medias (una con tu nombre).
 //                    El 24 se abre el regalo de la tarjeta (una vez por teléfono).
 //   ano  (28 dic–4 ene) Noche de pólvora: cohetes sin parar y, al tocar el cielo, el tuyo.
-// Estilos en css/temas.css (bloque "Tema Navidad"). Todo vive dentro de .nv-capa y de elementos .nv-*,
+// Estilos en css/temas/navidad.css (solo se descarga con el tema activo). Todo vive dentro de .nv-capa y de elementos .nv-*,
 // así que al cambiar de etapa o de tema se quitan sin dejar rastro.
 (function(){
   'use strict';
