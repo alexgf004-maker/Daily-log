@@ -61,11 +61,11 @@
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
 <link rel="stylesheet" href="css/temas/comun.css?v=46">
-<link rel="stylesheet" href="css/navidad-mascota.css?v=4">
+<link rel="stylesheet" href="css/navidad-mascota.css?v=5">
 <script src="js/navidad.js?v=4" defer></script>
 <script src="js/green-actor.js?v=1" defer></script>
-<script src="js/navidad-hielo.js?v=1" defer></script>
-<script src="js/navidad-mascota.js?v=4" defer></script>
+<script src="js/navidad-hielo.js?v=2" defer></script>
+<script src="js/navidad-mascota.js?v=5" defer></script>
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -744,6 +744,61 @@
   <g id="roof-front" opacity="0"><rect x="84" y="680" width="623" height="400" rx="21" fill="#e4f3d3" stroke="#3e8656" stroke-width="5"/><rect x="84" y="676" width="623" height="27" rx="11" fill="#428f56"/></g>
   <g id="peek-eyes" opacity="0"><ellipse cx="356" cy="658" rx="29" ry="33" fill="white" stroke="#326721" stroke-width="4"/><ellipse cx="442" cy="658" rx="29" ry="33" fill="white" stroke="#326721" stroke-width="4"/><g id="peek-pupils"><ellipse cx="365" cy="661" rx="14" ry="18" fill="#208b3b"/><ellipse cx="451" cy="661" rx="14" ry="18" fill="#208b3b"/><circle cx="362" cy="651" r="6" fill="white"/><circle cx="449" cy="651" r="6" fill="white"/></g></g>
 </g></svg>
+
+    <!-- Hielo visible sin JavaScript: el motor solo controla su deshielo gradual. -->
+    <div class="nv-hielo-fijo" aria-hidden="true">
+      <svg viewBox="0 0 800 1067" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="nvice-core" x1="0" y1="0" x2="1" y2="1">
+            <stop stop-color="#d5f8ff" stop-opacity=".76"/>
+            <stop offset=".32" stop-color="#83cff3" stop-opacity=".52"/>
+            <stop offset=".65" stop-color="#89ddf9" stop-opacity=".30"/>
+            <stop offset="1" stop-color="#b3edff" stop-opacity=".75"/>
+          </linearGradient>
+          <linearGradient id="nvice-flank" x1="0" y1="0" x2="1" y2="0">
+            <stop stop-color="#d7fbff" stop-opacity=".92"/>
+            <stop offset="1" stop-color="#41a6e1" stop-opacity=".65"/>
+          </linearGradient>
+          <linearGradient id="nvice-shine">
+            <stop stop-color="#fff" stop-opacity=".9"/>
+            <stop offset="1" stop-color="#e5ffff" stop-opacity=".04"/>
+          </linearGradient>
+          <clipPath id="nvice-shape">
+            <path d="M208 53L538 43L652 124L683 364L677 795L610 991L202 1015L113 913L121 280Z"/>
+          </clipPath>
+          <clipPath id="nvice-melt"><path id="nvice-melt-mask" d="M0 0H800V1067H0Z"/></clipPath>
+        </defs>
+        <g id="nvice-whole" clip-path="url(#nvice-melt)">
+          <path d="M208 53L538 43L652 124L683 364L677 795L610 991L202 1015L113 913L121 280Z" fill="url(#nvice-core)" stroke="#d8faff" stroke-width="14" stroke-linejoin="bevel"/>
+          <g clip-path="url(#nvice-shape)">
+            <path d="M113 913L121 280L208 53L256 215L211 789L202 1015Z" fill="url(#nvice-flank)" opacity=".78"/>
+            <path d="M538 43L652 124L683 364L677 795L610 991L570 791L597 200Z" fill="#71bee9" fill-opacity=".44"/>
+            <path d="M208 53L538 43L597 200L256 215Z" fill="#eaffff" fill-opacity=".52"/>
+            <path d="M211 789L570 791L610 991L202 1015Z" fill="#7ec9ec" fill-opacity=".37"/>
+            <path d="M270 274L358 230L302 658L241 719Z" fill="url(#nvice-shine)" opacity=".6"/>
+            <path d="M542 341L593 267L577 588L511 714Z" fill="#efffff" fill-opacity=".28"/>
+            <path d="M112 922L211 789L290 876L202 1015Z" fill="#d8faff" fill-opacity=".60"/>
+            <path d="M541 43L597 200L683 364" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="7"/>
+            <path d="M256 215L597 200M211 789L570 791" fill="none" stroke="#dcffff" stroke-opacity=".35" stroke-width="6"/>
+            <path d="M133 388L188 340M139 700L181 687M636 488L663 465M619 696L664 685" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="7"/>
+          </g>
+          <g id="nvice-cracks" fill="none" stroke="#f1ffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0">
+            <path d="M431 195L463 259L442 299L478 354L451 389M463 259L502 276L521 317M442 299L411 326"/>
+            <path d="M195 529L267 565L257 623L297 655M267 565L309 534M257 623L223 644"/>
+          </g>
+          <path d="M208 53L538 43L652 124L683 364L677 795L610 991L202 1015L113 913L121 280Z" fill="none" stroke="#92dff8" stroke-width="8" stroke-opacity=".82"/>
+          <path d="M147 343L220 94L505 73" stroke="#fff" stroke-width="12" stroke-opacity=".85" stroke-linecap="round" fill="none"/>
+          <path d="M178 937L215 979L598 961" stroke="#fff" stroke-opacity=".44" stroke-width="9" stroke-linecap="round" fill="none"/>
+        </g>
+        <g id="nvice-puddle" opacity="0">
+          <ellipse cx="403" cy="1026" rx="240" ry="23" fill="#b9f4ff" fill-opacity=".46"/>
+          <ellipse cx="410" cy="1020" rx="184" ry="14" fill="none" stroke="#eaffff" stroke-width="6"/>
+          <path d="M204 1019Q370 1039 565 1014" stroke="#fff" stroke-opacity=".45" stroke-width="5" fill="none"/>
+          <path class="nv-hielo-gota nv-hielo-gota-a" d="M164 767Q146 787 155 811Q170 824 180 806Q185 790 164 767Z" fill="#c4f4ff" stroke="#fff" stroke-width="4"/>
+          <path class="nv-hielo-gota nv-hielo-gota-b" d="M647 614Q635 631 642 647Q660 657 664 641Q667 627 647 614Z" fill="#d9faff" stroke="#fff" stroke-width="4"/>
+        </g>
+      </svg>
+    </div>
   </div>
   <div class="login-panel">
     <div class="login-brand lg-anim">
