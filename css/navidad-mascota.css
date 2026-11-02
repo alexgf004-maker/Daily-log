@@ -44,6 +44,12 @@
   overflow:visible;
 }
 .nav-pre #loginScreen>.nv-mascota .nv-hielo-fijo{display:block}
+.nav-pre #loginScreen .nv-hielo-fijo .nv-hielo-gota{
+  transform-box:fill-box;
+  transform-origin:center top;
+  animation:nvHieloGota 3.8s ease-in infinite;
+}
+.nav-pre #loginScreen .nv-hielo-fijo .nv-hielo-gota-b{animation-delay:1.9s}
 .nav-pre #loginScreen>.nv-mascota{
   width:clamp(166px,22vw,250px);
   right:1%;
