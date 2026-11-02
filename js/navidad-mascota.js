@@ -3,7 +3,7 @@
 'use strict';
 var mount=null,actor=null,ice=null,observer=null,stageNow='',generation=0,timers=[],touchStage=0,previewDay=null;
 var reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-function later(fn,ms){var id=setTimeout(fn,ms);timers.push(id);return id;}
+function later(fn,ms){var id=setTimeout(function(){timers=timers.filter(function(t){return t!==id;});fn();},ms);timers.push(id);return id;}
 function theme(){var t=window.__temas;return t&&t.activo&&t.activo.id==='navidad'?t:null;}
 function stage(){var t=theme();return t&&t.etapaDe(t.activo)?.id||'';}
 function isDate(month,day){var d=new Date();return d.getMonth()===month-1&&d.getDate()===day;}
@@ -17,7 +17,7 @@ function dayPre(){
 function clearAll(){
   generation++;timers.forEach(clearTimeout);timers=[];
   if(observer){observer.disconnect();observer=null;}
-  if(actor){actor.destroy();actor=null;}
+  if(actor){actor.svg.removeEventListener('pointerdown',onTap);actor.destroy();actor=null;}
   if(ice){ice.destroy();ice=null;}
   if(mount){mount.classList.remove('nv-mascota-congelada','nv-mascota-libre','nv-mascota-bloque');mount=null;}
   stageNow='';touchStage=0;
@@ -37,7 +37,7 @@ function play(name){
   return true;
 }
 function routine(){
-  if(!actor||ice||document.hidden||!document.getElementById('loginScreen')?.classList.contains('active'))return;
+  if(reduced||!actor||ice||document.hidden||!document.getElementById('loginScreen')?.classList.contains('active'))return;
   if(actor.scene!=='idle')return;
   var options=['sneak','steal','hide','climb','caught'];
   play(options[Math.floor(Math.random()*options.length)]);
@@ -49,7 +49,7 @@ function onTap(event){
   touchStage=touchStage%3+1;
   play('tap'+touchStage);
 }
-async function sync(){
+function sync(){
   if(!theme()){
     if(mount)clearAll();
     return;
@@ -107,7 +107,7 @@ window.__mascotaNavidadPreviewDia=function(day){
   previewDay=n;if(ice)ice.update(dayPre());
   return true;
 };
-document.addEventListener('visibilitychange',regulate);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)sync();else regulate();});
 document.addEventListener('DOMContentLoaded',sync);
 setInterval(function(){if(mount&&theme())sync();},60*1000);
 setInterval(routine,19*1000);

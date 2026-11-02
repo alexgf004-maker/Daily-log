@@ -1,100 +1,53 @@
-/* Mascota vectorial navideña: nunca afecta el tema vigente para otros usuarios. */
-#loginScreen>.nv-mascota{position:absolute;left:max(1%,calc(50% - 370px));bottom:5%;width:clamp(125px,19vw,240px);aspect-ratio:800 / 1067;z-index:2;touch-action:manipulation;filter:drop-shadow(0 12px 14px rgba(0,0,0,.23));}
-.nv-mascota>svg{display:block;width:100%;height:100%;overflow:visible;cursor:pointer;}
-.nv-mascota #background{display:none!important;}
-.nv-mascota-hielo{position:absolute;inset:0;pointer-events:none;filter:drop-shadow(0 0 8px rgba(182,244,255,.36));}
-.nv-mascota-hielo>svg{width:100%;height:100%;display:block;overflow:visible;}
-.nv-mascota-congelada{cursor:pointer;}
-.nv-mascota-congelada>svg{filter:saturate(.76) brightness(1.12);}
-.nv-mascota-hielo .nv-hielo-gota{transform-box:fill-box;transform-origin:center top;animation:nvHieloGota 3.8s ease-in infinite;}
-.nv-mascota-hielo .nv-hielo-gota-b{animation-delay:1.9s;}
-.nv-mascota-hielo.nv-hielo-golpe{animation:nvHieloGolpe .55s ease-out;}
+/* Escena de la mascota: el flujo del panel reserva su espacio en teléfonos.
+   Sin Navidad, el SVG permanece oculto y el login conserva su distribución. */
+#loginScreen .nv-mascota{display:none}
+.tema-navidad #loginScreen{position:relative}
+.tema-navidad #loginScreen .nv-mascota{
+  display:block;position:absolute;left:calc(100% + 12px);bottom:24px;
+  width:210px;aspect-ratio:800 / 1067;z-index:1;
+  touch-action:manipulation;filter:drop-shadow(0 8px 8px rgba(2,30,55,.22));
+}
+.nv-mascota>svg{display:block;width:100%;height:100%;overflow:visible;cursor:pointer}
+.nv-mascota #background{display:none!important}
+.nv-mascota .nv-hielo-fijo{
+  display:none;position:absolute;inset:0;z-index:2;pointer-events:none;
+  filter:drop-shadow(0 4px 5px rgba(6,68,116,.22));
+}
+.nv-hielo-fijo>svg{display:block;width:100%;height:100%;overflow:visible}
+.nav-pre #loginScreen .nv-mascota:not(.nv-mascota-libre) .nv-hielo-fijo{display:block}
+.nv-mascota-congelada>svg{filter:saturate(calc(1 - var(--nv-frio,1) * .25)) brightness(1.06)}
+.nv-hielo-gota{transform-box:fill-box;transform-origin:center top;animation:nvHieloGota 3.8s ease-in infinite}
+.nv-hielo-gota-b{animation-delay:1.9s}
+.nv-hielo-fijo.nv-hielo-golpe{animation:nvHieloGolpe .55s ease-out}
 @keyframes nvHieloGota{0%,60%{transform:translateY(0);opacity:0}65%{opacity:1}94%{opacity:.35}100%{transform:translateY(120px);opacity:0}}
 @keyframes nvHieloGolpe{0%,100%{transform:translateX(0)}23%{transform:translateX(-3px)}52%{transform:translateX(3px)}77%{transform:translateX(-1px)}}
-@media(max-width:720px){#loginScreen>.nv-mascota{left:auto;right:4%;bottom:30px;width:clamp(100px,24vw,150px);z-index:5;opacity:1}}
-@media(max-width:370px){#loginScreen>.nv-mascota{width:98px;right:2%;bottom:22px}}
-@media(prefers-reduced-motion:reduce){.nv-mascota,.nv-mascota *{animation:none!important;transition:none!important}}
-
-/* SVG inline: siempre visible en Pre-Navidad aunque falle el JS. */
-#loginScreen>.nv-mascota-estatica{display:none}
-.tema-navidad #loginScreen>.nv-mascota-estatica{display:block}
-#loginScreen>.nv-mascota-estatica{width:clamp(110px,20vw,190px);right:3%;left:auto;bottom:25px;z-index:5;pointer-events:auto}
-#loginScreen>.nv-mascota-estatica svg{width:100%;height:100%;display:block}
-#loginScreen>.nv-mascota-estatica #background{display:none!important}
-@media(max-width:720px){.tema-navidad #loginScreen>.nv-mascota-estatica{width:clamp(108px,25vw,155px);right:3%;bottom:30px;left:auto}}
-
-
-/* Pre-Navidad: bloque de hielo macizo, mayor que la criatura.
-   El SVG ya existe en index.html, así que también aparece sin motor JS. */
-#loginScreen>.nv-mascota .nv-hielo-fijo{
-  display:none;
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  z-index:3;
-  pointer-events:none;
-  filter:drop-shadow(0 9px 12px rgba(6,68,116,.38))
-         drop-shadow(0 0 14px rgba(192,247,255,.46));
-}
-#loginScreen>.nv-mascota .nv-hielo-fijo>svg{
-  display:block;
-  width:100%;
-  height:100%;
-  overflow:visible;
-}
-.nav-pre #loginScreen>.nv-mascota .nv-hielo-fijo{display:block}
-.nav-pre #loginScreen .nv-hielo-fijo .nv-hielo-gota{
-  transform-box:fill-box;
-  transform-origin:center top;
-  animation:nvHieloGota 3.8s ease-in infinite;
-}
-.nav-pre #loginScreen .nv-hielo-fijo .nv-hielo-gota-b{animation-delay:1.9s}
-.nav-pre #loginScreen>.nv-mascota{
-  width:clamp(166px,22vw,250px);
-  right:1%;
-  left:auto;
-  bottom:4px;
-  z-index:5;
-  /* El bloque no puede interceptar el botón Ingresar ni sus campos. */
-  pointer-events:none;
-  filter:drop-shadow(0 5px 6px rgba(2,40,78,.15));
-}
-.nav-pre #loginScreen>.nv-mascota>svg:first-child{
-  filter:saturate(.70) brightness(1.10);
-  opacity:.93;
-}
-.nav-pre #loginScreen>.nv-mascota::before{
-  content:"";
-  position:absolute;
-  left:15%;
-  width:70%;
-  height:16px;
-  bottom:5px;
-  border-radius:50%;
-  background:radial-gradient(ellipse,rgba(185,243,255,.58),rgba(185,243,255,0) 72%);
-  pointer-events:none;
-  z-index:0;
-}
-@media(max-width:720px){
-  .nav-pre #loginScreen>.nv-mascota,
-  .nav-pre #loginScreen>.nv-mascota-estatica{
-    width:clamp(144px,40vw,180px);
-    bottom:0;
-    right:0;
-    left:auto;
-    opacity:1;
-    z-index:5;
+/* El ancho incluye el espacio transparente del SVG y la sombra. El personaje
+   nunca queda por encima de la tarjeta, ni al abrir el teclado o girar el móvil. */
+@media(max-width:900px){
+  .tema-navidad #loginScreen{justify-content:flex-start}
+  .tema-navidad #loginScreen .login-panel{
+    display:grid;grid-template-columns:minmax(0,1fr) 144px;column-gap:12px;
+    padding-top:60px;padding-bottom:max(8px,env(safe-area-inset-bottom));margin:auto;
   }
-}
-@media(max-width:370px){
-  .nav-pre #loginScreen>.nv-mascota,
-  .nav-pre #loginScreen>.nv-mascota-estatica{
-    width:144px;
-    bottom:0;
-    right:-4px;
+  .tema-navidad #loginScreen .login-brand,
+  .tema-navidad #loginScreen .login-form{grid-column:1 / -1;min-width:0}
+  .tema-navidad #loginScreen .nv-mascota{
+    position:relative;grid-column:2;grid-row:3;left:auto;bottom:auto;
+    width:144px;margin-top:10px;align-self:end;justify-self:end;
   }
+  .tema-navidad #loginScreen .login-footer{
+    grid-column:1;grid-row:3;align-self:center;min-width:0;max-width:100%;
+    margin:14px 0 0;padding:8px 10px;border-radius:14px;font-size:11px;
+  }
+  .nav-pre #loginScreen .login-logo{width:48px;height:48px;margin-bottom:8px}
+  .nav-pre #loginScreen .login-brand{margin-bottom:14px}
+  .nav-pre #loginScreen .nv-camino{margin-top:10px;padding:5px 12px 2px}
+  .nav-pre #loginScreen .nv-camino svg{height:20px}
+}
+/* En escritorio el bloque se sitúa junto al panel, dentro del ancho disponible. */
+@media(min-width:901px){
+  .tema-navidad #loginScreen .login-panel{margin-top:48px;margin-bottom:24px}
 }
 @media(prefers-reduced-motion:reduce){
-  .nav-pre #loginScreen .nv-hielo-gota{animation:none!important}
+  .nv-mascota,.nv-mascota *{animation:none!important;transition:none!important}
 }
