@@ -18,7 +18,7 @@ function clearAll(){
   if(observer){observer.disconnect();observer=null;}
   if(actor){actor.destroy();actor=null;}
   if(ice){ice.destroy();ice=null;}
-  if(mount){mount.remove();mount=null;}
+  if(mount){mount.classList.remove('nv-mascota-congelada','nv-mascota-libre');mount=null;}
   stageNow='';touchStage=0;
 }
 function regulate(){
@@ -64,20 +64,14 @@ async function sync(){
   stageNow=current;
   var login=document.getElementById('loginScreen');
   if(!login)return;
-  var element=document.createElement('div');
-  element.className='nv-mascota';
-  element.setAttribute('aria-label',current==='pre'?'Criatura navideña atrapada en hielo':'Criatura navideña interactiva');
-  login.appendChild(element);mount=element;
+  // Utilizar el SVG que ya está en el HTML, sin crear otro contenedor.
+  var element=login.querySelector('.nv-mascota');
+  if(!element)return;
+  element.classList.remove('nv-mascota-congelada','nv-mascota-libre');
+  mount=element;
   try{
-    // SVG integrado: evita fallos por rutas, caché o peticiones en el login.
-    var source=window.__nvMascotaSprite;
-    if(!source)throw Error('Sprite vectorial no disponible');
-    if(myGeneration!==generation||!theme()||stage()!==current)return;
-    var xml=new DOMParser().parseFromString(source,'image/svg+xml');
-    if(xml.querySelector('parsererror'))throw Error('SVG inválido');
-    var svg=document.importNode(xml.documentElement,true);
-    svg.removeAttribute('width');svg.removeAttribute('height');svg.setAttribute('aria-hidden','true');
-    element.replaceChildren(svg);
+    var svg=element.querySelector('svg');
+    if(!svg)throw Error('SVG integrado no encontrado');
     if(typeof GreenActor!=='function')throw Error('GreenActor no disponible');
     actor=new GreenActor(svg,{initialScene:'idle'});
     if(current==='pre'){
