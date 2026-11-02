@@ -1082,12 +1082,41 @@ body:has(#loginScreen.active) .mu-amb{display:none}
 /* Sin tema: los colores actuales de la app (los mismos del login, para pasar de una a otra sin salto),
    el logo de vidrio con su pulso y un arco de carga fino que gira alrededor */
 #bootScreen{background:radial-gradient(circle at 85% 8%,rgba(96,165,250,.35) 0%,transparent 38%),radial-gradient(circle at 5% 95%,rgba(16,185,129,.22) 0%,transparent 40%),linear-gradient(160deg,#081428 0%,#12284a 45%,#1d4ed8 100%)!important}
-html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) .bt-arte{inset:26px;border-radius:50%;
-  background:conic-gradient(from 0deg,rgba(147,197,253,0) 0deg,rgba(147,197,253,0) 200deg,rgba(191,219,254,.95) 360deg);
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));
-  animation:btGira 1.1s linear infinite}
-html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) .bt-logo::before{content:'';position:absolute;inset:-7px;border-radius:25px;border:1px solid rgba(255,255,255,.3);animation:pulseRing 2.6s ease-out infinite}
-html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) .bt-p{display:none}
+/* Sin tema: presentación de la marca. El logo se dibuja (la I crece, la N se traza, el punto verde aparece con
+   una onda), luego "INNOVA" y "Registro de Planilla"; detrás, luces suaves de la marca que flotan */
+.boot-marca{display:none}
+html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) #bootScreen .boot-tema{display:none}
+html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) #bootScreen .boot-marca{display:block;position:absolute;inset:0;overflow:hidden}
+.bm-orbe{position:absolute;border-radius:50%;filter:blur(46px);opacity:.55;animation:bmFlota 9s ease-in-out infinite alternate}
+.bm-orbe.o1{width:280px;height:280px;left:-70px;top:12%;background:#2563eb}
+.bm-orbe.o2{width:240px;height:240px;right:-60px;top:38%;background:#06b6d4;animation-duration:11s;animation-delay:-3s;opacity:.4}
+.bm-orbe.o3{width:220px;height:220px;left:22%;bottom:-80px;background:#10b981;animation-duration:13s;animation-delay:-6s;opacity:.32}
+@keyframes bmFlota{from{transform:translate(0,0) scale(1)}to{transform:translate(30px,-26px) scale(1.12)}}
+.bm-centro{position:absolute;left:50%;top:50%;transform:translate(-50%,-56%);display:flex;flex-direction:column;align-items:center}
+.bm-logo{position:relative;width:96px;height:96px;border-radius:28px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,rgba(255,255,255,.18),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.28);
+  box-shadow:0 24px 50px -18px rgba(2,8,23,.7),inset 0 1px 0 rgba(255,255,255,.35);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  animation:bmAparece .6s cubic-bezier(.2,.9,.3,1.2) both}
+.bm-logo::before{content:'';position:absolute;inset:-9px;border-radius:35px;border:1px solid rgba(255,255,255,.22);animation:pulseRing 2.6s 1.2s ease-out infinite}
+.bm-logo::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%) -150% 0/250% 100% no-repeat;animation:bmBrillo 3.4s 1.3s ease-in-out infinite}
+.bm-logo svg{width:52px;height:52px;overflow:visible}
+.bm-i{transform-box:fill-box;transform-origin:50% 100%;animation:bmCrece .5s .25s cubic-bezier(.3,1.3,.5,1) both}
+.bm-n{stroke-dasharray:100;stroke-dashoffset:100;animation:bmTraza .7s .45s cubic-bezier(.6,0,.3,1) forwards}
+.bm-punto{transform-box:fill-box;transform-origin:50% 50%;animation:bmPunto .45s 1.05s cubic-bezier(.3,1.6,.5,1) both}
+.bm-onda{transform-box:fill-box;transform-origin:50% 50%;opacity:0;animation:bmOnda 1.6s 1.2s ease-out infinite}
+.bm-nombre{margin-top:26px;font-size:22px;font-weight:800;letter-spacing:.42em;padding-left:.42em;color:#fff;animation:bmTexto .7s 1s ease-out both}
+.bm-sub{margin-top:9px;font-size:11px;font-weight:600;letter-spacing:.22em;padding-left:.22em;white-space:nowrap;text-transform:uppercase;color:rgba(191,219,254,.75);animation:bmTexto .7s 1.15s ease-out both}
+.bm-barra{position:relative;width:120px;height:3px;margin-top:26px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;animation:bmTexto .5s 1.25s ease-out both}
+.bm-barra b{position:absolute;top:0;bottom:0;width:40%;border-radius:3px;background:linear-gradient(90deg,transparent,#93c5fd,#4ade80,transparent);animation:bmCarga 1.3s ease-in-out infinite}
+@keyframes bmAparece{from{opacity:0;transform:scale(.8) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes bmCrece{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
+@keyframes bmTraza{to{stroke-dashoffset:0}}
+@keyframes bmPunto{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes bmOnda{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(2.6)}}
+@keyframes bmBrillo{0%,60%{background-position:-150% 0}100%{background-position:150% 0}}
+@keyframes bmTexto{from{opacity:0;transform:translateY(6px);letter-spacing:.6em}to{opacity:1;transform:none}}
+@keyframes bmCarga{from{left:-40%}to{left:100%}}
+@media (prefers-reduced-motion:reduce){.boot-marca *,.boot-marca *::before,.boot-marca *::after{animation:none!important}.bm-n{stroke-dashoffset:0}.bm-onda{display:none}}
 
 /* Día de Muertos: noche ciruela; un cempasúchil gira detrás del logo y caen pétalos */
 .tema-muertos #bootScreen{background:radial-gradient(70% 50% at 50% 46%,rgba(249,115,22,.28),transparent 70%),linear-gradient(160deg,#2e0530 0%,#4a044e 55%,#2a0a2c 100%)!important}
