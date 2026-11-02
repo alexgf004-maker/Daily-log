@@ -349,6 +349,10 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     app (`.nv-bienvenida`: guirnalda que baja y se enciende, copos y "¡Qué gusto verte, Alex!", ~1.6 s). La cinta va
     por el borde derecho (sin pasar por los campos); la escarcha son helechos de hielo (`escarcha()`). Nada de esto toca
     la lógica del login.
+  - Dentro de la app en `pre`: colores generados por `herramientas/tema-colores.py` (bloque AUTO-COLORES-NAVIDAD de
+    `css/temas/navidad.css`, `:where(.nav-pre)`): encabezados de azul noche a azul hielo, acentos en rojo navideño,
+    datos del calendario en azul noche; estados sin cambiar. A mano: cordón de foquitos arriba de los encabezados,
+    barra de la marca roja y nieve suave en las pantallas (`.nv-amb`, la crea `js/navidad.js`; no sale en el login).
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
     (la primera con el nombre del usuario recordado). El 24 la tarjeta se "abre" (moño y cinta caen, confeti) una
     vez por teléfono (`innova_nav_regalo`).
