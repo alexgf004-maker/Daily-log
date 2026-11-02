@@ -9,16 +9,17 @@ function stage(){var t=theme();return t&&t.etapaDe(t.activo)?.id||'';}
 function isDate(month,day){var d=new Date();return d.getMonth()===month-1&&d.getDate()===day;}
 function dayPre(){
   var d=new Date(),t=window.__temas;
-  // Fuera de diciembre, "Ver ahora" enseña el día 10 como muestra.
-  if(t&&t.modo==='ver'&&previewDay!==null)return previewDay;
-  return d.getMonth()===11&&d.getDate()<=21?d.getDate():10;
+  // La vista previa siempre empieza totalmente congelada.
+  // Un día elegido manualmente para probar el deshielo tiene prioridad.
+  if(t&&t.modo==='ver')return previewDay!==null?previewDay:1;
+  return d.getMonth()===11&&d.getDate()<=21?d.getDate():1;
 }
 function clearAll(){
   generation++;timers.forEach(clearTimeout);timers=[];
   if(observer){observer.disconnect();observer=null;}
   if(actor){actor.destroy();actor=null;}
   if(ice){ice.destroy();ice=null;}
-  if(mount){mount.classList.remove('nv-mascota-congelada','nv-mascota-libre');mount=null;}
+  if(mount){mount.classList.remove('nv-mascota-congelada','nv-mascota-libre','nv-mascota-bloque');mount=null;}
   stageNow='';touchStage=0;
 }
 function regulate(){
@@ -67,7 +68,7 @@ async function sync(){
   // Utilizar el SVG que ya está en el HTML, sin crear otro contenedor.
   var element=login.querySelector('.nv-mascota');
   if(!element)return;
-  element.classList.remove('nv-mascota-congelada','nv-mascota-libre');
+  element.classList.remove('nv-mascota-congelada','nv-mascota-libre','nv-mascota-bloque');
   mount=element;
   try{
     var svg=element.querySelector('svg');
@@ -78,9 +79,8 @@ async function sync(){
       if(!window.NavidadHielo)throw Error('NavidadHielo no disponible');
       // El personaje está atrapado: detener por completo su movimiento.
       actor.pause();
-      ice=window.NavidadHielo.create(dayPre());
-      element.appendChild(ice.node);
-      element.classList.add('nv-mascota-congelada');
+      ice=window.NavidadHielo.create(dayPre(),element);
+      element.classList.add('nv-mascota-congelada','nv-mascota-bloque');
     }else{
       element.classList.add('nv-mascota-libre');
     }
