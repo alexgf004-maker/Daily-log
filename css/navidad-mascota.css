@@ -1,0 +1,7 @@
+/* Mascota SVG animada: exclusiva del tema navideño y del login. */
+#loginScreen>.nv-mascota{position:absolute;left:max(1%,calc(50% - 370px));bottom:5%;width:clamp(125px,19vw,240px);aspect-ratio:800 / 1067;z-index:2;pointer-events:auto;touch-action:manipulation;filter:drop-shadow(0 12px 14px rgba(0,0,0,.23));}
+.nv-mascota svg{display:block;width:100%;height:100%;overflow:visible;cursor:pointer;}
+.nv-mascota #background{display:none!important;}
+@media(max-width:720px){#loginScreen>.nv-mascota{left:2px;bottom:calc(100% - 132px);width:90px;z-index:2;opacity:.95}}
+@media(max-width:370px){#loginScreen>.nv-mascota{width:65px;bottom:calc(100% - 105px)}}
+@media(prefers-reduced-motion:reduce){.nv-mascota{transition:none!important}}
