@@ -47,3 +47,11 @@ node --check js/navidad.js
 **Límite:** Firebase App Check rechaza el dominio del entorno de prueba. La revisión visual usa una vista aislada del login que omite los módulos de Firebase. No equivale a una prueba de autenticación o marcaje contra producción, ni a una prueba en un teléfono físico.
 
 La rama se entrega para revisión visual, sin fusionar ni publicar en producción.
+
+## Corrección de altura móvil
+
+El flujo real `screen('loginScreen')` aplica `body.style.overflow = 'hidden'`. La primera vista aislada omitía esa condición: permitía desplazar el documento y ocultó un recorte real en teléfonos con menos de 843 px útiles.
+
+En móviles, el login ahora está limitado por `100dvh` (con respaldo `100vh`) y es su propio contenedor desplazable. El panel no se comprime; reserva 24 px más el área segura bajo la escena. En alturas de hasta 850 px, una variante compacta conserva campos y botón, reduce la mascota a 120 px y ajusta la cabecera.
+
+Validación de la corrección: vista aislada con el mismo bloqueo del body que producción. A 393×800, el bloque termina en y=773 y queda completamente visible. A 393×760, el contenedor ofrece 33 px de desplazamiento y se comprobó el acceso a toda la mascota. Se conserva el límite de App Check descrito anteriormente.
