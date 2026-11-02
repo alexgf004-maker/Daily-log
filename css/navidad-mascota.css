@@ -14,3 +14,11 @@
 @media(max-width:720px){#loginScreen>.nv-mascota{left:auto;right:4%;bottom:30px;width:clamp(100px,24vw,150px);z-index:5;opacity:1}}
 @media(max-width:370px){#loginScreen>.nv-mascota{width:98px;right:2%;bottom:22px}}
 @media(prefers-reduced-motion:reduce){.nv-mascota,.nv-mascota *{animation:none!important;transition:none!important}}
+
+/* SVG inline: siempre visible en Pre-Navidad aunque falle el JS. */
+#loginScreen>.nv-mascota-estatica{display:none}
+.tema-navidad #loginScreen>.nv-mascota-estatica{display:block}
+#loginScreen>.nv-mascota-estatica{width:clamp(110px,20vw,190px);right:3%;left:auto;bottom:25px;z-index:5;pointer-events:auto}
+#loginScreen>.nv-mascota-estatica svg{width:100%;height:100%;display:block}
+#loginScreen>.nv-mascota-estatica #background{display:none!important}
+@media(max-width:720px){.tema-navidad #loginScreen>.nv-mascota-estatica{width:clamp(108px,25vw,155px);right:3%;bottom:30px;left:auto}}
