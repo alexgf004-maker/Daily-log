@@ -73,21 +73,41 @@
   // barra: color de las barras del celular (hora y batería arriba, navegación abajo; <meta name="theme-color">)
   var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte'],barra:'#050307'},
              {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-05',clases:['tema-muertos'],barra:'#4a044e'}];
-  var d=new Date(), md=('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  function hoyMD(){ var d=new Date(); return ('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   var modo='auto', global=null; try{ modo=localStorage.getItem('innova_tema')||'auto'; global=JSON.parse(localStorage.getItem('innova_tema_global')||'null'); }catch(e){}
-  var porFecha=null; for(var i=0;i<TEMAS.length;i++){ if(md>=TEMAS[i].desde&&md<=TEMAS[i].hasta) porFecha=TEMAS[i]; }
-  // Tema de referencia para Mi Perfil y "Ver ahora": el de la fecha o, si no hay, el próximo del año
-  var proximo=null; for(var p=0;p<TEMAS.length;p++){ if(TEMAS[p].desde>md&&(!proximo||TEMAS[p].desde<proximo.desde)) proximo=TEMAS[p]; }
-  if(!proximo) for(var q=0;q<TEMAS.length;q++){ if(!proximo||TEMAS[q].desde<proximo.desde) proximo=TEMAS[q]; }
+  // Tema por fecha y tema de referencia para Mi Perfil y "Ver ahora" (el de la fecha o, si no hay,
+  // el próximo del año). Se vuelve a calcular al regresar a la app y cada 30 min (ver aplicarTema),
+  // porque un teléfono puede dejar la app abierta días y pasar de un tema al siguiente.
+  function porFechaDe(md){ var r=null; for(var i=0;i<TEMAS.length;i++){ if(md>=TEMAS[i].desde&&md<=TEMAS[i].hasta) r=TEMAS[i]; } return r; }
+  function proximoDe(md){
+    var r=null; for(var p=0;p<TEMAS.length;p++){ if(TEMAS[p].desde>md&&(!r||TEMAS[p].desde<r.desde)) r=TEMAS[p]; }
+    if(!r) for(var q=0;q<TEMAS.length;q++){ if(!r||TEMAS[q].desde<r.desde) r=TEMAS[q]; }
+    return r;
+  }
+  function buscar(id){ for(var k=0;k<TEMAS.length;k++) if(TEMAS[k].id===id) return TEMAS[k]; return null; }
+  // Lo que el admin puso "para todos" vale solo hasta que termina la temporada de ese tema
+  // (la primera que termina después de que lo cambió). Así un "Encendido" de Halloween no
+  // se queda pegado en noviembre. Sin fecha de cambio (dato viejo), solo dentro de su temporada.
+  function globalVigente(g){
+    if(!g) return null;
+    var t=buscar(g.tema); if(!t) return g.modo==='on'?g:null;
+    if(!g.en) return porFechaDe(hoyMD())===t?g:null;
+    var e=new Date(g.en), emd=('0'+(e.getMonth()+1)).slice(-2)+'-'+('0'+e.getDate()).slice(-2);
+    var h=t.hasta.split('-'), fin=new Date(e.getFullYear()+(emd>t.hasta?1:0), Number(h[0])-1, Number(h[1]), 23, 59, 59, 999);
+    return Date.now()<=fin.getTime()?g:null;
+  }
   function efectivo(T){
     if(T.modo==='off') return null;
     if(T.modo==='ver') return T.ref;
-    var g=T.global;
+    var g=globalVigente(T.global);
     if(g&&g.modo==='off') return null;
-    if(g&&g.modo==='on'){ for(var k=0;k<T.lista.length;k++) if(T.lista[k].id===g.tema) return T.lista[k]; return T.lista[0]; }
+    if(g&&g.modo==='on') return buscar(g.tema)||T.lista[0];
     return T.porFecha;
   }
-  var T={lista:TEMAS,porFecha:porFecha,ref:porFecha||proximo,modo:modo,global:global,efectivo:efectivo};
+  var T={lista:TEMAS,modo:modo,global:global,efectivo:efectivo};
+  T.recalcular=function(){ var md=hoyMD(); T.porFecha=porFechaDe(md); T.ref=T.porFecha||proximoDe(md); };
+  T.globalVigente=function(){ return globalVigente(T.global); };
+  T.recalcular();
   var t=efectivo(T); T.activo=t;
   if(t) for(var j=0;j<t.clases.length;j++) document.documentElement.classList.add(t.clases[j]);
   // Las barras del celular las pinta Android con theme-color: que sigan al tema (sin tema, el azul de la app)
@@ -1512,6 +1532,7 @@ function cerrarSesionForzada(){
   if(!me) return;
   window.doLogout();
   avisoSesionCerrada();
+  aplicarTema();   // y el tema que toca hoy (la app pudo quedar abierta desde otra temporada)
 }
 try{
   onValue(refFirebase(db,'config/cierreSesion'), sn=>{
@@ -3988,7 +4009,7 @@ window.cargarPerfilEmpleado=async()=>{
 function pintarTema(){
   const T=window.__temas; if(!T) return;
   const sig=T.ref, fc=md=>{ const [m,d]=md.split('-').map(Number); return `${d} ${MESES_FX[m-1]}`; };
-  const g=T.global, st=$('temaStatus'), md=$('temaModo');
+  const g=T.globalVigente(), st=$('temaStatus'), md=$('temaModo');
   if(st) st.textContent=T.modo==='off'?'Apagado en este dispositivo'
     :T.activo?`${T.activo.nombre} activo${T.modo==='ver'&&!T.porFecha&&g?.modo!=='on'?' (vista previa)':''}`
     :g?.modo==='off'?'Apagado para todos'
@@ -4004,6 +4025,7 @@ function pintarTema(){
 // Aplica el tema que corresponde (dispositivo, para todos o por fecha) si cambió
 function aplicarTema(){
   const T=window.__temas; if(!T) return;
+  T.recalcular();   // por si cambió el día (app abierta desde ayer) o venció lo "para todos"
   const nuevo=T.efectivo(T);
   const html=document.documentElement;
   if(nuevo!==T.activo){
@@ -4026,7 +4048,7 @@ window.cicloTema=()=>{
 // Tema para TODOS (solo admin): Por fecha → Encendido → Apagado. Se guarda en config/tema.
 window.cicloTemaGlobal=async()=>{
   const T=window.__temas; if(!T) return;
-  const act=T.global?.modo||'auto';
+  const act=T.globalVigente()?.modo||'auto';
   const sig={auto:'on',on:'off',off:'auto'}[act];
   const nombre=T.ref.nombre;
   if(sig==='on'&&!confirm(`¿Encender el tema de ${nombre} para todos? Lo verán en el login y en la app desde ya.`)) return;
@@ -4038,12 +4060,15 @@ window.cicloTemaGlobal=async()=>{
 try{
   onValue(refFirebase(db,'config/tema'), sn=>{
     const T=window.__temas; if(!T) return;
-    const v=sn.val(); const g=v&&(v.modo==='on'||v.modo==='off')?{modo:v.modo,tema:v.tema||T.ref.id}:null;
+    const v=sn.val(); const g=v&&(v.modo==='on'||v.modo==='off')?{modo:v.modo,tema:v.tema||T.ref.id,en:Number(v.en)||0}:null;
     T.global=g;
     try{ if(g) localStorage.setItem('innova_tema_global',JSON.stringify(g)); else localStorage.removeItem('innova_tema_global'); }catch(_){}
     aplicarTema();
   });
 }catch(e){ console.warn('[tema]', e.message); }
+// Al volver a la app y cada 30 min se revisa si toca otro tema (cambio de día o de temporada)
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') aplicarTema(); });
+setInterval(aplicarTema, 30*60*1000);
 // Vista previa de la escena del marcaje con datos de ejemplo: no guarda nada ni pide ubicación
 // Vista previa de las animaciones del tema con datos de ejemplo: no marca, no guarda ni pide ubicación.
 // Marcaje a tiempo / tarde, "¡Listo, guardado!" y, con el Día de los Muertos, el xolo.

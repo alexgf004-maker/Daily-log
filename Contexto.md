@@ -329,6 +329,12 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   teléfono lo escucha en vivo, también en el login, y lo copia en `localStorage.innova_tema_global` para
   aplicarlo al abrir sin parpadeo. Prioridad: el modo de ESE dispositivo (Ver ahora / Apagado, `innova_tema`)
   > para todos > por fecha. Al apagarse se quitan del login la escena, la sangre y los ojos (`aplicarTema`).
+  Lo "para todos" **vence solo** al terminar la temporada de ese tema (la primera que termina después de
+  `en`; `globalVigente` en el `<head>`): un "Encendido" de Halloween no sigue en noviembre. Sin `en`
+  (dato viejo) solo vale dentro de su temporada.
+- **El tema por fecha se recalcula** (`__temas.recalcular()`) en cada `aplicarTema`: al volver a la app
+  (`visibilitychange`), cada 30 min y al cerrar la sesión a todos. Antes se calculaba solo al abrir, y un
+  teléfono con la app abierta desde octubre seguía con Halloween en noviembre.
 
 `css/temas.css` + un script corto en el `<head>` de `index.html` (lista `TEMAS`). Cada tema
 tiene fechas `desde`/`hasta` en formato mes-día y se aplica solo cada año poniendo clases en
