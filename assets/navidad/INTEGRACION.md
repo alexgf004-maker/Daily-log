@@ -4,11 +4,11 @@ La mascota utiliza el SVG inline de `index.html`. `assets/navidad/personaje-anim
 
 ## Comportamiento
 
-- **1 de diciembre:** bloque translúcido completo; personaje inmóvil.
-- **2–21 de diciembre:** las caras, el espesor y la altura del bloque disminuyen según el día del calendario local del dispositivo. Aumentan el charco y las gotas; el 21 queda una base alrededor de los pies. La mascota sigue inmóvil.
+- **1 de diciembre:** bloque translúcido completo; cuerpo inmóvil, con parpadeo y movimiento suave de las pupilas.
+- **2–21 de diciembre:** las caras, el espesor y la altura del bloque disminuyen según el día del calendario local del dispositivo. Aumentan el charco y las gotas; el 21 queda una base alrededor de los pies. El cuerpo sigue inmóvil; solo se mueven los ojos.
 - **22 de diciembre:** la etapa existente cambia a `casa`; desaparece el hielo y se reanudan las animaciones. Se comprueba también cada minuto y al regresar a la pestaña.
 - **24 y 31 de diciembre:** se conservan las escenas especiales `xmas` y `nye`.
-- La preferencia de movimiento reducido evita las travesuras automáticas. El motor se pausa cuando el login no está visible o la pestaña queda oculta.
+- La preferencia de movimiento reducido evita las travesuras automáticas. El motor y las animaciones oculares se pausan cuando el login no está visible o la pestaña queda oculta. Con movimiento reducido, los ojos también permanecen estáticos.
 
 El modo **Ver ahora** empieza en el día 1 tanto para la mascota como para el paisaje. Esta consola cambia solo el bloque, mientras se está previsualizando Pre-Navidad:
 
@@ -38,7 +38,7 @@ node --check js/navidad-mascota.js
 node --check js/navidad.js
 ```
 
-- 9 pruebas de progresión, límites de la vista previa, liberación al cambiar de fecha, limpieza de escuchadores, tema apagado, otros temas y movimiento reducido.
+- 11 pruebas de progresión, límites de la vista previa, liberación al cambiar de fecha, limpieza de escuchadores, tema apagado, otros temas, movimiento reducido y pausa/reanudación de los ojos.
 - Chrome: HTML/CSS/SVG y motores reales del login, dentro de vistas de 320×568, 360×640, 390×844, 412×915, 844×390 y 1280×800. Comprobación de escritura, mostrar/ocultar PIN y acceso visual al botón; sin enviar credenciales ni marcajes.
 - Las 14 escenas reales se muestrearon en cinco momentos de su duración, sin atributos `NaN` o `Infinity`.
 - Capturas reales de los días 1, 12, 21 y 22. Comparación con `main` al iniciar la tarea (`5e2b227`). Con Día de Muertos, la tarjeta conserva exactamente su posición y tamaño.

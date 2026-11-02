@@ -78,3 +78,12 @@ test('se conserva el catálogo de 14 animaciones y el SVG inline completo',()=>{
  const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,14);
  for(const id of ['actor','head','body','tail','arm-left','arm-right','leg-left','leg-right','eye-left','eye-right'])assert.ok(read('index.html').includes('id="'+id+'"'));
 });
+test('los ojos se pausan al ocultar la pestaña y se reanudan con el cuerpo detenido',()=>{
+ const f=fixture();f.ctx.__mascotaNavidadSync();assert.equal(f.mount.classList.contains('nv-mascota-ojos-pausa'),false);
+ f.ctx.document.hidden=true;f.callbacks.visibilitychange();assert.equal(f.mount.classList.contains('nv-mascota-ojos-pausa'),true);
+ f.ctx.document.hidden=false;f.callbacks.visibilitychange();assert.equal(f.mount.classList.contains('nv-mascota-ojos-pausa'),false);assert.equal(f.actors[0].paused,true);
+ f.ctx.__temas.activo=null;f.ctx.__mascotaNavidadSync();assert.equal(f.mount.classList.contains('nv-mascota-ojos-pausa'),false);
+});
+test('movimiento reducido mantiene también los ojos estáticos',()=>{
+ const f=fixture({reduced:true});f.ctx.__mascotaNavidadSync();assert.equal(f.mount.classList.contains('nv-mascota-ojos-pausa'),true);assert.equal(f.actors[0].paused,true);
+});

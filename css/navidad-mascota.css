@@ -16,6 +16,30 @@
 .nv-hielo-fijo>svg{display:block;width:100%;height:100%;overflow:visible}
 .nav-pre #loginScreen .nv-mascota:not(.nv-mascota-libre) .nv-hielo-fijo{display:block}
 .nv-mascota-congelada>svg{filter:saturate(calc(1 - var(--nv-frio,1) * .25)) brightness(1.06)}
+/* Solo los ojos se animan sobre la pose detenida de GreenActor. Las coordenadas
+   del viewBox coinciden con los centros que utiliza su motor vectorial. */
+.nv-mascota-congelada #eye-left,
+.nv-mascota-congelada #eye-right{
+  transform-box:view-box;
+  animation:nvOjosParpadeo 5.8s linear infinite;
+}
+.nv-mascota-congelada #eye-left{transform-origin:351px 317px}
+.nv-mascota-congelada #eye-right{transform-origin:449px 325px}
+.nv-mascota-congelada #pupil-left,
+.nv-mascota-congelada #pupil-right{animation:nvOjosMirada 11.6s ease-in-out infinite}
+.nv-mascota-ojos-pausa #eye-left,
+.nv-mascota-ojos-pausa #eye-right,
+.nv-mascota-ojos-pausa #pupil-left,
+.nv-mascota-ojos-pausa #pupil-right{animation-play-state:paused}
+@keyframes nvOjosParpadeo{
+  0%,45%,49%,100%{transform:scaleY(1)}
+  47%{transform:scaleY(.08)}
+}
+@keyframes nvOjosMirada{
+  0%,10%,92%,100%{transform:translate(0,0)}
+  24%,38%{transform:translate(-10px,1px)}
+  55%,70%{transform:translate(12px,-3px)}
+}
 .nv-hielo-gota{transform-box:fill-box;transform-origin:center top;animation:nvHieloGota 3.8s ease-in infinite}
 .nv-hielo-gota-b{animation-delay:1.9s}
 .nv-hielo-fijo.nv-hielo-golpe{animation:nvHieloGolpe .55s ease-out}

@@ -19,13 +19,19 @@ function clearAll(){
   if(observer){observer.disconnect();observer=null;}
   if(actor){actor.svg.removeEventListener('pointerdown',onTap);actor.destroy();actor=null;}
   if(ice){ice.destroy();ice=null;}
-  if(mount){mount.classList.remove('nv-mascota-congelada','nv-mascota-libre','nv-mascota-bloque');mount=null;}
+  if(mount){mount.classList.remove('nv-mascota-ojos-pausa','nv-mascota-congelada','nv-mascota-libre','nv-mascota-bloque');mount=null;}
   stageNow='';touchStage=0;
 }
 function regulate(){
   if(!actor)return;
   var login=document.getElementById('loginScreen');
-  if(ice||reduced||document.hidden||!login?.classList.contains('active'))actor.pause();
+  var hidden=reduced||document.hidden||!login?.classList.contains('active');
+  // La pose queda detenida; CSS mueve únicamente ojos y pupilas dentro del hielo.
+  if(mount){
+    if(hidden)mount.classList.add('nv-mascota-ojos-pausa');
+    else mount.classList.remove('nv-mascota-ojos-pausa');
+  }
+  if(ice||hidden)actor.pause();
   else actor.resume();
 }
 function play(name){
@@ -77,7 +83,7 @@ function sync(){
     actor=new GreenActor(svg,{initialScene:'idle'});
     if(current==='pre'){
       if(!window.NavidadHielo)throw Error('NavidadHielo no disponible');
-      // El personaje está atrapado: detener por completo su movimiento.
+      // El cuerpo está atrapado; los ojos se animan por CSS sobre esta pose fija.
       actor.pause();
       ice=window.NavidadHielo.create(dayPre(),element);
       element.classList.add('nv-mascota-congelada','nv-mascota-bloque');
