@@ -1,48 +1,49 @@
-# Mascota verde animada — integración navideña (borrador)
+# Mascota de Navidad y deshielo
 
-Implementación preparada para revisar y continuar con Claude, sin modificar la rama principal.
+La mascota utiliza el SVG inline de `index.html`. `assets/navidad/personaje-animable.svg` conserva el original; `js/green-actor.js` mantiene sus 14 escenas. No se modificó el motor vectorial ni el módulo principal de autenticación y marcaje.
 
-## Estructura
-- `assets/navidad/personaje-animable.svg`: SVG vectorial transparente por capas.
-- `js/green-actor.js`: motor de 14 escenas; expone `GreenActor`.
-- `js/navidad-mascota.js`: carga, montaje, limpieza, clics y coordinación con el tema de Daily-log.
-- `css/navidad-mascota.css`: posición móvil y escritorio.
-- `index.html`: carga de recursos y sincronización después de `__escenaNavidad`.
+## Comportamiento
 
-## Comportamiento y restricciones
-- Solo se monta si `window.__temas.activo.id === 'navidad'`. Si se cambia a Día de Muertos, Halloween o al tema normal, se destruye el motor y se elimina el contenedor.
-- No activa temas ni modifica `config/tema` en Firebase. No modifica los métodos de login ni la autenticación.
-- El modo **Ver ahora** del perfil sigue siendo local al dispositivo.
-- Por defecto se reproduce `idle`; cada 19 segundos (solo si está el login a la vista) puede iniciar una acción aleatoria: sigilo, robar, esconderse, trepar o sorpresa.
-- Al tocar el personaje, alterna tres reacciones. La Nochebuena real (24 diciembre) reproduce `xmas`, y el 31 de diciembre se activa `nye`.
-- Respeta la preferencia de movimiento reducido, detiene el movimiento cuando el documento queda oculto.
+- **1 de diciembre:** bloque translúcido completo; cuerpo inmóvil, con parpadeo y movimiento suave de las pupilas.
+- **2–21 de diciembre:** las caras, el espesor y la altura del bloque disminuyen según el día del calendario local del dispositivo. Aumentan el charco y las gotas; el 21 queda una base alrededor de los pies. El cuerpo sigue inmóvil; solo se mueven los ojos.
+- **22 de diciembre:** la etapa existente cambia a `casa`; desaparece el hielo y se reanudan las animaciones. Se comprueba también cada minuto y al regresar a la pestaña.
+- **24 y 31 de diciembre:** se conservan las escenas especiales `xmas` y `nye`.
+- La preferencia de movimiento reducido evita las travesuras automáticas. El motor y las animaciones oculares se pausan cuando el login no está visible o la pestaña queda oculta. Con movimiento reducido, los ojos también permanecen estáticos.
 
-## API manual
+El modo **Ver ahora** empieza en el día 1 tanto para la mascota como para el paisaje. Esta consola cambia solo el bloque, mientras se está previsualizando Pre-Navidad:
+
 ```js
-window.__mascotaNavidadPlay('steal');
-window.__mascotaNavidadPlay('caught');
-window.__mascotaNavidadPlay('drop');
-window.__mascotaNavidadTap();
+window.__mascotaNavidadPreviewDia(1);
+window.__mascotaNavidadPreviewDia(12);
+window.__mascotaNavidadPreviewDia(21);
+window.__mascotaNavidadEstado();
 ```
-Además del resto de escenas disponibles en `GreenActor.SCENES`.
 
-## Próximos pasos y límites
-- Este paso incluye la integración inicial, **no equivale a aprobar el tema navideño terminado**.
-- Revisar posición del personaje en teléfonos pequeños y cómo se solapa con la tarjeta, sin bloquear campos ni botones.
-- Adaptar las secuencias del personaje a las luces y objetos reales que dibuja `js/navidad.js` (la animación de robar usa sus propios elementos SVG).
-- Agregar disparadores específicos del marcaje si se desea, cuidando no cambiar el resultado del marcaje.
-- Mantener esta rama sin fusionar hasta revisión visual y funcional.
+Para revisar la liberación, seleccionar **Navidad** en el selector de etapa del perfil. El control de día solo acepta enteros de 1 a 21 y no cambia fechas ni preferencias globales.
 
-## Historia añadida: personaje congelado (Pre-Navidad)
+## Composición
 
-- Archivo `js/navidad-hielo.js` genera una **cápsula SVG vectorial de hielo** con reflejos, grietas y goteo.
-- **1 de diciembre:** personaje inmóvil, dentro del hielo completo.
-- **2–21 de diciembre:** el borde de hielo desciende progresivamente según el **día del calendario** y los indicios de derretimiento aumentan. El personaje permanece inmóvil, no hace travesuras mientras está atrapado.
-- **22 de diciembre:** la etapa cambia a `casa`, la cápsula desaparece y comienza su comportamiento animado.
-- **24 de diciembre:** la escena `xmas` se reproduce al cargar el login navideño real.
-- La visualización anticipada de Pre-Navidad fuera de diciembre usa el día 10 a modo de demostración, sin alterar fechas reales.
-- Solo en modo **Mi Perfil → Ver ahora** se puede probar cualquier día del 1 al 21 desde la consola del navegador con `window.__mascotaNavidadPreviewDia(1)`, `window.__mascotaNavidadPreviewDia(12)` o `window.__mascotaNavidadPreviewDia(21)`. El avance en producción se decide por la fecha, no por el almacenamiento local.
-- Se consulta el tema activo en `window.__temas`; no escribe datos a Firebase ni cambia la configuración global de temporadas.
-- La capa de hielo tiene `pointer-events:none` y no cubre campos de login. Los toques sobre la mascota congelada solo provocan una sacudida del hielo.
+La mascota reside en el panel, después de la tarjeta. Hasta 900 px de ancho, una fila de cuadrícula le reserva espacio junto a la ayuda del PIN. La tarjeta termina 10 px antes de comenzar la caja del SVG. En ventanas cortas, el documento permite desplazarse; el bloque acompaña al contenido y no queda anclado encima de los campos. En escritorio se sitúa junto al panel.
 
-**Pendiente de validación visual en navegadores reales:** ajuste fino de tamaño/ubicación móvil y del contorno del hielo respecto al personaje, antes de fusionar.
+La silueta del hielo y sus caras se recalculan juntas: no se usa un recorte horizontal de la imagen original. El SVG contiene también una forma estática completa como respaldo.
+
+No se escribe en Firebase, no se toca `config/tema` y se conserva el registro y la prioridad de los temas. El calendario automático existente tampoco cambia. La mascota se oculta con otros temas.
+
+## Verificación de esta rama
+
+```sh
+node --test tests/navidad.test.cjs
+node --check js/navidad-hielo.js
+node --check js/navidad-mascota.js
+node --check js/navidad.js
+```
+
+- 11 pruebas de progresión, límites de la vista previa, liberación al cambiar de fecha, limpieza de escuchadores, tema apagado, otros temas, movimiento reducido y pausa/reanudación de los ojos.
+- Chrome: HTML/CSS/SVG y motores reales del login, dentro de vistas de 320×568, 360×640, 390×844, 412×915, 844×390 y 1280×800. Comprobación de escritura, mostrar/ocultar PIN y acceso visual al botón; sin enviar credenciales ni marcajes.
+- Las 14 escenas reales se muestrearon en cinco momentos de su duración, sin atributos `NaN` o `Infinity`.
+- Capturas reales de los días 1, 12, 21 y 22. Comparación con `main` al iniciar la tarea (`5e2b227`). Con Día de Muertos, la tarjeta conserva exactamente su posición y tamaño.
+- El módulo principal y el registro de temas se compararon con `main`: contenido idéntico.
+
+**Límite:** Firebase App Check rechaza el dominio del entorno de prueba. La revisión visual usa una vista aislada del login que omite los módulos de Firebase. No equivale a una prueba de autenticación o marcaje contra producción, ni a una prueba en un teléfono físico.
+
+La rama se entrega para revisión visual, sin fusionar ni publicar en producción.

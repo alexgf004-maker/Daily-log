@@ -20,6 +20,7 @@
   function dia(et){
     var d=new Date(), m=d.getMonth()+1, n=d.getDate(), T=window.__temas;
     var md=('0'+m).slice(-2)+'-'+('0'+n).slice(-2);
+    if(T&&T.modo==='ver'&&et.id==='pre') return {mes:12,dia:1,real:false};
     if(T&&T.enRango(md,et.desde,et.hasta)) return {mes:m,dia:n,real:true};
     return {mes:12,dia:{pre:10,casa:23,ano:31}[et.id],real:false};
   }

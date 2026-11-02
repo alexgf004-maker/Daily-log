@@ -61,11 +61,11 @@
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
 <link rel="stylesheet" href="css/temas/comun.css?v=46">
-<link rel="stylesheet" href="css/navidad-mascota.css?v=5">
-<script src="js/navidad.js?v=5" defer></script>
+<link rel="stylesheet" href="css/navidad-mascota.css?v=7">
+<script src="js/navidad.js?v=6" defer></script>
 <script src="js/green-actor.js?v=1" defer></script>
-<script src="js/navidad-hielo.js?v=2" defer></script>
-<script src="js/navidad-mascota.js?v=5" defer></script>
+<script src="js/navidad-hielo.js?v=3" defer></script>
+<script src="js/navidad-mascota.js?v=7" defer></script>
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -549,6 +549,37 @@
 
 <!-- LOGIN -->
 <div id="loginScreen" class="screen">
+  <div class="login-panel">
+    <div class="login-brand lg-anim">
+      <div class="login-logo"><svg viewBox="80 108 352 296" fill="none"><rect x="112" y="140" width="62" height="232" rx="31" fill="#fff"/><path d="M240 341V171c0-17 21-25 33-12l96 104c12 13 33 5 33-12V171" stroke="#fff" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/><circle cx="400" cy="372" r="30" fill="#4ade80"/></svg></div>
+      <div class="login-brand-eyebrow">Registro de Planilla</div>
+      <div class="login-brand-name"><span class="inn">INNOVA</span></div>
+      <div class="login-brand-sub">Servicios técnicos y comerciales</div>
+    </div>
+    <div class="login-form lg-anim lg-d1">
+      <div class="lg-hd"><div><div class="login-hola" id="loginSaludo">Bienvenido</div><div class="login-hola-sub">Ingresa con tu usuario y PIN</div></div><span class="lg-chip" id="loginFecha"></span></div>
+      <div id="loginAlert"></div>
+      <div class="fg lg-anim lg-d2">
+        <label class="fl" for="loginUser">Usuario</label>
+        <div class="lg-wrap">
+          <svg class="lg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input type="text" id="loginUser" placeholder="tu.usuario" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        </div>
+      </div>
+      <div class="fg lg-anim lg-d3" style="margin-bottom:12px">
+        <label class="fl" for="loginPin">PIN de acceso</label>
+        <div class="lg-wrap">
+          <svg class="lg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          <input type="password" id="loginPin" placeholder="••••" maxlength="8" inputmode="numeric">
+          <button type="button" class="lg-ver" aria-label="Mostrar PIN" onclick="var p=document.getElementById('loginPin');var v=p.type==='password';p.type=v?'text':'password';this.classList.toggle('visible',v);this.setAttribute('aria-label',v?'Ocultar PIN':'Mostrar PIN');p.focus();">
+            <svg class="lg-ojo-a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="lg-ojo-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+      <label class="lg-rec lg-anim lg-d3"><input type="checkbox" id="loginRecordar" checked><span class="lg-rec-sw" aria-hidden="true"><i></i></span><span>Recordar mi usuario</span></label>
+      <button class="btn-login lg-anim lg-d4" onclick="doLogin()">Ingresar<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+    </div>
   <!-- SVG incorporado en el HTML: mascota visible aun si el motor de animación falla. -->
   <div class="nv-mascota nv-mascota-estatica" aria-label="Personaje verde de Navidad">
 <svg id="nv-green-character" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="800" height="1067" viewBox="0 0 800 1067" role="img" aria-labelledby="art-title art-desc">
@@ -746,90 +777,41 @@
 </g></svg>
     <!-- Hielo visible sin JavaScript: el motor solo controla su deshielo gradual. -->
     <div class="nv-hielo-fijo" aria-hidden="true">
-      <svg viewBox="0 0 800 1067" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 800 1067" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
-          <linearGradient id="nvice-core" x1="0" y1="0" x2="1" y2="1">
-            <stop stop-color="#d5f8ff" stop-opacity=".76"/>
-            <stop offset=".32" stop-color="#83cff3" stop-opacity=".52"/>
-            <stop offset=".65" stop-color="#89ddf9" stop-opacity=".30"/>
-            <stop offset="1" stop-color="#b3edff" stop-opacity=".75"/>
+          <linearGradient id="nvice-core" x1="0" y1="0" x2="1" y2=".6">
+            <stop stop-color="#d5f8ff" stop-opacity=".62"/>
+            <stop offset=".4" stop-color="#91d7f3" stop-opacity=".29"/>
+            <stop offset=".72" stop-color="#b5edff" stop-opacity=".20"/>
+            <stop offset="1" stop-color="#76c9ee" stop-opacity=".56"/>
           </linearGradient>
-          <linearGradient id="nvice-flank" x1="0" y1="0" x2="1" y2="0">
-            <stop stop-color="#d7fbff" stop-opacity=".92"/>
-            <stop offset="1" stop-color="#41a6e1" stop-opacity=".65"/>
+          <linearGradient id="nvice-shine" x1="0" y1="0" x2="1" y2=".5">
+            <stop stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#e5ffff" stop-opacity=".04"/>
           </linearGradient>
-          <linearGradient id="nvice-shine">
-            <stop stop-color="#fff" stop-opacity=".9"/>
-            <stop offset="1" stop-color="#e5ffff" stop-opacity=".04"/>
-          </linearGradient>
-          <clipPath id="nvice-shape">
-            <path d="M208 53L538 43L652 124L683 364L677 795L610 991L202 1015L113 913L121 280Z"/>
-          </clipPath>
-          <clipPath id="nvice-melt"><path id="nvice-melt-mask" d="M0 0H800V1067H0Z"/></clipPath>
+          <clipPath id="nvice-melt"><path id="nvice-melt-mask" d="M200 55L605 47L675 125L669 940L605 1010L200 1018L130 940L134 223Z"/></clipPath>
         </defs>
-        <g id="nvice-whole" clip-path="url(#nvice-melt)">
-          <path d="M208 53L538 43L652 124L683 364L677 795L610 991L202 1015L113 913L121 280Z" fill="url(#nvice-core)" stroke="#d8faff" stroke-width="14" stroke-linejoin="bevel"/>
-          <g clip-path="url(#nvice-shape)">
-            <path d="M113 913L121 280L208 53L256 215L211 789L202 1015Z" fill="url(#nvice-flank)" opacity=".78"/>
-            <path d="M538 43L652 124L683 364L677 795L610 991L570 791L597 200Z" fill="#71bee9" fill-opacity=".44"/>
-            <path d="M208 53L538 43L597 200L256 215Z" fill="#eaffff" fill-opacity=".52"/>
-            <path d="M211 789L570 791L610 991L202 1015Z" fill="#7ec9ec" fill-opacity=".37"/>
-            <path d="M270 274L358 230L302 658L241 719Z" fill="url(#nvice-shine)" opacity=".6"/>
-            <path d="M542 341L593 267L577 588L511 714Z" fill="#efffff" fill-opacity=".28"/>
-            <path d="M112 922L211 789L290 876L202 1015Z" fill="#d8faff" fill-opacity=".60"/>
-            <path d="M541 43L597 200L683 364" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="7"/>
-            <path d="M256 215L597 200M211 789L570 791" fill="none" stroke="#dcffff" stroke-opacity=".35" stroke-width="6"/>
-            <path d="M133 388L188 340M139 700L181 687M636 488L663 465M619 696L664 685" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="7"/>
-          </g>
-          <g id="nvice-cracks" fill="none" stroke="#f1ffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0">
-            <path d="M431 195L463 259L442 299L478 354L451 389M463 259L502 276L521 317M442 299L411 326"/>
-            <path d="M195 529L267 565L257 623L297 655M267 565L309 534M257 623L223 644"/>
-          </g>
-          <path d="M208 53L538 43L652 124L683 364L677 795L610 991L202 1015L113 913L121 280Z" fill="none" stroke="#92dff8" stroke-width="8" stroke-opacity=".82"/>
-          <path d="M147 343L220 94L505 73" stroke="#fff" stroke-width="12" stroke-opacity=".85" stroke-linecap="round" fill="none"/>
-          <path d="M178 937L215 979L598 961" stroke="#fff" stroke-opacity=".44" stroke-width="9" stroke-linecap="round" fill="none"/>
-        </g>
         <g id="nvice-puddle" opacity="0">
-          <ellipse cx="403" cy="1026" rx="240" ry="23" fill="#b9f4ff" fill-opacity=".46"/>
-          <ellipse cx="410" cy="1020" rx="184" ry="14" fill="none" stroke="#eaffff" stroke-width="6"/>
-          <path d="M204 1019Q370 1039 565 1014" stroke="#fff" stroke-opacity=".45" stroke-width="5" fill="none"/>
-          <path class="nv-hielo-gota nv-hielo-gota-a" d="M164 767Q146 787 155 811Q170 824 180 806Q185 790 164 767Z" fill="#c4f4ff" stroke="#fff" stroke-width="4"/>
-          <path class="nv-hielo-gota nv-hielo-gota-b" d="M647 614Q635 631 642 647Q660 657 664 641Q667 627 647 614Z" fill="#d9faff" stroke="#fff" stroke-width="4"/>
+          <ellipse cx="403" cy="1020" rx="257" ry="22" fill="#a4e1f2" fill-opacity=".32"/>
+          <ellipse cx="403" cy="1018" rx="209" ry="12" fill="none" stroke="#e9fcff" stroke-opacity=".7" stroke-width="4"/>
+          <g id="nvice-drips" fill="#d9faff" stroke="#fff" stroke-width="2">
+            <path class="nv-hielo-gota nv-hielo-gota-a" d="M0 0Q-11 16-8 23Q0 34 8 23Q11 16 0 0Z"/>
+            <path class="nv-hielo-gota nv-hielo-gota-b" d="M0 0Q-9 13-7 19Q0 28 7 19Q9 13 0 0Z"/>
+          </g>
+        </g>
+        <g id="nvice-whole" clip-path="url(#nvice-melt)">
+          <path id="nvice-body" d="M200 55L605 47L675 125L669 940L605 1010L200 1018L130 940L134 223Z" fill="url(#nvice-core)" stroke="#d6f8ff" stroke-opacity=".85" stroke-width="10" stroke-linejoin="round"/>
+          <path id="nvice-left" d="M200 55L134 223L130 940L200 1018L186 940L206 223Z" fill="#a2e5fa" fill-opacity=".32" stroke="#e6fcff" stroke-opacity=".5" stroke-width="3"/>
+          <path id="nvice-top" d="M200 55L605 47L675 125L612 209L206 223Z" fill="#ecfcff" fill-opacity=".43" stroke="#f2ffff" stroke-opacity=".65" stroke-width="4"/>
+          <path id="nvice-right" d="M612 209L675 125L669 940L605 1010Z" fill="#63bae7" fill-opacity=".26" stroke="#d6f6ff" stroke-opacity=".6" stroke-width="4"/>
+          <path id="nvice-reflection" d="M230 242L305 218L246 912L202 950Z" fill="url(#nvice-shine)"/>
+          <path id="nvice-rim" d="M148 195L200 67L605 60" fill="none" stroke="#f3ffff" stroke-opacity=".88" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+          <g id="nvice-cracks" fill="none" stroke="#e9fcff" stroke-width="3" stroke-linecap="round" opacity="0">
+            <path d="M520 390L490 446L517 486L499 543M490 446L454 460M253 706L288 742L273 789M288 742L319 728"/>
+          </g>
         </g>
       </svg>
     </div>
   </div>
-  <div class="login-panel">
-    <div class="login-brand lg-anim">
-      <div class="login-logo"><svg viewBox="80 108 352 296" fill="none"><rect x="112" y="140" width="62" height="232" rx="31" fill="#fff"/><path d="M240 341V171c0-17 21-25 33-12l96 104c12 13 33 5 33-12V171" stroke="#fff" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/><circle cx="400" cy="372" r="30" fill="#4ade80"/></svg></div>
-      <div class="login-brand-eyebrow">Registro de Planilla</div>
-      <div class="login-brand-name"><span class="inn">INNOVA</span></div>
-      <div class="login-brand-sub">Servicios técnicos y comerciales</div>
-    </div>
-    <div class="login-form lg-anim lg-d1">
-      <div class="lg-hd"><div><div class="login-hola" id="loginSaludo">Bienvenido</div><div class="login-hola-sub">Ingresa con tu usuario y PIN</div></div><span class="lg-chip" id="loginFecha"></span></div>
-      <div id="loginAlert"></div>
-      <div class="fg lg-anim lg-d2">
-        <label class="fl" for="loginUser">Usuario</label>
-        <div class="lg-wrap">
-          <svg class="lg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <input type="text" id="loginUser" placeholder="tu.usuario" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
-        </div>
-      </div>
-      <div class="fg lg-anim lg-d3" style="margin-bottom:12px">
-        <label class="fl" for="loginPin">PIN de acceso</label>
-        <div class="lg-wrap">
-          <svg class="lg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-          <input type="password" id="loginPin" placeholder="••••" maxlength="8" inputmode="numeric">
-          <button type="button" class="lg-ver" aria-label="Mostrar PIN" onclick="var p=document.getElementById('loginPin');var v=p.type==='password';p.type=v?'text':'password';this.classList.toggle('visible',v);this.setAttribute('aria-label',v?'Ocultar PIN':'Mostrar PIN');p.focus();">
-            <svg class="lg-ojo-a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <svg class="lg-ojo-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-          </button>
-        </div>
-      </div>
-      <label class="lg-rec lg-anim lg-d3"><input type="checkbox" id="loginRecordar" checked><span class="lg-rec-sw" aria-hidden="true"><i></i></span><span>Recordar mi usuario</span></label>
-      <button class="btn-login lg-anim lg-d4" onclick="doLogin()">Ingresar<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
-    </div>
     <div class="login-footer lg-anim lg-d4">¿Olvidaste tu PIN? Pide a David que lo restablezca.</div>
   </div>
 </div>
