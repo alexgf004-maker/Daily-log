@@ -357,6 +357,11 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     enero cambia ("Feliz Nochebuena"…). Cuenta regresiva bajo el nombre de la app en `casa` y `ano`.
   - El canvas solo dibuja con el login a la vista y la app en primer plano; con movimiento reducido no anima.
     Todo vive en `.nv-capa` / `.nv-extra` y se quita al cambiar de etapa o de tema.
+- **Pantalla de carga con el tema** (`#bootScreen`, solo CSS en `css/temas.css`, bloque "Pantalla de carga"): con tema,
+  en vez de la ruedita va el logo con un detalle animado: cempasúchil que gira y pétalos (Muertos), copo de nieve
+  (Pre-Navidad), corona navideña (Sala), cohete que estalla (Año Nuevo), luna con murciélagos (Halloween). Sin tema,
+  presentación de la marca (`.boot-marca`): con los colores del login, el logo se dibuja solo (la I crece, la N se
+  traza, el punto verde aparece con una onda), luego "INNOVA" y "Registro de Planilla", y luces suaves que flotan detrás. La pantalla del sistema al tocar el ícono (Android, `manifest.json`) no se puede cambiar por tema.
 - **El tema por fecha se recalcula** (`__temas.recalcular()`) en cada `aplicarTema`: al volver a la app
   (`visibilitychange`), cada 30 min y al cerrar la sesión a todos. Antes se calculaba solo al abrir, y un
   teléfono con la app abierta desde octubre seguía con Halloween en noviembre.
