@@ -1,0 +1,193 @@
+<svg id="nv-green-character" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="800" height="1067" viewBox="0 0 800 1067" role="img" aria-labelledby="art-title art-desc">
+<title id="art-title">Criatura verde navideña — personaje vectorial animable</title>
+<desc id="art-desc">Personaje verde original con mechón en espiral, ojos grandes, orejas puntiagudas y bufanda roja. Cada pieza está separada en grupos SVG identificados.</desc>
+<defs>
+  <radialGradient id="bgGrad" cx="47%" cy="47%" r="70%"><stop offset="0" stop-color="#b9f45b"/><stop offset=".64" stop-color="#92d938"/><stop offset="1" stop-color="#65bb24"/></radialGradient>
+  <radialGradient id="faceGrad" cx="46%" cy="27%" r="78%"><stop offset="0" stop-color="#e2ff7f"/><stop offset=".27" stop-color="#b4f53f"/><stop offset=".70" stop-color="#83d927"/><stop offset="1" stop-color="#4ca90b"/></radialGradient>
+  <linearGradient id="furLight" x1=".12" y1=".2" x2=".8" y2="1"><stop offset="0" stop-color="#dafa60"/><stop offset=".5" stop-color="#9be622"/><stop offset="1" stop-color="#54b914"/></linearGradient>
+  <linearGradient id="furDark" x1="0" y1="0" x2="1" y2=".5"><stop offset="0" stop-color="#4c9c14"/><stop offset=".5" stop-color="#9bea2b"/><stop offset="1" stop-color="#c8f954"/></linearGradient>
+  <linearGradient id="bodyGrad" x1=".15" y1="0" x2=".83" y2="1"><stop offset="0" stop-color="#b8f941"/><stop offset=".5" stop-color="#8ada1c"/><stop offset="1" stop-color="#58b319"/></linearGradient>
+  <radialGradient id="bellyGrad"><stop offset="0" stop-color="#d4fb53"/><stop offset=".75" stop-color="#9be12b"/><stop offset="1" stop-color="#82cc25"/></radialGradient>
+  <linearGradient id="scarfGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6154"/><stop offset=".42" stop-color="#de2628"/><stop offset="1" stop-color="#a81726"/></linearGradient>
+  <linearGradient id="scarfTail" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e73930"/><stop offset="1" stop-color="#a51727"/></linearGradient>
+  <radialGradient id="eyeGrad" cx="42%" cy="30%" r="74%"><stop offset="0" stop-color="#ffffff"/><stop offset=".83" stop-color="#ffffff"/><stop offset="1" stop-color="#c9e5ce"/></radialGradient>
+  <radialGradient id="irisGrad" cx="35%" cy="32%" r="66%"><stop offset="0" stop-color="#76f927"/><stop offset=".5" stop-color="#239e1e"/><stop offset="1" stop-color="#075c24"/></radialGradient>
+  <linearGradient id="noseGrad" x1=".1" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#438f39"/><stop offset="1" stop-color="#154d20"/></linearGradient>
+  <filter id="shadow"><feGaussianBlur stdDeviation="8"/></filter>
+  <clipPath id="headClip"><path d="M400 206 C359 210 336 228 309 246 C283 267 273 294 257 310 C248 328 240 335 231 358 C233 357 241 356 247 357 C233 378 234 391 222 402 L245 397 Q240 420 257 435 L262 424 Q272 456 295 462 L292 446 Q307 467 335 475 Q392 497 460 472 C482 464 511 446 518 423 L530 435 Q543 419 542 398 L555 403 Q547 383 546 360 L557 362 Q545 329 521 309 Q510 286 482 255 C456 230 438 211 400 206Z"/></clipPath>
+</defs>
+<!-- Un fondo opcional, que puedes ocultar o borrar para usar transparencia. -->
+<g id="background" style="display:none" inkscape:groupmode="layer" inkscape:label="Fondo (ocultable)"><rect width="800" height="1067" fill="url(#bgGrad)"/><ellipse cx="403" cy="955" rx="126" ry="15" fill="#3f971d" opacity=".18" filter="url(#shadow)"/></g>
+
+
+<defs>
+ <linearGradient id="cardSurface" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fafff4"/><stop offset="1" stop-color="#dff4c5"/></linearGradient>
+ <radialGradient id="starGlow"><stop stop-color="#fff5a2" stop-opacity=".85"/><stop offset="1" stop-color="#fff9bc" stop-opacity="0"/></radialGradient>
+ <linearGradient id="sackFabric"><stop stop-color="#e6be78"/><stop offset="1" stop-color="#a56f33"/></linearGradient>
+</defs>
+<g id="props-back" pointer-events="none">
+ <g id="night-overlay" opacity="0"><rect x="0" y="0" width="800" height="1067" fill="#0a2a31" opacity=".68"/></g>
+ <g id="roof-card" opacity="0">
+  <rect x="106" y="688" width="590" height="380" rx="27" fill="#13372a" opacity=".2"/>
+  <rect x="100" y="680" width="590" height="380" rx="26" fill="url(#cardSurface)" stroke="#367e45" stroke-width="5"/>
+  <rect x="98" y="676" width="594" height="25" rx="12" fill="#4b934d"/>
+  <rect x="143" y="744" width="497" height="49" rx="13" fill="#d4eabf" stroke="#b4ce9e"/>
+  <rect x="143" y="811" width="497" height="49" rx="13" fill="#d4eabf" stroke="#b4ce9e"/>
+  <rect x="240" y="888" width="311" height="53" rx="16" fill="#26764a"/>
+  <text x="397" y="922" fill="white" text-anchor="middle" font-size="22" font-weight="650" font-family="system-ui,sans-serif">ENTRAR</text>
+ </g>
+ <g id="wire-bulb" opacity="0"><path d="M579 -20V554" stroke="#285d22" stroke-width="5" stroke-linecap="round"/><path d="M567 552H591V576Q579 588 567 576Z" fill="#426c35"/>
+   <g id="hanging-bulb"><path d="M579 580 C555 580 552 600 562 614 Q569 621 572 628 H586 Q590 620 598 611 C608 594 597 580 579 580Z" fill="#ffed9f" stroke="#ba911f" stroke-width="3"/><path d="M570 629H588 M570 634H588" stroke="#99721e" stroke-width="4"/><path d="M570 592q-8 9 1 18" stroke="#fff" stroke-width="4" opacity=".7"/></g>
+ </g>
+ <g id="lights-string" opacity="0"><path d="M90 207 Q408 278 740 202" fill="none" stroke="#163d2a" stroke-width="6"/><g fill="#ffe69b" stroke="#fffbe2" stroke-width="2"><ellipse cx="183" cy="236" rx="15" ry="23"/><ellipse cx="333" cy="251" rx="15" ry="23"/><ellipse cx="486" cy="249" rx="15" ry="23"/><ellipse cx="635" cy="225" rx="15" ry="23"/></g></g>
+ <g id="christmas-star" opacity="0"><circle cx="630" cy="707" r="100" fill="url(#starGlow)"/><path d="M630 631 l20 55 58 3 -46 36 14 57 -46 -33 -48 33 15 -57 -46 -36 59 -3Z" fill="#ffdf66" stroke="#dba435" stroke-width="5"/><circle cx="630" cy="706" r="19" fill="#fff4b9"/></g>
+ <g id="celebration-fireworks" opacity="0" fill="none" stroke-linecap="round" stroke-width="8"><g id="fw-left" stroke="#ffd88f"><path d="M190 160v-47 M190 230v45 M154 194h-50 M225 194h50 M164 168l-32 -33 M214 168l35 -33 M162 219l-34 34 M218 217l35 35"/></g><g id="fw-right" transform="translate(425 90)" stroke="#effaf1"><path d="M190 160v-47 M190 230v45 M154 194h-50 M225 194h50 M164 168l-32 -33 M214 168l35 -33 M162 219l-34 34 M218 217l35 35"/></g></g>
+</g>
+
+<g id="actor" tabindex="0" role="button" aria-label="Toca al personaje para ver sus reacciones" style="cursor:pointer">
+<!-- Los miembros quedan detrás del torso y son fáciles de rotar desde su articulación. -->
+<g id="tail" inkscape:groupmode="layer" inkscape:label="Cola">
+ <path d="M350 759 C305 725 246 740 229 790 C212 844 247 871 283 857 Q257 849 256 822 C255 798 283 775 319 801 C318 813 322 824 334 827 L357 801Z" fill="url(#furLight)" stroke="#65b51d" stroke-width="3"/>
+ <path d="M293 782 C259 779 244 815 255 831 M286 852 C248 835 254 811 270 801" fill="none" stroke="#e2ff87" stroke-width="7" stroke-linecap="round" opacity=".64"/>
+ <path d="M238 794 L226 785 234 811 219 815 236 821 M272 857 257 865 282 862" fill="#83cd27"/>
+</g>
+<g id="leg-left" inkscape:groupmode="layer" inkscape:label="Pierna izquierda">
+ <path d="M354 803 Q349 864 352 931 L362 950 Q375 949 380 937 Q384 864 388 810Z" fill="url(#furLight)" stroke="#6ab824" stroke-width="2"/>
+ <path d="M366 826 Q357 889 363 934" fill="none" stroke="#e0fc79" stroke-width="5" opacity=".5"/>
+ <g id="foot-left"><path d="M355 931 C349 946 328 941 310 954 Q297 968 312 978 C322 987 339 982 352 978 C370 988 389 980 389 966 Q388 947 372 937Z" fill="url(#furLight)" stroke="#65ab1b" stroke-width="2.5"/><path d="M324 954 Q312 966 321 977 M349 953 Q338 967 349 980 M374 950 Q365 964 376 978" fill="none" stroke="#71bd23" stroke-width="2.5"/></g>
+</g>
+<g id="leg-right" inkscape:groupmode="layer" inkscape:label="Pierna derecha">
+ <path d="M415 804 Q414 867 422 938 Q430 954 441 948 L452 936 Q452 866 448 810Z" fill="url(#furLight)" stroke="#6ab824" stroke-width="2"/>
+ <path d="M436 831 Q429 887 438 936" fill="none" stroke="#e0fc79" stroke-width="5" opacity=".4"/>
+ <g id="foot-right"><path d="M424 935 Q409 943 409 960 C405 980 421 987 438 978 Q460 988 479 975 C500 978 510 963 494 952 Q474 937 452 938Z" fill="url(#furLight)" stroke="#65ab1b" stroke-width="2.5"/><path d="M431 946 Q420 960 431 979 M455 949 Q447 967 457 981 M482 953 Q473 966 485 977" fill="none" stroke="#71bd23" stroke-width="2.5"/></g>
+</g>
+
+<g id="body" inkscape:groupmode="layer" inkscape:label="Torso y pelaje">
+ <path d="M365 502 C354 535 340 584 333 628 C322 690 315 770 342 826 Q361 860 402 858 Q442 859 461 821 C481 777 471 693 457 625 C449 581 440 540 429 500Z" fill="url(#bodyGrad)" stroke="#75c51c" stroke-width="3"/>
+ <path d="M382 560 Q359 623 358 737 Q354 823 403 835 Q454 816 441 724 Q435 630 412 561Z" fill="url(#bellyGrad)" opacity=".62"/>
+ <path d="M344 669 l-10 31 15-8 -14 37 11-6 -8 36 11-9 M456 690 l15 29-12-4 13 35-13-8 5 38-11-15 M373 850 l10 14 4-13 M428 852 l6 12 6-19" fill="#7ecd24" opacity=".9"/>
+ <path d="M365 613 C349 698 346 788 365 816 M428 603 C456 703 461 781 443 817" fill="none" stroke="#dafb76" stroke-width="7" opacity=".25" stroke-linecap="round"/>
+ <g id="body-fur" fill="none" stroke-linecap="round" opacity=".28" stroke-width="2.5">
+  <path d="M385 587 q-14 55-9 100 M406 609 q-14 73-9 127 M423 642 q-8 52-5 98 M363 711 q-4 61 6 100 M437 737 q10 58-4 83 M393 733 q-10 52-8 81 M411 765 q4 38-2 62" stroke="#f1ff9e"/>
+ </g>
+</g>
+<g id="arm-left" inkscape:groupmode="layer" inkscape:label="Brazo izquierdo">
+ <path d="M356 573 C338 580 325 601 321 615 Q328 639 357 648 L374 636 Q356 617 358 607 Q365 592 370 585Z" fill="url(#furLight)" stroke="#67b621" stroke-width="2.5"/>
+ <path d="M368 624 Q356 615 350 628 Q341 623 339 635 C340 648 351 652 359 646 Q361 658 370 658 Q379 654 377 646 Q389 650 392 639 Q393 627 379 628 Q379 618 368 624Z" fill="url(#furLight)" stroke="#62a815" stroke-width="2.4"/>
+ <path d="M354 633 Q354 642 360 647 M370 630 Q375 638 371 651" stroke="#62a815" stroke-width="2" fill="none"/>
+</g>
+<g id="arm-right" inkscape:groupmode="layer" inkscape:label="Brazo derecho">
+ <path d="M443 573 C463 584 478 601 478 618 Q471 641 444 649 L428 638 Q447 619 443 609 Q436 593 432 586Z" fill="url(#furLight)" stroke="#67b621" stroke-width="2.5"/>
+ <path d="M432 624 Q445 616 449 628 Q459 623 462 635 C461 648 451 650 444 646 Q439 660 431 657 Q423 654 426 646 Q413 649 411 638 Q410 627 423 628 Q423 619 432 624Z" fill="url(#furLight)" stroke="#62a815" stroke-width="2.4"/>
+ <path d="M448 631 Q448 640 443 648 M430 631 Q427 641 432 652" stroke="#62a815" stroke-width="2" fill="none"/>
+</g>
+
+<!-- El extremo de la bufanda se anima independientemente del nudo. -->
+<g id="scarf-tail" inkscape:groupmode="layer" inkscape:label="Bufanda, extremo">
+ <path d="M427 495 Q453 488 458 518 C466 554 473 587 489 623 C505 656 506 686 513 710 L470 720 C469 690 461 656 447 631 C432 602 419 553 416 521Z" fill="url(#scarfTail)" stroke="#a41a25" stroke-width="3"/>
+ <path d="M440 551 Q459 550 466 542 M451 596 L480 586 M465 643 Q487 640 497 630 M470 675 Q490 673 505 664" fill="none" stroke="#ae1726" stroke-width="16" opacity=".68"/>
+ <path d="M454 565 Q470 563 475 555 M469 612 Q485 606 491 597 M478 693 Q496 690 506 683" fill="none" stroke="#fb7561" stroke-width="5" opacity=".53"/>
+ <path d="M471 715 Q468 738 474 749 M481 714 Q481 743 487 752 M493 710 Q494 739 501 746 M504 708 Q509 735 517 741" fill="none" stroke="#af1a2c" stroke-width="8" stroke-linecap="round"/>
+</g>
+
+<!-- Cabeza: grupo principal pivotable, con rostro y rasgos animables internamente. -->
+<g id="head" inkscape:groupmode="layer" inkscape:label="Cabeza completa">
+ <g id="ear-left" inkscape:label="Oreja izquierda">
+  <path d="M327 290 C301 255 260 258 244 214 C228 237 228 263 242 284 C224 276 220 258 221 247 C199 286 223 334 272 353 L339 337Z" fill="url(#furDark)" stroke="#83ca29" stroke-width="3"/>
+  <path d="M300 315 Q254 298 249 247 Q258 268 282 278 Q292 291 300 315Z" fill="#5ca71b" opacity=".7"/>
+  <path d="M248 238 C249 272 274 295 290 306" stroke="#defb79" stroke-width="7" fill="none" opacity=".7"/>
+  <path d="M221 266 l-18 -15 12 30 -12 7 29 4" fill="#b0ef49"/>
+ </g>
+ <g id="ear-right" inkscape:label="Oreja derecha">
+  <path d="M469 291 C494 250 540 261 559 210 C575 238 572 265 559 283 C577 275 579 259 582 247 C601 284 574 335 531 353 L463 335Z" fill="url(#furDark)" stroke="#83ca29" stroke-width="3"/>
+  <path d="M496 316 Q544 296 554 246 Q543 267 520 280 Q504 298 496 316Z" fill="#4d9d16" opacity=".65"/>
+  <path d="M555 238 C556 269 532 297 510 307" stroke="#defb79" stroke-width="7" fill="none" opacity=".7"/>
+  <path d="M578 270 l17 -16 -9 29 13 7 -28 5" fill="#b0ef49"/>
+ </g>
+ <g id="hair" inkscape:label="Mechon">
+  <path d="M350 249 Q362 206 359 162 C357 132 374 103 399 89 Q389 114 396 131 C401 91 435 66 466 77 Q441 76 432 99 C452 78 480 85 480 104 Q476 83 458 99 C443 112 443 132 461 134 Q477 129 469 116 C498 132 482 159 460 154 C439 151 427 133 431 114 C408 152 442 189 446 249Z" fill="url(#furLight)" stroke="#87cc2d" stroke-width="2.5"/>
+  <path d="M383 210 Q384 154 411 116 M401 211 Q411 151 440 125 M422 206 Q415 169 439 152" stroke="#e5ff8d" stroke-width="7" stroke-linecap="round" fill="none" opacity=".7"/>
+  <path d="M369 220 Q359 203 359 183 L344 207 354 239 M430 197 Q444 176 460 185 L445 209" fill="#a5e832"/>
+ </g>
+ <g id="face" inkscape:label="Rostro">
+  <path d="M400 206 C359 210 336 228 309 246 C283 267 273 294 257 310 C248 328 240 335 231 358 C233 357 241 356 247 357 C233 378 234 391 222 402 L245 397 Q240 420 257 435 L262 424 Q272 456 295 462 L292 446 Q307 467 335 475 Q392 497 460 472 C482 464 511 446 518 423 L530 435 Q543 419 542 398 L555 403 Q547 383 546 360 L557 362 Q545 329 521 309 Q510 286 482 255 C456 230 438 211 400 206Z" fill="url(#faceGrad)" stroke="#85ca2a" stroke-width="3"/>
+  <g clip-path="url(#headClip)">
+   <path d="M257 387 Q284 432 319 434 M544 392 Q511 431 483 433" stroke="#c6ff66" stroke-width="12" fill="none" opacity=".37"/>
+   <path d="M296 325 Q278 358 278 395 M504 323 Q530 356 526 395" stroke="#ebff9c" stroke-width="8" fill="none" opacity=".23"/>
+   <path d="M345 429 Q393 457 459 427" stroke="#64bc18" stroke-width="6" fill="none" opacity=".16"/>
+  </g>
+  <!-- Fine fur tufts around cheek edges -->
+  <g id="cheek-details" fill="none" stroke-linecap="round">
+   <path d="M254 347 l-24 24 M250 373 l-18 28 M257 413 l-8 23 M272 434 l-5 26 M288 447 l0 26 M533 349 l26 17 M543 373 l19 24 M533 408 l18 25 M515 431 l12 28 M501 451 l7 25" stroke="#b5f255" stroke-width="6" opacity=".78"/>
+   <path d="M282 355 q14 21 18 32 M290 403 q16 16 27 20 M505 350 q-16 26-19 36 M514 403 q-15 19-28 22" stroke="#e6ff91" stroke-width="4" opacity=".4"/>
+  </g>
+ </g>
+ <g id="eyebrows" inkscape:label="Cejas" fill="none" stroke="#326d16" stroke-width="12" stroke-linecap="round">
+  <path id="brow-left" d="M316 273 Q342 256 364 275"/>
+  <path id="brow-right" d="M425 282 Q448 253 477 278"/>
+ </g>
+ <g id="eyes" inkscape:label="Ojos">
+  <g id="eye-left" inkscape:label="Ojo izquierdo">
+   <ellipse cx="352" cy="322" rx="39" ry="47" fill="#347f24" opacity=".3"/>
+   <ellipse cx="351" cy="317" rx="38" ry="46" fill="url(#eyeGrad)" stroke="#327622" stroke-width="3.5"/>
+   <g id="pupil-left" inkscape:label="Pupila izquierda"><ellipse cx="366" cy="332" rx="20" ry="24" fill="url(#irisGrad)"/><ellipse cx="367" cy="333" rx="10" ry="16" fill="#12391f"/><ellipse cx="359" cy="322" rx="8" ry="9" fill="#fff"/><circle cx="377" cy="344" r="4" fill="#c0fbb9" opacity=".8"/></g>
+   <path id="lid-left" d="M314 320 C319 285 334 271 350 271 C371 270 384 293 390 320 L386 280 Q349 251 319 282Z" fill="#9ce536" opacity="0"/>
+  </g>
+  <g id="eye-right" inkscape:label="Ojo derecho">
+   <ellipse cx="450" cy="332" rx="40" ry="47" fill="#347f24" opacity=".3"/>
+   <ellipse cx="449" cy="325" rx="39" ry="46" fill="url(#eyeGrad)" stroke="#327622" stroke-width="3.5"/>
+   <g id="pupil-right" inkscape:label="Pupila derecha"><ellipse cx="441" cy="337" rx="20" ry="24" fill="url(#irisGrad)"/><ellipse cx="442" cy="337" rx="10" ry="16" fill="#12391f"/><ellipse cx="434" cy="328" rx="8" ry="9" fill="#fff"/><circle cx="453" cy="346" r="4" fill="#c0fbb9" opacity=".8"/></g>
+   <path id="lid-right" d="M411 326 C415 291 431 278 448 278 C468 278 482 300 488 326 L485 288 Q448 257 415 289Z" fill="#9ce536" opacity="0"/>
+  </g>
+ </g>
+ <g id="freckles" fill="#3b9b21" opacity=".67"><circle cx="292" cy="382" r="3"/><circle cx="302" cy="390" r="4"/><circle cx="313" cy="385" r="2"/><circle cx="502" cy="385" r="3"/><circle cx="492" cy="393" r="3.5"/><circle cx="482" cy="388" r="2.5"/></g>
+ <g id="nose" inkscape:label="Nariz"><path d="M388 368 C394 357 410 357 419 367 Q422 377 410 381 Q400 388 390 378 Q384 375 388 368Z" fill="url(#noseGrad)"/><path d="M395 367 Q406 363 413 369" fill="none" stroke="#a5eb67" stroke-width="3" opacity=".5"/></g>
+ <g id="mouth" inkscape:label="Boca"><path d="M389 414 Q395 406 407 409 Q422 414 414 431 Q406 447 396 438 Q389 430 389 414Z" fill="#5c291d" stroke="#34741b" stroke-width="2"/><path d="M397 436 Q405 428 412 435" stroke="#e77976" stroke-width="5" fill="none" opacity=".75"/></g>
+<g id="blush" opacity="0"><ellipse cx="303" cy="397" rx="30" ry="14" fill="#fc8194" opacity=".72"/><ellipse cx="501" cy="397" rx="30" ry="14" fill="#fc8194" opacity=".72"/></g>
+  <g id="sweat" opacity="0"><path d="M530 345 C512 376 514 389 530 390 Q552 389 530 345Z" fill="#b6f1ff" stroke="#4aa6c5" stroke-width="3"/><path d="M526 371 Q526 362 531 358" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g>
+  <g id="smile" opacity="0"><path d="M368 417 Q400 451 433 415" stroke="#47721f" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M385 436Q400 443 416 433" fill="none" stroke="#f7fff2" stroke-width="4"/></g>
+  </g>
+
+<!-- Delante de la cabeza para cubrir la unión con el cuerpo. -->
+<g id="scarf-knot" inkscape:groupmode="layer" inkscape:label="Bufanda, nudo">
+ <path d="M345 467 Q369 461 396 470 Q432 463 451 470 L452 490 Q414 507 354 494 Q341 485 345 467Z" fill="url(#scarfGrad)" stroke="#a51c20" stroke-width="3"/>
+ <path d="M343 488 Q368 476 399 490 Q431 479 457 488 Q464 500 455 510 Q430 521 398 516 Q360 522 344 504Z" fill="url(#scarfGrad)" stroke="#9b1a20" stroke-width="3"/>
+ <path d="M350 508 Q379 499 398 513 Q425 503 451 507 Q463 520 445 532 Q398 540 356 526 Q340 522 350 508Z" fill="url(#scarfGrad)" stroke="#ad1d26" stroke-width="3"/>
+ <path d="M360 481 Q398 478 431 484 M364 502 Q401 500 443 504 M368 524 Q396 530 425 524" fill="none" stroke="#ff8374" stroke-width="5" opacity=".34"/>
+ <path d="M384 471 L387 529 M419 469 L412 528" stroke="#98151d" stroke-width="6" opacity=".2"/>
+</g>
+<g id="hands-ears" opacity="0" pointer-events="none">
+ <path d="M348 587 Q294 537 275 459 Q266 410 275 330" fill="none" stroke="#8bdb35" stroke-width="32" stroke-linecap="round"/>
+ <path d="M451 587 Q509 526 529 458 Q540 402 519 328" fill="none" stroke="#8bdb35" stroke-width="32" stroke-linecap="round"/>
+ <ellipse cx="274" cy="329" rx="25" ry="34" fill="#abef51" stroke="#67b723" stroke-width="3"/>
+ <ellipse cx="519" cy="328" rx="25" ry="34" fill="#abef51" stroke="#67b723" stroke-width="3"/>
+ <path d="M265 313 Q255 335 267 346 M528 310 Q539 333 526 345" stroke="#77c82b" stroke-width="4" fill="none"/>
+</g>
+<g id="reach-arm" opacity="0" pointer-events="none">
+ <path d="M448 585 Q498 567 548 586 L570 587" stroke="#7ecb27" stroke-width="35" fill="none" stroke-linecap="round"/>
+ <path d="M474 580 Q526 574 550 586" stroke="#b5f36a" stroke-width="9" fill="none" opacity=".55" stroke-linecap="round"/>
+ <ellipse cx="571" cy="588" rx="23" ry="20" fill="#abec52" stroke="#64aa24" stroke-width="3"/>
+ <path d="M568 575Q587 580 584 594M564 579Q550 585 557 602" stroke="#66a723" stroke-width="3" fill="none"/>
+</g>
+<g id="sitting-legs" opacity="0" pointer-events="none">
+ <path d="M367 809 Q344 824 316 830 Q296 837 300 852 Q314 870 346 851 Q370 839 388 848" fill="#9fe43c" stroke="#5fae21" stroke-width="5"/>
+ <path d="M432 808 Q459 825 485 832 Q505 842 499 857 Q479 870 458 850 Q437 838 411 847" fill="#9fe43c" stroke="#5fae21" stroke-width="5"/>
+ <path d="M314 844l-5 13 M333 842l-5 13 M475 843l6 15 M491 840l6 14" stroke="#78bf2b" stroke-width="3"/>
+</g>
+</g><!-- /actor -->
+<g id="props-front" pointer-events="none">
+  <g id="bag" opacity="0"><path d="M566 818 Q544 809 552 788 L588 777 615 792 Q633 811 619 820 C656 858 645 902 606 915 Q548 919 538 876 C534 851 546 837 566 818Z" fill="url(#sackFabric)" stroke="#76501d" stroke-width="4"/><path d="M560 817Q586 831 621 817 M558 797Q586 804 618 791" fill="none" stroke="#936020" stroke-width="7"/><path d="M575 796L569 771 M599 796L614 770" stroke="#d0a066" stroke-width="12" stroke-linecap="round"/><text x="590" y="872" text-anchor="middle" font-size="28" font-weight="700" fill="#7f5b27" font-family="system-ui,sans-serif">?</text></g>
+  <g id="stolen-bulb" opacity="0"><path d="M0 -17Q-23 -17 -24 4 Q-24 18 -12 29H12 Q24 17 24 4 Q23 -17 0 -17Z" fill="#fff0a4" stroke="#c99b28" stroke-width="3"/><path d="M-11 28H11M-10 36H10" stroke="#aa7f29" stroke-width="5"/></g>
+  <g id="rolling-bulbs" opacity="0">
+    <g id="roll-a"><path d="M0-22C-23-20 -26 2 -12 20 L12 20C26 2 22 -20 0 -22Z" fill="#f9e89c" stroke="#b5882f" stroke-width="4"/><rect x="-9" y="18" width="18" height="12" rx="3" fill="#9e742e"/></g>
+    <g id="roll-b"><path d="M0-22C-23-20 -26 2 -12 20 L12 20C26 2 22 -20 0 -22Z" fill="#ffd1b1" stroke="#c47836" stroke-width="4"/><rect x="-9" y="18" width="18" height="12" rx="3" fill="#9e742e"/></g>
+    <g id="roll-c"><path d="M0-22C-23-20 -26 2 -12 20 L12 20C26 2 22 -20 0 -22Z" fill="#cfebff" stroke="#5198a8" stroke-width="4"/><rect x="-9" y="18" width="18" height="12" rx="3" fill="#4f828d"/></g>
+  </g>
+  <g id="bubble" opacity="0"><path d="M480 198h180q21 0 21 19v52q0 18 -21 18h-90l-25 28v-28h-65q-19 0-19-18v-54q0-19 19-19Z" fill="#fbfff4" stroke="#4d8b42" stroke-width="4"/><text id="bubble-text" x="568" y="254" font-size="30" font-weight="750" text-anchor="middle" font-family="system-ui,sans-serif" fill="#235d37">¡!</text></g>
+  <g id="speed-lines" opacity="0" fill="none" stroke="#eafcc4" stroke-linecap="round" stroke-width="8">
+ <path d="M130 683h112 M109 731h83 M160 789h118"/>
+</g>
+<g id="dust" opacity="0" fill="#e4f7bd"><circle cx="260" cy="938" r="18"/><circle cx="221" cy="958" r="13"/><circle cx="187" cy="941" r="8"/></g>
+  <g id="roof-front" opacity="0"><rect x="84" y="680" width="623" height="400" rx="21" fill="#e4f3d3" stroke="#3e8656" stroke-width="5"/><rect x="84" y="676" width="623" height="27" rx="11" fill="#428f56"/></g>
+  <g id="peek-eyes" opacity="0"><ellipse cx="356" cy="658" rx="29" ry="33" fill="white" stroke="#326721" stroke-width="4"/><ellipse cx="442" cy="658" rx="29" ry="33" fill="white" stroke="#326721" stroke-width="4"/><g id="peek-pupils"><ellipse cx="365" cy="661" rx="14" ry="18" fill="#208b3b"/><ellipse cx="451" cy="661" rx="14" ry="18" fill="#208b3b"/><circle cx="362" cy="651" r="6" fill="white"/><circle cx="449" cy="651" r="6" fill="white"/></g></g>
+</g></svg>
