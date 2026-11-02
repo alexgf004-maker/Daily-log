@@ -332,6 +332,24 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   Lo "para todos" **vence solo** al terminar la temporada de ese tema (la primera que termina después de
   `en`; `globalVigente` en el `<head>`): un "Encendido" de Halloween no sigue en noviembre. Sin `en`
   (dato viejo) solo vale dentro de su temporada.
+- **Temporadas que cruzan el año y etapas** (`enRango`, `etapaDe`, `clasesDe`, `claveDe` en el `<head>`): un tema
+  puede ir de `'12-01'` a `'01-04'` y tener `etapas` con sus propias fechas, clases y color de barra. En `<html>` va
+  la clase del tema más la de la etapa (`tema-navidad nav-pre`). `aplicarTema` compara por clave (tema + etapa),
+  así el cambio de etapa (21→22 dic) se aplica solo. Fuera de temporada ("Ver ahora"), la etapa es la guardada en
+  `localStorage.innova_tema_etapa` o la primera.
+- **Tema Navidad** (1 dic – 4 ene, `js/navidad.js` + bloque "Tema Navidad" de `css/temas.css`). Login por etapa:
+  - `pre` (1–21 dic) invierno mágico: aurora (canvas), copos de cristal, montañas y lago al ancho real de la
+    pantalla, pinos con moños y esferas rojas, trineo; cordón de foquitos congelados que prenden más cada día (el
+    17 todos); casita a lo lejos que se acerca y enciende ventanas; camino "Rumbo a Navidad" (24 huellitas y el
+    trineo en el día de hoy) bajo el nombre de la app; tarjeta envuelta con cinta, moño y "Se abre el 24".
+  - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
+    (la primera con el nombre del usuario recordado). El 24 la tarjeta se "abre" (moño y cinta caen, confeti) una
+    vez por teléfono (`innova_nav_regalo`).
+  - `ano` (28 dic–4 ene): ciudad, banderines, pólvora continua y un cohete donde se toque el cielo; borde arcoíris.
+  - Saludo del login con el nombre (de `innova_usuario_recordado`, "alex.gonzalez" → "Alex"); el 24, 25 y 1 de
+    enero cambia ("Feliz Nochebuena"…). Cuenta regresiva bajo el nombre de la app en `casa` y `ano`.
+  - El canvas solo dibuja con el login a la vista y la app en primer plano; con movimiento reducido no anima.
+    Todo vive en `.nv-capa` / `.nv-extra` y se quita al cambiar de etapa o de tema.
 - **El tema por fecha se recalcula** (`__temas.recalcular()`) en cada `aplicarTema`: al volver a la app
   (`visibilitychange`), cada 30 min y al cerrar la sesión a todos. Antes se calculaba solo al abrir, y un
   teléfono con la app abierta desde octubre seguía con Halloween en noviembre.

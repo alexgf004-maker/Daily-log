@@ -60,7 +60,8 @@
 })();
 </script>
 <link rel="stylesheet" href="css/styles.css?v=81">
-<link rel="stylesheet" href="css/temas.css?v=38">
+<link rel="stylesheet" href="css/temas.css?v=39">
+<script src="js/navidad.js?v=1" defer></script>
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -72,13 +73,20 @@
 (function(){
   // barra: color de las barras del celular (hora y batería arriba, navegación abajo; <meta name="theme-color">)
   var TEMAS=[{id:'halloween',nombre:'Halloween',desde:'10-26',hasta:'10-31',clases:['tema-halloween','fuerte'],barra:'#050307'},
-             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-05',clases:['tema-muertos'],barra:'#4a044e'}];
+             {id:'muertos',nombre:'Día de los Muertos',desde:'11-01',hasta:'11-05',clases:['tema-muertos'],barra:'#4a044e'},
+             // Navidad: una temporada que cruza el año, en tres etapas con su propia escena (js/navidad.js)
+             {id:'navidad',nombre:'Navidad',desde:'12-01',hasta:'01-04',clases:['tema-navidad'],barra:'#0a2d55',
+              etapas:[{id:'pre', nombre:'Pre-Navidad',desde:'12-01',hasta:'12-21',clases:['nav-pre'], barra:'#0a2d55'},
+                      {id:'casa',nombre:'Navidad',    desde:'12-22',hasta:'12-27',clases:['nav-casa'],barra:'#2b0d0a'},
+                      {id:'ano', nombre:'Año Nuevo',  desde:'12-28',hasta:'01-04',clases:['nav-ano'], barra:'#120a2e'}]}];
   function hoyMD(){ var d=new Date(); return ('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   var modo='auto', global=null; try{ modo=localStorage.getItem('innova_tema')||'auto'; global=JSON.parse(localStorage.getItem('innova_tema_global')||'null'); }catch(e){}
   // Tema por fecha y tema de referencia para Mi Perfil y "Ver ahora" (el de la fecha o, si no hay,
   // el próximo del año). Se vuelve a calcular al regresar a la app y cada 30 min (ver aplicarTema),
   // porque un teléfono puede dejar la app abierta días y pasar de un tema al siguiente.
-  function porFechaDe(md){ var r=null; for(var i=0;i<TEMAS.length;i++){ if(md>=TEMAS[i].desde&&md<=TEMAS[i].hasta) r=TEMAS[i]; } return r; }
+  // Un rango puede cruzar el año (desde '12-28' hasta '01-04'): entonces vale si es >= desde O <= hasta
+  function enRango(md,desde,hasta){ return desde<=hasta ? (md>=desde&&md<=hasta) : (md>=desde||md<=hasta); }
+  function porFechaDe(md){ var r=null; for(var i=0;i<TEMAS.length;i++){ if(enRango(md,TEMAS[i].desde,TEMAS[i].hasta)) r=TEMAS[i]; } return r; }
   function proximoDe(md){
     var r=null; for(var p=0;p<TEMAS.length;p++){ if(TEMAS[p].desde>md&&(!r||TEMAS[p].desde<r.desde)) r=TEMAS[p]; }
     if(!r) for(var q=0;q<TEMAS.length;q++){ if(!r||TEMAS[q].desde<r.desde) r=TEMAS[q]; }
@@ -104,14 +112,27 @@
     if(g&&g.modo==='on') return buscar(g.tema)||T.lista[0];
     return T.porFecha;
   }
-  var T={lista:TEMAS,modo:modo,global:global,efectivo:efectivo};
+  var T={lista:TEMAS,modo:modo,global:global,efectivo:efectivo,enRango:enRango,hoyMD:hoyMD};
+  // Etapa de un tema que las tiene (Navidad): la de la fecha; fuera de temporada (vista previa) la que se
+  // eligió para probar ('innova_tema_etapa') o la primera.
+  T.etapaDe=function(tema){
+    if(!tema||!tema.etapas) return null;
+    var forz=null; try{ forz=localStorage.getItem('innova_tema_etapa'); }catch(e){}
+    var md=hoyMD(), i;
+    if(forz) for(i=0;i<tema.etapas.length;i++) if(tema.etapas[i].id===forz) return tema.etapas[i];
+    for(i=0;i<tema.etapas.length;i++) if(enRango(md,tema.etapas[i].desde,tema.etapas[i].hasta)) return tema.etapas[i];
+    return tema.etapas[0];
+  };
+  T.clasesDe=function(tema){ var e=T.etapaDe(tema); return tema?tema.clases.concat(e?e.clases:[]):[]; };
+  T.claveDe=function(tema){ var e=T.etapaDe(tema); return tema?tema.id+(e?':'+e.id:''):''; };
+  T.todasClases=function(){ var r=[]; TEMAS.forEach(function(t){ r=r.concat(t.clases); (t.etapas||[]).forEach(function(e){ r=r.concat(e.clases); }); }); return r; };
   T.recalcular=function(){ var md=hoyMD(); T.porFecha=porFechaDe(md); T.ref=T.porFecha||proximoDe(md); };
   T.globalVigente=function(){ return globalVigente(T.global); };
   T.recalcular();
-  var t=efectivo(T); T.activo=t;
-  if(t) for(var j=0;j<t.clases.length;j++) document.documentElement.classList.add(t.clases[j]);
+  var t=efectivo(T); T.activo=t; T.activoClave=T.claveDe(t);
+  if(t){ var cl=T.clasesDe(t); for(var j=0;j<cl.length;j++) document.documentElement.classList.add(cl[j]); }
   // Las barras del celular las pinta Android con theme-color: que sigan al tema (sin tema, el azul de la app)
-  T.colorBarra=function(tema){ var m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content',(tema&&tema.barra)||'#1e3a5f'); };
+  T.colorBarra=function(tema){ var m=document.querySelector('meta[name="theme-color"]'), e=T.etapaDe(tema); if(m) m.setAttribute('content',(e&&e.barra)||(tema&&tema.barra)||'#1e3a5f'); };
   T.colorBarra(t);
   window.__temas=T;
   // Halloween: escena animada del login (murciélagos que salen de la luna, relámpago,
@@ -448,7 +469,7 @@
     armarGuirnaldas();
     var tm=null; window.addEventListener('resize',function(){ clearTimeout(tm); tm=setTimeout(armarGuirnaldas,200); });
   };
-  document.addEventListener('DOMContentLoaded',function(){ window.__escenaHalloween(); window.__escenaMuertos(); });
+  document.addEventListener('DOMContentLoaded',function(){ window.__escenaHalloween(); window.__escenaMuertos(); window.__escenaNavidad&&window.__escenaNavidad(); });
 })();
 </script>
 </head>
@@ -529,10 +550,14 @@
     var s=document.getElementById('loginSaludo'), c=document.getElementById('loginFecha');
     if(!s||!c) return;
     var d=new Date(), h=d.getHours();
-    s.textContent=(h<5||h>=19)?'Buenas noches':(h<12?'Buenos días':'Buenas tardes');
+    var base=(h<5||h>=19)?'Buenas noches':(h<12?'Buenos días':'Buenas tardes');
+    // En Navidad el saludo lleva el nombre del usuario recordado (y cambia el 24, 25 y 1 de enero)
+    var nav=window.__saludoNavidad&&window.__saludoNavidad(base);
+    if(nav) s.innerHTML=nav; else s.textContent=base;
     var t=d.toLocaleDateString('es-SV',{weekday:'short',day:'numeric',month:'short'}).replace(/\./g,'');
     c.textContent=t.charAt(0).toUpperCase()+t.slice(1);
   }
+  window.__pintarSaludo=pintar;
   pintar(); setInterval(pintar,60000);
 })();
 </script>
@@ -4028,10 +4053,12 @@ function aplicarTema(){
   T.recalcular();   // por si cambió el día (app abierta desde ayer) o venció lo "para todos"
   const nuevo=T.efectivo(T);
   const html=document.documentElement;
-  if(nuevo!==T.activo){
-    T.lista.forEach(t=>t.clases.forEach(c=>html.classList.remove(c)));
-    T.activo=nuevo;
-    if(nuevo){ nuevo.clases.forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); window.__escenaMuertos&&window.__escenaMuertos(); }
+  const clave=T.claveDe(nuevo);
+  if(clave!==T.activoClave){
+    T.todasClases().forEach(c=>html.classList.remove(c));
+    T.activo=nuevo; T.activoClave=clave;
+    if(nuevo){ T.clasesDe(nuevo).forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); window.__escenaMuertos&&window.__escenaMuertos(); }
+    window.__escenaNavidad&&window.__escenaNavidad();   // arma la etapa que toca o quita la escena si ya no es Navidad
     T.colorBarra&&T.colorBarra(nuevo);
     if(nuevo?.id!=='halloween') document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());
     if(nuevo?.id!=='muertos') document.querySelectorAll('.mu-capa,.mu-amb,.mu-xolo').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
