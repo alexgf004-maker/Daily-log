@@ -1,4 +1,4 @@
-/* GreenActor 1.0 — 14 SVG animations for a self-contained web login. No external dependencies.
+/* GreenActor 1.1 — 14 original SVG animations and 4 integrated login poses. No external dependencies.
    API: const actor = new GreenActor(document.querySelector('#green-character'));
    actor.play('steal'); actor.tap(); actor.pause(); actor.resume(); actor.destroy();
    Custom DOM events: greenactor:scenechange and greenactor:complete. */
@@ -25,13 +25,17 @@ const SCENES = Object.freeze({
  tap2:     {duration:4.0,loop:false,title:'Segundo toque', detail:'Se molesta, protesta y sale de la escena refunfuñando.', group:'Toques'},
  tap3:     {duration:4.2,loop:false,title:'Tercer toque', detail:'Se sonroja, desvía la mirada y parece disfrutar la atención.', group:'Toques'},
  xmas:     {duration:8.0,loop:false,title:'Nochebuena · 24 dic', detail:'Devuelve los focos, sonríe por primera vez y se sienta junto a la estrella.', group:'Fechas especiales'},
+ thaw:     {duration:6.2,loop:false,title:'Libre del hielo',detail:'Observa sus manos, se sacude el frío y se estira.',group:'Login integrado'},
+ privacy:  {duration:.6,loop:false,title:'No miro el PIN',detail:'Se cubre los ojos mientras el campo está enfocado.',group:'Login integrado'},
+ tug:      {duration:6.0,loop:false,title:'Tirar de las luces',detail:'Alcanza un cordón, tira suavemente y vigila si lo descubren.',group:'Login integrado'},
+ offer:    {duration:5.0,loop:false,title:'Devolver la luz',detail:'Levanta la mano y devuelve un foco a la guirnalda.',group:'Login integrado'},
  nye:      {duration:5.6,loop:true,title:'31 de diciembre', detail:'Los destellos lo asustan: tiembla y se tapa los oídos.', group:'Fechas especiales'},
 });
 class GreenActor {
  constructor(svg, options={}){
   if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error('GreenActor requires the actual inline <svg> element.');
   this.svg=svg; this.options=options; this.nodes={};
-  const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','mouth','smile','blush','sweat','hands-ears','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
+  const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','mouth','smile','blush','sweat','hands-ears','hands-eyes','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
   for (const id of ids) this.nodes[id]=svg.querySelector('#'+id);
   this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
   this._raf=requestAnimationFrame(t=>this.frame(t));
@@ -72,7 +76,7 @@ class GreenActor {
       }
     }
     this.render(this.elapsed);
-    if(this.options.onFrame)this.options.onFrame(this.getSceneInfo());
+    if(this.options.onFrame)this.options.onFrame(this.getSceneInfo(),dt);
   }
   this._raf=requestAnimationFrame(t=>this.frame(t));
  }
@@ -102,6 +106,12 @@ class GreenActor {
       v.leftLeg=11*step;v.rightLeg=-11*step;v.leftArm=10+6*step;v.rightArm=-10-6*step;
       v.head=9*wave(t,.34);v.pupilX=t%6<2?-10:t%6<4?11:-8;
       v.earL=-3*step;v.earR=3*step;v.scarf=7*wave(t,.36);
+      if(this.options.embedded){
+        // La aproximación termina en la misma posición que el tirón del cordón.
+        const settle=1-between(t,1.3,2),arc=Math.sin(PI*clamp(t/2));
+        v.dx=32*arc;v.dy=-5*Math.abs(step)*arc;v.angle=-2*arc;
+        for(const key of ['leftLeg','rightLeg','leftArm','rightArm','head','earL','earR','scarf'])v[key]*=settle;
+      }
       break;}
     case 'run':{
       const sprint=wave(t,3.8);
@@ -210,6 +220,36 @@ class GreenActor {
       props('stolen-bulb');visible['stolen-bulb']=bump(t,.6,1.1,3.3,3.9);
       bulbTransform=`translate(${lerp(490,485,give)} ${lerp(657,246,give)}) rotate(${180*give}) scale(.68)`;
       break;}
+    case 'thaw':{
+      const look=bump(t,.2,.7,1.45,1.9),shiver=bump(t,1.5,1.8,2.55,2.9),stretch=bump(t,2.9,3.6,4.9,6.2);
+      v.pupilY=14*look;v.head=8*look-9*stretch;
+      v.dx=4*wave(t,9)*shiver;v.dy=-12*stretch;
+      v.leftArm=24*look+90*stretch;v.rightArm=-24*look-90*stretch;
+      v.body=1+.035*stretch;v.scarf=12*wave(t,7)*shiver;
+      v.earL=5*wave(t,8)*shiver;v.earR=-v.earL;
+      v.eyeL=1-.45*stretch;v.eyeR=v.eyeL;
+      break;}
+    case 'privacy':{
+      const cover=between(t,0,.6);
+      v.head=0;v.dy=0;v.body=1;v.leftArm=0;v.rightArm=0;
+      v.eyeL=1-.9*cover;v.eyeR=v.eyeL;v.pupilX=0;v.pupilY=0;
+      props('hands-eyes');visible['hands-eyes']=cover;
+      this.transform('hands-eyes',`translate(0 ${180*(1-cover)})`);
+      break;}
+    case 'tug':{
+      const reach=between(t,0,.8),pull=bump(t,1.0,1.4,3.5,4.0);
+      v.head=-10*reach+14*between(t,4.0,5.2);v.pupilY=-10*(1-between(t,4,5));
+      v.pupilX=t>4?10*wave(t,.6):7;v.leftArm=12*reach;
+      v.angle=-3*pull;v.dy=4*pull;v.scarf=2*wave(t,.5);
+      props('reach-arm');visible['reach-arm']=reach;
+      this.rot('reach-arm',-26*reach+4*pull,448,585);
+      break;}
+    case 'offer':{
+      const reach=between(t,0,.8)*(1-between(t,3.8,5));
+      v.head=-7*reach;v.pupilY=-9*reach;v.leftArm=8*reach;
+      props('reach-arm','smile');visible['reach-arm']=reach;visible.smile=reach;
+      this.rot('reach-arm',-26*reach,448,585);this.show('mouth',1-reach);
+      break;}
     case 'nye':{
       props('night-overlay','celebration-fireworks','hands-ears');
       visible['night-overlay']=.85;
@@ -235,7 +275,7 @@ class GreenActor {
   this.transform('pupil-left',`translate(${v.pupilX.toFixed(1)} ${v.pupilY.toFixed(1)})`);
   this.transform('pupil-right',`translate(${v.pupilX.toFixed(1)} ${v.pupilY.toFixed(1)})`);
   this.rot('brow-left',v.browL,340,272);this.rot('brow-right',v.browR,450,272);
-  for (const id of ['roof-card','roof-front','peek-eyes','wire-bulb','stolen-bulb','bag','rolling-bulbs','sweat','blush','smile','bubble','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','hands-ears','reach-arm','sitting-legs','speed-lines']) {
+  for (const id of ['roof-card','roof-front','peek-eyes','wire-bulb','stolen-bulb','bag','rolling-bulbs','sweat','blush','smile','bubble','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','hands-ears','hands-eyes','reach-arm','sitting-legs','speed-lines']) {
     this.show(id,visible[id]||0);
   }
   if(mode!=='caught')this.transform('sweat','translate(0 0)');
@@ -245,9 +285,14 @@ class GreenActor {
   if(mode!=='nye')this.transform('celebration-fireworks','translate(0 0)');
   // Swap original legs for a connected, drawn seated pose (no detached feet).
   if(mode==='xmas'){const amount=visible['sitting-legs']||0;this.show('leg-left',1-amount);this.show('leg-right',1-amount)}else{this.show('leg-left',1);this.show('leg-right',1)}
-  this.show('arm-right',mode==='steal'?1-(visible['reach-arm']||0):1);
+  this.show('arm-right',['steal','tug','offer'].includes(mode)?1-(visible['reach-arm']||0):mode==='privacy'?1-(visible['hands-eyes']||0):1);
+  this.show('arm-left',mode==='privacy'?1-(visible['hands-eyes']||0):1);
+  if(!['tug','offer'].includes(mode))this.transform('reach-arm','translate(0 0)');
+  if(mode!=='privacy')this.transform('hands-eyes','translate(0 0)');
+  // El login aporta los objetos reales: no dibujar otra tarjeta o guirnalda encima.
+  if(this.options.embedded)for(const id of ['roof-card','roof-front','wire-bulb','lights-string','night-overlay','celebration-fireworks'])this.show(id,0);
   // Restore the default face when leaving the Nochebuena scene.
-  if(mode!=='xmas')this.show('mouth',1);
+  if(mode!=='xmas'&&mode!=='offer')this.show('mouth',1);
   this.show('bubble',bubble);if(text)this.n('bubble-text').textContent=text;
  }
 }

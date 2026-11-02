@@ -77,13 +77,15 @@
 /* Deja visible la base del bloque en la altura útil de un móvil con barras.
    Las ventanas aún más bajas conservan campos legibles y permiten desplazarse. */
 @media(max-width:900px) and (max-height:850px){
-  .tema-navidad #loginScreen .login-panel{--nv-mascota-ancho:120px}
+  .tema-navidad #loginScreen .login-panel{--nv-mascota-ancho:120px;padding-top:44px}
   .nav-pre #loginScreen .login-panel{padding-top:44px}
   .nav-pre #loginScreen .login-logo{width:40px;height:40px}
   .nav-pre #loginScreen .login-brand{margin-bottom:10px}
   .nav-pre #loginScreen .nv-camino{margin-top:6px}
   .nav-pre #loginScreen .nv-camino svg{height:18px}
   .nav-pre #loginScreen .nv-focos{height:84px}
+  .nav-casa #loginScreen .login-logo,
+  .nav-ano #loginScreen .login-logo{width:48px;height:48px;margin-bottom:8px}
 }
 /* En escritorio el bloque se sitúa junto al panel, dentro del ancho disponible. */
 @media(min-width:901px){
@@ -92,3 +94,5 @@
 @media(prefers-reduced-motion:reduce){
   .nv-mascota,.nv-mascota *{animation:none!important;transition:none!important}
 }
+/* Cable y foco de la guirnalda real: decoración sin superficie interactiva. */
+.tema-navidad .nv-historia-capa{position:absolute;left:0;top:0;z-index:3;pointer-events:none;overflow:hidden}

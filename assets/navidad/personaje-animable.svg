@@ -163,6 +163,14 @@
  <ellipse cx="519" cy="328" rx="25" ry="34" fill="#abef51" stroke="#67b723" stroke-width="3"/>
  <path d="M265 313 Q255 335 267 346 M528 310 Q539 333 526 345" stroke="#77c82b" stroke-width="4" fill="none"/>
 </g>
+<g id="hands-eyes" opacity="0" pointer-events="none">
+ <path d="M352 580Q285 520 294 431Q300 357 334 328" fill="none" stroke="#75bf25" stroke-width="33" stroke-linecap="round"/>
+ <path d="M445 580Q516 518 505 433Q497 365 465 335" fill="none" stroke="#75bf25" stroke-width="33" stroke-linecap="round"/>
+ <path d="M350 575Q295 507 305 428M447 575Q505 510 494 432" fill="none" stroke="#adE65b" stroke-width="9" stroke-linecap="round"/>
+ <ellipse cx="350" cy="319" rx="40" ry="48" fill="url(#furLight)" stroke="#64aa24" stroke-width="4"/>
+ <ellipse cx="449" cy="326" rx="40" ry="48" fill="url(#furLight)" stroke="#64aa24" stroke-width="4"/>
+ <path d="M327 293L332 340M344 284L349 341M362 290L367 335M432 299L436 349M448 291L452 349M465 298L467 340" fill="none" stroke="#78bd31" stroke-width="3.5" stroke-linecap="round"/>
+</g>
 <g id="reach-arm" opacity="0" pointer-events="none">
  <path d="M448 585 Q498 567 548 586 L570 587" stroke="#7ecb27" stroke-width="35" fill="none" stroke-linecap="round"/>
  <path d="M474 580 Q526 574 550 586" stroke="#b5f36a" stroke-width="9" fill="none" opacity=".55" stroke-linecap="round"/>
