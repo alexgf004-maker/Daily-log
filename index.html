@@ -142,7 +142,7 @@
   // activo. Al abrir se escribe aquí mismo, en el <head>, para que cargue antes de pintar (sin parpadeo);
   // si el tema cambia con la app abierta (fecha, "Ver ahora", "Tema para todos"), aplicarTema llama a
   // cargarCss. Subir TEMAS_V al cambiar cualquiera de esos archivos.
-  var TEMAS_V='47';
+  var TEMAS_V='48';
   T.cssDe=function(tema){ return tema&&tema.css?tema.css+'?v='+TEMAS_V:null; };
   if(t&&t.css) document.write('<link rel="stylesheet" data-tema-css="'+t.id+'" href="'+T.cssDe(t)+'">');
   T.cargarCss=function(tema){
@@ -865,6 +865,7 @@ import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, ca
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, alUbicar, ubicarSede, justificarMarcaje } from "./js/marcaje.js?v=2";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js?v=2";
 import { calcularDescuentos } from "./js/calculadora.js";
+import { diaNavidad, diasDelCordon, cordonHTML, adventoHTML, abrirPuerta, lineaPersonalAdviento } from "./js/navidad-app.js?v=1";
 import { configurarAvisos, estadoAvisos, activarAvisos, refrescarAvisos, quitarAvisosDeEsteTelefono, apagarAvisos, probarAviso, esIOS } from "./js/avisos.js";
 import { iniciarMusica, subirMusica, activarMusica, quitarMusica, esperarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
@@ -1428,6 +1429,10 @@ function renderAdmin(){
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
             <span class="pf-tx"><b>Tema para todos</b><span id="temaGlobalStatus">…</span></span><span class="ap-tema" id="temaGlobalModo"></span>
           </button>
+          <button class="pf-row ap-aud" onclick="editarAdviento()">
+            <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8C10 4 6 4 7 7c.6 1.6 3 1 5 1zM12 8c2-4 6-4 5-1-.6 1.6-3 1-5 1z"/></svg></span>
+            <span class="pf-tx"><b>Mensajes del Adviento</b><span id="advStatus">Escribe un mensaje para la puertita de un día de diciembre</span></span>
+          </button>
           <button class="pf-row ap-aud tema-probar" id="temaProbar" onclick="probarMarcajeTema()">
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2 14 22"/><path d="M18.5 2.5C13 .5 6 1.5 1.5 6.5 6 4.5 12 4 17 6Z"/></svg></span>
             <span class="pf-tx"><b>Probar animaciones</b><span>Marcaje y guardado, sin marcar ni guardar de verdad</span></span>
@@ -1943,7 +1948,7 @@ window.maintLogin=async()=>{
   localStorage.setItem('innova_session',JSON.stringify(me));
   marcarInicioSesion();
   migrarPinesUnaVez();
-  iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+  iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh(); navidadApp();
   trasEntrarAvisos();
 };
 const _mp=$('maintPin'); if(_mp) _mp.addEventListener('keydown',e=>{if(e.key==='Enter')window.maintLogin();});
@@ -1967,9 +1972,9 @@ window.doLogin = async ()=>{
     else localStorage.removeItem(USUARIO_RECORDADO_KEY);
   }catch(_){}
   if(me.role==='admin'||me.role==='asistente'){
-    iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+    iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh(); navidadApp();
   } else {
-    renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita();
+    renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita(); navidadApp();
   }
   trasEntrarAvisos();
 };
@@ -2038,7 +2043,7 @@ if(navigator.storage && navigator.storage.persist){
             if(fresh.activo&&fresh.role==='admin'){
               me={id:user.id,...fresh};
               localStorage.setItem('innova_session',JSON.stringify(me));
-              iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+              iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh(); navidadApp();
               trasEntrarAvisos();
               return;
             }
@@ -2071,9 +2076,9 @@ if(navigator.storage && navigator.storage.persist){
       me = {id:user.id, ...fresh};
       localStorage.setItem('innova_session', JSON.stringify(me));
       if(me.role==='admin'||me.role==='asistente'){
-        iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh();
+        iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh(); navidadApp();
       } else {
-        renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita();
+        renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita(); navidadApp();
       }
       trasEntrarAvisos();
     } catch(e) { localStorage.removeItem('innova_session'); screen('loginScreen'); }
@@ -4356,7 +4361,8 @@ function aplicarTema(){
     T.cargarCss&&T.cargarCss(nuevo);   // estilos del tema nuevo (y fuera los del anterior)
     T.activo=nuevo; T.activoClave=clave;
     if(nuevo){ T.clasesDe(nuevo).forEach(c=>html.classList.add(c)); window.__escenaHalloween&&window.__escenaHalloween(); window.__escenaMuertos&&window.__escenaMuertos(); }
-    window.__escenaNavidad&&window.__escenaNavidad(); window.__mascotaNavidadSync&&window.__mascotaNavidadSync();   // arma la etapa que toca o quita la escena si ya no es Navidad
+    window.__escenaNavidad&&window.__escenaNavidad(); window.__mascotaNavidadSync&&window.__mascotaNavidadSync();
+    navidadApp();   // cordón de foquitos y calendario de Adviento de la etapa (o quitarlos)   // arma la etapa que toca o quita la escena si ya no es Navidad
     T.colorBarra&&T.colorBarra(nuevo);
     if(nuevo?.id!=='halloween') document.querySelectorAll('.hw-capa,.hw-sangre,.hw-ojos,.hw-fant-in').forEach(c=>c.remove());
     if(nuevo?.id!=='muertos') document.querySelectorAll('.mu-capa,.mu-amb,.mu-xolo').forEach(c=>c.remove());   // escena del login (fantasma, luna, sangre y ojos) y fantasma de adentro
@@ -4364,6 +4370,80 @@ function aplicarTema(){
   }
   pintarTema();
 }
+// ── Navidad dentro de la app: cordón personal de foquitos (Pre-Navidad) y calendario de Adviento (1–24 dic) ──
+// La lógica y los dibujos están en js/navidad-app.js. Aquí solo se juntan los datos (una lectura de los marcajes
+// del mes del propio usuario y los mensajes del admin en config/navidad/adviento) y se pinta.
+let advMensajes=null;
+async function navidadApp(){
+  document.querySelectorAll('.nvp-foq,#nvpAdv').forEach(e=>e.remove());
+  document.querySelectorAll('.nvp-con-foq').forEach(e=>e.classList.remove('nvp-con-foq'));
+  const T=window.__temas, et=T?.activo?.id==='navidad'?T.etapaDe(T.activo):null;
+  if(!et||!me) return;
+  const nd=diaNavidad(today());
+  if(!nd.real) nd.dia=et.id==='casa'?23:10;            // vista previa fuera de temporada
+  const enEmpleado=!!$('empReg')&&$('employeeScreen')?.classList.contains('active');
+  let encendidos=null;
+  if(et.id==='pre'&&enEmpleado){
+    const mes=`${nd.anio}-12`;
+    const [marcs,sabados,asuetos]=nd.real?await Promise.all([
+      obtenerMarcajesMes(db,{ref,get},me.id,mes).catch(()=>[]),
+      obtenerSabadosLaborales(db,{ref,get},mes).catch(()=>({})),
+      getAllAsuetos(nd.anio).catch(()=>[])]):[[],{},[]];
+    const dias=diasDelCordon({anio:nd.anio,diaHoy:nd.dia,real:nd.real,uid:me.id,marcajes:marcs,sabados,asuetos,empleadoTrabajaSabado});
+    encendidos=dias.filter(d=>d.estado==='on').length;
+    const ph=document.querySelector('#empReg .page-header');
+    if(ph&&!ph.querySelector('.nvp-foq')){ ph.classList.add('nvp-con-foq'); ph.insertAdjacentHTML('beforeend',cordonHTML(dias,me.nombre,nd.real)); }
+  }
+  if(nd.dia>24||!(et.id==='pre'||et.id==='casa')) return;
+  if(advMensajes===null){ try{ advMensajes=(await get(ref(db,'config/navidad/adviento'))).val()||{}; }catch(_){ advMensajes={}; } }
+  const ancla=enEmpleado?document.querySelector('#empReg .page-header'):document.querySelector('#adDash .dash-hero');
+  if(!ancla||document.getElementById('nvpAdv')) return;
+  const pintar=()=>{
+    document.getElementById('nvpAdv')?.remove();
+    ancla.insertAdjacentHTML('afterend',adventoHTML({uid:me.id,anio:nd.anio,diaHoy:nd.dia,real:nd.real}));
+    document.getElementById('nvpAdv').addEventListener('click',e=>{
+      const b=e.target.closest('[data-dia]'); if(!b||b.disabled) return;
+      const dia=Number(b.dataset.dia);
+      abrirPuerta({dia,uid:me.id,anio:nd.anio,nombre:me.nombre,real:nd.real,mensajeAdmin:advMensajes?.[dia]||null,
+        lineaPersonal:lineaPersonalAdviento({nombre:me.nombre,encendidos,diaHoy:nd.dia})});
+      setTimeout(pintar,350);   // la puerta queda abierta en la tarjeta
+    });
+  };
+  pintar();
+}
+window.__navidadApp=navidadApp;
+// Mi Perfil del admin → Mensajes del Adviento: un mensaje para la puertita de un día (le llega a todos)
+window.editarAdviento=async()=>{
+  let msgs={}; try{ msgs=(await get(ref(db,'config/navidad/adviento'))).val()||{}; }catch(_){}
+  document.getElementById('nvpEdit')?.remove();
+  const w=document.createElement('div'); w.id='nvpEdit'; w.className='nvp-modal abre';
+  const lista=()=>Array.from({length:24},(_,i)=>i+1).map(d=>`<button type="button" class="nvp-ed-d ${msgs[d]?'con':''}" data-d="${d}">${d}</button>`).join('');
+  w.innerHTML=`<div class="nvp-modal-in nvp-ed" role="dialog" aria-label="Mensajes del Adviento">
+    <div class="nvp-t">Mensajes del Adviento</div>
+    <p class="nvp-x">Escoge un día y escribe el mensaje que verán todos al abrir esa puertita. Los días con punto ya tienen mensaje.</p>
+    <div class="nvp-ed-dias">${lista()}</div>
+    <div class="nvp-ed-k" id="nvpEdDia">Día 1</div>
+    <textarea id="nvpEdTx" maxlength="280" rows="4" placeholder="Ej.: Hoy a las 4 p. m. es el convivio. ¡Los esperamos!"></textarea>
+    <div class="nvp-ed-bt"><button type="button" class="borrar" id="nvpEdBorrar">Quitar mensaje</button><button type="button" class="guardar" id="nvpEdGuardar">Guardar</button></div>
+    <button type="button" class="nvp-cerrar">Cerrar</button></div>`;
+  document.body.appendChild(w);
+  let dia=Math.min(24,Math.max(1,new Date().getMonth()===11?new Date().getDate():1));
+  const elegir=d=>{ dia=d; $('nvpEdDia').textContent=`Día ${d}`; $('nvpEdTx').value=msgs[d]?.texto||''; w.querySelectorAll('.nvp-ed-d').forEach(b=>b.classList.toggle('sel',Number(b.dataset.d)===d)); };
+  const refrescar=()=>{ w.querySelector('.nvp-ed-dias').innerHTML=lista(); elegir(dia); advMensajes=msgs; const st=$('advStatus'); if(st) st.textContent=`${Object.keys(msgs).length} ${Object.keys(msgs).length===1?'día con mensaje':'días con mensaje'}`; };
+  w.addEventListener('click',async e=>{
+    if(e.target===w||e.target.closest('.nvp-cerrar')){ w.remove(); return; }
+    const b=e.target.closest('.nvp-ed-d'); if(b){ elegir(Number(b.dataset.d)); return; }
+    if(e.target.id==='nvpEdGuardar'||e.target.id==='nvpEdBorrar'){
+      const texto=e.target.id==='nvpEdGuardar'?$('nvpEdTx').value.trim():'';
+      try{
+        if(texto){ msgs[dia]={texto,por:me?.nombre||'',en:Date.now()}; await set(ref(db,`config/navidad/adviento/${dia}`),msgs[dia]); }
+        else { delete msgs[dia]; await set(ref(db,`config/navidad/adviento/${dia}`),null); }
+        refrescar(); showToastEmp(texto?`Mensaje del día ${dia} guardado`:`Mensaje del día ${dia} quitado`);
+      }catch(err){ alert('No se pudo guardar: '+err.message); }
+    }
+  });
+  refrescar();
+};
 // "Ver ahora" → Qué ver: recorre cada tema y, si tiene etapas, cada etapa. Solo en este dispositivo.
 window.cicloTemaVer=()=>{
   const T=window.__temas; if(!T) return;

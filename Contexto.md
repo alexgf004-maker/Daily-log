@@ -353,6 +353,14 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     `css/temas/navidad.css`, `:where(.nav-pre)`): encabezados de azul noche a azul hielo, acentos en rojo navideño,
     datos del calendario en azul noche; estados sin cambiar. A mano: cordón de foquitos arriba de los encabezados,
     barra de la marca roja y nieve suave en las pantallas (`.nv-amb`, la crea `js/navidad.js`; no sale en el login).
+  - **Cordón personal de foquitos** (Pre-Navidad, `js/navidad-app.js`, lo pinta `navidadApp()` en index.html): en el
+    encabezado de "Registro de actividades" del técnico, un foquito por día hábil del 1 al 21 dic (sin domingos ni
+    asuetos; sábados solo si le tocan). Encendido si ese día marcó la entrada a tiempo o la justificó; congelado si no;
+    tenue si todavía no llega. Una sola lectura de `marcajes/<uid>`. Fuera de diciembre muestra un ejemplo.
+  - **Calendario de Adviento** (1–24 dic, técnico y dashboard del admin): 24 puertitas; se abre la de hoy y las pasadas.
+    Cada una trae una sorpresa propia (`ADVIENTO` en `js/navidad-app.js`), una línea personal (foquitos) y el mensaje
+    que el admin escriba en Mi Perfil → "Mensajes del Adviento" (`config/navidad/adviento/<día>` = {texto, por, en};
+    lo permite la regla `config/$otro`). Las puertas abiertas se recuerdan en el teléfono (`innova_adviento_<uid>_<año>`).
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
     (la primera con el nombre del usuario recordado). El 24 la tarjeta se "abre" (moño y cinta caen, confeti) una
     vez por teléfono (`innova_nav_regalo`).
