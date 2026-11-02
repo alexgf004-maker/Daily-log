@@ -106,7 +106,7 @@
   }
   function efectivo(T){
     if(T.modo==='off') return null;
-    if(T.modo==='ver') return T.ref;
+    if(T.modo==='ver'){ var vv=null; try{ vv=localStorage.getItem('innova_tema_ver'); }catch(e){} return buscar(vv)||T.ref; }
     var g=globalVigente(T.global);
     if(g&&g.modo==='off') return null;
     if(g&&g.modo==='on') return buscar(g.tema)||T.lista[0];
@@ -117,7 +117,7 @@
   // eligió para probar ('innova_tema_etapa') o la primera.
   T.etapaDe=function(tema){
     if(!tema||!tema.etapas) return null;
-    var forz=null; try{ forz=localStorage.getItem('innova_tema_etapa'); }catch(e){}
+    var forz=null; if(T.modo==='ver') try{ forz=localStorage.getItem('innova_tema_etapa'); }catch(e){}   // la etapa elegida solo vale en "Ver ahora"
     var md=hoyMD(), i;
     if(forz) for(i=0;i<tema.etapas.length;i++) if(tema.etapas[i].id===forz) return tema.etapas[i];
     for(i=0;i<tema.etapas.length;i++) if(enRango(md,tema.etapas[i].desde,tema.etapas[i].hasta)) return tema.etapas[i];
@@ -1125,6 +1125,10 @@ function renderAdmin(){
           <button class="pf-row ap-aud" onclick="cicloTema()">
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></span>
             <span class="pf-tx"><b>Tema de temporada</b><span id="temaStatus">…</span></span><span class="ap-tema" id="temaModo"></span>
+          </button>
+          <button class="pf-row ap-aud" id="temaVerRow" onclick="cicloTemaVer()" style="display:none">
+            <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+            <span class="pf-tx"><b>Qué ver</b><span>Toca para cambiar el tema o la etapa que ves aquí</span></span><span class="ap-tema" id="temaVer"></span>
           </button>
           <button class="pf-row ap-aud" onclick="cerrarSesionTodos()">
             <span class="pf-ic r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
@@ -4040,6 +4044,9 @@ function pintarTema(){
     :g?.modo==='off'?'Apagado para todos'
     :`${sig.nombre}: del ${fc(sig.desde)} al ${fc(sig.hasta)}`;
   if(md) md.textContent={auto:'Automático',ver:'Ver ahora',off:'Apagado'}[T.modo];
+  const vr=$('temaVerRow'), vt=$('temaVer');
+  if(vr) vr.style.display=T.modo==='ver'?'':'none';
+  if(vt&&T.activo){ const et=T.etapaDe(T.activo); vt.textContent=T.activo.nombre+(et?' · '+et.nombre:''); }
   const gs=$('temaGlobalStatus'), gm=$('temaGlobalModo');
   const gt=g?.modo==='on'?(T.lista.find(x=>x.id===g.tema)||sig):sig; // el que se encendió para todos
   if(gs) gs.textContent=g?.modo==='on'?`${gt.nombre} encendido para todos, aunque no sea la fecha`
@@ -4066,6 +4073,16 @@ function aplicarTema(){
   }
   pintarTema();
 }
+// "Ver ahora" → Qué ver: recorre cada tema y, si tiene etapas, cada etapa. Solo en este dispositivo.
+window.cicloTemaVer=()=>{
+  const T=window.__temas; if(!T) return;
+  const ops=[]; T.lista.forEach(t=>{ if(t.etapas) t.etapas.forEach(e=>ops.push([t.id,e.id])); else ops.push([t.id,'']); });
+  const act=T.activo, eAct=T.etapaDe(act);
+  let i=ops.findIndex(o=>act&&o[0]===act.id&&(o[1]||'')===(eAct?eAct.id:''));
+  const sig=ops[(i+1)%ops.length];
+  try{ localStorage.setItem('innova_tema_ver',sig[0]); if(sig[1]) localStorage.setItem('innova_tema_etapa',sig[1]); else localStorage.removeItem('innova_tema_etapa'); }catch(e){}
+  aplicarTema();
+};
 window.cicloTema=()=>{
   const T=window.__temas; if(!T) return;
   T.modo={auto:'ver',ver:'off',off:'auto'}[T.modo]||'auto';
