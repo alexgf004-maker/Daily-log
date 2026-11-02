@@ -889,66 +889,102 @@ body:has(#loginScreen.active) .mu-amb{display:none}
 .nav-pre .lg-chip{display:none}
 .nav-pre .btn-login,.nav-casa .btn-login{background:linear-gradient(135deg,#e3263c,#a3132a 60%,#6f0b1c);box-shadow:0 12px 24px -10px rgba(160,15,40,.8)}
 .nav-pre .login-footer{display:table;padding:6px 13px;border-radius:99px;background:rgba(4,30,60,.5);color:#eafaff;max-width:none}
-/* tarjeta envuelta: cinta vertical, moño y etiqueta */
-.nv-cinta{position:absolute;z-index:0;top:0;bottom:0;right:44px;width:16px;background:linear-gradient(90deg,#a3132a,#e3263c 40%,#f24a5c 55%,#c4152c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);opacity:.92;pointer-events:none}
-.nv-mono{position:absolute;right:16px;top:-26px;width:72px;height:50px;z-index:3;filter:drop-shadow(0 4px 4px rgba(80,0,10,.35));animation:nvMono 3.4s ease-in-out infinite;transform-origin:50% 60%;pointer-events:none}
-@keyframes nvMono{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
-.nv-etiqueta{position:absolute;right:86px;top:-12px;z-index:2;transform:rotate(-5deg);background:#fffaf0;border:1px solid #e9d5b0;color:#7d0d1f;font-size:10.5px;font-weight:700;padding:3px 8px 3px 12px;border-radius:3px 8px 8px 3px;box-shadow:0 2px 4px rgba(0,0,0,.15)}
-.nv-etiqueta::before{content:'';position:absolute;left:4px;top:50%;width:4px;height:4px;margin-top:-2px;border-radius:50%;background:#c9b48a}
-.nv-etiqueta b{font-size:12.5px}
+/* Tarjeta envuelta: una cinta satinada que baja por el borde derecho (en el margen, sin pasar por los campos),
+   un moño de verdad en la esquina y una etiqueta de papel colgando del moño */
+.nv-cinta{position:absolute;z-index:0;top:0;bottom:0;right:3px;width:11px;pointer-events:none;
+  background:linear-gradient(90deg,#8a0f22 0%,#d51f37 28%,#ff7a8a 48%,#e3263c 62%,#9e1027 100%);box-shadow:0 0 0 .5px rgba(80,0,15,.25)}
+.nv-cinta::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0 22px,rgba(255,255,255,.07) 22px 23px)}
+.nv-mono{position:absolute;right:-23px;top:-26px;width:66px;height:51px;z-index:3;pointer-events:none;filter:drop-shadow(0 5px 5px rgba(70,0,12,.3));animation:nvMono 4s ease-in-out infinite;transform-origin:50% 45%}
+@keyframes nvMono{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+.nv-etiqueta{position:absolute;right:40px;top:-9px;z-index:2;transform:rotate(-7deg);transform-origin:100% 0;pointer-events:none;
+  padding:5px 10px 5px 16px;font-size:11px;font-weight:700;color:#6a3a18;letter-spacing:.01em;white-space:nowrap;
+  background:linear-gradient(180deg,#fbf2df,#efe0bf);clip-path:polygon(8px 0,100% 0,100% 100%,8px 100%,0 50%);
+  filter:drop-shadow(0 2px 2px rgba(60,30,0,.25));animation:nvEtq 4s ease-in-out infinite}
+.nv-etiqueta::before{content:'';position:absolute;left:7px;top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:#c9ad7a;box-shadow:inset 0 1px 1px rgba(0,0,0,.25)}
+.nv-etiqueta b{font-size:13px;color:#b5142c;font-weight:800}
+@keyframes nvEtq{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(-4deg)}}
 
-/* Pre-Navidad: todo el login a juego */
-/* "Recordar mi usuario": rojo navideño y la bolita con un copito */
-.nav-pre .lg-rec{color:#2a4a6a}
-.nav-pre .lg-rec-sw{background:#c9dcec}
-.nav-pre .lg-rec input:checked+.lg-rec-sw{background:linear-gradient(135deg,#e3263c,#a3132a)}
-.nav-pre .lg-rec-sw i::after{content:'';position:absolute;inset:3px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-12 -12 24 24'%3E%3Cg stroke='%231b84c9' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M0-10V10M-8.7-5L8.7 5M-8.7 5L8.7-5'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;opacity:.35;transition:opacity .2s}
-.nav-pre .lg-rec input:checked+.lg-rec-sw i::after{opacity:1}
-.nav-pre .lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0 0 3px rgba(227,38,60,.28)}
-/* campos: borde escarcha y brillo helado al escribir */
-.nav-pre .login-form input{background:#fff;border-color:#cfe6f6;color:#0b2d55}
-.nav-pre .login-form input:focus{border-color:#7cc9f0;box-shadow:0 0 0 4px rgba(124,201,240,.28),0 0 18px rgba(160,230,255,.5)}
-.nav-pre .lg-ico,.nav-pre .lg-ver{color:#5a87ad}
+/* Pre-Navidad: todo el login a juego (rediseño) */
+/* Interruptor "Recordar mi usuario": riel escarchado; encendido en rojo satinado. La bolita lleva un copo
+   de seis brazos que gira al cambiar */
+.nav-pre .lg-rec{color:#24435f}
+.nav-pre .lg-rec-sw{width:44px;height:26px;background:linear-gradient(180deg,#d9e6f1,#e9f2f9);box-shadow:inset 0 1px 2px rgba(20,60,100,.22),inset 0 0 0 1px rgba(120,160,195,.25)}
+.nav-pre .lg-rec-sw i{top:3px;left:3px;width:20px;height:20px;box-shadow:0 1px 3px rgba(10,40,80,.3),0 0 0 .5px rgba(10,40,80,.08)}
+.nav-pre .lg-rec input:checked+.lg-rec-sw{background:linear-gradient(180deg,#ec3b4f,#b5142c);box-shadow:inset 0 1px 2px rgba(80,0,15,.35),0 0 0 1px rgba(181,20,44,.15)}
+.nav-pre .lg-rec input:checked+.lg-rec-sw i{transform:translateX(18px)}
+.nav-pre .lg-rec-sw i::after{content:'';position:absolute;inset:3px;transition:transform .5s cubic-bezier(.3,1.3,.5,1),opacity .25s;opacity:.45;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-12 -12 24 24'%3E%3Cg stroke='%2390a8bd' stroke-width='1.5' stroke-linecap='round' fill='none'%3E%3Cg id='b'%3E%3Cpath d='M0 0V-10.5M0-5L-2.6-7.6M0-5L2.6-7.6M0-8.2L-1.6-9.8M0-8.2L1.6-9.8'/%3E%3C/g%3E%3Cuse href='%23b' transform='rotate(60)'/%3E%3Cuse href='%23b' transform='rotate(120)'/%3E%3Cuse href='%23b' transform='rotate(180)'/%3E%3Cuse href='%23b' transform='rotate(240)'/%3E%3Cuse href='%23b' transform='rotate(300)'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
+.nav-pre .lg-rec input:checked+.lg-rec-sw i::after{opacity:1;transform:rotate(120deg);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-12 -12 24 24'%3E%3Cg stroke='%23c4152c' stroke-width='1.5' stroke-linecap='round' fill='none'%3E%3Cg id='b'%3E%3Cpath d='M0 0V-10.5M0-5L-2.6-7.6M0-5L2.6-7.6M0-8.2L-1.6-9.8M0-8.2L1.6-9.8'/%3E%3C/g%3E%3Cuse href='%23b' transform='rotate(60)'/%3E%3Cuse href='%23b' transform='rotate(120)'/%3E%3Cuse href='%23b' transform='rotate(180)'/%3E%3Cuse href='%23b' transform='rotate(240)'/%3E%3Cuse href='%23b' transform='rotate(300)'/%3E%3C/g%3E%3C/svg%3E")}
+.nav-pre .lg-rec input:focus-visible+.lg-rec-sw{outline:2px solid rgba(43,140,206,.45);outline-offset:2px}
+
+/* Campos: blancos, borde fino azul hielo; al escribir, un anillo limpio (sin resplandor pesado) */
+.nav-pre .login-form input{background:#fff;border:1.5px solid #d6e5f2;color:#0b2d55;box-shadow:0 1px 0 rgba(255,255,255,.8),0 2px 6px -4px rgba(10,50,90,.18)}
+.nav-pre .login-form input::placeholder{color:#9db1c4}
+.nav-pre .login-form input:focus{border-color:#5fb4e2;box-shadow:0 0 0 4px rgba(95,180,226,.16);background:#fff}
+.nav-pre .lg-ico,.nav-pre .lg-ver{color:#8aa5bd}
 .nav-pre .lg-wrap:focus-within .lg-ico{color:#1b84c9}
-.nav-pre .login-form .fl{color:#2a4a6a}
-/* avisos: el error como tarjetita escarchada con foquito apagado; el informativo en azul hielo con copo */
-.nav-pre #loginAlert .mk-av{position:relative;overflow:hidden;box-shadow:0 6px 16px -10px rgba(10,50,90,.35)}
-.nav-pre #loginAlert .mk-av.mal{background:linear-gradient(180deg,#fff,#f2f9ff);border-color:#f5b5be}
-.nav-pre #loginAlert .mk-av.mal .mk-av-ic{background:linear-gradient(135deg,#e3263c,#a3132a)}
-.nav-pre #loginAlert .mk-av.mal b{color:#8a0f1f}.nav-pre #loginAlert .mk-av.mal .mk-av-tx>span{color:#5a7590}
-.nav-pre #loginAlert .mk-av.info{background:linear-gradient(180deg,#fff,#eef8ff);border-color:#bae6fd}
-.nav-pre #loginAlert .mk-av.info .mk-av-ic{background:linear-gradient(135deg,#2aa7e8,#155f96)}
-.nav-pre #loginAlert .mk-av.info b{color:#0b3a6a}
+.nav-pre .login-form .fl{color:#33526e;letter-spacing:.06em}
+
+/* Avisos: vidrio blanco con filo de color a la izquierda, ícono redondo dibujado a mano
+   (error: esfera navideña con una grieta · info: copo de nieve) y escarcha fina de fondo */
+.nav-pre #loginAlert .mk-av{position:relative;overflow:hidden;align-items:center;gap:12px;padding:12px 14px 12px 16px;border-radius:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(246,251,255,.95));border:1px solid rgba(160,195,225,.45);
+  box-shadow:0 10px 24px -14px rgba(10,45,85,.45);animation:nvAviso .38s cubic-bezier(.2,.9,.3,1.2)}
+.nav-pre #loginAlert .mk-av::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:3.5px;border-radius:0 3px 3px 0}
+.nav-pre #loginAlert .mk-av.mal::before{background:linear-gradient(180deg,#ef4459,#b5142c)}
+.nav-pre #loginAlert .mk-av.info::before{background:linear-gradient(180deg,#5cc3f0,#1b84c9)}
+.nav-pre #loginAlert .mk-av-ic{width:36px;height:36px;border-radius:50%;background:none!important;box-shadow:none}
 .nav-pre #loginAlert .mk-av-ic svg{display:none}
-.nav-pre #loginAlert .mk-av-ic::before{content:'';width:20px;height:20px;background:center/contain no-repeat}
-.nav-pre #loginAlert .mk-av.mal .mk-av-ic::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='9' y='2' width='6' height='4' rx='1' fill='%23fff' opacity='.85'/%3E%3Cpath d='M12 6C7 8 7 18 12 21C17 18 17 8 12 6Z' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M9 11C10 10 14 10 15 11' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M5 4L19 20' stroke='%23fff' stroke-width='2' stroke-linecap='round' opacity='.9'/%3E%3C/svg%3E")}
-.nav-pre #loginAlert .mk-av.info .mk-av-ic::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-12 -12 24 24'%3E%3Cg stroke='%23fff' stroke-width='2' stroke-linecap='round' fill='none'%3E%3Cpath d='M0-10V10M-8.7-5L8.7 5M-8.7 5L8.7-5M0-6L-3-9M0-6L3-9M0 6L-3 9M0 6L3 9'/%3E%3C/g%3E%3C/svg%3E")}
-.nav-pre #loginAlert .mk-av::after{content:'';position:absolute;right:-6px;top:-6px;width:56px;height:40px;opacity:.7;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 56 40'%3E%3Cg stroke='%23bfe6ff' stroke-width='1.2' fill='none' stroke-linecap='round'%3E%3Cpath d='M56 0L30 14M56 0L38 26M56 0L50 34M42 7l-4-5M44 18l-6 1M50 22l-6 3'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
-/* (el temblor de frío de la tarjeta lo hace js/navidad.js con form.animate) */
+.nav-pre #loginAlert .mk-av-ic::before{content:'';width:36px;height:36px;background:center/contain no-repeat}
+.nav-pre #loginAlert .mk-av.mal .mk-av-ic::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3CradialGradient id='g' cx='.36' cy='.32' r='.75'%3E%3Cstop offset='0' stop-color='%23ff9aa6'/%3E%3Cstop offset='.45' stop-color='%23e3263c'/%3E%3Cstop offset='1' stop-color='%237d0d1f'/%3E%3C/radialGradient%3E%3ClinearGradient id='c' x1='0' x2='0' y1='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f6dc8a'/%3E%3Cstop offset='1' stop-color='%23b98328'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M18 1.5v4' stroke='%23b98328' stroke-width='1.2'/%3E%3Crect x='14.5' y='5' width='7' height='4.5' rx='1.2' fill='url(%23c)'/%3E%3Ccircle cx='18' cy='21' r='12' fill='url(%23g)'/%3E%3Cpath d='M9 19c3 2 15 2 18 0' stroke='%23f6dc8a' stroke-width='1.2' fill='none' opacity='.8'/%3E%3Cpath d='M20.5 10.5l-2.6 5 3 2.4-3.4 4.6 1.6 1.4-2.6 4.6' stroke='%23fff' stroke-width='1.4' fill='none' stroke-linejoin='round' stroke-linecap='round'/%3E%3Cellipse cx='13.6' cy='15.6' rx='2.6' ry='1.6' fill='%23fff' opacity='.55' transform='rotate(-35 13.6 15.6)'/%3E%3C/svg%3E")}
+.nav-pre #loginAlert .mk-av.info .mk-av-ic::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-18 -18 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop offset='0' stop-color='%2366ccf4'/%3E%3Cstop offset='1' stop-color='%23155f96'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle r='17' fill='url(%23g)'/%3E%3Cg stroke='%23fff' stroke-width='1.6' stroke-linecap='round' fill='none'%3E%3Cg id='b'%3E%3Cpath d='M0 0V-11M0-5.5L-3-8.5M0-5.5L3-8.5M0-8.8L-1.8-10.6M0-8.8L1.8-10.6'/%3E%3C/g%3E%3Cuse href='%23b' transform='rotate(60)'/%3E%3Cuse href='%23b' transform='rotate(120)'/%3E%3Cuse href='%23b' transform='rotate(180)'/%3E%3Cuse href='%23b' transform='rotate(240)'/%3E%3Cuse href='%23b' transform='rotate(300)'/%3E%3C/g%3E%3Ccircle r='1.8' fill='%23fff'/%3E%3C/svg%3E")}
+.nav-pre #loginAlert .mk-av-tx b{font-size:13.5px;font-weight:800;letter-spacing:-.1px}
+.nav-pre #loginAlert .mk-av.mal b{color:#8a0f22}
+.nav-pre #loginAlert .mk-av.info b{color:#0b3a6a}
+.nav-pre #loginAlert .mk-av-tx>span{color:#5b7088!important;font-size:12px}
+/* escarcha fina de fondo, a la derecha del aviso (la arma js/navidad.js con .nv-helada) */
+.nav-pre #loginAlert .nv-helada{position:absolute;right:-4px;top:-4px;width:92px;height:64px;pointer-events:none;opacity:.9}
+@keyframes nvAviso{from{opacity:0;transform:translateY(-6px) scale(.985);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
 .nv-fq.falla .vid{animation:nvFalla 1.5s steps(1) 1}
 @keyframes nvFalla{0%{opacity:1}12%{opacity:.25}20%{opacity:1}30%{opacity:.2}45%,100%{opacity:.35}}
-/* botón: destello de escarcha que lo cruza y chispitas al tocarlo */
-.nav-pre .btn-login{position:relative;overflow:hidden}
-.nav-pre .btn-login::before{content:'';position:absolute;top:0;bottom:0;width:55%;left:-70%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-18deg);animation:nvBrilloBtn 4.2s ease-in-out infinite;pointer-events:none}
-@keyframes nvBrilloBtn{0%,62%{left:-70%}100%{left:130%}}
-.nv-chispa{position:fixed;z-index:70;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;pointer-events:none;box-shadow:0 0 6px rgba(255,255,255,.9);animation:nvChispa .85s ease-out forwards}
+
+/* Botón: rojo satinado, filo de nieve arriba, destello suave y chispitas al tocarlo */
+.nav-pre .btn-login{position:relative;overflow:visible;background:linear-gradient(180deg,#ec3a4e 0%,#c81d35 55%,#a5142b 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -2px 0 rgba(80,0,15,.25),0 12px 22px -12px rgba(150,15,40,.85)}
+.nav-pre .btn-login::after{content:'';position:absolute;left:10px;right:10px;top:-5px;height:11px;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 11' preserveAspectRatio='none'%3E%3Cpath d='M0 7C8 2 18 3 26 5S44 1 54 4 74 2 84 5 102 1 114 4 134 2 144 5 162 1 174 4 194 2 204 5 222 1 234 4 254 2 264 5 282 1 292 4L300 6V8C292 10 286 8 280 9S262 11 252 9 232 10 220 9 200 11 190 9 170 10 160 9 140 11 128 9 108 10 98 9 78 11 66 9 46 10 36 9 16 11 0 9Z' fill='%23fff'/%3E%3C/svg%3E") center/100% 100% no-repeat;filter:drop-shadow(0 1px 1px rgba(10,40,80,.2))}
+.nav-pre .btn-login::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.28) 45%,transparent 60%) -200% 0/250% 100% no-repeat;animation:nvBrilloBtn 5s ease-in-out infinite}
+@keyframes nvBrilloBtn{0%,65%{background-position:-200% 0}100%{background-position:200% 0}}
+.nv-chispa{position:fixed;z-index:70;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;pointer-events:none;box-shadow:0 0 6px 1px rgba(255,255,255,.95);animation:nvChispa .8s cubic-bezier(.2,.7,.4,1) forwards}
 @keyframes nvChispa{to{transform:translate(var(--tx),var(--ty)) scale(.2);opacity:0}}
-/* escarcha en las esquinas de la tarjeta */
-.nv-escarcha{position:absolute;width:104px;height:78px;pointer-events:none;z-index:0;opacity:.85}
-.nv-escarcha svg{width:100%;height:100%}
-.nv-escarcha.a{left:-2px;top:-2px;transform:scaleX(-1)}
-.nv-escarcha.b{right:-2px;bottom:-2px;transform:scaleY(-1)}
-/* foquitos que se pueden tocar */
+
+/* Escarcha de verdad en las esquinas de la tarjeta (helechos de hielo que arma js/navidad.js) */
+.nv-escarcha{position:absolute;width:118px;height:96px;pointer-events:none;z-index:0;opacity:.95;overflow:hidden;border-radius:22px}
+.nv-escarcha svg{width:100%;height:100%;display:block}
+.nv-escarcha.a{left:0;top:0}
+.nv-escarcha.b{right:0;bottom:0;transform:rotate(180deg)}
+
+/* Foquitos que se pueden tocar */
 .nav-pre .nv-fq{pointer-events:auto;cursor:pointer}
 .nv-fq.destella .vid{animation:nvDestella .8s ease-out 1}
-@keyframes nvDestella{0%{opacity:1;filter:brightness(1)}30%{opacity:1;filter:brightness(1.9) drop-shadow(0 0 6px #fff)}100%{opacity:1;filter:brightness(1)}}
-/* bienvenida al entrar: foquitos que se encienden arriba y copos que caen */
+@keyframes nvDestella{0%{filter:brightness(1)}30%{filter:brightness(1.9) drop-shadow(0 0 6px #fff)}100%{filter:brightness(1)}}
+
+/* Bienvenida al entrar: una guirnalda de foquitos baja meciéndose y se enciende en cadena, caen copos y un
+   saludo breve; ~1.6 s sobre la app, sin tapar los toques */
 .nv-bienvenida{position:fixed;inset:0;z-index:9000;pointer-events:none;overflow:hidden}
-.nv-bv-focos{position:absolute;left:0;right:0;top:0;height:30px}
-.nv-bv-focos i{position:absolute;top:6px;width:11px;height:16px;border-radius:50% 50% 50% 50%/40% 40% 60% 60%;opacity:0;box-shadow:0 0 12px currentColor;animation:nvBvFoco 1.2s ease-out forwards}
-@keyframes nvBvFoco{0%{opacity:0;transform:scale(.6)}20%{opacity:1;transform:scale(1.15);filter:brightness(1.6)}70%{opacity:1}100%{opacity:0}}
-.nv-bienvenida b{position:absolute;top:-10px;border-radius:50%;background:#fff;opacity:.95;box-shadow:0 0 0 1px rgba(27,132,201,.28),0 0 8px rgba(27,132,201,.45);animation:nvBvCopo 1.2s ease-in forwards}
-@keyframes nvBvCopo{to{transform:translateY(55vh);opacity:0}}
+.nv-bv-guirnalda{position:absolute;left:-2%;width:104%;top:-4px;height:70px;transform-origin:50% 0;animation:nvBvBaja 1.6s cubic-bezier(.3,1.2,.5,1) forwards}
+@keyframes nvBvBaja{0%{transform:translateY(-70px)}25%{transform:translateY(0) rotate(.6deg)}45%{transform:rotate(-.4deg)}60%,85%{transform:none;opacity:1}100%{opacity:0}}
+.nv-bv-guirnalda .vid{opacity:.35;animation:nvBvPrende .3s ease-out forwards}
+@keyframes nvBvPrende{to{opacity:1}}
+.nv-bv-hola{position:absolute;left:50%;top:76px;transform:translateX(-50%);padding:8px 16px 8px 12px;border-radius:99px;display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.96);color:#0b3a6a;font-size:13.5px;font-weight:800;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(10,45,85,.55),0 0 0 1px rgba(160,195,225,.5);
+  animation:nvBvHola 1.6s cubic-bezier(.2,.9,.3,1.2) forwards}
+.nv-bv-hola svg{width:20px;height:20px}
+@keyframes nvBvHola{0%{opacity:0;transform:translate(-50%,-10px) scale(.92)}18%{opacity:1;transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
+.nv-bienvenida b{position:absolute;top:-12px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(27,132,201,.25),0 0 8px rgba(27,132,201,.4);animation:nvBvCopo 1.6s ease-in forwards}
+@keyframes nvBvCopo{0%{transform:translateY(0)}100%{transform:translateY(60vh) translateX(var(--dx,0));opacity:0}}
 
 /* ═ Navidad en casa ═ */
 .nav-casa #loginScreen{background:radial-gradient(90% 60% at 80% 100%,#7a2a12 0%,transparent 60%),radial-gradient(70% 50% at 15% 40%,rgba(255,170,80,.18),transparent 70%),linear-gradient(180deg,#2b0d0a 0%,#3d140e 45%,#2a0c08 100%)!important}

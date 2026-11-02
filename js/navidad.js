@@ -160,16 +160,30 @@
   }
 
   /* ── Pre-Navidad: detalles del login (escarcha, foquitos que se tocan, errores con "brrr", bienvenida) ── */
-  var SVG_ESC=(function(){ var g=''; for(var i=0;i<9;i++){ var a=(180+i*11)*Math.PI/180, L=40+((i*23)%40), x=120+Math.cos(a)*L, y=Math.sin(a)*L*-.8;
-      g+='<path d="M120 0 L'+x.toFixed(1)+' '+(-y).toFixed(1)+'"/>'; [.35,.6,.8].forEach(function(f,k){ var px=120+(x-120)*f, py=-y*f; g+='<path d="M'+px.toFixed(1)+' '+py.toFixed(1)+' l-6 '+(((i+k)%3)*4-4)+' M'+px.toFixed(1)+' '+py.toFixed(1)+' l'+(((i*k)%3)-1)+' 7"/>'; }); }
-    return '<svg viewBox="0 0 120 90"><g stroke="#bfe6ff" stroke-width="1.4" fill="none" stroke-linecap="round">'+g+'</g></svg>'; })();
+  function escarcha(w,h,semilla){
+    var sem=semilla||7, rnd=function(){ sem=(sem*9301+49297)%233280; return sem/233280; }, d='';
+    function rama(x,y,ang,largo,prof){
+      var x2=x+Math.cos(ang)*largo, y2=y+Math.sin(ang)*largo; d+='M'+x.toFixed(1)+' '+y.toFixed(1)+'L'+x2.toFixed(1)+' '+y2.toFixed(1);
+      if(prof<=0||largo<4) return;
+      var n=prof>1?3:4;
+      for(var k=1;k<=n;k++){ var t=k/(n+1), bx=x+(x2-x)*t, by=y+(y2-y)*t, l=largo*(.42-.06*k)*(.8+rnd()*.4);
+        rama(bx,by,ang-1.05,l,prof-1); rama(bx,by,ang+1.05,l*(.85+rnd()*.3),prof-1); }
+    }
+    // desde la esquina (0,0) hacia adentro
+    [[.18,62],[.62,74],[1.05,58],[1.4,40]].forEach(function(r){ rama(0,0,r[0]+(rnd()-.5)*.12,r[1]*(.85+rnd()*.3),2); });
+    return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="xMinYMin slice"><defs><radialGradient id="nvEscF'+semilla+'" cx="0" cy="0" r="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>'+
+      '<filter id="nvEscB'+semilla+'"><feGaussianBlur stdDeviation="1.2"/></filter></defs>'+
+      '<rect width="'+w+'" height="'+h+'" fill="url(#nvEscF'+semilla+')"/>'+
+      '<path d="'+d+'" stroke="#cfeeff" stroke-width="2.2" fill="none" opacity=".55" filter="url(#nvEscB'+semilla+')"/>'+
+      '<path d="'+d+'" stroke="#ffffff" stroke-width=".85" fill="none" stroke-linecap="round" opacity=".95"/></svg>';
+  }
   function chispas(x,y,n,cols){ for(var i=0;i<n;i++){ var c=document.createElement('i'); c.className='nv-extra nv-chispa'; c.style.left=x+'px'; c.style.top=y+'px';
       c.style.background=cols[i%cols.length]; var a=Math.random()*6.283, r=R(30,90); c.style.setProperty('--tx',(Math.cos(a)*r).toFixed(0)+'px'); c.style.setProperty('--ty',(Math.sin(a)*r).toFixed(0)+'px');
       document.body.appendChild(c); (function(e){ setTimeout(function(){ e.remove(); },900); })(c); } }
   function detallesPre(capa){
     var form=$('#loginScreen .login-form');
     // escarcha en dos esquinas de la tarjeta (las otras tienen el moño y la etiqueta)
-    if(form) form.insertAdjacentHTML('afterbegin','<div class="nv-extra nv-escarcha a">'+SVG_ESC+'</div><div class="nv-extra nv-escarcha b">'+SVG_ESC+'</div>');
+    if(form) form.insertAdjacentHTML('afterbegin','<div class="nv-extra nv-escarcha a">'+escarcha(118,96,7)+'</div><div class="nv-extra nv-escarcha b">'+escarcha(118,96,19)+'</div>');
     // foquitos que se pueden tocar: el congelado titila, el encendido destella
     capa.querySelectorAll('.nv-fq').forEach(function(f){ f.addEventListener('pointerdown',function(e){ e.stopPropagation();
       var cl=f.classList.contains('on')?'destella':'intenta'; f.classList.remove(cl); void f.getBoundingClientRect(); f.classList.add(cl); setTimeout(function(){ f.classList.remove(cl); },900); }); });
@@ -188,7 +202,9 @@
     }
     function vigilar(){
       var al=document.getElementById('loginAlert'), ls=document.getElementById('loginScreen'); if(!al||!ls) return;
-      new MutationObserver(function(){ if(enPre()&&al.querySelector('.mk-av.mal')) falla(); }).observe(al,{childList:true});
+      new MutationObserver(function(){ if(!enPre()) return;
+        al.querySelectorAll('.mk-av:not(.nv-ok)').forEach(function(m){ m.classList.add('nv-ok'); m.insertAdjacentHTML('beforeend','<div class="nv-helada">'+escarcha(92,64,31).replace('xMinYMin','xMaxYMin')+'</div>'); var h=m.querySelector('.nv-helada svg'); if(h) h.style.transform='scaleX(-1)'; });
+        if(al.querySelector('.mk-av.mal')) falla(); }).observe(al,{childList:true});
       var antes=ls.classList.contains('active');
       new MutationObserver(function(){ var ahora=ls.classList.contains('active');
         if(antes&&!ahora&&enPre()&&!reducido){ var m=document.getElementById('maintenanceScreen'); if(!(m&&m.classList.contains('active'))) bienvenida(); }
@@ -197,18 +213,42 @@
     // al entrar: una guirnalda de foquitos se enciende arriba y caen copos, menos de un segundo
     function bienvenida(){
       var b=document.createElement('div'); b.className='nv-extra nv-bienvenida'; b.setAttribute('aria-hidden','true');
-      var focos='', cols=['#e3263c','#f2c45a','#e3263c','#2bb38a','#e3263c','#fff'];
-      for(var i=0;i<14;i++) focos+='<i style="left:'+(3+i*7.2).toFixed(1)+'%;background:'+cols[i%cols.length]+';animation-delay:'+(i*.03).toFixed(2)+'s"></i>';
-      var copos=''; for(i=0;i<22;i++) copos+='<b style="left:'+R(0,100).toFixed(0)+'%;animation-delay:'+R(0,.25).toFixed(2)+'s;width:'+R(4,9).toFixed(0)+'px;height:'+R(4,9).toFixed(0)+'px"></b>';
-      b.innerHTML='<div class="nv-bv-focos">'+focos+'</div>'+copos; document.body.appendChild(b);
-      setTimeout(function(){ b.remove(); },1300);
+      var cols=['#e3263c','#f2c45a','#e3263c','#2bb38a','#e3263c','#9cd7ff'], g='', n=16;
+      for(var i=0;i<n;i++){ var t=(i+.5)/n, x=t*400, y=10+Math.sin(t*Math.PI)*26;
+        g+='<g transform="translate('+x.toFixed(1)+' '+y.toFixed(1)+') rotate('+((i%2?1:-1)*10)+')"><rect x="-2.6" y="-1" width="5.2" height="4.4" rx="1" fill="#5a6a7a"/>'+
+           '<path class="vid" style="animation-delay:'+(.25+i*.05).toFixed(2)+'s" d="M0 3 C-5.5 5 -5.5 14.5 0 17 C5.5 14.5 5.5 5 0 3Z" fill="'+cols[i%cols.length]+'" filter="url(#nvBvLuz)"/></g>'; }
+      var copos=''; for(i=0;i<20;i++) copos+='<b style="left:'+R(0,100).toFixed(0)+'%;animation-delay:'+R(.1,.45).toFixed(2)+'s;width:'+R(4,8).toFixed(0)+'px;height:'+R(4,8).toFixed(0)+'px;--dx:'+R(-30,30).toFixed(0)+'px"></b>';
+      var n2=nombre();
+      b.innerHTML='<svg class="nv-bv-guirnalda" viewBox="0 0 400 50" preserveAspectRatio="none"><defs><filter id="nvBvLuz" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'+
+        '<path d="M0 10 Q200 62 400 10" stroke="#2a3a4a" stroke-width="1.2" fill="none"/>'+g+'</svg>'+copos+
+        '<div class="nv-bv-hola"><svg viewBox="-12 -12 24 24"><g stroke="#1b84c9" stroke-width="1.6" stroke-linecap="round" fill="none"><g id="nvBvC"><path d="M0 0V-10M0-5L-2.6-7.6M0-5L2.6-7.6"/></g><use href="#nvBvC" transform="rotate(60)"/><use href="#nvBvC" transform="rotate(120)"/><use href="#nvBvC" transform="rotate(180)"/><use href="#nvBvC" transform="rotate(240)"/><use href="#nvBvC" transform="rotate(300)"/></g></svg>'+
+        (n2?'¡Qué gusto verte, '+esc(n2)+'!':'¡Qué gusto verte!')+'</div>';
+      document.body.appendChild(b);
+      setTimeout(function(){ b.remove(); },1750);
     }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',vigilar); else vigilar();
   })();
+  var MONO='<svg class="nv-extra nv-mono" viewBox="-39 -26 78 60"><defs>'+
+    '<linearGradient id="nvLazo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b7c"/><stop offset=".45" stop-color="#e3263c"/><stop offset="1" stop-color="#8a0f22"/></linearGradient>'+
+    '<linearGradient id="nvLazoIn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6e0a1a"/><stop offset="1" stop-color="#b5142c"/></linearGradient>'+
+    '<linearGradient id="nvCola" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9e1027"/><stop offset=".5" stop-color="#e3263c"/><stop offset="1" stop-color="#8a0f22"/></linearGradient>'+
+    '<radialGradient id="nvNudo" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#ff8a98"/><stop offset=".6" stop-color="#d51f37"/><stop offset="1" stop-color="#8a0f22"/></radialGradient></defs>'+
+    // colas
+    '<path d="M-3 3 C-7 12 -12 20 -16 30 L-11 27 L-8 33 C-4 22 -1 12 1 4Z" fill="url(#nvCola)"/>'+
+    '<path d="M3 3 C7 12 11 20 14 31 L9 28 L6 34 C3 22 1 12 -1 4Z" fill="url(#nvCola)"/>'+
+    // lazos (con su interior más oscuro)
+    '<path d="M-2 -1 C-14 -22 -38 -20 -35 -5 C-33 6 -16 7 -2 2Z" fill="url(#nvLazo)"/>'+
+    '<path d="M-5 -1 C-14 -14 -29 -13 -28 -5 C-27 1 -16 2 -5 1Z" fill="url(#nvLazoIn)" opacity=".75"/>'+
+    '<path d="M2 -1 C14 -22 38 -20 35 -5 C33 6 16 7 2 2Z" fill="url(#nvLazo)"/>'+
+    '<path d="M5 -1 C14 -14 29 -13 28 -5 C27 1 16 2 5 1Z" fill="url(#nvLazoIn)" opacity=".75"/>'+
+    '<path d="M-30 -12 C-24 -17 -14 -16 -8 -9" stroke="#ffc2ca" stroke-width="1.4" fill="none" opacity=".7" stroke-linecap="round"/>'+
+    '<path d="M30 -12 C24 -17 14 -16 8 -9" stroke="#ffc2ca" stroke-width="1.4" fill="none" opacity=".5" stroke-linecap="round"/>'+
+    // nudo
+    '<rect x="-6.5" y="-6" width="13" height="11" rx="4.5" fill="url(#nvNudo)"/><path d="M-4 -3.5 C-1 -5 2 -5 4 -3.5" stroke="#ffc2ca" stroke-width="1.2" fill="none" opacity=".8" stroke-linecap="round"/>'+
+    '</svg>';
   function envolverTarjeta(etq){
     var form=$('#loginScreen .login-form'); if(!form) return null;
-    form.insertAdjacentHTML('afterbegin','<div class="nv-extra nv-cinta"></div><svg class="nv-extra nv-mono" viewBox="-40 -30 80 56"><path d="M0 0 C-14 -22 -36 -14 -26 -2 C-20 6 -8 4 0 0Z" fill="#e3263c"/><path d="M0 0 C14 -22 36 -14 26 -2 C20 6 8 4 0 0Z" fill="#e3263c"/><path d="M0 0 C-10 -14 -26 -10 -20 -3" stroke="#a3132a" stroke-width="1.6" fill="none"/><path d="M0 0 C10 -14 26 -10 20 -3" stroke="#a3132a" stroke-width="1.6" fill="none"/><path d="M-2 2 L-12 24 L-6 21 L-3 26Z M2 2 L12 24 L6 21 L3 26Z" fill="#c4152c"/><ellipse rx="6" ry="5" fill="#f24a5c"/><ellipse cx="-2" cy="-1.5" rx="2" ry="1.2" fill="#fff" opacity=".55"/></svg>'+
-      (etq?'<div class="nv-extra nv-etiqueta">'+etq+'</div>':''));
+    form.insertAdjacentHTML('afterbegin','<div class="nv-extra nv-cinta"></div>'+MONO+(etq?'<div class="nv-extra nv-etiqueta">'+etq+'</div>':''));
     return form;
   }
 

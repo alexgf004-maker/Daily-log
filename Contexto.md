@@ -346,7 +346,9 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     avisos (`#loginAlert .mk-av`) escarchados con foquito apagado (error) o copo (info); con un error la tarjeta tiembla
     (`form.animate`, para no reiniciar `.lg-anim`) y un foquito encendido falla; botón con destello y chispitas al
     tocarlo; escarcha en dos esquinas; los foquitos se pueden tocar; al entrar, foquitos y copos de bienvenida sobre la
-    app (`.nv-bienvenida`, ~1 s). Nada de esto toca la lógica del login.
+    app (`.nv-bienvenida`: guirnalda que baja y se enciende, copos y "¡Qué gusto verte, Alex!", ~1.6 s). La cinta va
+    por el borde derecho (sin pasar por los campos); la escarcha son helechos de hielo (`escarcha()`). Nada de esto toca
+    la lógica del login.
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
     (la primera con el nombre del usuario recordado). El 24 la tarjeta se "abre" (moño y cinta caen, confeti) una
     vez por teléfono (`innova_nav_regalo`).
