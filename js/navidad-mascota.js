@@ -69,9 +69,9 @@ async function sync(){
   element.setAttribute('aria-label',current==='pre'?'Criatura navideña atrapada en hielo':'Criatura navideña interactiva');
   login.appendChild(element);mount=element;
   try{
-    var response=await fetch('assets/navidad/personaje-animable.svg');
-    if(!response.ok)throw Error('No se pudo cargar SVG: '+response.status);
-    var source=await response.text();
+    // SVG integrado: evita fallos por rutas, caché o peticiones en el login.
+    var source=window.__nvMascotaSprite;
+    if(!source)throw Error('Sprite vectorial no disponible');
     if(myGeneration!==generation||!theme()||stage()!==current)return;
     var xml=new DOMParser().parseFromString(source,'image/svg+xml');
     if(xml.querySelector('parsererror'))throw Error('SVG inválido');
