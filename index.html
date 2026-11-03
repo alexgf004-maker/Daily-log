@@ -59,7 +59,7 @@
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=81">
+<link rel="stylesheet" href="css/styles.css?v=82">
 <link rel="stylesheet" href="css/temas/comun.css?v=46">
 <link rel="stylesheet" href="css/navidad-mascota.css?v=8">
 <script src="js/navidad.js?v=6" defer></script>
@@ -6692,22 +6692,38 @@ window.progSub=(cual)=>{
 // Carga los datos de una fecha UNA sola vez (usuarios, ausentes, programación).
 // renderArmar() ya no vuelve a pedir nada de esto en cada clic — por eso cada
 // acción del tablero (asignar, quitar, crear grupo) redibuja al instante.
+// Mientras carga, el tablero queda bloqueado y no se guarda nada: antes, un cambio hecho en ese momento
+// guardaba los grupos del día anterior en el día nuevo. Si llegan dos cargas seguidas (‹ › rápido), vale la última.
+// Si la carga falla, el tablero sigue bloqueado (guardar ahí borraría lo que sí hay en la base).
 async function cargarProgramacionFecha(fecha){
-  progFecha=fecha;
-  const [prog,users]=await Promise.all([
-    obtenerProgramacion(db,{ref,get},fecha),
-    getUsers(),
-    getRegistrosAll(), // calienta el caché para que cargarAusentesProg no espere de nuevo
-  ]);
-  progGrupos = prog?.grupos ? JSON.parse(JSON.stringify(prog.grupos)) : [];
-  // La base no guarda listas vacías: si falta una de las dos, se repone vacía
-  progNoDisp = {personal:[...(prog?.noDisponibles?.personal||[])], vehiculos:[...(prog?.noDisponibles?.vehiculos||[])]};
-  progEmpleados = users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  await cargarAusentesProg(fecha);
-  renderArmar();
+  const n=++progCargaN;
+  progFecha=fecha; progCargando=true; bloquearTableroProg(true); estadoGuardadoProg('carga');
+  try{
+    const [prog,users]=await Promise.all([
+      obtenerProgramacion(db,{ref,get},fecha),
+      getUsers(),
+      getRegistrosAll(), // calienta el caché para que cargarAusentesProg no espere de nuevo
+    ]);
+    if(n!==progCargaN) return;
+    progGrupos = prog?.grupos ? JSON.parse(JSON.stringify(prog.grupos)) : [];
+    // La base no guarda listas vacías: si falta una de las dos, se repone vacía
+    progNoDisp = {personal:[...(prog?.noDisponibles?.personal||[])], vehiculos:[...(prog?.noDisponibles?.vehiculos||[])]};
+    progUsuarios = users;
+    progEmpleados = users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+    await cargarAusentesProg(fecha);
+    if(n!==progCargaN) return;
+    progCargando=false; estadoGuardadoProg(prog?.actualizado?'guardadoAntes':'',prog?.actualizado);
+    renderArmar(); bloquearTableroProg(false);
+    escucharProgEnVivo(fecha);
+  }catch(e){
+    if(n!==progCargaN) return;
+    console.warn('[programación] no se pudo cargar', fecha, e);
+    estadoGuardadoProg('errorCarga',e);
+  }
 }
 
 window.progCambiarFecha=(val)=>{ if(val) cargarProgramacionFecha(val); };
+window.progReintentarCarga=()=>cargarProgramacionFecha(progFecha);
 
 // "Copiar de..." — antes solo ofrecía la programación anterior más reciente
 // (en la práctica, los lunes eso era el viernes, con una cuadrilla distinta
@@ -6788,8 +6804,111 @@ window.confirmarCopiarProg=async()=>{
   }
 };
 
+// ── Guardado de la programación ──
+// Cada cambio del tablero guarda el día completo en segundo plano. Antes, si fallaba (sin señal, sesión
+// caída, permiso negado) no se avisaba nada: el cambio se veía en pantalla pero no llegaba a la base.
+// Ahora: hay un indicador "Guardando… / Guardado ✓", un aviso rojo con el motivo y un botón para reintentar;
+// los guardados van en orden (si llega un cambio mientras se guarda, se guarda otra vez al terminar) y se
+// limpian valores vacíos que la base rechaza. Cada guardado lleva quién y desde qué dispositivo (dev), para
+// que la escucha en vivo distinga lo propio de lo de otra persona.
+const PROG_DEV=Math.random().toString(36).slice(2,10);
+let progGuardando=false, progPendiente=false, progCargando=false, progCargaN=0, progUsuarios=[], progEscucha=null, progEscuchaFecha=null;
+let progEstadoG={tipo:'',t:0,msg:''};
+const limpiarGrupoProg=g=>{
+  const noms=g.empleadosNombres||[];
+  const pares=(g.empleados||[]).map((id,k)=>[id,noms[k]]).filter(([id])=>typeof id==='string'&&id);
+  const out={...g, campania:String(g.campania||''), area:g.area||'campo', empleados:pares.map(x=>x[0]), empleadosNombres:pares.map(x=>String(x[1]??'')),
+    vehiculo:g.vehiculo||'', vehiculoNombre:String(g.vehiculoNombre||'')};
+  if(g.zona!=null) out.zona=String(g.zona);
+  return out;
+};
 async function persistProg(){
-  await guardarProgramacion(db,{ref,get,set}, progFecha, {grupos:progGrupos, noDisponibles:progNoDisp});
+  if(progCargando||!progFecha) return;                 // mientras carga otro día no se guarda nada
+  if(progGuardando){ progPendiente=true; return; }      // va uno en camino: al terminar se guarda lo último
+  progGuardando=true; progPendiente=false;
+  const fecha=progFecha;
+  estadoGuardadoProg('guardando');
+  const lento=setTimeout(()=>{ if(progGuardando) estadoGuardadoProg('lento'); },6000);
+  let ok=false;
+  try{
+    const datos=JSON.parse(JSON.stringify({grupos:progGrupos.map(limpiarGrupoProg), noDisponibles:progNoDisp,
+      actualizado:Date.now(), dev:PROG_DEV, por:me?.id||''}));
+    await set(ref(db,`programaciones/${fecha}`), datos);
+    ok=true;
+  }catch(e){
+    console.warn('[programación] no se guardó', fecha, e);
+    estadoGuardadoProg('error',e);
+    showToastEmp('⚠️ No se guardó la programación. '+motivoErrorProg(e), 6000);
+  }finally{
+    clearTimeout(lento); progGuardando=false;
+    if(progPendiente&&!progCargando) persistProg();
+    else if(ok) estadoGuardadoProg('ok');
+  }
+}
+window.progReintentarGuardar=()=>persistProg();
+function motivoErrorProg(e){
+  const c=String(e&&(e.code||e.message)||'');
+  if(/permission/i.test(c)) return 'Tu sesión no tiene permiso para guardar: sal y vuelve a entrar.';
+  if(navigator.onLine===false) return 'No hay conexión a internet.';
+  return 'Revisa tu conexión e inténtalo de nuevo.';
+}
+const horaCortaProg=t=>{ const d=new Date(t); return `${d.getHours()%12||12}:${String(d.getMinutes()).padStart(2,'0')} ${d.getHours()<12?'a.m.':'p.m.'}`; };
+function htmlGuardadoProg(){
+  const E=progEstadoG;
+  switch(E.tipo){
+    case 'carga': return '<span class="pg-gd cargando"><i></i>Cargando el día…</span>';
+    case 'errorCarga': return '<span class="pg-gd error">No se pudo cargar este día. <button onclick="progReintentarCarga()">Reintentar</button></span>';
+    case 'guardando': return '<span class="pg-gd guardando"><i></i>Guardando…</span>';
+    case 'lento': return '<span class="pg-gd lento"><i></i>Guardando… revisa tu señal</span>';
+    case 'ok': return `<span class="pg-gd ok">✓ Guardado · ${horaCortaProg(E.t)}</span>`;
+    case 'guardadoAntes': { const d=new Date(E.t), f=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      return `<span class="pg-gd ok tenue">Guardado ${f===today()?'hoy':'el '+fechaCortaFx(f)} · ${horaCortaProg(E.t)}</span>`; }
+    case 'remoto': return `<span class="pg-gd remoto">↻ Actualizado con cambios de ${escHtml(E.msg)} · ${horaCortaProg(E.t)}</span>`;
+    case 'error': return `<span class="pg-gd error">No se guardó. ${escHtml(E.msg)} <button onclick="progReintentarGuardar()">Reintentar</button></span>`;
+    default: return '';
+  }
+}
+function estadoGuardadoProg(tipo,extra){
+  progEstadoG={tipo, t:tipo==='guardadoAntes'?extra:Date.now(), msg:tipo==='error'?motivoErrorProg(extra):(tipo==='remoto'?extra:'')};
+  const el=document.getElementById('progGuardado');
+  if(el) el.innerHTML=htmlGuardadoProg();
+  else if(tipo==='errorCarga'&&$('progArmarBody')) $('progArmarBody').innerHTML=`<div class="pg-guardado">${htmlGuardadoProg()}</div>`;   // primera carga: aún no hay tablero
+}
+function bloquearTableroProg(si){ const b=$('progArmarBody'); if(b) b.classList.toggle('pg-cargando',!!si); }
+// Si se intenta cerrar la app con algo sin guardar, el navegador pregunta
+window.addEventListener('beforeunload',e=>{ if(progGuardando||progPendiente||progEstadoG.tipo==='error'){ e.preventDefault(); e.returnValue=''; } });
+
+// ── Programación en vivo ──
+// Antes, si dos personas (o la misma en dos dispositivos) tenían abierto el mismo día, cada guardado escribía
+// el día completo con lo que tenía su pantalla y pisaba lo de la otra. Ahora el tablero escucha el día abierto:
+// cuando otra persona guarda, se actualiza solo (y avisa quién). Lo propio se reconoce por "dev".
+function escucharProgEnVivo(fecha){
+  if(progEscuchaFecha===fecha&&progEscucha) return;
+  if(progEscucha){ try{ progEscucha(); }catch(_){} progEscucha=null; }
+  progEscuchaFecha=fecha;
+  let pendiente=null;
+  const aplicar=v=>{
+    if(fecha!==progFecha||progCargando||progGuardando||progPendiente) return;
+    const nuevos=v.grupos||[];
+    if(JSON.stringify(nuevos.map(limpiarGrupoProg))===JSON.stringify(progGrupos.map(limpiarGrupoProg))&&!progVaciado(v)) return;
+    progGrupos=JSON.parse(JSON.stringify(nuevos));
+    progNoDisp={personal:[...(v.noDisponibles?.personal||[])], vehiculos:[...(v.noDisponibles?.vehiculos||[])]};
+    const quien=(progUsuarios.find(u=>u.id===v.por)||{}).nombre||'otra persona';
+    if($('moVehGrupo')?.classList.contains('open')) closeModal('moVehGrupo');
+    renderArmar(); estadoGuardadoProg('remoto',quien);
+    showToastEmp(`↻ La programación se actualizó con cambios de ${quien}.`, 4000);
+  };
+  const progVaciado=v=>!(v.grupos||[]).length&&progGrupos.length>0;
+  progEscucha=onValue(refFirebase(db,`programaciones/${fecha}`), sn=>{
+    const v=sn.val();
+    if(!v||v.dev===PROG_DEV) return;                   // vacío o es lo que guardó este mismo dispositivo
+    // Si está escribiendo una zona, se aplica al salir del campo para no quitarle lo que teclea
+    const foco=document.activeElement;
+    if(foco&&foco.closest&&foco.closest('#progArmarBody')&&/INPUT|TEXTAREA/.test(foco.tagName)){
+      pendiente=v; foco.addEventListener('blur',()=>{ const x=pendiente; pendiente=null; if(x) setTimeout(()=>aplicar(x),50); },{once:true}); return;
+    }
+    aplicar(v);
+  }, err=>{ console.warn('[programación] sin escucha en vivo', err&&err.message); });
 }
 
 // Registro de ausencia que aplica a esa fecha (o null). Además del registro
@@ -6941,6 +7060,7 @@ function renderArmar(){
         <span class="pg-fecha-w"><button class="pg-fecha" tabindex="-1" aria-hidden="true">${fechaTxt}</button><input type="date" id="progFechaInput" class="fx-fecha-sobre" value="${progFecha}" onchange="progCambiarFecha(this.value)" onclick="abrirCalendario(this)" aria-label="Elegir fecha"></span>
         <button onclick="progDia(1)" aria-label="Día siguiente">›</button>
       </div>
+      <div class="pg-guardado" id="progGuardado" aria-live="polite">${htmlGuardadoProg()}</div>
       <div class="us-cnt">
         <span><b>${progGrupos.length}</b>Grupos</span><span><b>${persAsignadas.size}</b>Asignados</span><span><b>${persLibres.length}</b>Libres</span><span><b>${ausentesAuto.length}</b>Ausentes</span>
       </div>
