@@ -142,7 +142,7 @@
   // activo. Al abrir se escribe aquí mismo, en el <head>, para que cargue antes de pintar (sin parpadeo);
   // si el tema cambia con la app abierta (fecha, "Ver ahora", "Tema para todos"), aplicarTema llama a
   // cargarCss. Subir TEMAS_V al cambiar cualquiera de esos archivos.
-  var TEMAS_V='48';
+  var TEMAS_V='49';
   T.cssDe=function(tema){ return tema&&tema.css?tema.css+'?v='+TEMAS_V:null; };
   if(t&&t.css) document.write('<link rel="stylesheet" data-tema-css="'+t.id+'" href="'+T.cssDe(t)+'">');
   T.cargarCss=function(tema){
@@ -2740,41 +2740,57 @@ function etiquetaChip(chip,extra){
 // A tiempo la hora se agacha y la hoja pasa por encima; tarde (o salida antes) la hora queda partida.
 const hwTema=()=>document.documentElement.classList.contains('tema-halloween');
 const muTema=()=>document.documentElement.classList.contains('tema-muertos');
-// ── Día de los Muertos: marcaje "camino de cempasúchil" ──
-// El punto es una flor de cempasúchil: fresca con cheque si llegó a tiempo; si llegó tarde se marchita
-// (pierde color, se encoge y se ladea), suelta pétalos y lleva una ✕. La línea hacia la salida se llena
-// de pétalos (pocos y apagados si fue tarde). La hora y la etiqueta de estado no cambian.
+// ── Día de los Muertos: marcaje "los pétalos arman tu flor" ──
+// El punto es una flor de cempasúchil. Al marcar, llegan pétalos desde las orillas de la tarjeta y la flor se arma
+// capa por capa; a tiempo, un destello dorado pasa por la hora. Tarde: llegan pocos y lentos, la flor queda a medias,
+// se marchita (pierde color y se ladea) y se le caen dos pétalos. La línea se pinta por tramos: naranja si fue a
+// tiempo, apagada si fue tarde. La hora y la etiqueta de estado no cambian.
 function florMarcajeMU(tono){
   const capas=[[20,'#ea580c'],[14.8,'#f97316'],[10,'#fb923c']].map(([r,c])=>{
     let g=''; for(let k=0;k<12;k++){ const a=Math.PI*2*k/12; g+=`<circle cx="${(20+Math.cos(a)*r*.62).toFixed(1)}" cy="${(20+Math.sin(a)*r*.62).toFixed(1)}" r="${(r*.4).toFixed(1)}" fill="${c}"/>`; }
-    return `<g>${g}</g>`; }).join('');
+    return `<g class="cp">${g}</g>`; }).join('');
   const centro=tono==='mal'?'#dc2626':tono==='ok'?'#16a34a':'#94a3b8';
   const marca=tono==='mal'?'<path d="M17 17l6 6M23 17l-6 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>'
     :'<path d="M16 20l3 3 5-6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
-  return `<svg viewBox="0 0 40 40" width="40" height="40">${capas}<circle cx="20" cy="20" r="7" fill="${centro}"/>${marca}</svg>`;
+  return `<svg viewBox="0 0 40 40" width="40" height="40">${capas}<g class="ctr"><circle cx="20" cy="20" r="7" fill="${centro}"/>${marca}</g></svg>`;
 }
-// Pétalos sobre la línea: tramo de la entrada (0–50 %) y de la salida (50–100 %). Solo el recién
-// marcado se anima. Tarde: 4 pétalos apagados; a tiempo: 9.
+// Tramos de la línea: entrada (0–50 %) y salida (50–100 %); el recién marcado se pinta después de armar la flor
 function petalosLineaMU(entrada,salida,recien){
-  const tramo=(dato,desde,nuevo)=>{
-    if(!dato) return '';
-    const tarde=chipEstado(dato).color==='br', n=tarde?4:9; let s='';
-    for(let i=0;i<n;i++) s+=`<i class="mk3-pc${tarde?' mal':''}${nuevo?' nuevo':''}" style="left:${(desde+(i+.5)*50/n).toFixed(1)}%;animation-delay:${(.35+i*.11).toFixed(2)}s"></i>`;
-    return s;
-  };
+  const tramo=(dato,desde,nuevo)=>dato?`<b class="mk3-tr${chipEstado(dato).color==='br'?' mal':''}${nuevo?' nuevo':''}" style="left:${desde}%"></b>`:'';
   return tramo(entrada,0,recien==='entrada')+tramo(salida,50,recien==='salida');
 }
-// Tarde: la flor recién marcada suelta dos pétalos que caen
-function petalosCaenMU(card,pt){
-  if(!card||!pt||!pt.querySelector('.mk3-dot.mal')) return;
-  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const c=card.getBoundingClientRect(), b=pt.querySelector('.mk3-dot').getBoundingClientRect();
-  [0,1].forEach(k=>{
-    const q=document.createElement('i'); q.className='mk3-pcae';
-    q.style.left=(b.left-c.left+b.width/2-6+k*10)+'px'; q.style.top=(b.top-c.top+b.height-12)+'px';
-    card.appendChild(q);
-    q.animate([{transform:'translate(0,0) rotate(0)',opacity:0},{opacity:1,offset:.1},{transform:`translate(${k?14:-10}px,70px) rotate(${k?220:-200}deg)`,opacity:0}],
-      {duration:1600,delay:1300+k*350,easing:'ease-in',fill:'forwards'}).onfinish=()=>q.remove();
+// La escena: pétalos desde las orillas → la flor se arma → destello en la hora (a tiempo) o se marchita (tarde)
+function armarFlorMU(card,pt){
+  const dot=pt&&pt.querySelector('.mk3-dot.mu'); if(!card||!dot) return;
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){ dot.classList.add('lista'); return; }
+  const mal=dot.classList.contains('mal'), svg=dot.querySelector('svg'), capas=[...svg.querySelectorAll('.cp')], ctr=svg.querySelector('.ctr');
+  const c=card.getBoundingClientRect(), b=dot.getBoundingClientRect(), W=c.width, H=c.height;
+  const px=b.left-c.left+b.width/2, py=b.top-c.top+b.height/2, n=mal?9:26;
+  const anim=(el,k,o)=>el.animate(k,Object.assign({fill:'forwards'},o));
+  const llegadas=[];
+  for(let k=0;k<n;k++){
+    const q=document.createElement('i'); q.className='mk3-pv v'+(k%3); card.appendChild(q);
+    const lado=k%4, sx=lado===0?-12:lado===1?W+4:(k*53)%W, sy=lado<2?(k*37)%H:(lado===2?-14:H+4);
+    const mx=(sx+px)/2+(k%2?40:-40), my=(sy+py)/2-30, tx=px-5+Math.cos(k)*(mal?10:6), ty=py-6+Math.sin(k)*(mal?10:6);
+    const a=anim(q,[{transform:`translate(${sx}px,${sy}px) rotate(0)`,opacity:0},{opacity:1,offset:.15},
+      {transform:`translate(${mx}px,${my}px) rotate(${200+k*20}deg)`,offset:.55},
+      {transform:`translate(${tx}px,${ty}px) rotate(${400+k*30}deg) scale(.5)`,opacity:mal?.7:0}],{duration:mal?1500:1150,delay:k*(mal?70:28),easing:'cubic-bezier(.45,0,.3,1)'});
+    llegadas.push(a.finished.catch(()=>{}).then(()=>q.remove()));
+  }
+  capas.forEach((g,i)=>anim(g,[{transform:'scale(0) rotate(-60deg)'},{transform:mal?'scale(.75)':'scale(1.15)'},{transform:mal?'scale(.8)':'none'}],
+    {duration:mal?900:650,delay:(mal?900:700)+i*(mal?260:160),easing:'ease-out'}));
+  Promise.all(llegadas).then(()=>{
+    anim(ctr,[{opacity:0,transform:'scale(.4)'},{opacity:1,transform:'none'}],{duration:300});
+    if(!mal){
+      const h=pt.querySelector('.mk3-t'); if(h){ h.classList.add('mu-brillo'); setTimeout(()=>h.classList.remove('mu-brillo'),1000); }
+      return;
+    }
+    // tarde: se marchita y se le caen dos pétalos
+    anim(svg,[{filter:'none',transform:'none'},{filter:'saturate(.25) brightness(.72)',transform:'scale(.86) rotate(14deg) translateY(2px)'}],{duration:900,easing:'ease-in-out'})
+      .finished.catch(()=>{}).then(()=>{ dot.classList.add('lista'); svg.getAnimations().forEach(x=>x.cancel()); });
+    [0,1].forEach(k=>{ const q=document.createElement('i'); q.className='mk3-pv gris'; card.appendChild(q);
+      anim(q,[{transform:`translate(${px-4+k*8}px,${py+8}px) rotate(0)`,opacity:1},{transform:`translate(${px+(k?18:-14)}px,${py+70}px) rotate(${k?220:-200}deg)`,opacity:0}],
+        {duration:1500,delay:300+k*300,easing:'ease-in'}).finished.catch(()=>{}).then(()=>q.remove()); });
   });
 }
 const ICO_GUADANA_HW='<svg viewBox="0 0 24 24"><path d="M18 2 14 22" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M18.5 2.5C13 .5 6 1.5 1.5 6.5 6 4.5 12 4 17 6Z" fill="currentColor"/></svg>';
@@ -2899,7 +2915,7 @@ async function renderMarcajeCard(msgHtml, recien){
   // pantalla, para que al tocar "Marcar" la ubicación ya esté lista o casi.
   // Solo si falta algo por marcar (si ya marcó salida, no hace falta GPS).
   if(recien&&hwTema()) tajoHalloween(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
-  if(recien&&muTema()) petalosCaenMU(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
+  if(recien&&muTema()) armarFlorMU(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
   if(avanceIni!==avance){
     // La línea avanza hasta el punto recién marcado
     const barra=cont.querySelector('.mk3-line i');
@@ -4491,7 +4507,7 @@ window.probarMarcajeTema=function(){
       <div class="mk3-line">${linea}</div>
       <div class="mk3-pt"><div class="mk3-dot off"></div><div class="mk3-t off">--:--</div><div class="mk3-l">Salida</div></div></div></div>`;
     const card=$('hwPruebaCard').querySelector('.mk3'), pt=$('hwPruebaCard').querySelector('.mk3-pt.recien');
-    requestAnimationFrame(()=>mu?petalosCaenMU(card,pt):tajoHalloween(card,pt));
+    if(mu) armarFlorMU(card,pt); else requestAnimationFrame(()=>tajoHalloween(card,pt));
   };
   // "¡Listo, guardado!" de ejemplo; la vista previa se oculta mientras tanto y vuelve al cerrarse
   const guardado=()=>{
