@@ -120,7 +120,8 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   vuelve a bajarla si cambia `version`. Al subir otra se escriben primero las partes, luego `config/musica`
   y al final se borra la versión anterior. Tope 6 MB por archivo.
 - `programaciones/{fecha}`: `{grupos:[{campania, area, empleados[], empleadosNombres[],
-  vehiculo, vehiculoNombre, zona}], noDisponibles:{personal[], vehiculos[]}, ...}`.
+  vehiculo, vehiculoNombre, zona}], noDisponibles:{personal[], vehiculos[]}, actualizado, por, dev}`
+  (`por` = uid de quien guardó; `dev` = id del dispositivo, para que la escucha en vivo ignore lo propio).
 - `asuetos/`, `observaciones/`, `suspensiones/`: nodos de apoyo.
 - `avisos_tokens/{uid}/{id}`: `{token, actualizado, equipo}` un registro por teléfono con los avisos
   activados (lo escribe la app; solo el dueño lo lee). `avisos_enviados/{fecha}/{uid}/{tipo}_{antes|despues}`: control
@@ -164,6 +165,19 @@ importante — ver sección 7.**
 - **Programación** (sección grande, muy iterada — el diseño actual es el aprobado tras
   varios rechazados):
   - Solo admin arma la sección.
+  - **Guardado** (`persistProg`): cada cambio guarda el día completo en segundo plano, en orden (si llega
+    otro cambio mientras se guarda, se vuelve a guardar al terminar) y limpiando valores vacíos
+    (`limpiarGrupoProg`). Indicador bajo la fecha (`#progGuardado`, `htmlGuardadoProg`): "Guardando…",
+    "✓ Guardado · hora", "Guardando… revisa tu señal" a los 6 s, y si falla un aviso rojo con el motivo
+    (`motivoErrorProg`: permiso → "sal y vuelve a entrar"; sin internet) + botón **Reintentar** y un toast.
+    Si se cierra la app con algo sin guardar, el navegador pregunta. Antes los fallos no se avisaban
+    (reporte de la admin: "no guarda los cambios").
+  - **En vivo** (`escucharProgEnVivo`): el tablero escucha el día abierto; si otra persona (u otro dispositivo)
+    guarda, se actualiza solo y avisa "Actualizado con cambios de X". Antes cada pantalla pisaba a la otra.
+    Si se está escribiendo una zona, se aplica al salir del campo.
+  - **Carga de un día** (`cargarProgramacionFecha`): el tablero queda bloqueado y no se guarda nada hasta que
+    termine (antes un cambio en ese momento guardaba los grupos del día anterior en el nuevo); vale solo la
+    última carga; si falla, queda bloqueado con "No se pudo cargar este día · Reintentar".
   - Las campañas ocupan la pantalla (separadas **Campo** / **Plantel**), cada una con
     botón "+ grupo"; los grupos son cajas.
   - Un **botón flotante "Personal libre (N)"** abre un panel deslizable con la lista
