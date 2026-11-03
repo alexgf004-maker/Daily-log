@@ -17,7 +17,7 @@ function fixture({date='2026-12-01',mode='auto',reduced=false}={}){
  let now=new Date(date+'T12:00:00');
  const mount=new Element(),svg=new Element(),iceNode=new Element(),login=new Element(),form=new Element(),pin=new Element(),user=new Element();pin.id='loginPin';user.id='loginUser';form.children={pin,user};login.children['.login-form']=form;
  mount.children.svg=svg;mount.children['.nv-hielo-fijo']=iceNode;login.children['.nv-mascota']=mount;login.classList.add('active');
- for(const id of ['melt-mask','body','left','top','right','reflection','rim','cracks','puddle'])iceNode.children['#nvice-'+id]=new Element();
+ for(const id of ['melt-mask','body','left','top','right','reflection','rim','cracks','puddle','frost-body','contour','runoff-a','runoff-b','wet-edge','ripple-a','ripple-b'])iceNode.children['#nvice-'+id]=new Element();
  iceNode.drops=[new Element(),new Element()];
  const callbacks={},intervals=[],timers=new Map(),actors=[];let timerID=0;
  class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene='idle';this.elapsed=0;actors.push(this)}pause(){this.paused=true}resume(){this.paused=false}destroy(){this.destroyed=true}play(name){this.scene=name;this.elapsed=0}render(t){this.elapsed=t}getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...Actor.SCENES[this.scene]}}}
@@ -152,4 +152,28 @@ test('sin guirnalda no inicia una travesura ni deja la pose bloqueada',()=>{
 test('activar movimiento reducido durante el PIN conserva las manos sobre los ojos',()=>{
  const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.form.emit('focusin',{target:f.pin});f.callbacks.mediachange({matches:true});
  assert.equal(f.actors.at(-1).scene,'privacy');assert.equal(f.actors.at(-1).elapsed,.6);assert.equal(f.actors.at(-1).paused,true);
+});
+
+test('el deshielo interpola sin saltos, permite invertirlo y cancela sus cuadros al salir',()=>{
+ const f=fixture(),frames=new Map();let seq=0;
+ f.ctx.requestAnimationFrame=fn=>{frames.set(++seq,fn);return seq};
+ f.ctx.cancelAnimationFrame=id=>frames.delete(id);
+ function frame(time){const entries=[...frames];frames.clear();for(const [,fn] of entries)fn(time);}
+ function top(){return Number(f.iceNode.children['#nvice-body'].attrs.d.match(/^M[\d.]+ ([\d.]+)/)[1]);}
+ const ice=f.ctx.NavidadHielo.create(1,f.mount),start=top();
+ ice.update(21);assert.equal(top(),start);frame(0);frame(475);
+ const middle=top();assert.ok(middle>start&&middle<922);
+ ice.update(1);assert.equal(frames.size,1);frame(600);frame(1550);assert.equal(top(),start);assert.equal(frames.size,0);
+ ice.update(21);assert.equal(frames.size,1);ice.destroy();assert.equal(frames.size,0);
+});
+test('las gotas y las ondas mantienen el mismo punto de caída durante el deshielo',()=>{
+ const f=fixture(),ice=f.ctx.NavidadHielo.create(1,f.mount);
+ for(const day of [1,7,14,21]){
+  ice.update(day);
+  f.iceNode.drops.forEach((drop,i)=>{
+   const [x,y]=drop.style.translate.split(' ').map(parseFloat);
+   assert.ok(y<1022);assert.equal(x,Number(f.iceNode.children[i?'#nvice-ripple-b':'#nvice-ripple-a'].attrs.cx));
+   assert.ok(Math.abs(y+parseFloat(drop.style['--nv-chute'])-1022)<.2);
+  });
+ }
 });

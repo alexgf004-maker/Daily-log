@@ -788,35 +788,69 @@
     <div class="nv-hielo-fijo" aria-hidden="true">
       <svg viewBox="0 0 800 1067" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
-          <linearGradient id="nvice-core" x1="0" y1="0" x2="1" y2=".6">
-            <stop stop-color="#d5f8ff" stop-opacity=".62"/>
-            <stop offset=".4" stop-color="#91d7f3" stop-opacity=".29"/>
-            <stop offset=".72" stop-color="#b5edff" stop-opacity=".20"/>
-            <stop offset="1" stop-color="#76c9ee" stop-opacity=".56"/>
+          <linearGradient id="nvice-core" x1="0" y1=".25" x2="1" y2=".65">
+            <stop stop-color="#dcf8ff" stop-opacity=".64"/><stop offset=".14" stop-color="#77c8e4" stop-opacity=".36"/>
+            <stop offset=".38" stop-color="#c7f0f8" stop-opacity=".15"/><stop offset=".7" stop-color="#aadfe8" stop-opacity=".23"/>
+            <stop offset=".91" stop-color="#4293b9" stop-opacity=".47"/><stop offset="1" stop-color="#d8f7ff" stop-opacity=".7"/>
           </linearGradient>
-          <linearGradient id="nvice-shine" x1="0" y1="0" x2="1" y2=".5">
-            <stop stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#e5ffff" stop-opacity=".04"/>
+          <linearGradient id="nvice-frost" x1="0" y1="0" x2="1" y2=".1">
+            <stop stop-color="#effaff" stop-opacity=".85"/><stop offset=".19" stop-color="#e8faff" stop-opacity=".16"/>
+            <stop offset=".5" stop-color="#fff" stop-opacity=".025"/><stop offset=".8" stop-color="#ecfbff" stop-opacity=".12"/>
+            <stop offset="1" stop-color="#e4f8ff" stop-opacity=".7"/>
           </linearGradient>
-          <clipPath id="nvice-melt"><path id="nvice-melt-mask" d="M200 55L605 47L675 125L669 940L605 1010L200 1018L130 940L134 223Z"/></clipPath>
+          <linearGradient id="nvice-shine" x1="0" y1="0" x2="1" y2=".3">
+            <stop stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#ebfaff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </linearGradient>
+          <radialGradient id="nvice-water"><stop stop-color="#438fae" stop-opacity=".3"/><stop offset=".65" stop-color="#b2e6ef" stop-opacity=".24"/><stop offset="1" stop-color="#e6fbff" stop-opacity="0"/></radialGradient>
+          <filter id="nvice-grain" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency=".038 .075" numOctaves="3" seed="12"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 .86 0 0 0 0 .96 0 0 0 0 1 1.8 0 0 0 -.6"/>
+            <feComposite in2="SourceGraphic" operator="in"/>
+          </filter>
+          <filter id="nvice-refraction" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence type="fractalNoise" baseFrequency=".018 .035" numOctaves="1" seed="9" result="grain"/>
+            <feDisplacementMap in="SourceGraphic" in2="grain" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+          <clipPath id="nvice-melt"><path id="nvice-melt-mask" d="M213 54C320 38 498 53 579 48Q627 51 649 94L669 172L655 947Q638 1000 575 1010L218 1015Q151 1008 139 954L127 232Q135 145 165 91Q184 60 213 54Z"/></clipPath>
         </defs>
-        <g id="nvice-puddle" opacity="0">
-          <ellipse cx="403" cy="1020" rx="257" ry="22" fill="#a4e1f2" fill-opacity=".32"/>
-          <ellipse cx="403" cy="1018" rx="209" ry="12" fill="none" stroke="#e9fcff" stroke-opacity=".7" stroke-width="4"/>
-          <g id="nvice-drips" fill="#d9faff" stroke="#fff" stroke-width="2">
-            <path class="nv-hielo-gota nv-hielo-gota-a" d="M0 0Q-11 16-8 23Q0 34 8 23Q11 16 0 0Z"/>
-            <path class="nv-hielo-gota nv-hielo-gota-b" d="M0 0Q-9 13-7 19Q0 28 7 19Q9 13 0 0Z"/>
+        <g id="nvice-puddle" opacity=".18">
+          <ellipse cx="403" cy="1023" rx="302" ry="37" fill="url(#nvice-water)"/>
+          <path d="M136 1024Q198 1006 273 1014T459 1016T677 1024Q575 1047 435 1037T136 1024" fill="#b5e4ee" fill-opacity=".24"/>
+          <path d="M170 1028Q239 1038 312 1031M478 1033Q584 1040 646 1025" fill="none" stroke="#e3faff" stroke-opacity=".58" stroke-width="2" stroke-linecap="round"/>
+          <g fill="none" stroke="#dffaff" stroke-width="2.5">
+            <ellipse id="nvice-ripple-a" class="nv-hielo-onda" cx="176" cy="1023" rx="38" ry="8"/>
+            <ellipse id="nvice-ripple-b" class="nv-hielo-onda nv-hielo-onda-b" cx="622" cy="1022" rx="32" ry="7"/>
           </g>
         </g>
         <g id="nvice-whole" clip-path="url(#nvice-melt)">
-          <path id="nvice-body" d="M200 55L605 47L675 125L669 940L605 1010L200 1018L130 940L134 223Z" fill="url(#nvice-core)" stroke="#d6f8ff" stroke-opacity=".85" stroke-width="10" stroke-linejoin="round"/>
-          <path id="nvice-left" d="M200 55L134 223L130 940L200 1018L186 940L206 223Z" fill="#a2e5fa" fill-opacity=".32" stroke="#e6fcff" stroke-opacity=".5" stroke-width="3"/>
-          <path id="nvice-top" d="M200 55L605 47L675 125L612 209L206 223Z" fill="#ecfcff" fill-opacity=".43" stroke="#f2ffff" stroke-opacity=".65" stroke-width="4"/>
-          <path id="nvice-right" d="M612 209L675 125L669 940L605 1010Z" fill="#63bae7" fill-opacity=".26" stroke="#d6f6ff" stroke-opacity=".6" stroke-width="4"/>
-          <path id="nvice-reflection" d="M230 242L305 218L246 912L202 950Z" fill="url(#nvice-shine)"/>
-          <path id="nvice-rim" d="M148 195L200 67L605 60" fill="none" stroke="#f3ffff" stroke-opacity=".88" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-          <g id="nvice-cracks" fill="none" stroke="#e9fcff" stroke-width="3" stroke-linecap="round" opacity="0">
-            <path d="M520 390L490 446L517 486L499 543M490 446L454 460M253 706L288 742L273 789M288 742L319 728"/>
+          <path id="nvice-body" d="M213 54C320 38 498 53 579 48Q627 51 649 94L669 172L655 947Q638 1000 575 1010L218 1015Q151 1008 139 954L127 232Q135 145 165 91Q184 60 213 54Z" fill="url(#nvice-core)" stroke="#c6eef8" stroke-opacity=".52" stroke-width="5"/>
+          <path id="nvice-left" fill="#d2f3fb" fill-opacity=".22"/>
+          <path id="nvice-top" fill="#e8faff" fill-opacity=".32" stroke="#e5faff" stroke-opacity=".32" stroke-width="3"/>
+          <path id="nvice-right" fill="#3c85a7" fill-opacity=".22"/>
+          <path id="nvice-frost-body" fill="url(#nvice-frost)" filter="url(#nvice-grain)"/>
+          <path id="nvice-reflection" fill="url(#nvice-shine)"/>
+          <path id="nvice-contour" fill="none" stroke="#e8faff" stroke-opacity=".22" stroke-width="11" stroke-linecap="round"/>
+          <path id="nvice-rim" fill="none" stroke="#f0fcff" stroke-opacity=".75" stroke-width="4" stroke-linecap="round"/>
+          <g id="nvice-clouds" fill="#e7f9ff" opacity=".23">
+            <path d="M128 349Q215 267 253 321T204 459Q168 514 148 612Z"/><path d="M599 490Q645 567 621 710T559 934L666 990L682 415Z"/>
+            <path d="M170 913Q266 957 401 938T648 960L642 1018L168 1029Z"/>
           </g>
+          <g id="nvice-cracks" fill="none" stroke="#effbff" stroke-width="2.5" stroke-linecap="round" opacity=".42">
+            <path d="M169 267L221 296L239 341L268 356M221 296L256 286L274 305M239 341L211 372L212 400M618 641L581 685L594 718L559 759M581 685L552 678L537 691M594 718L617 745M224 896L268 919L280 953M268 919L300 903"/>
+          </g>
+          <g fill="none" stroke="#edfbff" stroke-opacity=".45" stroke-width="2">
+            <ellipse cx="182" cy="409" rx="5" ry="9"/><ellipse cx="196" cy="442" rx="3" ry="5"/><ellipse cx="209" cy="414" rx="2" ry="3"/>
+            <ellipse cx="603" cy="787" rx="5" ry="8"/><ellipse cx="590" cy="812" rx="3" ry="4"/><ellipse cx="614" cy="829" rx="2" ry="4"/>
+            <ellipse cx="242" cy="847" rx="3" ry="6"/><ellipse cx="546" cy="224" rx="4" ry="7"/>
+          </g>
+          <g fill="none" stroke="#f0fcff" stroke-width="3" stroke-linecap="round">
+            <path id="nvice-runoff-a" pathLength="100" class="nv-hielo-reguero"/><path id="nvice-runoff-b" pathLength="100" class="nv-hielo-reguero nv-hielo-reguero-b"/>
+          </g>
+          <path id="nvice-wet-edge" fill="none" stroke="#effcff" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <g id="nvice-drips" fill="#ceeffa" stroke="#f0fcff" stroke-opacity=".8" stroke-width="1.5">
+          <path class="nv-hielo-gota nv-hielo-gota-a" d="M0 -10C-1 -3-6 2-5 7C-4 15 5 15 5 7C6 2 1 -3 0 -10Z"/>
+          <path class="nv-hielo-gota nv-hielo-gota-b" d="M0 -8C-1 -2-5 2-4 6C-3 12 4 12 4 6C5 2 1 -2 0 -8Z"/>
         </g>
       </svg>
     </div>

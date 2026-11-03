@@ -15,7 +15,7 @@
 }
 .nv-hielo-fijo>svg{display:block;width:100%;height:100%;overflow:visible}
 .nav-pre #loginScreen .nv-mascota:not(.nv-mascota-libre) .nv-hielo-fijo{display:block}
-.nv-mascota-congelada>svg{filter:saturate(calc(1 - var(--nv-frio,1) * .25)) brightness(1.06)}
+.nv-mascota-congelada>svg{filter:url(#nvice-refraction) saturate(calc(1 - var(--nv-frio,1) * .28)) brightness(1.02)}
 /* Solo los ojos se animan sobre la pose detenida de GreenActor. Las coordenadas
    del viewBox coinciden con los centros que utiliza su motor vectorial. */
 .nv-mascota-congelada #eye-left,
@@ -30,7 +30,8 @@
 .nv-mascota-ojos-pausa #eye-left,
 .nv-mascota-ojos-pausa #eye-right,
 .nv-mascota-ojos-pausa #pupil-left,
-.nv-mascota-ojos-pausa #pupil-right{animation-play-state:paused}
+.nv-mascota-ojos-pausa #pupil-right,
+.nv-mascota-ojos-pausa .nv-hielo-fijo *{animation-play-state:paused}
 @keyframes nvOjosParpadeo{
   0%,45%,49%,100%{transform:scaleY(1)}
   47%{transform:scaleY(.08)}
@@ -40,11 +41,34 @@
   24%,38%{transform:translate(-10px,1px)}
   55%,70%{transform:translate(12px,-3px)}
 }
-.nv-hielo-gota{transform-box:fill-box;transform-origin:center top;animation:nvHieloGota 3.8s ease-in infinite}
-.nv-hielo-gota-b{animation-delay:1.9s}
+/* El agua crece sobre la pared, se desprende y termina en el charco.
+   Los ciclos comparten reloj; la segunda gota rompe la simetría. */
+.nv-hielo-gota{animation:nvHieloGota 5.6s linear infinite;opacity:0}
+.nv-hielo-gota-b{animation-delay:-2.35s;animation-duration:6.7s}
+.nv-hielo-reguero{stroke-dasharray:8 100;stroke-dashoffset:8;opacity:0;animation:nvHieloReguero 5.6s linear infinite}
+.nv-hielo-reguero-b{animation-delay:-2.35s;animation-duration:6.7s}
+.nv-hielo-onda{transform-box:fill-box;transform-origin:center;animation:nvHieloOnda 5.6s linear infinite;opacity:0}
+.nv-hielo-onda-b{animation-delay:-2.35s;animation-duration:6.7s}
 .nv-hielo-fijo.nv-hielo-golpe{animation:nvHieloGolpe .55s ease-out}
-@keyframes nvHieloGota{0%,60%{transform:translateY(0);opacity:0}65%{opacity:1}94%{opacity:.35}100%{transform:translateY(120px);opacity:0}}
-@keyframes nvHieloGolpe{0%,100%{transform:translateX(0)}23%{transform:translateX(-3px)}52%{transform:translateX(3px)}77%{transform:translateX(-1px)}}
+.nv-hielo-golpe #nvice-cracks{stroke-opacity:.9;stroke-width:4}
+@keyframes nvHieloReguero{
+  0%,8%,65%,100%{opacity:0}
+  14%,40%{opacity:var(--nv-eau,.4)}
+  8%{stroke-dashoffset:8}53%,100%{stroke-dashoffset:-100}
+}
+@keyframes nvHieloGota{
+  0%,43%{transform:translateY(0) scale(.25,.3);opacity:0}
+  51%{transform:translateY(0) scale(.75,1);opacity:.85}
+  55%{transform:translateY(4px) scale(.7,1.2);opacity:.85;animation-timing-function:cubic-bezier(.42,0,1,1)}
+  75%{transform:translateY(var(--nv-chute,320px)) scale(.65,1.25);opacity:.65}
+  76%,100%{transform:translateY(var(--nv-chute,320px)) scale(1.7,.2);opacity:0}
+}
+@keyframes nvHieloOnda{
+  0%,75%{transform:scale(.1);opacity:0}
+  78%{transform:scale(.28);opacity:.7}
+  100%{transform:scale(1.5);opacity:0}
+}
+@keyframes nvHieloGolpe{0%,100%{transform:translateX(0)}23%{transform:translateX(-1.8px)}52%{transform:translateX(1.2px)}77%{transform:translateX(-.5px)}}
 /* El ancho incluye el espacio transparente del SVG y la sombra. El personaje
    nunca queda por encima de la tarjeta, ni al abrir el teclado o girar el móvil. */
 @media(max-width:900px){
