@@ -110,6 +110,11 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   guarda la marca vigente en `localStorage.innova_sesion_cierre`; si en la base aparece otra distinta, la
   sesión se cierra (al abrir la app o al instante con la app abierta) con el aviso "La app se actualizó".
   No compara relojes. Sesiones sin marca guardada (versiones viejas) se cierran si existe un cierre.
+  Con la app abierta, después de cerrar la sesión la app **se recarga** (`cerrarSesionForzada`: espera a que
+  termine el cierre, máx. 3 s, refresca la copia de la página con `fetch(..., {cache:'reload'})` y recarga),
+  así cada teléfono trae la versión nueva sin cerrarla a mano; el aviso se muestra tras recargar
+  (`sessionStorage.innova_aviso_cierre`). Sirve para publicar algo importante y que todos lo tengan ya.
+  Al salir (`doLogout`) se detiene la escucha en vivo de la programación y se reabre al entrar.
   Al volver a entrar, si hay música que ese teléfono no tiene, el login la espera con una pantalla de
   avance (`retenerParaMusica`; a los 15 s deja "Entrar sin esperar"). El texto no menciona la música:
   con Halloween dice "Preparando la temporada de Halloween" (calabaza); sin tema, "Preparando la app".
@@ -120,7 +125,8 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   vuelve a bajarla si cambia `version`. Al subir otra se escriben primero las partes, luego `config/musica`
   y al final se borra la versión anterior. Tope 6 MB por archivo.
 - `programaciones/{fecha}`: `{grupos:[{campania, area, empleados[], empleadosNombres[],
-  vehiculo, vehiculoNombre, zona}], noDisponibles:{personal[], vehiculos[]}, ...}`.
+  vehiculo, vehiculoNombre, zona}], noDisponibles:{personal[], vehiculos[]}, actualizado, por, dev}`
+  (`por` = uid de quien guardó; `dev` = id del dispositivo, para que la escucha en vivo ignore lo propio).
 - `asuetos/`, `observaciones/`, `suspensiones/`: nodos de apoyo.
 - `avisos_tokens/{uid}/{id}`: `{token, actualizado, equipo}` un registro por teléfono con los avisos
   activados (lo escribe la app; solo el dueño lo lee). `avisos_enviados/{fecha}/{uid}/{tipo}_{antes|despues}`: control
@@ -164,6 +170,19 @@ importante — ver sección 7.**
 - **Programación** (sección grande, muy iterada — el diseño actual es el aprobado tras
   varios rechazados):
   - Solo admin arma la sección.
+  - **Guardado** (`persistProg`): cada cambio guarda el día completo en segundo plano, en orden (si llega
+    otro cambio mientras se guarda, se vuelve a guardar al terminar) y limpiando valores vacíos
+    (`limpiarGrupoProg`). Indicador bajo la fecha (`#progGuardado`, `htmlGuardadoProg`): "Guardando…",
+    "✓ Guardado · hora", "Guardando… revisa tu señal" a los 6 s, y si falla un aviso rojo con el motivo
+    (`motivoErrorProg`: permiso → "sal y vuelve a entrar"; sin internet) + botón **Reintentar** y un toast.
+    Si se cierra la app con algo sin guardar, el navegador pregunta. Antes los fallos no se avisaban
+    (reporte de la admin: "no guarda los cambios").
+  - **En vivo** (`escucharProgEnVivo`): el tablero escucha el día abierto; si otra persona (u otro dispositivo)
+    guarda, se actualiza solo y avisa "Actualizado con cambios de X". Antes cada pantalla pisaba a la otra.
+    Si se está escribiendo una zona, se aplica al salir del campo.
+  - **Carga de un día** (`cargarProgramacionFecha`): el tablero queda bloqueado y no se guarda nada hasta que
+    termine (antes un cambio en ese momento guardaba los grupos del día anterior en el nuevo); vale solo la
+    última carga; si falla, queda bloqueado con "No se pudo cargar este día · Reintentar".
   - Las campañas ocupan la pantalla (separadas **Campo** / **Plantel**), cada una con
     botón "+ grupo"; los grupos son cajas.
   - Un **botón flotante "Personal libre (N)"** abre un panel deslizable con la lista
@@ -381,6 +400,10 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   rombo (`papelPicadoProg`, cada banderita en su propia capa para que los recortes dejen ver el fondo), con su
   propio espacio arriba (`TOPB`, el texto baja), y abajo una ofrenda con arco de cempasúchil (`cempasuchilProg`),
   velas, pan de muerto, floreros, calaverita de azúcar al centro (`calaveritaProg`), mantel con picos y pétalos.
+- **Imagen de la programación compacta:** con pocos grupos va a 1080 de ancho (campañas de un grupo en 2
+  columnas, las demás a todo lo ancho). Si así saldría más de ~1.5 veces más alta que ancha, pasa a 1620 de ancho
+  y TODAS las tarjetas van en 3 columnas (`armarTodo(3)`), en orden de lectura columna por columna y repartidas
+  para que queden parejas (`repartir`). Los adornos de Muertos se reparten según el ancho.
 - **El tema por fecha se recalcula** (`__temas.recalcular()`) en cada `aplicarTema`: al volver a la app
   (`visibilitychange`), cada 30 min y al cerrar la sesión a todos. Antes se calculaba solo al abrir, y un
   teléfono con la app abierta desde octubre seguía con Halloween en noviembre.
@@ -394,9 +417,12 @@ degradados de ciruela a cempasúchil y papel picado en el borde de los encabezad
 flores, pan de muerto y calaverita (en PC va en la esquina), pétalos de cempasúchil cayendo, coronita de flores en el
 logo y la leyenda "Día de los Muertos"; sin animación con `prefers-reduced-motion`. Dentro de la app caen
 siempre 6 pétalos lentos y transparentes (`.mu-amb`, z-index 90: debajo de la barra, hojas y ventanas; sin toques;
-no salen en el login). Marcaje "camino de cempasúchil" (`florMarcajeMU`, `petalosLineaMU`, `petalosCaenMU`): el punto
-es una flor fresca con cheque si llegó a tiempo; si llegó tarde se marchita, suelta dos pétalos y lleva ✕; la línea se
-llena de 9 pétalos (4 apagados si fue tarde) por tramo (entrada 0–50 %, salida 50–100 %). "¡Listo, guardado!"
+no salen en el login). Marcaje "los pétalos arman tu flor" (`florMarcajeMU`, `petalosLineaMU`, `armarFlorMU`; elegida entre
+varias muestras, ni muy sencilla ni muy producida): al marcar llegan pétalos desde las orillas de la tarjeta y la flor
+se arma capa por capa; a tiempo, un destello dorado pasa por la hora (`.mu-brillo`). Tarde: llegan pocos y lentos, la
+flor queda a medias, se marchita (pierde color y se ladea), se le caen dos pétalos y lleva ✕. La línea se pinta por
+tramo (entrada 0–50 %, salida 50–100 %): naranja a tiempo, apagada si fue tarde. La tarjeta recorta los pétalos
+(`overflow:hidden`). Con movimiento reducido la flor sale armada directo. "¡Listo, guardado!"
 (`ESCENA_GUARDADO_MU`, `confetiGuardadoMU`, clase `.fx-ok.mu`): cae una calaverita, le estampan el sello "✓ GUARDADO"
 con un temblor y confeti de papel picado, y guiña; se cierra a los 4.2 s. El xolo (`xoloAdentro`, `.mu-xolo`, el equivalente al
 fantasma de Halloween) pasea por la parte de abajo de las pantallas de adentro: llega como perrito normal (capa

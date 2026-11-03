@@ -59,12 +59,12 @@
   }
 })();
 </script>
-<link rel="stylesheet" href="css/styles.css?v=81">
+<link rel="stylesheet" href="css/styles.css?v=82">
 <link rel="stylesheet" href="css/temas/comun.css?v=46">
 <link rel="stylesheet" href="css/navidad-mascota.css?v=12">
 <script src="js/navidad.js?v=7" defer></script>
 <script src="js/green-actor.js?v=4" defer></script>
-<script src="js/navidad-hielo.js?v=3" defer></script>
+<script src="js/navidad-hielo.js?v=4" defer></script>
 <script src="js/navidad-historia.js?v=1" defer></script>
 <script src="js/navidad-mascota.js?v=10" defer></script>
 <script>
@@ -1886,11 +1886,19 @@ function avisoSesionCerrada(){
   const al=$('loginAlert');
   if(al) al.innerHTML=`<div class="mk-av info lg-av"><span class="mk-av-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></span><div class="mk-av-tx"><b>La app se actualizó</b><span>Vuelve a entrar con tu usuario y PIN</span></div></div>`;
 }
+// Después de sacar a la persona, la app se recarga para traer la versión nueva: antes, quien tenía la app
+// abierta volvía a entrar con el código viejo en memoria hasta cerrarla a mano. Antes de recargar se espera
+// a que termine el cierre (quitar los avisos de este teléfono, máx. 3 s) y se refresca la copia guardada de
+// la página. El aviso "Se cerró tu sesión" se muestra al volver (sessionStorage).
 function cerrarSesionForzada(){
   if(!me) return;
-  window.doLogout();
+  const fin=window.doLogout();
   avisoSesionCerrada();
   aplicarTema();   // y el tema que toca hoy (la app pudo quedar abierta desde otra temporada)
+  try{ sessionStorage.setItem('innova_aviso_cierre','1'); }catch(_){}
+  Promise.race([Promise.resolve(fin).catch(()=>{}), new Promise(r=>setTimeout(r,3000))])
+    .then(()=>fetch(location.pathname,{cache:'reload'}).catch(()=>{}))
+    .then(()=>location.reload());
 }
 try{
   onValue(refFirebase(db,'config/cierreSesion'), sn=>{
@@ -2018,7 +2026,8 @@ window.doLogout=()=>{
   const uidSale=me?.id;
   me=null;
   localStorage.removeItem('innova_session');
-  quitarAvisosDeEsteTelefono(uidSale).finally(()=>signOut(auth).catch(()=>{}));
+  try{ detenerProgEnVivo(); }catch(_){}   // la escucha de la programación se vuelve a abrir al entrar
+  const fin=quitarAvisosDeEsteTelefono(uidSale).finally(()=>signOut(auth).catch(()=>{}));
   $('avisosCard')&&($('avisosCard').style.display='none');
   stopDashRefresh();
   detenerEspejos();
@@ -2028,6 +2037,7 @@ window.doLogout=()=>{
   $('loginAlert').innerHTML='';
   aplicarUsuarioRecordado();
   screen('loginScreen');
+  return fin;
 };
 // Lo que se agrega directo al <body> (campanita, tutorial, resúmenes, globos de las gráficas) no se
 // borra con appContainer: al cerrar sesión se quita aquí para que no quede tapando el login.
@@ -2092,7 +2102,8 @@ if(navigator.storage && navigator.storage.persist){
     // Sin mantenimiento — restaurar sesión normal
     const saved = localStorage.getItem('innova_session');
     const usr = await authListo;
-    if(!saved){ if(usr) signOut(auth).catch(()=>{}); screen('loginScreen'); return; }
+    let tocaAviso=false; try{ tocaAviso=sessionStorage.getItem('innova_aviso_cierre')==='1'; sessionStorage.removeItem('innova_aviso_cierre'); }catch(_){}
+    if(!saved){ if(usr) signOut(auth).catch(()=>{}); screen('loginScreen'); if(tocaAviso) avisoSesionCerrada(); return; }
     // Sesión de antes del login por servidor (o vencida): hay que volver a entrar
     if(!usr){ localStorage.removeItem('innova_session'); screen('loginScreen'); avisoSesionCerrada(); return; }
     // ¿El admin cerró la sesión a todos después de que esta empezó?
@@ -2792,41 +2803,57 @@ function etiquetaChip(chip,extra){
 // A tiempo la hora se agacha y la hoja pasa por encima; tarde (o salida antes) la hora queda partida.
 const hwTema=()=>document.documentElement.classList.contains('tema-halloween');
 const muTema=()=>document.documentElement.classList.contains('tema-muertos');
-// ── Día de los Muertos: marcaje "camino de cempasúchil" ──
-// El punto es una flor de cempasúchil: fresca con cheque si llegó a tiempo; si llegó tarde se marchita
-// (pierde color, se encoge y se ladea), suelta pétalos y lleva una ✕. La línea hacia la salida se llena
-// de pétalos (pocos y apagados si fue tarde). La hora y la etiqueta de estado no cambian.
+// ── Día de los Muertos: marcaje "los pétalos arman tu flor" ──
+// El punto es una flor de cempasúchil. Al marcar, llegan pétalos desde las orillas de la tarjeta y la flor se arma
+// capa por capa; a tiempo, un destello dorado pasa por la hora. Tarde: llegan pocos y lentos, la flor queda a medias,
+// se marchita (pierde color y se ladea) y se le caen dos pétalos. La línea se pinta por tramos: naranja si fue a
+// tiempo, apagada si fue tarde. La hora y la etiqueta de estado no cambian.
 function florMarcajeMU(tono){
   const capas=[[20,'#ea580c'],[14.8,'#f97316'],[10,'#fb923c']].map(([r,c])=>{
     let g=''; for(let k=0;k<12;k++){ const a=Math.PI*2*k/12; g+=`<circle cx="${(20+Math.cos(a)*r*.62).toFixed(1)}" cy="${(20+Math.sin(a)*r*.62).toFixed(1)}" r="${(r*.4).toFixed(1)}" fill="${c}"/>`; }
-    return `<g>${g}</g>`; }).join('');
+    return `<g class="cp">${g}</g>`; }).join('');
   const centro=tono==='mal'?'#dc2626':tono==='ok'?'#16a34a':'#94a3b8';
   const marca=tono==='mal'?'<path d="M17 17l6 6M23 17l-6 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>'
     :'<path d="M16 20l3 3 5-6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
-  return `<svg viewBox="0 0 40 40" width="40" height="40">${capas}<circle cx="20" cy="20" r="7" fill="${centro}"/>${marca}</svg>`;
+  return `<svg viewBox="0 0 40 40" width="40" height="40">${capas}<g class="ctr"><circle cx="20" cy="20" r="7" fill="${centro}"/>${marca}</g></svg>`;
 }
-// Pétalos sobre la línea: tramo de la entrada (0–50 %) y de la salida (50–100 %). Solo el recién
-// marcado se anima. Tarde: 4 pétalos apagados; a tiempo: 9.
+// Tramos de la línea: entrada (0–50 %) y salida (50–100 %); el recién marcado se pinta después de armar la flor
 function petalosLineaMU(entrada,salida,recien){
-  const tramo=(dato,desde,nuevo)=>{
-    if(!dato) return '';
-    const tarde=chipEstado(dato).color==='br', n=tarde?4:9; let s='';
-    for(let i=0;i<n;i++) s+=`<i class="mk3-pc${tarde?' mal':''}${nuevo?' nuevo':''}" style="left:${(desde+(i+.5)*50/n).toFixed(1)}%;animation-delay:${(.35+i*.11).toFixed(2)}s"></i>`;
-    return s;
-  };
+  const tramo=(dato,desde,nuevo)=>dato?`<b class="mk3-tr${chipEstado(dato).color==='br'?' mal':''}${nuevo?' nuevo':''}" style="left:${desde}%"></b>`:'';
   return tramo(entrada,0,recien==='entrada')+tramo(salida,50,recien==='salida');
 }
-// Tarde: la flor recién marcada suelta dos pétalos que caen
-function petalosCaenMU(card,pt){
-  if(!card||!pt||!pt.querySelector('.mk3-dot.mal')) return;
-  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const c=card.getBoundingClientRect(), b=pt.querySelector('.mk3-dot').getBoundingClientRect();
-  [0,1].forEach(k=>{
-    const q=document.createElement('i'); q.className='mk3-pcae';
-    q.style.left=(b.left-c.left+b.width/2-6+k*10)+'px'; q.style.top=(b.top-c.top+b.height-12)+'px';
-    card.appendChild(q);
-    q.animate([{transform:'translate(0,0) rotate(0)',opacity:0},{opacity:1,offset:.1},{transform:`translate(${k?14:-10}px,70px) rotate(${k?220:-200}deg)`,opacity:0}],
-      {duration:1600,delay:1300+k*350,easing:'ease-in',fill:'forwards'}).onfinish=()=>q.remove();
+// La escena: pétalos desde las orillas → la flor se arma → destello en la hora (a tiempo) o se marchita (tarde)
+function armarFlorMU(card,pt){
+  const dot=pt&&pt.querySelector('.mk3-dot.mu'); if(!card||!dot) return;
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){ dot.classList.add('lista'); return; }
+  const mal=dot.classList.contains('mal'), svg=dot.querySelector('svg'), capas=[...svg.querySelectorAll('.cp')], ctr=svg.querySelector('.ctr');
+  const c=card.getBoundingClientRect(), b=dot.getBoundingClientRect(), W=c.width, H=c.height;
+  const px=b.left-c.left+b.width/2, py=b.top-c.top+b.height/2, n=mal?9:26;
+  const anim=(el,k,o)=>el.animate(k,Object.assign({fill:'forwards'},o));
+  const llegadas=[];
+  for(let k=0;k<n;k++){
+    const q=document.createElement('i'); q.className='mk3-pv v'+(k%3); card.appendChild(q);
+    const lado=k%4, sx=lado===0?-12:lado===1?W+4:(k*53)%W, sy=lado<2?(k*37)%H:(lado===2?-14:H+4);
+    const mx=(sx+px)/2+(k%2?40:-40), my=(sy+py)/2-30, tx=px-5+Math.cos(k)*(mal?10:6), ty=py-6+Math.sin(k)*(mal?10:6);
+    const a=anim(q,[{transform:`translate(${sx}px,${sy}px) rotate(0)`,opacity:0},{opacity:1,offset:.15},
+      {transform:`translate(${mx}px,${my}px) rotate(${200+k*20}deg)`,offset:.55},
+      {transform:`translate(${tx}px,${ty}px) rotate(${400+k*30}deg) scale(.5)`,opacity:mal?.7:0}],{duration:mal?1500:1150,delay:k*(mal?70:28),easing:'cubic-bezier(.45,0,.3,1)'});
+    llegadas.push(a.finished.catch(()=>{}).then(()=>q.remove()));
+  }
+  capas.forEach((g,i)=>anim(g,[{transform:'scale(0) rotate(-60deg)'},{transform:mal?'scale(.75)':'scale(1.15)'},{transform:mal?'scale(.8)':'none'}],
+    {duration:mal?900:650,delay:(mal?900:700)+i*(mal?260:160),easing:'ease-out'}));
+  Promise.all(llegadas).then(()=>{
+    anim(ctr,[{opacity:0,transform:'scale(.4)'},{opacity:1,transform:'none'}],{duration:300});
+    if(!mal){
+      const h=pt.querySelector('.mk3-t'); if(h){ h.classList.add('mu-brillo'); setTimeout(()=>h.classList.remove('mu-brillo'),1000); }
+      return;
+    }
+    // tarde: se marchita y se le caen dos pétalos
+    anim(svg,[{filter:'none',transform:'none'},{filter:'saturate(.25) brightness(.72)',transform:'scale(.86) rotate(14deg) translateY(2px)'}],{duration:900,easing:'ease-in-out'})
+      .finished.catch(()=>{}).then(()=>{ dot.classList.add('lista'); svg.getAnimations().forEach(x=>x.cancel()); });
+    [0,1].forEach(k=>{ const q=document.createElement('i'); q.className='mk3-pv gris'; card.appendChild(q);
+      anim(q,[{transform:`translate(${px-4+k*8}px,${py+8}px) rotate(0)`,opacity:1},{transform:`translate(${px+(k?18:-14)}px,${py+70}px) rotate(${k?220:-200}deg)`,opacity:0}],
+        {duration:1500,delay:300+k*300,easing:'ease-in'}).finished.catch(()=>{}).then(()=>q.remove()); });
   });
 }
 const ICO_GUADANA_HW='<svg viewBox="0 0 24 24"><path d="M18 2 14 22" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M18.5 2.5C13 .5 6 1.5 1.5 6.5 6 4.5 12 4 17 6Z" fill="currentColor"/></svg>';
@@ -2951,7 +2978,7 @@ async function renderMarcajeCard(msgHtml, recien){
   // pantalla, para que al tocar "Marcar" la ubicación ya esté lista o casi.
   // Solo si falta algo por marcar (si ya marcó salida, no hace falta GPS).
   if(recien&&hwTema()) tajoHalloween(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
-  if(recien&&muTema()) petalosCaenMU(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
+  if(recien&&muTema()) armarFlorMU(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
   if(avanceIni!==avance){
     // La línea avanza hasta el punto recién marcado
     const barra=cont.querySelector('.mk3-line i');
@@ -4543,7 +4570,7 @@ window.probarMarcajeTema=function(){
       <div class="mk3-line">${linea}</div>
       <div class="mk3-pt"><div class="mk3-dot off"></div><div class="mk3-t off">--:--</div><div class="mk3-l">Salida</div></div></div></div>`;
     const card=$('hwPruebaCard').querySelector('.mk3'), pt=$('hwPruebaCard').querySelector('.mk3-pt.recien');
-    requestAnimationFrame(()=>mu?petalosCaenMU(card,pt):tajoHalloween(card,pt));
+    if(mu) armarFlorMU(card,pt); else requestAnimationFrame(()=>tajoHalloween(card,pt));
   };
   // "¡Listo, guardado!" de ejemplo; la vista previa se oculta mientras tanto y vuelve al cerrarse
   const guardado=()=>{
@@ -6728,22 +6755,38 @@ window.progSub=(cual)=>{
 // Carga los datos de una fecha UNA sola vez (usuarios, ausentes, programación).
 // renderArmar() ya no vuelve a pedir nada de esto en cada clic — por eso cada
 // acción del tablero (asignar, quitar, crear grupo) redibuja al instante.
+// Mientras carga, el tablero queda bloqueado y no se guarda nada: antes, un cambio hecho en ese momento
+// guardaba los grupos del día anterior en el día nuevo. Si llegan dos cargas seguidas (‹ › rápido), vale la última.
+// Si la carga falla, el tablero sigue bloqueado (guardar ahí borraría lo que sí hay en la base).
 async function cargarProgramacionFecha(fecha){
-  progFecha=fecha;
-  const [prog,users]=await Promise.all([
-    obtenerProgramacion(db,{ref,get},fecha),
-    getUsers(),
-    getRegistrosAll(), // calienta el caché para que cargarAusentesProg no espere de nuevo
-  ]);
-  progGrupos = prog?.grupos ? JSON.parse(JSON.stringify(prog.grupos)) : [];
-  // La base no guarda listas vacías: si falta una de las dos, se repone vacía
-  progNoDisp = {personal:[...(prog?.noDisponibles?.personal||[])], vehiculos:[...(prog?.noDisponibles?.vehiculos||[])]};
-  progEmpleados = users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
-  await cargarAusentesProg(fecha);
-  renderArmar();
+  const n=++progCargaN;
+  progFecha=fecha; progCargando=true; bloquearTableroProg(true); estadoGuardadoProg('carga');
+  try{
+    const [prog,users]=await Promise.all([
+      obtenerProgramacion(db,{ref,get},fecha),
+      getUsers(),
+      getRegistrosAll(), // calienta el caché para que cargarAusentesProg no espere de nuevo
+    ]);
+    if(n!==progCargaN) return;
+    progGrupos = prog?.grupos ? JSON.parse(JSON.stringify(prog.grupos)) : [];
+    // La base no guarda listas vacías: si falta una de las dos, se repone vacía
+    progNoDisp = {personal:[...(prog?.noDisponibles?.personal||[])], vehiculos:[...(prog?.noDisponibles?.vehiculos||[])]};
+    progUsuarios = users;
+    progEmpleados = users.filter(u=>u.role==='empleado'&&(u.activo===true||u.activo==='true'));
+    await cargarAusentesProg(fecha);
+    if(n!==progCargaN) return;
+    progCargando=false; estadoGuardadoProg(prog?.actualizado?'guardadoAntes':'',prog?.actualizado);
+    renderArmar(); bloquearTableroProg(false);
+    escucharProgEnVivo(fecha);
+  }catch(e){
+    if(n!==progCargaN) return;
+    console.warn('[programación] no se pudo cargar', fecha, e);
+    estadoGuardadoProg('errorCarga',e);
+  }
 }
 
 window.progCambiarFecha=(val)=>{ if(val) cargarProgramacionFecha(val); };
+window.progReintentarCarga=()=>cargarProgramacionFecha(progFecha);
 
 // "Copiar de..." — antes solo ofrecía la programación anterior más reciente
 // (en la práctica, los lunes eso era el viernes, con una cuadrilla distinta
@@ -6824,8 +6867,112 @@ window.confirmarCopiarProg=async()=>{
   }
 };
 
+// ── Guardado de la programación ──
+// Cada cambio del tablero guarda el día completo en segundo plano. Antes, si fallaba (sin señal, sesión
+// caída, permiso negado) no se avisaba nada: el cambio se veía en pantalla pero no llegaba a la base.
+// Ahora: hay un indicador "Guardando… / Guardado ✓", un aviso rojo con el motivo y un botón para reintentar;
+// los guardados van en orden (si llega un cambio mientras se guarda, se guarda otra vez al terminar) y se
+// limpian valores vacíos que la base rechaza. Cada guardado lleva quién y desde qué dispositivo (dev), para
+// que la escucha en vivo distinga lo propio de lo de otra persona.
+const PROG_DEV=Math.random().toString(36).slice(2,10);
+let progGuardando=false, progPendiente=false, progCargando=false, progCargaN=0, progUsuarios=[], progEscucha=null, progEscuchaFecha=null;
+let progEstadoG={tipo:'',t:0,msg:''};
+const limpiarGrupoProg=g=>{
+  const noms=g.empleadosNombres||[];
+  const pares=(g.empleados||[]).map((id,k)=>[id,noms[k]]).filter(([id])=>typeof id==='string'&&id);
+  const out={...g, campania:String(g.campania||''), area:g.area||'campo', empleados:pares.map(x=>x[0]), empleadosNombres:pares.map(x=>String(x[1]??'')),
+    vehiculo:g.vehiculo||'', vehiculoNombre:String(g.vehiculoNombre||'')};
+  if(g.zona!=null) out.zona=String(g.zona);
+  return out;
+};
 async function persistProg(){
-  await guardarProgramacion(db,{ref,get,set}, progFecha, {grupos:progGrupos, noDisponibles:progNoDisp});
+  if(progCargando||!progFecha) return;                 // mientras carga otro día no se guarda nada
+  if(progGuardando){ progPendiente=true; return; }      // va uno en camino: al terminar se guarda lo último
+  progGuardando=true; progPendiente=false;
+  const fecha=progFecha;
+  estadoGuardadoProg('guardando');
+  const lento=setTimeout(()=>{ if(progGuardando) estadoGuardadoProg('lento'); },6000);
+  let ok=false;
+  try{
+    const datos=JSON.parse(JSON.stringify({grupos:progGrupos.map(limpiarGrupoProg), noDisponibles:progNoDisp,
+      actualizado:Date.now(), dev:PROG_DEV, por:me?.id||''}));
+    await set(ref(db,`programaciones/${fecha}`), datos);
+    ok=true;
+  }catch(e){
+    console.warn('[programación] no se guardó', fecha, e);
+    estadoGuardadoProg('error',e);
+    showToastEmp('⚠️ No se guardó la programación. '+motivoErrorProg(e), 6000);
+  }finally{
+    clearTimeout(lento); progGuardando=false;
+    if(progPendiente&&!progCargando) persistProg();
+    else if(ok) estadoGuardadoProg('ok');
+  }
+}
+window.progReintentarGuardar=()=>persistProg();
+function motivoErrorProg(e){
+  const c=String(e&&(e.code||e.message)||'');
+  if(/permission/i.test(c)) return 'Tu sesión no tiene permiso para guardar: sal y vuelve a entrar.';
+  if(navigator.onLine===false) return 'No hay conexión a internet.';
+  return 'Revisa tu conexión e inténtalo de nuevo.';
+}
+const horaCortaProg=t=>{ const d=new Date(t); return `${d.getHours()%12||12}:${String(d.getMinutes()).padStart(2,'0')} ${d.getHours()<12?'a.m.':'p.m.'}`; };
+function htmlGuardadoProg(){
+  const E=progEstadoG;
+  switch(E.tipo){
+    case 'carga': return '<span class="pg-gd cargando"><i></i>Cargando el día…</span>';
+    case 'errorCarga': return '<span class="pg-gd error">No se pudo cargar este día. <button onclick="progReintentarCarga()">Reintentar</button></span>';
+    case 'guardando': return '<span class="pg-gd guardando"><i></i>Guardando…</span>';
+    case 'lento': return '<span class="pg-gd lento"><i></i>Guardando… revisa tu señal</span>';
+    case 'ok': return `<span class="pg-gd ok">✓ Guardado · ${horaCortaProg(E.t)}</span>`;
+    case 'guardadoAntes': { const d=new Date(E.t), f=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      return `<span class="pg-gd ok tenue">Guardado ${f===today()?'hoy':'el '+fechaCortaFx(f)} · ${horaCortaProg(E.t)}</span>`; }
+    case 'remoto': return `<span class="pg-gd remoto">↻ Actualizado con cambios de ${escHtml(E.msg)} · ${horaCortaProg(E.t)}</span>`;
+    case 'error': return `<span class="pg-gd error">No se guardó. ${escHtml(E.msg)} <button onclick="progReintentarGuardar()">Reintentar</button></span>`;
+    default: return '';
+  }
+}
+function estadoGuardadoProg(tipo,extra){
+  progEstadoG={tipo, t:tipo==='guardadoAntes'?extra:Date.now(), msg:tipo==='error'?motivoErrorProg(extra):(tipo==='remoto'?extra:'')};
+  const el=document.getElementById('progGuardado');
+  if(el) el.innerHTML=htmlGuardadoProg();
+  else if(tipo==='errorCarga'&&$('progArmarBody')) $('progArmarBody').innerHTML=`<div class="pg-guardado">${htmlGuardadoProg()}</div>`;   // primera carga: aún no hay tablero
+}
+function bloquearTableroProg(si){ const b=$('progArmarBody'); if(b) b.classList.toggle('pg-cargando',!!si); }
+// Si se intenta cerrar la app con algo sin guardar, el navegador pregunta
+window.addEventListener('beforeunload',e=>{ if(progGuardando||progPendiente||progEstadoG.tipo==='error'){ e.preventDefault(); e.returnValue=''; } });
+
+// ── Programación en vivo ──
+// Antes, si dos personas (o la misma en dos dispositivos) tenían abierto el mismo día, cada guardado escribía
+// el día completo con lo que tenía su pantalla y pisaba lo de la otra. Ahora el tablero escucha el día abierto:
+// cuando otra persona guarda, se actualiza solo (y avisa quién). Lo propio se reconoce por "dev".
+function detenerProgEnVivo(){ if(progEscucha){ try{ progEscucha(); }catch(_){} } progEscucha=null; progEscuchaFecha=null; }
+function escucharProgEnVivo(fecha){
+  if(progEscuchaFecha===fecha&&progEscucha) return;
+  if(progEscucha){ try{ progEscucha(); }catch(_){} progEscucha=null; }
+  progEscuchaFecha=fecha;
+  let pendiente=null;
+  const aplicar=v=>{
+    if(fecha!==progFecha||progCargando||progGuardando||progPendiente) return;
+    const nuevos=v.grupos||[];
+    if(JSON.stringify(nuevos.map(limpiarGrupoProg))===JSON.stringify(progGrupos.map(limpiarGrupoProg))&&!progVaciado(v)) return;
+    progGrupos=JSON.parse(JSON.stringify(nuevos));
+    progNoDisp={personal:[...(v.noDisponibles?.personal||[])], vehiculos:[...(v.noDisponibles?.vehiculos||[])]};
+    const quien=(progUsuarios.find(u=>u.id===v.por)||{}).nombre||'otra persona';
+    if($('moVehGrupo')?.classList.contains('open')) closeModal('moVehGrupo');
+    renderArmar(); estadoGuardadoProg('remoto',quien);
+    showToastEmp(`↻ La programación se actualizó con cambios de ${quien}.`, 4000);
+  };
+  const progVaciado=v=>!(v.grupos||[]).length&&progGrupos.length>0;
+  progEscucha=onValue(refFirebase(db,`programaciones/${fecha}`), sn=>{
+    const v=sn.val();
+    if(!v||v.dev===PROG_DEV) return;                   // vacío o es lo que guardó este mismo dispositivo
+    // Si está escribiendo una zona, se aplica al salir del campo para no quitarle lo que teclea
+    const foco=document.activeElement;
+    if(foco&&foco.closest&&foco.closest('#progArmarBody')&&/INPUT|TEXTAREA/.test(foco.tagName)){
+      pendiente=v; foco.addEventListener('blur',()=>{ const x=pendiente; pendiente=null; if(x) setTimeout(()=>aplicar(x),50); },{once:true}); return;
+    }
+    aplicar(v);
+  }, err=>{ console.warn('[programación] sin escucha en vivo', err&&err.message); if(progEscuchaFecha===fecha){ progEscucha=null; progEscuchaFecha=null; } });
 }
 
 // Registro de ausencia que aplica a esa fecha (o null). Además del registro
@@ -6977,6 +7124,7 @@ function renderArmar(){
         <span class="pg-fecha-w"><button class="pg-fecha" tabindex="-1" aria-hidden="true">${fechaTxt}</button><input type="date" id="progFechaInput" class="fx-fecha-sobre" value="${progFecha}" onchange="progCambiarFecha(this.value)" onclick="abrirCalendario(this)" aria-label="Elegir fecha"></span>
         <button onclick="progDia(1)" aria-label="Día siguiente">›</button>
       </div>
+      <div class="pg-guardado" id="progGuardado" aria-live="polite">${htmlGuardadoProg()}</div>
       <div class="us-cnt">
         <span><b>${progGrupos.length}</b>Grupos</span><span><b>${persAsignadas.size}</b>Asignados</span><span><b>${persLibres.length}</b>Libres</span><span><b>${ausentesAuto.length}</b>Ausentes</span>
       </div>
@@ -7280,15 +7428,15 @@ function ofrendaProg(ctx,W,H,base,top){
   // fondo: ciruela con el resplandor de las velas desde abajo y polvito dorado
   const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#2a0530'); g.addColorStop(.55,'#4a044e'); g.addColorStop(1,'#6b0f4a'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   const r=ctx.createRadialGradient(W*.5,H+40,20,W*.5,H+40,W*.7); r.addColorStop(0,'rgba(249,115,22,.55)'); r.addColorStop(1,'rgba(249,115,22,0)'); ctx.fillStyle=r; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#fde68a'; for(let i=0;i<70;i++){ ctx.globalAlpha=.15+((i*13)%10)/22; ctx.beginPath(); ctx.arc((i*149)%W,top+10+((i*71)%Math.max(40,base-top)),(i%4)?1:1.7,0,P); ctx.fill(); } ctx.globalAlpha=1;
+  ctx.fillStyle='#fde68a'; for(let i=0;i<Math.round(W/15);i++){ ctx.globalAlpha=.15+((i*13)%10)/22; ctx.beginPath(); ctx.arc((i*149)%W,top+10+((i*71)%Math.max(40,base-top)),(i%4)?1:1.7,0,P); ctx.fill(); } ctx.globalAlpha=1;
   // papel picado en dos hileras (atrás más chico y tenue)
-  papelPicadoProg(ctx,-20,W+20,4,30,22,cols.slice().reverse(),.55);
-  papelPicadoProg(ctx,-10,W+10,2,44,15,cols,.96);
+  papelPicadoProg(ctx,-20,W+20,4,30,Math.round(W/49),cols.slice().reverse(),.55);
+  papelPicadoProg(ctx,-10,W+10,2,44,Math.round(W/72),cols,.96);
   // ── la ofrenda en la franja de abajo ──
   const y0=base, yM=H-26;                          // y0: inicio de la franja; yM: borde del mantel
   // arco de cempasúchil de lado a lado
   ctx.strokeStyle='rgba(22,101,52,.7)'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(18,yM); ctx.quadraticCurveTo(W/2,y0-30,W-18,yM); ctx.stroke();
-  for(let k=0;k<=26;k++){ const t=k/26, x=(1-t)*(1-t)*18+2*(1-t)*t*(W/2)+t*t*(W-18), y=(1-t)*(1-t)*yM+2*(1-t)*t*(y0-30)+t*t*yM; cempasuchilProg(ctx,x,y,k%2?9:11); }
+  const nf=Math.round(W/41); for(let k=0;k<=nf;k++){ const t=k/nf, x=(1-t)*(1-t)*18+2*(1-t)*t*(W/2)+t*t*(W-18), y=(1-t)*(1-t)*yM+2*(1-t)*t*(y0-30)+t*t*yM; cempasuchilProg(ctx,x,y,k%2?9:11); }
   // mantel morado con orilla de picos naranja y rosa
   ctx.fillStyle='#7e22ce'; ctx.fillRect(0,yM,W,H-yM); ctx.fillStyle='#db2777'; ctx.fillRect(0,yM,W,6);
   ctx.fillStyle='#f97316'; for(let x=0;x<W;x+=20){ ctx.beginPath(); ctx.moveTo(x,yM+6); ctx.lineTo(x+20,yM+6); ctx.lineTo(x+10,yM+15); ctx.fill(); }
@@ -7304,11 +7452,14 @@ function ofrendaProg(ctx,W,H,base,top){
   // floreros de cempasúchil
   const florero=(x)=>{ ctx.fillStyle='#be185d'; ctx.beginPath(); ctx.moveTo(x-10,yM); ctx.lineTo(x-7,yM-22); ctx.lineTo(x+7,yM-22); ctx.lineTo(x+10,yM); ctx.fill(); ctx.fillStyle='#16a34a'; ctx.fillRect(x-1,yM-34,2,12);
     cempasuchilProg(ctx,x-7,yM-36,8); cempasuchilProg(ctx,x+7,yM-38,8); cempasuchilProg(ctx,x,yM-46,9); };
-  vela(70,30); florero(130); vela(190,44); pan(268,1); vela(352,24);
+  // del borde hacia el centro, y en espejo del otro lado (en la imagen ancha caben más cosas)
+  const serie=[['v',30,60],['f',0,60],['v',44,78],['p',1,84],['v',24,70],['f',0,62],['v',38,80],['p',.9,84]];
+  for(let x=70,k=0;x<W/2-100;k++){ const [t,v,paso]=serie[k%serie.length];
+    [x,W-x].forEach((xx,lado)=>{ if(t==='v') vela(xx,lado?v-4:v); else if(t==='f') florero(xx); else pan(xx,lado?v*.92:v); });
+    x+=paso; }
   calaveritaProg(ctx,W/2,yM-44,1.3);
-  vela(W-352,24); pan(W-268,.9); vela(W-190,40); florero(W-130); vela(W-70,30);
   // pétalos regados sobre el mantel
-  ctx.fillStyle='#f97316'; for(let k=0;k<26;k++){ ctx.save(); ctx.translate((k*83)%W,yM+22+((k*17)%10)); ctx.rotate(k); ctx.beginPath(); ctx.ellipse(0,0,4,2.4,0,0,P); ctx.fill(); ctx.restore(); }
+  ctx.fillStyle='#f97316'; for(let k=0;k<Math.round(W/41);k++){ ctx.save(); ctx.translate((k*83)%W,yM+22+((k*17)%10)); ctx.rotate(k); ctx.beginPath(); ctx.ellipse(0,0,4,2.4,0,0,P); ctx.fill(); ctx.restore(); }
 }
 function focosProg(ctx,W,y0,cae,cols,k=1){ const P=Math.PI*2, n=Math.round(W/(62*k));
   ctx.strokeStyle='rgba(207,227,242,.6)'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(0,y0); ctx.quadraticCurveTo(W/2,y0+cae*2,W,y0); ctx.stroke();
@@ -7391,7 +7542,7 @@ window.progGenerarImagen=async()=>{
   const plantel=progGrupos.filter(g=>g.area==='plantel');
 
   // ── Dibujo en canvas (áreas con barra lateral; campañas de un grupo en 2 columnas) ──
-  const W=1080, scale=2, pad=56;
+  let W=1080; const scale=2, pad=56;   // W crece cuando la programación es larga (ver «compacta» abajo)
   const F='"Plus Jakarta Sans", sans-serif';
   try{ await Promise.all(['500 20px','600 20px','700 20px','800 20px'].map(w=>document.fonts.load(`${w} ${F}`))); }catch(e){}
   // Con el tema de Halloween la imagen sale "de temporada": encabezado negro y sangre con goteo,
@@ -7509,12 +7660,12 @@ window.progGenerarImagen=async()=>{
     }};
   };
   // Tarjeta de campaña. "w" es el ancho total de la tarjeta.
-  const tarjeta=(c,w,area,forzarDos)=>{
+  const tarjeta=(c,w,area,forzarDos,sinCuadricula)=>{
     const iw=w-30-22; // ancho interior (franja + márgenes)
     fuente(700,18); const cnt=`${c.grupos.length} ${c.grupos.length===1?'grupo':'grupos'}`; const cw=ancho(cnt);
     fuente(800,25); const tl=envolver(c.nombre,iw-cw-14);
     const cab=20+tl.length*32+10;
-    const enCuadricula=c.grupos.length>3; // muchos grupos: 2 columnas por dentro
+    const enCuadricula=!sinCuadricula&&c.grupos.length>3; // muchos grupos: 2 columnas por dentro
     let filas=[], cuerpo=0;
     if(enCuadricula){
       const colW=(iw-28)/2;
@@ -7549,11 +7700,29 @@ window.progGenerarImagen=async()=>{
   };
 
   // ── Áreas ──
-  const railX=36, railW=50, cx0=railX+railW+18, cW=W-36-cx0, gapT=16;
-  const areas=[];
-  const armarArea=(nombre,grupos,color,barra,fondo)=>{
+  // Normal: campañas de un grupo en 2 columnas y las demás a todo lo ancho. Si así la imagen sale muy larga
+  // (mucho más alta que ancha), se hace más ancha y TODAS las tarjetas van en 3 columnas, en orden de lectura
+  // (se llena una columna y luego la siguiente), repartidas para que las columnas queden parejas.
+  const railX=36, railW=50, cx0=railX+railW+18, gapT=16;
+  let cW=W-36-cx0;
+  const areas=[]; let chipsAus=[];
+  const repartir=(cards,k)=>{   // corta la lista en k tramos seguidos con la columna más alta lo más baja posible
+    const hs=cards.map(c=>c.h), n=hs.length, suma=(i,j)=>hs.slice(i,j).reduce((a,b)=>a+b,0)+gapT*Math.max(0,j-i-1);
+    const memo={}; const mejor=(i,k)=>{ const key=i+'|'+k; if(memo[key]) return memo[key];
+      if(k===1||n-i<=1) return memo[key]={alto:suma(i,n),cortes:[n]};
+      let r={alto:Infinity}; for(let j=i+1;j<=n-(1);j++){ const resto=mejor(j,k-1), alto=Math.max(suma(i,j),resto.alto); if(alto<r.alto) r={alto,cortes:[j,...resto.cortes]}; }
+      const solo={alto:suma(i,n),cortes:[n]}; return memo[key]=(solo.alto<=r.alto?solo:r); };
+    const {cortes}=mejor(0,k); const cols=[]; let i=0; cortes.forEach(j=>{ cols.push(cards.slice(i,j)); i=j; }); return cols;
+  };
+  const armarArea=(nombre,grupos,color,barra,fondo,K)=>{
     const area={nombre,color,barra,fondo,bloques:[]};
     const camps=campanias(grupos);
+    if(K){
+      const colW=(cW-gapT*(K-1))/K;
+      const cols=repartir(camps.map(c=>tarjeta(c,colW,area,true,true)),K);
+      const h=Math.max(...cols.map(col=>col.reduce((a,c)=>a+c.h,0)+gapT*(col.length-1)));
+      area.bloques.push({cols,colW,h,cards:[]}); area.h=h; areas.push(area); return;
+    }
     // Las campañas de un solo grupo se juntan en 2 columnas; las demás van a todo lo ancho
     const i0=camps.findIndex(c=>c.grupos.length===1);
     const solos=camps.filter(c=>c.grupos.length===1);
@@ -7570,12 +7739,13 @@ window.progGenerarImagen=async()=>{
     area.h=area.bloques.reduce((a,b)=>a+b.h,0)+gapT*(area.bloques.length-1);
     areas.push(area);
   };
-  if(campo.length) armarArea('CAMPO',campo,C.campo.color,C.campo.barra,C.campo.fondo);
-  if(plantel.length) armarArea('PLANTEL',plantel,C.plantel.color,C.plantel.barra,C.plantel.fondo);
+  const armarTodo=(K)=>{
+  areas.length=0; chipsAus=[];
+  if(campo.length) armarArea('CAMPO',campo,C.campo.color,C.campo.barra,C.campo.fondo,K);
+  if(plantel.length) armarArea('PLANTEL',plantel,C.plantel.color,C.plantel.barra,C.plantel.fondo,K);
 
   // Ausentes: etiquetas que pasan a la siguiente línea
   const ausGrupos=[['Vacaciones','vacaciones'],['Incapacidad','incapacidad'],['Permiso','permiso'],['Día de bienestar','bienestar'],['Permiso injustificado','injustificado']].filter(([,k])=>ausentes[k].length);
-  const chipsAus=[];
   if(ausGrupos.length){
     let x=0, y=0;
     ausGrupos.forEach(([lbl,k])=>{
@@ -7589,6 +7759,10 @@ window.progGenerarImagen=async()=>{
   }
   // La barra necesita espacio para el nombre escrito de lado
   areas.forEach(a=>{ fuente(800,21); esp('6px'); a.railH=Math.max(a.h,ancho(a.nombre)+44); esp('0px'); });
+  return areas.reduce((a,ar)=>a+Math.max(ar.h,ar.railH),0)+26*(areas.length-1);
+  };
+  // Compacta: si con el ancho normal el alto pasa de ~1.5 veces el ancho, más ancha y en 3 columnas
+  if(armarTodo(0)+420>W*1.5){ W=1620; cW=W-36-cx0; armarTodo(3); }
 
   // ── Encabezado (las cifras a la par de la fecha si caben; si no, debajo) ──
   const nTec=progGrupos.reduce((a,g)=>a+(g.empleados||[]).length,0);
@@ -7663,7 +7837,8 @@ window.progGenerarImagen=async()=>{
     } else {
       let by=y;
       a.bloques.forEach(b=>{
-        if(b.cards.length===1&&!b.colW) b.cards[0].draw(cx0,by);
+        if(b.cols) b.cols.forEach((col,j)=>{ let yy=by; col.forEach(c=>{ c.draw(cx0+j*(b.colW+gapT),yy); yy+=c.h+gapT; }); });
+        else if(b.cards.length===1&&!b.colW) b.cards[0].draw(cx0,by);
         else b.cards.forEach((c,i)=>c.draw(cx0+i*(b.colW+gapT),by,b.h));
         by+=b.h+gapT;
       });

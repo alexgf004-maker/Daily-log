@@ -954,6 +954,20 @@ tbody tr:hover td{background:var(--bluelt)}
 #adProg .fx-fecha-oculta{position:absolute;left:0;top:0;width:1px!important;height:1px!important;padding:0!important;border:0!important;opacity:0;pointer-events:none;overflow:hidden}
 #adProg .fx-fecha-oculta.visible{position:static;width:100%!important;height:40px!important;padding:0 10px!important;opacity:1;pointer-events:auto;margin-top:8px;border-radius:10px}
 .pg-acts{display:flex;gap:6px;margin-top:12px}
+/* Estado del guardado de la programación (htmlGuardadoProg en index.html) */
+.pg-guardado{min-height:18px;margin-top:8px;display:flex;justify-content:center}
+.pg-gd{display:inline-flex;align-items:center;gap:6px;font:700 11.5px var(--sans);padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.14);color:#fff}
+.pg-gd.tenue{background:none;opacity:.75;font-weight:600}
+.pg-gd i{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pgLat 1s ease-in-out infinite alternate}
+@keyframes pgLat{from{opacity:.25}to{opacity:1}}
+.pg-gd.ok{background:rgba(16,185,129,.22)}
+.pg-gd.lento{background:rgba(245,158,11,.3)}
+.pg-gd.remoto{background:rgba(255,255,255,.22)}
+.pg-gd.error{background:#fee2e2;color:#991b1b;flex-wrap:wrap;justify-content:center;text-align:center;border-radius:12px;padding:6px 10px}
+.pg-gd button{border:none;border-radius:14px;padding:4px 10px;font:800 11.5px var(--sans);background:#b91c1c;color:#fff;cursor:pointer;pointer-events:auto}
+#progArmarBody.pg-cargando{pointer-events:none}
+#progArmarBody.pg-cargando>*:not(.pg-hero){opacity:.45;transition:opacity .2s}
+#progArmarBody.pg-cargando .pg-hero .rg-mnav{pointer-events:auto}
 .pg-acts button{flex:1;font:800 12px var(--sans);padding:9px 4px;border-radius:10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;cursor:pointer}
 .pg-acts button.w{background:#fff;color:#1d4ed8;border-color:#fff}
 .pg-sel{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;font-size:12.5px;color:#1e3a8a;margin-bottom:10px}
