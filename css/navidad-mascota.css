@@ -8,6 +8,8 @@
   touch-action:manipulation;filter:drop-shadow(0 8px 8px rgba(2,30,55,.22));
 }
 .nv-mascota>svg{display:block;width:100%;height:100%;overflow:visible;cursor:pointer}
+.nv-mascota #actor:focus:not(:focus-visible){outline:none}
+.nv-mascota #actor:focus-visible{outline:2px solid #c9edff;outline-offset:5px}
 .nv-mascota #background{display:none!important}
 .nv-mascota .nv-hielo-fijo{
   display:none;position:absolute;inset:0;z-index:2;pointer-events:none;

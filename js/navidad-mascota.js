@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 var mount=null,actor=null,ice=null,environment=null,observer=null,login=null,form=null;
-var stageNow='',previewDay=null,touchStage=0,flow=null,nap=28,manualRemaining=0,focusTarget=null;
+var stageNow='',previewDay=null,touchStage=0,flow=null,nap=28,manualRemaining=0,focusTarget=null,moodWait=7,moodIndex=0;
 var media=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)'),reduced=!!media?.matches;
 function theme(){var t=window.__temas;return t?.activo?.id==='navidad'?t:null;}
 function stage(){var t=theme();return t&&t.etapaDe(t.activo)?.id||'';}
@@ -11,15 +11,15 @@ function seasonKey(){return 'innova_nv_liberado_'+new Date().getFullYear();}
 function dayPre(){var d=new Date();if(preview())return previewDay===null?1:previewDay;return d.getMonth()===11&&d.getDate()<=21?d.getDate():1;}
 function giftDay(){var d=new Date();return d.getMonth()===11&&d.getDate()>=24;}
 function shouldIntroduce(){if(preview())return true;try{return localStorage.getItem(seasonKey())!=='1';}catch(e){return true;}}
-function stopStory(){if(environment)environment.restore();if(mount)delete mount.dataset.historia;flow=null;manualRemaining=0;nap=28;}
-function idle(){if(!actor)return;actor.play(stageNow==='ano'?'nye':'idle');}
+function stopStory(){if(environment)environment.restore();if(mount){delete mount.dataset.historia;delete mount.dataset.gesto;}flow=null;manualRemaining=0;nap=28;moodWait=7;}
+function idle(){if(!actor)return;if(mount)delete mount.dataset.gesto;actor.play(stageNow==='ano'?'nye':'idle');}
 function clearAll(){
   stopStory();if(observer){observer.disconnect();observer=null;}
   if(form){form.removeEventListener('focusin',onFocus);form.removeEventListener('focusout',onBlur);}
-  if(actor){actor.svg.removeEventListener('pointerdown',onTap);actor.destroy();actor=null;}
+  if(actor){actor.svg.removeEventListener('pointerdown',onTap);actor.svg.removeEventListener('keydown',onKey);actor.destroy();actor=null;}
   if(ice){ice.destroy();ice=null;}if(environment){environment.destroy();environment=null;}
   if(mount){mount.classList.remove('nv-mascota-ojos-pausa','nv-mascota-congelada','nv-mascota-libre','nv-mascota-bloque');delete mount.dataset.historia;}
-  mount=login=form=focusTarget=null;stageNow='';touchStage=0;
+  mount=login=form=focusTarget=null;stageNow='';touchStage=0;moodIndex=0;
 }
 function regulate(){
   if(!actor)return;
@@ -59,12 +59,19 @@ function frame(info,dt){
   }
   if(manualRemaining>0){manualRemaining-=dt;if(manualRemaining<=0)idle();return;}
   if(actor.scene!=='idle'||stageNow!=='casa')return;
-  nap-=dt;if(nap<=0&&!startStory(giftDay()?'regalo':'travesura'))nap=28;
+  nap-=dt;
+  if(nap<=0){if(!startStory(giftDay()?'regalo':'travesura'))nap=28;return;}
+  moodWait-=dt;
+  if(moodWait<=0){
+    var name=['grump','plot','plot','grump'][moodIndex++%4];
+    actor.play(name);mount.dataset.gesto=name;manualRemaining=GreenActor.SCENES[name].duration;
+    moodWait=11+Math.random()*6;
+  }
 }
 function play(name){
   if(!actor||ice||reduced||focusTarget||!GreenActor.SCENES[name])return false;
-  stopStory();delete mount.dataset.historia;actor.play(name);
-  if(!['idle','nye','tantrum'].includes(name))manualRemaining=GreenActor.SCENES[name].duration+.25;
+  stopStory();delete mount.dataset.historia;actor.play(name);mount.dataset.gesto=name;
+  if(!['idle','nye'].includes(name))manualRemaining=GreenActor.SCENES[name].duration+.25;
   return true;
 }
 function onTap(event){
@@ -73,6 +80,7 @@ function onTap(event){
   if(flow?.kind==='travesura'){caught();return;}
   touchStage=touchStage%3+1;play('tap'+touchStage);
 }
+function onKey(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();onTap(event);}}
 function onFocus(event){
   if(!actor||ice)return;focusTarget=event.target;stopStory();delete mount.dataset.historia;
   actor.play(event.target.id==='loginPin'?'privacy':'idle');regulate();
@@ -91,7 +99,7 @@ function sync(){
   if(!mount)return;
   try{
     var svg=mount.querySelector('svg');if(!svg||typeof GreenActor!=='function')throw Error('Motor o SVG no disponible');
-    actor=new GreenActor(svg,{initialScene:'idle',embedded:true,onFrame:frame});
+    actor=new GreenActor(svg,{initialScene:'idle',embedded:true,personality:current==='casa',onFrame:frame});
     form=login.querySelector('.login-form');
     if(current==='pre'){
       ice=window.NavidadHielo.create(dayPre(),mount);actor.pause();mount.classList.add('nv-mascota-congelada','nv-mascota-bloque');
@@ -102,7 +110,7 @@ function sync(){
       else if(current==='casa'&&giftDay())nap=4;
       else if(current==='ano')actor.play('nye');
     }
-    svg.addEventListener('pointerdown',onTap);
+    svg.addEventListener('pointerdown',onTap);svg.addEventListener('keydown',onKey);
     form?.addEventListener('focusin',onFocus);form?.addEventListener('focusout',onBlur);
     observer=new MutationObserver(regulate);observer.observe(login,{attributes:true,attributeFilter:['class']});
     if(!ice&&form?.contains(document.activeElement))onFocus({target:document.activeElement});

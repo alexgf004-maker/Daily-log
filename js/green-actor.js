@@ -1,4 +1,4 @@
-/* GreenActor 1.1 — 14 original SVG animations and 4 integrated login poses. No external dependencies.
+/* GreenActor 1.2 — 14 original SVG animations and 6 integrated login poses. No external dependencies.
    API: const actor = new GreenActor(document.querySelector('#green-character'));
    actor.play('steal'); actor.tap(); actor.pause(); actor.resume(); actor.destroy();
    Custom DOM events: greenactor:scenechange and greenactor:complete. */
@@ -29,13 +29,15 @@ const SCENES = Object.freeze({
  privacy:  {duration:.6,loop:false,title:'No miro el PIN',detail:'Se cubre los ojos mientras el campo está enfocado.',group:'Login integrado'},
  tug:      {duration:6.0,loop:false,title:'Tirar de las luces',detail:'Alcanza un cordón, tira suavemente y vigila si lo descubren.',group:'Login integrado'},
  offer:    {duration:5.0,loop:false,title:'Devolver la luz',detail:'Levanta la mano y devuelve un foco a la guirnalda.',group:'Login integrado'},
+ grump:    {duration:5.8,loop:false,title:'Refunfuñar',detail:'Entrecierra los ojos, cruza los brazos y protesta con una pequeña patada.',group:'Login integrado'},
+ plot:     {duration:5.2,loop:false,title:'Tramar otra travesura',detail:'Comprueba ambos lados, junta las manos y esboza una sonrisa torcida.',group:'Login integrado'},
  nye:      {duration:5.6,loop:true,title:'31 de diciembre', detail:'Los destellos lo asustan: tiembla y se tapa los oídos.', group:'Fechas especiales'},
 });
 class GreenActor {
  constructor(svg, options={}){
   if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error('GreenActor requires the actual inline <svg> element.');
   this.svg=svg; this.options=options; this.nodes={};
-  const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','mouth','smile','blush','sweat','hands-ears','hands-eyes','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
+  const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','lid-left','lid-right','mouth','expression-mouth','expression-line','smirk-crease','smile','blush','sweat','hands-ears','hands-eyes','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
   for (const id of ids) this.nodes[id]=svg.querySelector('#'+id);
   this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
   this._raf=requestAnimationFrame(t=>this.frame(t));
@@ -83,7 +85,8 @@ class GreenActor {
  render(t){
   const mode=this.scene;const D=SCENES[mode].duration;const p=clamp(t/D);
   const v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
-    scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,alpha:1};
+    scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,alpha:1};
+  const personality=this.options.embedded&&this.options.personality!==false;
   const visible={};const props=(...args)=>{for (const id of args)visible[id]=1};
   let text='';let bubble=0;let bagTransform='';let bulbTransform='';let rollVisible=0;
   // Every frame uses absolute coordinates; switching scenes never leaves stale transforms.
@@ -96,9 +99,17 @@ class GreenActor {
   v.scarf=4*wave(t,.31);v.tail=7*wave(t,.24);
   v.leftArm=2.5*wave(t,.23);v.rightArm=-2.5*wave(t,.23);
   v.eyeL=blinkAt(4.7);v.eyeR=blinkAt(4.7);
+  if(personality){v.grump=.24;v.lidL=.2;v.lidR=.26;}
   switch(mode){
     case 'idle':
       v.dy=-3*breath;v.pupilX=3*wave(t,.12);v.head=2*wave(t,.17);v.hair=2*wave(t,.2);
+      if(personality){
+        // Mirada primero, cabeza después: una pausa de sospecha dentro del reposo.
+        const glance=bump(t,.8,1.35,2.6,3.25);
+        v.pupilX=-10*glance;v.head=4*bump(t,1.15,1.75,2.7,3.5);
+        v.dy=-1.5*breath;v.scarf=2*wave(t,.25);v.tail=3*wave(t,.21);
+        v.grump=.26+.16*glance;v.lidL=.25+.17*glance;v.lidR=.32+.12*glance;
+      }
       break;
     case 'sneak':{
       const step=wave(t,1.05),drift=wave(t,.165);
@@ -109,8 +120,9 @@ class GreenActor {
       if(this.options.embedded){
         // La aproximación termina en la misma posición que el tirón del cordón.
         const settle=1-between(t,1.3,2),arc=Math.sin(PI*clamp(t/2));
-        v.dx=32*arc;v.dy=-5*Math.abs(step)*arc;v.angle=-2*arc;
+        v.dx=22*arc;v.dy=-3*Math.abs(step)*arc;v.angle=-3*arc;
         for(const key of ['leftLeg','rightLeg','leftArm','rightArm','head','earL','earR','scarf'])v[key]*=settle;
+        if(personality){v.pupilX=-12*bump(t,.1,.35,.9,1.2)+10*bump(t,1.15,1.4,1.75,2);v.grump=.38;v.sly=.35*between(t,1.2,1.9);v.lidL=.42;v.lidR=.3;}
       }
       break;}
     case 'run':{
@@ -151,6 +163,14 @@ class GreenActor {
       props('sweat'); visible.sweat=bump(t,.75,1.1,3.8,4.5);
       this.transform('sweat',`translate(0 ${(-12+58*between(t,1.3,3.4)).toFixed(1)})`);
       bubble=bump(t,.3,.65,2.4,3);text='¡Ups!';
+      if(personality){
+        const sulk=between(t,2.3,3.2),startle=1-between(t,1.5,2.2);
+        v.dx=-3*startle;v.dy=-10*bump(t,.02,.13,.3,.55);v.angle=0;
+        v.head=-8*startle+9*sulk;v.pupilX=-9*sulk;v.surprise=startle;
+        v.leftArm=-29*startle-32*sulk;v.rightArm=29*startle+32*sulk;
+        v.grump=.9*sulk;v.lidL=.7*sulk;v.lidR=.62*sulk;
+        v.eyeL=1+.16*startle;v.eyeR=v.eyeL;
+      }
       break;}
     case 'drop':{
       const trip=between(t,.5,2.2),fall=between(t,2.2,3.15),recover=between(t,4.4,6.4);
@@ -189,6 +209,12 @@ class GreenActor {
       v.leftLeg=-13*jump;v.rightLeg=13*jump;v.eyeL=1+.18*panic;v.eyeR=1+.18*panic;
       v.head=-10*panic;v.scarf=-15*jump;
       bubble=bump(t,.17,.31,1.0,1.7);text='¡Ah!';
+      if(personality){
+        const recoil=bump(t,0,.12,.32,.7),suspect=bump(t,.45,.9,2.1,3);
+        v.dy=-20*recoil;v.dx=4*recoil;v.angle=-2*recoil;v.head=-6*recoil+8*suspect;
+        v.leftLeg=-3*recoil;v.rightLeg=3*recoil;v.leftArm=-12*recoil-14*suspect;v.rightArm=12*recoil+14*suspect;
+        v.surprise=recoil;v.grump=.75*suspect;v.lidL=.65*suspect;v.lidR=.5*suspect;v.pupilX=-12*suspect;
+      }
       break;}
     case 'tap2':{
       const frown=between(t,.15,.55),walkOff=between(t,1.35,3.85);
@@ -197,6 +223,12 @@ class GreenActor {
       v.leftArm=64;v.rightArm=-45;v.browL=18*frown;v.browR=-17*frown;
       v.pupilX=-10;v.head=-11;v.eyeL=blinkAt(3.9);
       bubble=bump(t,.32,.52,1.5,1.85);text='grrr…';
+      if(personality){
+        const fold=bump(t,.1,.6,2.9,4),stamp=bump(t,1.6,1.85,2,2.25);
+        v.dx=4*fold;v.dy=3*fold;v.angle=2*fold;v.head=10*fold;v.pupilX=-13*fold;
+        v.leftArm=-34*fold;v.rightArm=34*fold;v.leftLeg=0;v.rightLeg=-12*stamp;
+        v.scarf=-7*bump(t,1.9,2.15,2.3,2.7);v.grump=fold;v.lidL=.78*fold;v.lidR=.65*fold;
+      }
       break;}
     case 'tap3':{
       const shy=between(t,.3,1.0);
@@ -204,6 +236,12 @@ class GreenActor {
       v.leftArm=28*shy;v.rightArm=-24*shy;v.earL=9*shy;v.earR=-9*shy;
       props('blush');visible.blush=shy;
       v.eyeL=blinkAt(3.6,.2);v.eyeR=blinkAt(3.6,.2);
+      if(personality){
+        const defy=bump(t,.1,.6,3,4.2);
+        visible.blush=0;v.head=-7*defy;v.dy=0;v.pupilX=12*defy;v.pupilY=-2*defy;
+        v.leftArm=-28*defy;v.rightArm=28*defy;v.earL=-4*defy;v.earR=2*defy;
+        v.grump=.2;v.sly=.85*defy;v.lidL=.55*defy;v.lidR=.25*defy;
+      }
       break;}
     case 'xmas':{
       props('christmas-star','lights-string');
@@ -243,12 +281,36 @@ class GreenActor {
       v.angle=-3*pull;v.dy=4*pull;v.scarf=2*wave(t,.5);
       props('reach-arm');visible['reach-arm']=reach;
       this.rot('reach-arm',-26*reach+4*pull,448,585);
+      if(personality){
+        const tug=bump(t,1,1.25,1.55,1.9)+.7*bump(t,2.3,2.55,2.85,3.2);
+        const check=bump(t,4,4.35,5.1,5.6);
+        v.angle=-4*tug;v.dy=3*tug;v.leftArm=15*reach;v.head=-8*reach+14*check;v.pupilX=7-18*check;
+        v.grump=.32;v.sly=.8*bump(t,1.3,1.8,4.1,4.7);v.lidL=.55;v.lidR=.38;
+        v.scarf=5*tug;this.rot('reach-arm',-26*reach+5*tug,448,585);
+      }
       break;}
     case 'offer':{
       const reach=between(t,0,.8)*(1-between(t,3.8,5));
       v.head=-7*reach;v.pupilY=-9*reach;v.leftArm=8*reach;
       props('reach-arm','smile');visible['reach-arm']=reach;visible.smile=reach;
       this.rot('reach-arm',-26*reach,448,585);this.show('mouth',1-reach);
+      if(personality){v.grump=.45*(1-between(t,2.1,3.5));v.lidL=.4*reach;v.lidR=.3*reach;visible.smile=.55*reach*between(t,2.2,3.6);}
+      break;}
+    case 'grump':{
+      const fold=bump(t,.12,.7,4.3,5.8),huff=bump(t,1.5,1.8,2.1,2.65),stamp=bump(t,3,3.25,3.4,3.7);
+      v.head=9*fold-5*huff;v.dy=3*fold;v.angle=2*fold;v.body=1-.012*huff;
+      v.leftArm=-34*fold;v.rightArm=34*fold;v.rightLeg=-13*stamp;v.leftLeg=0;
+      v.pupilX=-12*fold;v.pupilY=2*fold;v.grump=fold;v.lidL=.78*fold;v.lidR=.68*fold;
+      v.earL=6*fold;v.earR=-4*fold;v.scarf=-8*bump(t,1.9,2.1,2.3,2.85);
+      break;}
+    case 'plot':{
+      const left=bump(t,.1,.4,1.05,1.4),right=bump(t,1.5,1.8,2.4,2.8),idea=bump(t,2.8,3.3,4.5,5.2);
+      const rub=2.5*wave(t,1.65)*idea;
+      v.pupilX=-13*left+12*right+7*idea;v.pupilY=-3*idea;
+      v.head=5*bump(t,.35,.75,1.1,1.5)-5*bump(t,1.75,2.1,2.5,2.9)-6*idea;
+      v.leftArm=-31*idea+rub;v.rightArm=31*idea+rub;v.dy=2*idea;
+      v.grump=.3*(left+right);v.sly=.9*idea;v.lidL=.45*(left+right)+.5*idea;v.lidR=.35*(left+right)+.22*idea;
+      v.earL=-3*idea;v.earR=3*idea;v.tail=3*wave(t,.3);v.scarf=2*wave(t,.28);
       break;}
     case 'nye':{
       props('night-overlay','celebration-fireworks','hands-ears');
@@ -275,6 +337,20 @@ class GreenActor {
   this.transform('pupil-left',`translate(${v.pupilX.toFixed(1)} ${v.pupilY.toFixed(1)})`);
   this.transform('pupil-right',`translate(${v.pupilX.toFixed(1)} ${v.pupilY.toFixed(1)})`);
   this.rot('brow-left',v.browL,340,272);this.rot('brow-right',v.browR,450,272);
+  // Párpados reales sobre los ojos: la pupila mantiene su forma al entrecerrarlos.
+  for(const [id,cx,cy,rx,amount] of [['lid-left',351,317,38,v.lidL],['lid-right',449,325,39,v.lidR]]){
+    const a=PI*(.025+.44*clamp(amount)),dx=rx*Math.sin(a),y=cy-46*Math.cos(a);
+    this.attr(id,'d',`M${cx-dx} ${y} A${rx} 46 0 0 1 ${cx+dx} ${y} Q${cx} ${y+4*amount} ${cx-dx} ${y}Z`);
+    this.show(id,amount>0?1:0);
+  }
+  const g=clamp(v.grump),sly=clamp(v.sly);
+  this.attr('brow-left','d',`M316 ${273+11*g} Q342 ${256+25*g} 364 ${275+27*g-7*sly}`);
+  this.attr('brow-right','d',`M425 ${282+21*g-12*sly} Q448 ${253+27*g-8*sly} 477 ${278+6*g}`);
+  const expression=clamp((1-g+sly)/2),frown=[374,431,392,417,408,417,428,432],smirk=[369,419,391,440,420,437,442,408];
+  const m=frown.map((value,i)=>lerp(value,smirk[i],expression));
+  this.attr('expression-line','d',`M${m[0]} ${m[1]} C${m[2]} ${m[3]} ${m[4]} ${m[5]} ${m[6]} ${m[7]}`);
+  this.show('smirk-crease',sly);
+
   for (const id of ['roof-card','roof-front','peek-eyes','wire-bulb','stolen-bulb','bag','rolling-bulbs','sweat','blush','smile','bubble','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','hands-ears','hands-eyes','reach-arm','sitting-legs','speed-lines']) {
     this.show(id,visible[id]||0);
   }
@@ -293,7 +369,12 @@ class GreenActor {
   if(this.options.embedded)for(const id of ['roof-card','roof-front','wire-bulb','lights-string','night-overlay','celebration-fireworks'])this.show(id,0);
   // Restore the default face when leaving the Nochebuena scene.
   if(mode!=='xmas'&&mode!=='offer')this.show('mouth',1);
-  this.show('bubble',bubble);if(text)this.n('bubble-text').textContent=text;
+  const closedFace=(personality||['grump','plot'].includes(mode))*(1-v.surprise);
+  const happy=visible.smile||0;
+  this.show('expression-mouth',closedFace*(1-happy));
+  if(closedFace)this.show('mouth',(1-closedFace)*(1-happy));
+  // La actitud se entiende por la actuación; el login no necesita globos de texto.
+  this.show('bubble',this.options.embedded?0:bubble);if(text)this.n('bubble-text').textContent=text;
  }
 }
 GreenActor.SCENES=SCENES;

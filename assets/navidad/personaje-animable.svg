@@ -143,6 +143,10 @@
  <g id="freckles" fill="#3b9b21" opacity=".67"><circle cx="292" cy="382" r="3"/><circle cx="302" cy="390" r="4"/><circle cx="313" cy="385" r="2"/><circle cx="502" cy="385" r="3"/><circle cx="492" cy="393" r="3.5"/><circle cx="482" cy="388" r="2.5"/></g>
  <g id="nose" inkscape:label="Nariz"><path d="M388 368 C394 357 410 357 419 367 Q422 377 410 381 Q400 388 390 378 Q384 375 388 368Z" fill="url(#noseGrad)"/><path d="M395 367 Q406 363 413 369" fill="none" stroke="#a5eb67" stroke-width="3" opacity=".5"/></g>
  <g id="mouth" inkscape:label="Boca"><path d="M389 414 Q395 406 407 409 Q422 414 414 431 Q406 447 396 438 Q389 430 389 414Z" fill="#5c291d" stroke="#34741b" stroke-width="2"/><path d="M397 436 Q405 428 412 435" stroke="#e77976" stroke-width="5" fill="none" opacity=".75"/></g>
+ <g id="expression-mouth" opacity="0" fill="none" stroke="#38651a" stroke-width="5.5" stroke-linecap="round">
+  <path id="expression-line" d="M374 431 C392 417 408 417 428 432"/>
+  <path id="smirk-crease" d="M435 408 Q444 405 447 411" opacity="0" stroke-width="3"/>
+ </g>
 <g id="blush" opacity="0"><ellipse cx="303" cy="397" rx="30" ry="14" fill="#fc8194" opacity=".72"/><ellipse cx="501" cy="397" rx="30" ry="14" fill="#fc8194" opacity=".72"/></g>
   <g id="sweat" opacity="0"><path d="M530 345 C512 376 514 389 530 390 Q552 389 530 345Z" fill="#b6f1ff" stroke="#4aa6c5" stroke-width="3"/><path d="M526 371 Q526 362 531 358" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g>
   <g id="smile" opacity="0"><path d="M368 417 Q400 451 433 415" stroke="#47721f" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M385 436Q400 443 416 433" fill="none" stroke="#f7fff2" stroke-width="4"/></g>

@@ -79,9 +79,9 @@ test('no crea una mascota con otro tema ni con tema apagado',()=>{
 test('movimiento reducido: no inicia travesuras automáticas',()=>{
  const f=fixture({date:'2026-12-22',reduced:true});f.ctx.__mascotaNavidadSync();f.advance(120);assert.equal(f.actors[0].scene,'idle');assert.equal(f.actors[0].paused,true);
 });
-test('se conservan las 14 animaciones originales y se agregan 4 poses integradas',()=>{
- const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,18);
- for(const name of ['idle','sneak','run','climb','steal','caught','drop','tantrum','hide','tap1','tap2','tap3','xmas','nye','thaw','privacy','tug','offer'])assert.match(scenes,new RegExp('\\b'+name+':'));
+test('se conservan las 14 animaciones originales y se agregan 6 poses integradas',()=>{
+ const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,20);
+ for(const name of ['idle','sneak','run','climb','steal','caught','drop','tantrum','hide','tap1','tap2','tap3','xmas','nye','thaw','privacy','tug','offer','grump','plot'])assert.match(scenes,new RegExp('\\b'+name+':'));
  for(const id of ['actor','head','body','tail','arm-left','arm-right','leg-left','leg-right','eye-left','eye-right'])assert.ok(read('index.html').includes('id="'+id+'"'));
 });
 test('los ojos se pausan al ocultar la pestaña y se reanudan con el cuerpo detenido',()=>{
@@ -147,7 +147,7 @@ test('motor real: todas las escenas conservan transformaciones finitas y restaur
 });
 test('sin guirnalda no inicia una travesura ni deja la pose bloqueada',()=>{
  const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.envs.at(-1).start=()=>false;
- assert.equal(f.ctx.__mascotaNavidadHistoria('travesura'),false);assert.equal(f.ctx.__mascotaNavidadEstado().historia,null);assert.equal(f.actors.at(-1).scene,'idle');f.advance(100);assert.equal(f.actors.at(-1).scene,'idle');
+ assert.equal(f.ctx.__mascotaNavidadHistoria('travesura'),false);assert.equal(f.ctx.__mascotaNavidadEstado().historia,null);assert.equal(f.actors.at(-1).scene,'idle');f.advance(100);assert.ok(['idle','grump','plot'].includes(f.actors.at(-1).scene));assert.equal(f.ctx.__mascotaNavidadEstado().historia,null);
 });
 test('activar movimiento reducido durante el PIN conserva las manos sobre los ojos',()=>{
  const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.form.emit('focusin',{target:f.pin});f.callbacks.mediachange({matches:true});
@@ -176,4 +176,29 @@ test('las gotas y las ondas mantienen el mismo punto de caída durante el deshie
    assert.ok(Math.abs(y+parseFloat(drop.style['--nv-chute'])-1022)<.2);
   });
  }
+});
+
+test('alterna gestos con pausas y todavía roba una luz: los gestos no reinician la espera',()=>{
+ const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.Math=Object.create(Math);f.ctx.Math.random=()=>0;f.ctx.__mascotaNavidadSync();
+ const scenes=new Set(),stories=new Set();
+ for(let i=0;i<650;i++){f.advance(.1);scenes.add(f.actors.at(-1).scene);stories.add(f.ctx.__mascotaNavidadEstado().historia);}
+ for(const name of ['idle','grump','plot','tug','caught'])assert.ok(scenes.has(name),name);
+ assert.ok(stories.has('travesura'));assert.ok(stories.has('descubierto'));
+});
+test('enfocar el PIN interrumpe el gesto y el cambio de tema limpia su estado',()=>{
+ const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.ctx.__mascotaNavidadPlay('grump');
+ assert.equal(f.mount.dataset.gesto,'grump');f.form.emit('focusin',{target:f.pin});assert.equal(f.actors.at(-1).scene,'privacy');assert.equal(f.mount.dataset.gesto,undefined);
+ f.advance(40);assert.equal(f.actors.at(-1).scene,'privacy');
+ f.ctx.__temas.activo=null;f.ctx.__mascotaNavidadSync();assert.equal(f.mount.dataset.gesto,undefined);
+});
+test('un berrinche manual termina y vuelve al reposo en el login',()=>{
+ const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.ctx.__mascotaNavidadPlay('tantrum');f.advance(5.4);assert.equal(f.actors.at(-1).scene,'idle');
+});
+
+
+test('Enter y espacio repiten los toques y el teclado se desconecta al cambiar de tema',()=>{
+ const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();let prevented=0;
+ f.svg.emit('keydown',{key:'Enter',preventDefault(){prevented++}});assert.equal(f.actors.at(-1).scene,'tap1');
+ f.svg.emit('keydown',{key:' ',preventDefault(){prevented++}});assert.equal(f.actors.at(-1).scene,'tap2');assert.equal(prevented,2);
+ f.ctx.__temas.activo=null;f.ctx.__mascotaNavidadSync();assert.equal(f.svg.events.keydown.size,0);
 });
