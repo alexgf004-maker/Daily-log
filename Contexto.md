@@ -110,6 +110,11 @@ pero cualquier split debe hacerse con extremo cuidado y en rama aparte.
   guarda la marca vigente en `localStorage.innova_sesion_cierre`; si en la base aparece otra distinta, la
   sesión se cierra (al abrir la app o al instante con la app abierta) con el aviso "La app se actualizó".
   No compara relojes. Sesiones sin marca guardada (versiones viejas) se cierran si existe un cierre.
+  Con la app abierta, después de cerrar la sesión la app **se recarga** (`cerrarSesionForzada`: espera a que
+  termine el cierre, máx. 3 s, refresca la copia de la página con `fetch(..., {cache:'reload'})` y recarga),
+  así cada teléfono trae la versión nueva sin cerrarla a mano; el aviso se muestra tras recargar
+  (`sessionStorage.innova_aviso_cierre`). Sirve para publicar algo importante y que todos lo tengan ya.
+  Al salir (`doLogout`) se detiene la escucha en vivo de la programación y se reabre al entrar.
   Al volver a entrar, si hay música que ese teléfono no tiene, el login la espera con una pantalla de
   avance (`retenerParaMusica`; a los 15 s deja "Entrar sin esperar"). El texto no menciona la música:
   con Halloween dice "Preparando la temporada de Halloween" (calabaza); sin tema, "Preparando la app".
