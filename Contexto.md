@@ -380,6 +380,18 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     Cada una trae una sorpresa propia (`ADVIENTO` en `js/navidad-app.js`), una línea personal (foquitos) y el mensaje
     que el admin escriba en Mi Perfil → "Mensajes del Adviento" (`config/navidad/adviento/<día>` = {texto, por, en};
     lo permite la regla `config/$otro`). Las puertas abiertas se recuerdan en el teléfono (`innova_adviento_<uid>_<año>`).
+  - **Marcaje "Escarcha viva"** (Pre-Navidad, `js/navidad-marcaje.js`; elegida entre varias muestras, la del nivel
+    "escalones arriba"): al marcar, la escarcha crece desde las orillas y cubre la tarjeta (hora helada `.nvp-hielo`) y
+    arriba aparece una guirnalda de foquitos de vidrio congelados; desde el punto marcado sale una ola de calor que la
+    derrite (gotas, vapor), cada foquito se enciende al llegarle el calor y la hora pasa a dorado (`.nvp-oro`). Tarde: el
+    calor no alcanza, la escarcha regresa y los foquitos titilan y se apagan. Todo en un `<canvas class="nvp-fx">` que se
+    quita al terminar (~4.5 s); después queda fija la guirnalda (`canvas.nvp-guir`, `pintarGuirnaldaNV`): prendida si la
+    entrada fue a tiempo y la salida no fue antes, congelada si no. Punto: esfera roja con ✓ o gris con ✕ (`adornoNV`).
+    Línea por tramos (`tramosNV`, `.nvp-tr`). Con movimiento reducido sale directo el estado final. También en
+    "Probar animaciones". Nota para pruebas: el reloj falso de Playwright (`clock.install`) avanza ~3 veces más lento con
+    escenas pesadas de canvas; probar con "Ver ahora" (`innova_tema=ver`, `innova_tema_ver=navidad`, `innova_tema_etapa=pre`).
+  - **"Probar animaciones"** se muestra solo con Halloween, Muertos y Pre-Navidad (regla en `comun.css`; antes vivía en
+    `halloween.css` y fuera de Halloween el botón salía sin hacer nada).
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
     (la primera con el nombre del usuario recordado). El 24 la tarjeta se "abre" (moño y cinta caen, confeti) una
     vez por teléfono (`innova_nav_regalo`).

@@ -164,9 +164,6 @@
 @media (prefers-reduced-motion:reduce){.hw-tajo{display:none}.hw-escena,.hw-escena *{animation:none!important}}
 
 /* vista previa de la escena del marcaje (Perfil → Probar animación de marcaje) */
-.tema-probar{display:none!important}
-.tema-halloween .tema-probar{display:flex!important}
-.tema-muertos .tema-probar{display:flex!important}
 
 /* ══ "¡Listo, guardado!" en Halloween: la Muerte firma (ESCENA_GUARDADO_HW en index.html) ══
    Lo que se ve al final es el estilo base; las animaciones solo arrancan desde ahí con .on */
