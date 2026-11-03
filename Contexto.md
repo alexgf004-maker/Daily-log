@@ -398,9 +398,12 @@ degradados de ciruela a cempasúchil y papel picado en el borde de los encabezad
 flores, pan de muerto y calaverita (en PC va en la esquina), pétalos de cempasúchil cayendo, coronita de flores en el
 logo y la leyenda "Día de los Muertos"; sin animación con `prefers-reduced-motion`. Dentro de la app caen
 siempre 6 pétalos lentos y transparentes (`.mu-amb`, z-index 90: debajo de la barra, hojas y ventanas; sin toques;
-no salen en el login). Marcaje "camino de cempasúchil" (`florMarcajeMU`, `petalosLineaMU`, `petalosCaenMU`): el punto
-es una flor fresca con cheque si llegó a tiempo; si llegó tarde se marchita, suelta dos pétalos y lleva ✕; la línea se
-llena de 9 pétalos (4 apagados si fue tarde) por tramo (entrada 0–50 %, salida 50–100 %). "¡Listo, guardado!"
+no salen en el login). Marcaje "los pétalos arman tu flor" (`florMarcajeMU`, `petalosLineaMU`, `armarFlorMU`; elegida entre
+varias muestras, ni muy sencilla ni muy producida): al marcar llegan pétalos desde las orillas de la tarjeta y la flor
+se arma capa por capa; a tiempo, un destello dorado pasa por la hora (`.mu-brillo`). Tarde: llegan pocos y lentos, la
+flor queda a medias, se marchita (pierde color y se ladea), se le caen dos pétalos y lleva ✕. La línea se pinta por
+tramo (entrada 0–50 %, salida 50–100 %): naranja a tiempo, apagada si fue tarde. La tarjeta recorta los pétalos
+(`overflow:hidden`). Con movimiento reducido la flor sale armada directo. "¡Listo, guardado!"
 (`ESCENA_GUARDADO_MU`, `confetiGuardadoMU`, clase `.fx-ok.mu`): cae una calaverita, le estampan el sello "✓ GUARDADO"
 con un temblor y confeti de papel picado, y guiña; se cierra a los 4.2 s. El xolo (`xoloAdentro`, `.mu-xolo`, el equivalente al
 fantasma de Halloween) pasea por la parte de abajo de las pantallas de adentro: llega como perrito normal (capa
