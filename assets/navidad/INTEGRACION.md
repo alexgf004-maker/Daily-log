@@ -1,57 +1,75 @@
-# Mascota de Navidad y deshielo
+# Mascota de Navidad
 
-La mascota utiliza el SVG inline de `index.html`. `assets/navidad/personaje-animable.svg` conserva el original; `js/green-actor.js` mantiene sus 14 escenas. No se modificó el motor vectorial ni el módulo principal de autenticación y marcaje.
+El SVG inline de `index.html` y `assets/navidad/personaje-animable.svg` conservan el personaje original. `GreenActor` mantiene las 14 animaciones originales y añade seis poses para el login: `thaw`, `privacy`, `tug`, `offer`, `grump` y `plot`.
 
-## Comportamiento
+## Calendario e historia
 
-- **1 de diciembre:** bloque translúcido completo; cuerpo inmóvil, con parpadeo y movimiento suave de las pupilas.
-- **2–21 de diciembre:** las caras, el espesor y la altura del bloque disminuyen según el día del calendario local del dispositivo. Aumentan el charco y las gotas; el 21 queda una base alrededor de los pies. El cuerpo sigue inmóvil; solo se mueven los ojos.
-- **22 de diciembre:** la etapa existente cambia a `casa`; desaparece el hielo y se reanudan las animaciones. Se comprueba también cada minuto y al regresar a la pestaña.
-- **24 y 31 de diciembre:** se conservan las escenas especiales `xmas` y `nye`.
-- La preferencia de movimiento reducido evita las travesuras automáticas. El motor y las animaciones oculares se pausan cuando el login no está visible o la pestaña queda oculta. Con movimiento reducido, los ojos también permanecen estáticos.
+- **1–21 de diciembre:** el cuerpo permanece congelado; mantiene cejas fruncidas, párpados bajos y boca enojada. Solo los ojos parpadean y miran alrededor con pausas y cambios de mirada breves. El bloque pierde altura y espesor por día; el 21 conserva una base.
+- **Desde el 22:** desaparece el hielo. En la primera visita de la temporada, mira sus manos, se sacude el frío y se estira durante 6,2 segundos. La marca `innova_nv_liberado_<año>` se guarda únicamente en el dispositivo, al terminar la presentación. En Ver ahora se repite sin guardar esa marca.
+- **22–23:** tras acumular 24–36 segundos de reposo, camina de puntillas, tira de un cordón y se lleva un foco de la guirnalda real. Si lo tocas, se sobresalta y el foco cae y vuelve a su lugar. Sin intervención también termina devolviéndolo; nunca deja la decoración incompleta entre escenas.
+- **24–27:** devuelve una luz a la guirnalda con una sonrisa. El primer acceso de la temporada conserva la presentación de liberación.
+- **Año Nuevo:** reacciona a los fuegos artificiales del tema y se tapa los oídos. No dibuja otra escena de fuegos artificiales dentro de su SVG.
 
-El modo **Ver ahora** empieza en el día 1 tanto para la mascota como para el paisaje. Esta consola cambia solo el bloque, mientras se está previsualizando Pre-Navidad:
+La mayor parte del tiempo respira, parpadea y espera en su espacio. En Navidad intercala refunfuños y planes de robo, separados por pausas. Entrecierra los párpados, frunce las cejas, cruza los brazos, resopla, da una pequeña patada y junta las manos con una sonrisa torcida. Al tocarlo primero desconfía, después se enfada y al tercer toque responde con descaro. Estas variantes se limitan al login de Navidad: las 14 escenas originales siguen disponibles fuera del modo integrado. Los gestos no reinician la espera del robo; después de devolver el foco descubierto, adopta una pose de fastidio. Las animaciones autónomas no se ejecutan mientras el formulario tiene el foco.
+
+## Continuidad del movimiento
+
+El motor conserva postura y velocidad al cambiar de escena en el login. Una respuesta amortiguada aproxima cada articulación a su objetivo: las miradas responden antes que la cabeza y los brazos; pelo, orejas y bufanda terminan de acomodarse después. La respiración y los parpadeos usan un reloj continuo que no se reinicia al repetir el reposo ni al cambiar de gesto. El cruce de brazos incluye anticipación y una llegada escalonada de las manos.
+
+Las manos que cubren el PIN recorren arcos propios; sus brazos permanecen anclados en los hombros. Las capas auxiliares se relevan gradualmente al levantar o bajar las manos y al interrumpir una travesura. El cuerpo sigue inmóvil dentro del hielo. Las 14 escenas originales fuera del modo integrado conservan su reproducción directa.
+
+## Reacción al PIN
+
+Al enfocar el campo del PIN devuelve cualquier foco que estuviera moviendo y se cubre los ojos. Mantiene la pose hasta salir del campo. La interacción escucha `focusin` y `focusout`: no lee valores, credenciales, pulsaciones ni resultados de autenticación.
+
+Con movimiento reducido se muestra directamente la pose final, sin animar las manos. Los movimientos y el reloj de la historia se detienen cuando el login o la pestaña están ocultos. Al cambiar de tema se restauran los objetos y se eliminan escuchadores y capas.
+
+## Integración visual
+
+`js/navidad-historia.js` selecciona un foco existente de `.nv-guirnalda`. Durante su traslado, el foco original queda temporalmente oculto y una representación del mismo color lo acompaña hasta la mano. El cable pasa por el margen exterior de la tarjeta; el último tramo queda debajo del formulario. La capa tiene `pointer-events:none` y se elimina al devolver el foco, enfocar el formulario o abandonar la escena.
+
+Las escenas originales de robar y esconderse incluyen su propia tarjeta y guirnalda. El modo integrado evita dibujar esos decorados duplicados; las seis poses nuevas trabajan con el login real. La silueta del personaje permanece dentro de su espacio durante las reacciones integradas; no sale de pantalla al segundo toque. Los gestos se comunican por la cara y el cuerpo, sin globos de texto. Las animaciones originales siguen disponibles en el motor.
+
+El fondo mide la altura completa del contenido del login, sin usar su propia capa para calcularla. Degradado, lienzo, montañas, árbol y chimenea comparten el mismo suelo aunque haya desplazamiento. ResizeObserver reajusta las capas cuando cambian el panel o el espacio disponible; al cambiar de etapa se liberan observadores y escuchadores.
+
+En móvil se conserva la fila reservada a la mascota junto a la ayuda del PIN. El login usa su propio desplazamiento y `100dvh` (respaldo `100vh`) porque `screen()` bloquea el desplazamiento del body. Se reserva espacio bajo los pies. La cabecera de Navidad y Año Nuevo se compacta en ventanas bajas para conservar visible al personaje.
+
+No se modifica el módulo principal de autenticación/marcaje, el registro de temporadas, `config/tema` ni la activación global. Todo el comportamiento depende del tema activo existente.
+
+## Previsualización local
+
+Con Mi Perfil → Ver ahora → Pre-Navidad:
 
 ```js
-window.__mascotaNavidadPreviewDia(1);
-window.__mascotaNavidadPreviewDia(12);
-window.__mascotaNavidadPreviewDia(21);
-window.__mascotaNavidadEstado();
+__mascotaNavidadPreviewDia(1);
+__mascotaNavidadPreviewDia(12);
+__mascotaNavidadPreviewDia(21);
 ```
 
-Para revisar la liberación, seleccionar **Navidad** en el selector de etapa del perfil. El control de día solo acepta enteros de 1 a 21 y no cambia fechas ni preferencias globales.
+Con Ver ahora → Navidad:
 
-## Composición
+```js
+__mascotaNavidadHistoria('liberacion');
+__mascotaNavidadHistoria('travesura');
+__mascotaNavidadHistoria('regalo');
+__mascotaNavidadPlay('grump');
+__mascotaNavidadPlay('plot');
+__mascotaNavidadEstado();
+```
 
-La mascota reside en el panel, después de la tarjeta. Hasta 900 px de ancho, una fila de cuadrícula le reserva espacio junto a la ayuda del PIN. La tarjeta termina 10 px antes de comenzar la caja del SVG. En ventanas cortas, el documento permite desplazarse; el bloque acompaña al contenido y no queda anclado encima de los campos. En escritorio se sitúa junto al panel.
+Los controles de historia solo funcionan en esa vista local y con movimiento permitido; no alteran fechas ni preferencias globales. El reloj de las escenas usa el tiempo animado del motor, sin cadenas de temporizadores que continúen en segundo plano.
 
-La silueta del hielo y sus caras se recalculan juntas: no se usa un recorte horizontal de la imagen original. El SVG contiene también una forma estática completa como respaldo.
-
-No se escribe en Firebase, no se toca `config/tema` y se conserva el registro y la prioridad de los temas. El calendario automático existente tampoco cambia. La mascota se oculta con otros temas.
-
-## Verificación de esta rama
+## Validación
 
 ```sh
 node --test tests/navidad.test.cjs
-node --check js/navidad-hielo.js
+node --check js/green-actor.js
+node --check js/navidad-historia.js
 node --check js/navidad-mascota.js
-node --check js/navidad.js
 ```
 
-- 11 pruebas de progresión, límites de la vista previa, liberación al cambiar de fecha, limpieza de escuchadores, tema apagado, otros temas, movimiento reducido y pausa/reanudación de los ojos.
-- Chrome: HTML/CSS/SVG y motores reales del login, dentro de vistas de 320×568, 360×640, 390×844, 412×915, 844×390 y 1280×800. Comprobación de escritura, mostrar/ocultar PIN y acceso visual al botón; sin enviar credenciales ni marcajes.
-- Las 14 escenas reales se muestrearon en cinco momentos de su duración, sin atributos `NaN` o `Infinity`.
-- Capturas reales de los días 1, 12, 21 y 22. Comparación con `main` al iniciar la tarea (`5e2b227`). Con Día de Muertos, la tarjeta conserva exactamente su posición y tamaño.
-- El módulo principal y el registro de temas se compararon con `main`: contenido idéntico.
+Se prueban continuidad entre gestos, respuesta a 30/60 FPS, fase de respiración, cara enojada congelada, brazos anclados al cubrir el PIN, calendario, vista previa, liberación por temporada, pausa/reanudación, devolución de objetos, limpieza, enfoque del PIN, movimiento reducido y restauración de poses. El motor real se muestrea en cinco momentos de cada una de sus 20 escenas, con y sin integración, verificando transformaciones finitas y restauración de brazos.
 
-**Límite:** Firebase App Check rechaza el dominio del entorno de prueba. La revisión visual usa una vista aislada del login que omite los módulos de Firebase. No equivale a una prueba de autenticación o marcaje contra producción, ni a una prueba en un teléfono físico.
+La revisión en Chrome utiliza HTML/CSS/SVG y motores reales con el mismo bloqueo del body que producción. Se comprueban escenas completas, foco real, interacción del PIN y acceso al personaje en pantallas cortas. La revisión de los gestos utiliza el reloj real del motor, incluidos el regreso al reposo, las reacciones sucesivas y la interrupción al enfocar el PIN.
 
-La rama se entrega para revisión visual, sin fusionar ni publicar en producción.
-
-## Corrección de altura móvil
-
-El flujo real `screen('loginScreen')` aplica `body.style.overflow = 'hidden'`. La primera vista aislada omitía esa condición: permitía desplazar el documento y ocultó un recorte real en teléfonos con menos de 843 px útiles.
-
-En móviles, el login ahora está limitado por `100dvh` (con respaldo `100vh`) y es su propio contenedor desplazable. El panel no se comprime; reserva 24 px más el área segura bajo la escena. En alturas de hasta 850 px, una variante compacta conserva campos y botón, reduce la mascota a 120 px y ajusta la cabecera.
-
-Validación de la corrección: vista aislada con el mismo bloqueo del body que producción. A 393×800, el bloque termina en y=773 y queda completamente visible. A 393×760, el contenedor ofrece 33 px de desplazamiento y se comprobó el acceso a toda la mascota. Se conserva el límite de App Check descrito anteriormente.
+**Límite:** App Check rechaza el dominio de prueba. La vista aislada omite módulos Firebase y no equivale a una prueba de autenticación/marcaje contra producción ni a una prueba en un teléfono físico. La rama se prepara para revisión visual antes de fusionar.
