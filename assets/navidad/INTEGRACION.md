@@ -30,6 +30,8 @@ Con movimiento reducido se muestra directamente la pose final, sin animar las ma
 
 Las escenas originales de robar y esconderse incluyen su propia tarjeta y guirnalda. El modo integrado evita dibujar esos decorados duplicados; las seis poses nuevas trabajan con el login real. La silueta del personaje permanece dentro de su espacio durante las reacciones integradas; no sale de pantalla al segundo toque. Los gestos se comunican por la cara y el cuerpo, sin globos de texto. Las animaciones originales siguen disponibles en el motor.
 
+El fondo mide la altura completa del contenido del login, sin usar su propia capa para calcularla. Degradado, lienzo, montañas, árbol y chimenea comparten el mismo suelo aunque haya desplazamiento. ResizeObserver reajusta las capas cuando cambian el panel o el espacio disponible; al cambiar de etapa se liberan observadores y escuchadores.
+
 En móvil se conserva la fila reservada a la mascota junto a la ayuda del PIN. El login usa su propio desplazamiento y `100dvh` (respaldo `100vh`) porque `screen()` bloquea el desplazamiento del body. Se reserva espacio bajo los pies. La cabecera de Navidad y Año Nuevo se compacta en ventanas bajas para conservar visible al personaje.
 
 No se modifica el módulo principal de autenticación/marcaje, el registro de temporadas, `config/tema` ni la activación global. Todo el comportamiento depende del tema activo existente.

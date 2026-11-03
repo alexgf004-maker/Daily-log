@@ -11,7 +11,7 @@
   'use strict';
   var NS='http://www.w3.org/2000/svg';
   var reducido=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var armada=null, bucle=null;
+  var armada=null, bucle=null, soltarMedida=null;
   var R=function(a,b){ return a+Math.random()*(b-a); };
   var $=function(s,r){ return (r||document).querySelector(s); };
 
@@ -43,24 +43,49 @@
   };
 
   function quitar(){
+    if(soltarMedida){soltarMedida();soltarMedida=null;}
     document.querySelectorAll('.nv-capa,.nv-extra').forEach(function(e){ e.remove(); });
-    if(bucle){ bucle.vivo=false; bucle=null; }
+    if(bucle){ bucle.detener(); bucle=null; }
     armada=null;
+  }
+
+  // La decoración comparte la altura del contenido, aunque el login tenga scroll.
+  // No se mide scrollHeight: la propia capa absoluta podría impedir que disminuyera.
+  function encuadrar(ls,capa){
+    var panel=ls.querySelector('.login-panel'),ro=null,pendiente=0;
+    if(!panel)return function(){};
+    function medir(){
+      pendiente=0;if(!ls.clientHeight||!panel.offsetHeight)return;
+      var espacio=parseFloat(getComputedStyle(panel).marginBottom)||0;
+      var pie=parseFloat(getComputedStyle(ls).paddingBottom)||0;
+      var alto=Math.ceil(Math.max(ls.clientHeight,panel.offsetTop+panel.offsetHeight+espacio+pie));
+      if(capa.style.height!==alto+'px')capa.style.height=alto+'px';
+      ls.style.setProperty('--nv-escena-alto',alto+'px');
+    }
+    function programar(){if(!pendiente)pendiente=requestAnimationFrame(medir);}
+    if(typeof ResizeObserver==='function'){ro=new ResizeObserver(programar);ro.observe(ls);ro.observe(panel);}
+    window.addEventListener('resize',programar);medir();
+    return function(){
+      if(ro)ro.disconnect();if(pendiente)cancelAnimationFrame(pendiente);
+      window.removeEventListener('resize',programar);ls.style.removeProperty('--nv-escena-alto');
+    };
   }
 
   /* ── canvas compartido: dibuja solo con el login a la vista y la app en primer plano ── */
   function lienzo(capa,pasos){
     var cv=document.createElement('canvas'); cv.className='nv-lienzo'; capa.appendChild(cv);
-    var ctx=cv.getContext('2d'), W=0, H=0, b={vivo:true};
+    var ctx=cv.getContext('2d'), W=0, H=0, b={vivo:true},tamano=null;
     function medir(){ var d=Math.min(window.devicePixelRatio||1,2); W=cv.clientWidth; H=cv.clientHeight; cv.width=W*d; cv.height=H*d; ctx.setTransform(d,0,0,d,0,0); }
     medir(); window.addEventListener('resize',medir);
+    if(typeof ResizeObserver==='function'){tamano=new ResizeObserver(medir);tamano.observe(cv);}
+    b.detener=function(){b.vivo=false;window.removeEventListener('resize',medir);if(tamano)tamano.disconnect();};
     var ls=document.getElementById('loginScreen');
     function cuadro(t){
-      if(!b.vivo){ window.removeEventListener('resize',medir); return; }
+      if(!b.vivo)return;
       if(!document.hidden&&ls&&ls.classList.contains('active')){ if(!W) medir(); ctx.clearRect(0,0,W,H); pasos.forEach(function(f){ f(ctx,W,H,t); }); }
       requestAnimationFrame(cuadro);
     }
-    if(reducido){ setTimeout(function(){ medir(); pasos.forEach(function(f){ f(ctx,W,H,0); }); },60); }
+    if(reducido){ setTimeout(function(){ if(!b.vivo)return; medir(); pasos.forEach(function(f){ f(ctx,W,H,0); }); },60); }
     else requestAnimationFrame(cuadro);
     b.ctx=ctx; b.tam=function(){ return [W,H]; };
     return b;
@@ -381,6 +406,7 @@
     if(et.id==='pre'&&!reducido&&document.body){ var amb=document.createElement('div'), cc=''; amb.className='nv-extra nv-amb'; amb.setAttribute('aria-hidden','true');
       for(var k=0;k<10;k++) cc+='<i style="left:'+(4+k*9.6).toFixed(1)+'%;animation-duration:'+(15+(k*7)%9)+'s;animation-delay:-'+((k*5.3)%17).toFixed(1)+'s"></i>';
       amb.innerHTML=cc; document.body.appendChild(amb); }
+    soltarMedida=encuadrar(ls,capa);
     armada=et.id;
     window.__pintarSaludo&&window.__pintarSaludo();
   };

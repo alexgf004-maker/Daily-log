@@ -2,7 +2,12 @@
 /* ── Tema Navidad (1 dic – 4 ene), en tres etapas ──
    html.tema-navidad + .nav-pre (1–21 dic) | .nav-casa (22–27 dic) | .nav-ano (28 dic–4 ene).
    La escena del login la arma js/navidad.js dentro de .nv-capa; lo que agrega al panel lleva .nv-extra. */
-.nv-capa{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.nv-capa{position:absolute;inset:0 0 auto;min-height:100%;overflow:hidden;pointer-events:none;z-index:0}
+/* El degradado y los objetos terminan en el mismo suelo, también al desplazarse. */
+html.tema-navidad #loginScreen{
+  background-size:100% var(--nv-escena-alto,100%)!important;
+  background-attachment:local!important;background-repeat:no-repeat!important;
+}
 .nv-lienzo{position:absolute;inset:0;width:100%;height:100%}
 .tema-navidad #loginScreen::before{content:none!important}
 .tema-navidad .login-hola em{font-style:normal}
@@ -213,6 +218,10 @@
   .nv-medias{left:auto;right:calc(4% + 22px);width:316px;bottom:118px}
   .nv-media.m1{left:0}.nv-media.m2{left:52px}.nv-media.m3{right:52px}.nv-media.m4{right:0}
   .nv-casita{left:20%}
+}
+/* En móvil el árbol acompaña el suelo; no queda detrás de la cabecera. */
+@media(max-width:759px){
+  .nv-arbol{top:auto;bottom:24px;left:4px;width:122px;height:228px}
 }
 /* celulares bajitos: los foquitos y guirnaldas más cortos para no tapar el logo */
 @media (max-height:700px){ .nv-focos{height:84px} .nv-guirnalda,.nv-banderines{height:70px} }
