@@ -7228,15 +7228,15 @@ function ofrendaProg(ctx,W,H,base,top){
   // fondo: ciruela con el resplandor de las velas desde abajo y polvito dorado
   const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#2a0530'); g.addColorStop(.55,'#4a044e'); g.addColorStop(1,'#6b0f4a'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   const r=ctx.createRadialGradient(W*.5,H+40,20,W*.5,H+40,W*.7); r.addColorStop(0,'rgba(249,115,22,.55)'); r.addColorStop(1,'rgba(249,115,22,0)'); ctx.fillStyle=r; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#fde68a'; for(let i=0;i<70;i++){ ctx.globalAlpha=.15+((i*13)%10)/22; ctx.beginPath(); ctx.arc((i*149)%W,top+10+((i*71)%Math.max(40,base-top)),(i%4)?1:1.7,0,P); ctx.fill(); } ctx.globalAlpha=1;
+  ctx.fillStyle='#fde68a'; for(let i=0;i<Math.round(W/15);i++){ ctx.globalAlpha=.15+((i*13)%10)/22; ctx.beginPath(); ctx.arc((i*149)%W,top+10+((i*71)%Math.max(40,base-top)),(i%4)?1:1.7,0,P); ctx.fill(); } ctx.globalAlpha=1;
   // papel picado en dos hileras (atrás más chico y tenue)
-  papelPicadoProg(ctx,-20,W+20,4,30,22,cols.slice().reverse(),.55);
-  papelPicadoProg(ctx,-10,W+10,2,44,15,cols,.96);
+  papelPicadoProg(ctx,-20,W+20,4,30,Math.round(W/49),cols.slice().reverse(),.55);
+  papelPicadoProg(ctx,-10,W+10,2,44,Math.round(W/72),cols,.96);
   // ── la ofrenda en la franja de abajo ──
   const y0=base, yM=H-26;                          // y0: inicio de la franja; yM: borde del mantel
   // arco de cempasúchil de lado a lado
   ctx.strokeStyle='rgba(22,101,52,.7)'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(18,yM); ctx.quadraticCurveTo(W/2,y0-30,W-18,yM); ctx.stroke();
-  for(let k=0;k<=26;k++){ const t=k/26, x=(1-t)*(1-t)*18+2*(1-t)*t*(W/2)+t*t*(W-18), y=(1-t)*(1-t)*yM+2*(1-t)*t*(y0-30)+t*t*yM; cempasuchilProg(ctx,x,y,k%2?9:11); }
+  const nf=Math.round(W/41); for(let k=0;k<=nf;k++){ const t=k/nf, x=(1-t)*(1-t)*18+2*(1-t)*t*(W/2)+t*t*(W-18), y=(1-t)*(1-t)*yM+2*(1-t)*t*(y0-30)+t*t*yM; cempasuchilProg(ctx,x,y,k%2?9:11); }
   // mantel morado con orilla de picos naranja y rosa
   ctx.fillStyle='#7e22ce'; ctx.fillRect(0,yM,W,H-yM); ctx.fillStyle='#db2777'; ctx.fillRect(0,yM,W,6);
   ctx.fillStyle='#f97316'; for(let x=0;x<W;x+=20){ ctx.beginPath(); ctx.moveTo(x,yM+6); ctx.lineTo(x+20,yM+6); ctx.lineTo(x+10,yM+15); ctx.fill(); }
@@ -7252,11 +7252,14 @@ function ofrendaProg(ctx,W,H,base,top){
   // floreros de cempasúchil
   const florero=(x)=>{ ctx.fillStyle='#be185d'; ctx.beginPath(); ctx.moveTo(x-10,yM); ctx.lineTo(x-7,yM-22); ctx.lineTo(x+7,yM-22); ctx.lineTo(x+10,yM); ctx.fill(); ctx.fillStyle='#16a34a'; ctx.fillRect(x-1,yM-34,2,12);
     cempasuchilProg(ctx,x-7,yM-36,8); cempasuchilProg(ctx,x+7,yM-38,8); cempasuchilProg(ctx,x,yM-46,9); };
-  vela(70,30); florero(130); vela(190,44); pan(268,1); vela(352,24);
+  // del borde hacia el centro, y en espejo del otro lado (en la imagen ancha caben más cosas)
+  const serie=[['v',30,60],['f',0,60],['v',44,78],['p',1,84],['v',24,70],['f',0,62],['v',38,80],['p',.9,84]];
+  for(let x=70,k=0;x<W/2-100;k++){ const [t,v,paso]=serie[k%serie.length];
+    [x,W-x].forEach((xx,lado)=>{ if(t==='v') vela(xx,lado?v-4:v); else if(t==='f') florero(xx); else pan(xx,lado?v*.92:v); });
+    x+=paso; }
   calaveritaProg(ctx,W/2,yM-44,1.3);
-  vela(W-352,24); pan(W-268,.9); vela(W-190,40); florero(W-130); vela(W-70,30);
   // pétalos regados sobre el mantel
-  ctx.fillStyle='#f97316'; for(let k=0;k<26;k++){ ctx.save(); ctx.translate((k*83)%W,yM+22+((k*17)%10)); ctx.rotate(k); ctx.beginPath(); ctx.ellipse(0,0,4,2.4,0,0,P); ctx.fill(); ctx.restore(); }
+  ctx.fillStyle='#f97316'; for(let k=0;k<Math.round(W/41);k++){ ctx.save(); ctx.translate((k*83)%W,yM+22+((k*17)%10)); ctx.rotate(k); ctx.beginPath(); ctx.ellipse(0,0,4,2.4,0,0,P); ctx.fill(); ctx.restore(); }
 }
 function focosProg(ctx,W,y0,cae,cols,k=1){ const P=Math.PI*2, n=Math.round(W/(62*k));
   ctx.strokeStyle='rgba(207,227,242,.6)'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(0,y0); ctx.quadraticCurveTo(W/2,y0+cae*2,W,y0); ctx.stroke();
@@ -7339,7 +7342,7 @@ window.progGenerarImagen=async()=>{
   const plantel=progGrupos.filter(g=>g.area==='plantel');
 
   // ── Dibujo en canvas (áreas con barra lateral; campañas de un grupo en 2 columnas) ──
-  const W=1080, scale=2, pad=56;
+  let W=1080; const scale=2, pad=56;   // W crece cuando la programación es larga (ver «compacta» abajo)
   const F='"Plus Jakarta Sans", sans-serif';
   try{ await Promise.all(['500 20px','600 20px','700 20px','800 20px'].map(w=>document.fonts.load(`${w} ${F}`))); }catch(e){}
   // Con el tema de Halloween la imagen sale "de temporada": encabezado negro y sangre con goteo,
@@ -7457,12 +7460,12 @@ window.progGenerarImagen=async()=>{
     }};
   };
   // Tarjeta de campaña. "w" es el ancho total de la tarjeta.
-  const tarjeta=(c,w,area,forzarDos)=>{
+  const tarjeta=(c,w,area,forzarDos,sinCuadricula)=>{
     const iw=w-30-22; // ancho interior (franja + márgenes)
     fuente(700,18); const cnt=`${c.grupos.length} ${c.grupos.length===1?'grupo':'grupos'}`; const cw=ancho(cnt);
     fuente(800,25); const tl=envolver(c.nombre,iw-cw-14);
     const cab=20+tl.length*32+10;
-    const enCuadricula=c.grupos.length>3; // muchos grupos: 2 columnas por dentro
+    const enCuadricula=!sinCuadricula&&c.grupos.length>3; // muchos grupos: 2 columnas por dentro
     let filas=[], cuerpo=0;
     if(enCuadricula){
       const colW=(iw-28)/2;
@@ -7497,11 +7500,29 @@ window.progGenerarImagen=async()=>{
   };
 
   // ── Áreas ──
-  const railX=36, railW=50, cx0=railX+railW+18, cW=W-36-cx0, gapT=16;
-  const areas=[];
-  const armarArea=(nombre,grupos,color,barra,fondo)=>{
+  // Normal: campañas de un grupo en 2 columnas y las demás a todo lo ancho. Si así la imagen sale muy larga
+  // (mucho más alta que ancha), se hace más ancha y TODAS las tarjetas van en 3 columnas, en orden de lectura
+  // (se llena una columna y luego la siguiente), repartidas para que las columnas queden parejas.
+  const railX=36, railW=50, cx0=railX+railW+18, gapT=16;
+  let cW=W-36-cx0;
+  const areas=[]; let chipsAus=[];
+  const repartir=(cards,k)=>{   // corta la lista en k tramos seguidos con la columna más alta lo más baja posible
+    const hs=cards.map(c=>c.h), n=hs.length, suma=(i,j)=>hs.slice(i,j).reduce((a,b)=>a+b,0)+gapT*Math.max(0,j-i-1);
+    const memo={}; const mejor=(i,k)=>{ const key=i+'|'+k; if(memo[key]) return memo[key];
+      if(k===1||n-i<=1) return memo[key]={alto:suma(i,n),cortes:[n]};
+      let r={alto:Infinity}; for(let j=i+1;j<=n-(1);j++){ const resto=mejor(j,k-1), alto=Math.max(suma(i,j),resto.alto); if(alto<r.alto) r={alto,cortes:[j,...resto.cortes]}; }
+      const solo={alto:suma(i,n),cortes:[n]}; return memo[key]=(solo.alto<=r.alto?solo:r); };
+    const {cortes}=mejor(0,k); const cols=[]; let i=0; cortes.forEach(j=>{ cols.push(cards.slice(i,j)); i=j; }); return cols;
+  };
+  const armarArea=(nombre,grupos,color,barra,fondo,K)=>{
     const area={nombre,color,barra,fondo,bloques:[]};
     const camps=campanias(grupos);
+    if(K){
+      const colW=(cW-gapT*(K-1))/K;
+      const cols=repartir(camps.map(c=>tarjeta(c,colW,area,true,true)),K);
+      const h=Math.max(...cols.map(col=>col.reduce((a,c)=>a+c.h,0)+gapT*(col.length-1)));
+      area.bloques.push({cols,colW,h,cards:[]}); area.h=h; areas.push(area); return;
+    }
     // Las campañas de un solo grupo se juntan en 2 columnas; las demás van a todo lo ancho
     const i0=camps.findIndex(c=>c.grupos.length===1);
     const solos=camps.filter(c=>c.grupos.length===1);
@@ -7518,12 +7539,13 @@ window.progGenerarImagen=async()=>{
     area.h=area.bloques.reduce((a,b)=>a+b.h,0)+gapT*(area.bloques.length-1);
     areas.push(area);
   };
-  if(campo.length) armarArea('CAMPO',campo,C.campo.color,C.campo.barra,C.campo.fondo);
-  if(plantel.length) armarArea('PLANTEL',plantel,C.plantel.color,C.plantel.barra,C.plantel.fondo);
+  const armarTodo=(K)=>{
+  areas.length=0; chipsAus=[];
+  if(campo.length) armarArea('CAMPO',campo,C.campo.color,C.campo.barra,C.campo.fondo,K);
+  if(plantel.length) armarArea('PLANTEL',plantel,C.plantel.color,C.plantel.barra,C.plantel.fondo,K);
 
   // Ausentes: etiquetas que pasan a la siguiente línea
   const ausGrupos=[['Vacaciones','vacaciones'],['Incapacidad','incapacidad'],['Permiso','permiso'],['Día de bienestar','bienestar'],['Permiso injustificado','injustificado']].filter(([,k])=>ausentes[k].length);
-  const chipsAus=[];
   if(ausGrupos.length){
     let x=0, y=0;
     ausGrupos.forEach(([lbl,k])=>{
@@ -7537,6 +7559,10 @@ window.progGenerarImagen=async()=>{
   }
   // La barra necesita espacio para el nombre escrito de lado
   areas.forEach(a=>{ fuente(800,21); esp('6px'); a.railH=Math.max(a.h,ancho(a.nombre)+44); esp('0px'); });
+  return areas.reduce((a,ar)=>a+Math.max(ar.h,ar.railH),0)+26*(areas.length-1);
+  };
+  // Compacta: si con el ancho normal el alto pasa de ~1.5 veces el ancho, más ancha y en 3 columnas
+  if(armarTodo(0)+420>W*1.5){ W=1620; cW=W-36-cx0; armarTodo(3); }
 
   // ── Encabezado (las cifras a la par de la fecha si caben; si no, debajo) ──
   const nTec=progGrupos.reduce((a,g)=>a+(g.empleados||[]).length,0);
@@ -7611,7 +7637,8 @@ window.progGenerarImagen=async()=>{
     } else {
       let by=y;
       a.bloques.forEach(b=>{
-        if(b.cards.length===1&&!b.colW) b.cards[0].draw(cx0,by);
+        if(b.cols) b.cols.forEach((col,j)=>{ let yy=by; col.forEach(c=>{ c.draw(cx0+j*(b.colW+gapT),yy); yy+=c.h+gapT; }); });
+        else if(b.cards.length===1&&!b.colW) b.cards[0].draw(cx0,by);
         else b.cards.forEach((c,i)=>c.draw(cx0+i*(b.colW+gapT),by,b.h));
         by+=b.h+gapT;
       });
