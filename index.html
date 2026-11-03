@@ -1834,11 +1834,19 @@ function avisoSesionCerrada(){
   const al=$('loginAlert');
   if(al) al.innerHTML=`<div class="mk-av info lg-av"><span class="mk-av-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></span><div class="mk-av-tx"><b>La app se actualizó</b><span>Vuelve a entrar con tu usuario y PIN</span></div></div>`;
 }
+// Después de sacar a la persona, la app se recarga para traer la versión nueva: antes, quien tenía la app
+// abierta volvía a entrar con el código viejo en memoria hasta cerrarla a mano. Antes de recargar se espera
+// a que termine el cierre (quitar los avisos de este teléfono, máx. 3 s) y se refresca la copia guardada de
+// la página. El aviso "Se cerró tu sesión" se muestra al volver (sessionStorage).
 function cerrarSesionForzada(){
   if(!me) return;
-  window.doLogout();
+  const fin=window.doLogout();
   avisoSesionCerrada();
   aplicarTema();   // y el tema que toca hoy (la app pudo quedar abierta desde otra temporada)
+  try{ sessionStorage.setItem('innova_aviso_cierre','1'); }catch(_){}
+  Promise.race([Promise.resolve(fin).catch(()=>{}), new Promise(r=>setTimeout(r,3000))])
+    .then(()=>fetch(location.pathname,{cache:'reload'}).catch(()=>{}))
+    .then(()=>location.reload());
 }
 try{
   onValue(refFirebase(db,'config/cierreSesion'), sn=>{
@@ -1966,7 +1974,8 @@ window.doLogout=()=>{
   const uidSale=me?.id;
   me=null;
   localStorage.removeItem('innova_session');
-  quitarAvisosDeEsteTelefono(uidSale).finally(()=>signOut(auth).catch(()=>{}));
+  try{ detenerProgEnVivo(); }catch(_){}   // la escucha de la programación se vuelve a abrir al entrar
+  const fin=quitarAvisosDeEsteTelefono(uidSale).finally(()=>signOut(auth).catch(()=>{}));
   $('avisosCard')&&($('avisosCard').style.display='none');
   stopDashRefresh();
   detenerEspejos();
@@ -1976,6 +1985,7 @@ window.doLogout=()=>{
   $('loginAlert').innerHTML='';
   aplicarUsuarioRecordado();
   screen('loginScreen');
+  return fin;
 };
 // Lo que se agrega directo al <body> (campanita, tutorial, resúmenes, globos de las gráficas) no se
 // borra con appContainer: al cerrar sesión se quita aquí para que no quede tapando el login.
@@ -2040,7 +2050,8 @@ if(navigator.storage && navigator.storage.persist){
     // Sin mantenimiento — restaurar sesión normal
     const saved = localStorage.getItem('innova_session');
     const usr = await authListo;
-    if(!saved){ if(usr) signOut(auth).catch(()=>{}); screen('loginScreen'); return; }
+    let tocaAviso=false; try{ tocaAviso=sessionStorage.getItem('innova_aviso_cierre')==='1'; sessionStorage.removeItem('innova_aviso_cierre'); }catch(_){}
+    if(!saved){ if(usr) signOut(auth).catch(()=>{}); screen('loginScreen'); if(tocaAviso) avisoSesionCerrada(); return; }
     // Sesión de antes del login por servidor (o vencida): hay que volver a entrar
     if(!usr){ localStorage.removeItem('innova_session'); screen('loginScreen'); avisoSesionCerrada(); return; }
     // ¿El admin cerró la sesión a todos después de que esta empezó?
@@ -6882,6 +6893,7 @@ window.addEventListener('beforeunload',e=>{ if(progGuardando||progPendiente||pro
 // Antes, si dos personas (o la misma en dos dispositivos) tenían abierto el mismo día, cada guardado escribía
 // el día completo con lo que tenía su pantalla y pisaba lo de la otra. Ahora el tablero escucha el día abierto:
 // cuando otra persona guarda, se actualiza solo (y avisa quién). Lo propio se reconoce por "dev".
+function detenerProgEnVivo(){ if(progEscucha){ try{ progEscucha(); }catch(_){} } progEscucha=null; progEscuchaFecha=null; }
 function escucharProgEnVivo(fecha){
   if(progEscuchaFecha===fecha&&progEscucha) return;
   if(progEscucha){ try{ progEscucha(); }catch(_){} progEscucha=null; }
@@ -6908,7 +6920,7 @@ function escucharProgEnVivo(fecha){
       pendiente=v; foco.addEventListener('blur',()=>{ const x=pendiente; pendiente=null; if(x) setTimeout(()=>aplicar(x),50); },{once:true}); return;
     }
     aplicar(v);
-  }, err=>{ console.warn('[programación] sin escucha en vivo', err&&err.message); });
+  }, err=>{ console.warn('[programación] sin escucha en vivo', err&&err.message); if(progEscuchaFecha===fecha){ progEscucha=null; progEscuchaFecha=null; } });
 }
 
 // Registro de ausencia que aplica a esa fecha (o null). Además del registro
