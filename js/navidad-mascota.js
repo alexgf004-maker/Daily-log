@@ -99,7 +99,7 @@ function sync(){
   if(!mount)return;
   try{
     var svg=mount.querySelector('svg');if(!svg||typeof GreenActor!=='function')throw Error('Motor o SVG no disponible');
-    actor=new GreenActor(svg,{initialScene:'idle',embedded:true,personality:current==='casa',onFrame:frame});
+    actor=new GreenActor(svg,{initialScene:'idle',embedded:true,personality:current==='casa',frozen:current==='pre',onFrame:frame});
     form=login.querySelector('.login-form');
     if(current==='pre'){
       ice=window.NavidadHielo.create(dayPre(),mount);actor.pause();mount.classList.add('nv-mascota-congelada','nv-mascota-bloque');

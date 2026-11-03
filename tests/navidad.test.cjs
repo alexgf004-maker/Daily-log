@@ -142,7 +142,7 @@ test('motor real: todas las escenas conservan transformaciones finitas y restaur
    actor.play(name);for(const p of [0,.25,.5,.9,1]){actor.render(meta.duration*p);for(const n of Object.values(svg.children))for(const v of Object.values(n.attrs))assert.doesNotMatch(v,/NaN|Infinity/,name);}
   }
   actor.play('privacy');actor.render(.6);assert.equal(actor.n('hands-eyes').attrs.opacity,'1');assert.equal(actor.n('arm-left').attrs.opacity,'0');
-  actor.play('idle');assert.equal(actor.n('hands-eyes').attrs.opacity,'0');assert.equal(actor.n('arm-left').attrs.opacity,'1');assert.equal(actor.n('arm-right').attrs.opacity,'1');actor.destroy();
+  actor.play('idle');actor.render(0);assert.equal(actor.n('hands-eyes').attrs.opacity,'0');assert.equal(actor.n('arm-left').attrs.opacity,'1');assert.equal(actor.n('arm-right').attrs.opacity,'1');actor.destroy();
  }
 });
 test('sin guirnalda no inicia una travesura ni deja la pose bloqueada',()=>{
@@ -201,4 +201,61 @@ test('Enter y espacio repiten los toques y el teclado se desconecta al cambiar d
  f.svg.emit('keydown',{key:'Enter',preventDefault(){prevented++}});assert.equal(f.actors.at(-1).scene,'tap1');
  f.svg.emit('keydown',{key:' ',preventDefault(){prevented++}});assert.equal(f.actors.at(-1).scene,'tap2');assert.equal(prevented,2);
  f.ctx.__temas.activo=null;f.ctx.__mascotaNavidadSync();assert.equal(f.svg.events.keydown.size,0);
+});
+
+function realActor(options={}){
+ const context={Math,console,requestAnimationFrame:()=>1,cancelAnimationFrame(){},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail}}};context.window=context;
+ vm.createContext(context);vm.runInContext(read('js/green-actor.js'),context);
+ const svg=new Element();svg.tagName='svg';svg.dispatchEvent=()=>{};
+ for(const id of read('assets/navidad/personaje-animable.svg').matchAll(/id="([^"]+)"/g))svg.children['#'+id[1]]=new Element();
+ const actor=new context.GreenActor(svg,{embedded:true,...options});let now=1000;actor.frame(now);
+ return {actor,tick(dt){now+=dt*1000;actor.frame(now);}};
+}
+test('dentro del hielo mantiene cejas, párpados y boca enojados sin mover el cuerpo',()=>{
+ const {actor}=realActor({frozen:true,personality:false});
+ actor.render(0);const root=actor.n('actor').attrs.transform;
+ for(const t of [0,1,5,20]){
+  actor.render(t);assert.equal(actor.n('brow-left').attrs.d,'M316 284 Q342 281 364 302');
+  assert.equal(actor.n('expression-mouth').attrs.opacity,'1');assert.equal(actor.n('mouth').attrs.opacity,'0');
+  assert.equal(actor.n('lid-left').attrs.opacity,'1');assert.equal(actor.n('actor').attrs.transform,root);
+ }
+});
+test('las interrupciones conservan la pose y la velocidad; no vuelven al origen de golpe',()=>{
+ const {actor,tick}=realActor();actor.play('grump');for(let i=0;i<150;i++)tick(1/60);
+ const arm=actor.n('arm-left').attrs.transform,head=actor.n('head').attrs.transform;
+ actor.play('caught');assert.equal(actor.n('arm-left').attrs.transform,arm);assert.equal(actor.n('head').attrs.transform,head);
+ tick(1/60);assert.ok(Math.abs(actor._pose.leftArm+34)<2);
+ actor.play('idle');for(let i=0;i<120;i++)tick(1/60);
+ assert.ok(Math.abs(actor._pose.leftArm)<3);assert.ok(Math.abs(actor._velocity.leftArm)<5);
+});
+test('la respiración sigue su fase al repetir el ciclo de reposo',()=>{
+ const {actor,tick}=realActor();const values=[];
+ for(let i=0;i<400;i++){tick(1/60);values.push(actor._pose.dy);}
+ assert.ok(Math.abs(values[348]-values[347])<.15);assert.ok(values.every(Number.isFinite));
+});
+test('la respuesta amortiguada coincide a 30 y 60 cuadros por segundo',()=>{
+ function at(fps){const r=realActor();r.actor.play('grump');for(let i=0;i<fps*2;i++)r.tick(1/fps);return r.actor._pose;}
+ const slow=at(30),fast=at(60);
+ for(const key of ['leftArm','rightArm','head','dy','scarf'])assert.ok(Math.abs(slow[key]-fast[key])<.7,key);
+});
+test('las manos siguen conectadas a los hombros al cubrir el PIN y al bajar',()=>{
+ const {actor,tick}=realActor();actor.play('privacy');
+ for(let i=0;i<60;i++){tick(1/60);assert.match(actor.n('cover-arm-left').attrs.d,/^M352 580 /);assert.match(actor.n('cover-arm-right').attrs.d,/^M445 580 /);}
+ assert.ok(actor._pose.cover>.99);assert.equal(actor.n('hands-eyes').attrs.transform,'translate(0 0)');
+ actor.play('idle');assert.ok(Number(actor.n('hands-eyes').attrs.opacity)>.9);
+ for(let i=0;i<90;i++)tick(1/60);
+ assert.equal(actor.n('hands-eyes').attrs.opacity,'0');assert.equal(actor.n('arm-left').attrs.opacity,'1');
+});
+
+test('el controlador conserva la pose congelada al avanzar el deshielo y la retira el 22',()=>{
+ const f=fixture();f.ctx.__mascotaNavidadSync();assert.equal(f.actors.at(-1).options.frozen,true);
+ f.setDate('2026-12-21');f.ctx.__mascotaNavidadSync();assert.equal(f.actors.at(-1).options.frozen,true);
+ f.setDate('2026-12-22');f.ctx.__mascotaNavidadSync();assert.equal(f.actors.at(-1).options.frozen,false);
+});
+test('la amortiguación y su reloj permanecen quietos durante la pausa',()=>{
+ const {actor,tick}=realActor();actor.play('grump');for(let i=0;i<45;i++)tick(1/60);
+ const before=actor.n('arm-left').attrs.transform,time=actor.motionTime;
+ actor.pause();tick(60);actor.resume();tick(1/60);
+ assert.equal(actor.n('arm-left').attrs.transform,before);assert.equal(actor.motionTime,time);
+ tick(1/60);assert.ok(actor.motionTime-time<.02);assert.ok(Number.isFinite(actor._pose.leftArm));
 });

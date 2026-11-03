@@ -4,13 +4,19 @@ El SVG inline de `index.html` y `assets/navidad/personaje-animable.svg` conserva
 
 ## Calendario e historia
 
-- **1–21 de diciembre:** el cuerpo permanece congelado; los ojos parpadean y miran alrededor. El bloque pierde altura y espesor por día; el 21 conserva una base.
+- **1–21 de diciembre:** el cuerpo permanece congelado; mantiene cejas fruncidas, párpados bajos y boca enojada. Solo los ojos parpadean y miran alrededor con pausas y cambios de mirada breves. El bloque pierde altura y espesor por día; el 21 conserva una base.
 - **Desde el 22:** desaparece el hielo. En la primera visita de la temporada, mira sus manos, se sacude el frío y se estira durante 6,2 segundos. La marca `innova_nv_liberado_<año>` se guarda únicamente en el dispositivo, al terminar la presentación. En Ver ahora se repite sin guardar esa marca.
 - **22–23:** tras acumular 24–36 segundos de reposo, camina de puntillas, tira de un cordón y se lleva un foco de la guirnalda real. Si lo tocas, se sobresalta y el foco cae y vuelve a su lugar. Sin intervención también termina devolviéndolo; nunca deja la decoración incompleta entre escenas.
 - **24–27:** devuelve una luz a la guirnalda con una sonrisa. El primer acceso de la temporada conserva la presentación de liberación.
 - **Año Nuevo:** reacciona a los fuegos artificiales del tema y se tapa los oídos. No dibuja otra escena de fuegos artificiales dentro de su SVG.
 
 La mayor parte del tiempo respira, parpadea y espera en su espacio. En Navidad intercala refunfuños y planes de robo, separados por pausas. Entrecierra los párpados, frunce las cejas, cruza los brazos, resopla, da una pequeña patada y junta las manos con una sonrisa torcida. Al tocarlo primero desconfía, después se enfada y al tercer toque responde con descaro. Estas variantes se limitan al login de Navidad: las 14 escenas originales siguen disponibles fuera del modo integrado. Los gestos no reinician la espera del robo; después de devolver el foco descubierto, adopta una pose de fastidio. Las animaciones autónomas no se ejecutan mientras el formulario tiene el foco.
+
+## Continuidad del movimiento
+
+El motor conserva postura y velocidad al cambiar de escena en el login. Una respuesta amortiguada aproxima cada articulación a su objetivo: las miradas responden antes que la cabeza y los brazos; pelo, orejas y bufanda terminan de acomodarse después. La respiración y los parpadeos usan un reloj continuo que no se reinicia al repetir el reposo ni al cambiar de gesto. El cruce de brazos incluye anticipación y una llegada escalonada de las manos.
+
+Las manos que cubren el PIN recorren arcos propios; sus brazos permanecen anclados en los hombros. Las capas auxiliares se relevan gradualmente al levantar o bajar las manos y al interrumpir una travesura. El cuerpo sigue inmóvil dentro del hielo. Las 14 escenas originales fuera del modo integrado conservan su reproducción directa.
 
 ## Reacción al PIN
 
@@ -60,7 +66,7 @@ node --check js/navidad-historia.js
 node --check js/navidad-mascota.js
 ```
 
-Se prueban calendario, vista previa, liberación por temporada, pausa/reanudación, devolución de objetos, limpieza, enfoque del PIN, movimiento reducido y restauración de poses. El motor real se muestrea en cinco momentos de cada una de sus 20 escenas, con y sin integración, verificando transformaciones finitas y restauración de brazos.
+Se prueban continuidad entre gestos, respuesta a 30/60 FPS, fase de respiración, cara enojada congelada, brazos anclados al cubrir el PIN, calendario, vista previa, liberación por temporada, pausa/reanudación, devolución de objetos, limpieza, enfoque del PIN, movimiento reducido y restauración de poses. El motor real se muestrea en cinco momentos de cada una de sus 20 escenas, con y sin integración, verificando transformaciones finitas y restauración de brazos.
 
 La revisión en Chrome utiliza HTML/CSS/SVG y motores reales con el mismo bloqueo del body que producción. Se comprueban escenas completas, foco real, interacción del PIN y acceso al personaje en pantallas cortas. La revisión de los gestos utiliza el reloj real del motor, incluidos el regreso al reposo, las reacciones sucesivas y la interrupción al enfocar el PIN.
 

@@ -1,4 +1,4 @@
-/* GreenActor 1.2 — 14 original SVG animations and 6 integrated login poses. No external dependencies.
+/* GreenActor 1.3 — 14 original SVG animations and 6 integrated login poses. No external dependencies.
    API: const actor = new GreenActor(document.querySelector('#green-character'));
    actor.play('steal'); actor.tap(); actor.pause(); actor.resume(); actor.destroy();
    Custom DOM events: greenactor:scenechange and greenactor:complete. */
@@ -37,9 +37,10 @@ class GreenActor {
  constructor(svg, options={}){
   if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error('GreenActor requires the actual inline <svg> element.');
   this.svg=svg; this.options=options; this.nodes={};
-  const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','lid-left','lid-right','mouth','expression-mouth','expression-line','smirk-crease','smile','blush','sweat','hands-ears','hands-eyes','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
+  const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','lid-left','lid-right','mouth','expression-mouth','expression-line','smirk-crease','smile','blush','sweat','hands-ears','hands-eyes','cover-arm-left','cover-arm-right','cover-arm-shine','cover-hand-left','cover-hand-right','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
   for (const id of ids) this.nodes[id]=svg.querySelector('#'+id);
   this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
+  this.motionTime=0;this._pose=null;this._velocity={};this._visible={};
   this._raf=requestAnimationFrame(t=>this.frame(t));
   this.play(options.initialScene||'idle');
  }
@@ -54,12 +55,12 @@ class GreenActor {
   if(!SCENES[name])throw new Error('Unknown scene: '+name);
   this.scene=name;this.elapsed=0;this.completed=false;
   this.svg.dispatchEvent(new CustomEvent('greenactor:scenechange',{detail:{name, ...SCENES[name]}}));
-  this.render(0);
+  this.render(0,0);
   return this;
  }
  tap(){this.tapCount=this.tapCount%3+1;this.play('tap'+this.tapCount);return this.tapCount}
  pause(){this.paused=true; return this}
- resume(){this.paused=false;this.last=0;return this}
+ resume(){if(this.paused){this.paused=false;this.last=0;}return this}
  togglePause(){return this.paused?this.resume():this.pause()}
  resetTouches(){this.tapCount=0;return this}
  getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...SCENES[this.scene]}}
@@ -77,37 +78,61 @@ class GreenActor {
         if(!this.completed){this.completed=true;this.svg.dispatchEvent(new CustomEvent('greenactor:complete',{detail:{name:this.scene}}))}
       }
     }
-    this.render(this.elapsed);
+    this.motionTime+=dt;
+    this.render(this.elapsed,dt);
     if(this.options.onFrame)this.options.onFrame(this.getSceneInfo(),dt);
   }
   this._raf=requestAnimationFrame(t=>this.frame(t));
  }
- render(t){
+ // Respuesta amortiguada exacta: conserva posición y velocidad al cambiar de gesto.
+ // Ojos rápidos, cabeza intermedia y ropa más lenta, sin un filtro dependiente de FPS.
+ settlePose(target,dt){
+  if(!this._pose||dt===null||!this.options.embedded){this._pose={...target};this._velocity={};return;}
+  for(const key of Object.keys(target)){
+    if(['eyeL','eyeR'].includes(key)){this._pose[key]=target[key];continue;}
+    let frequency=14,damping=.94;
+    if(['pupilX','pupilY','lidL','lidR','grump','sly','surprise','cover'].includes(key)){frequency=26;damping=1;}
+    else if(['scarf','tail','knot','hair','earL','earR'].includes(key)){frequency=9;damping=.78;}
+    else if(['leftArm','rightArm','reach'].includes(key)){frequency=13;damping=.86;}
+    const x=this._pose[key]-target[key],velocity=this._velocity[key]||0,decay=Math.exp(-damping*frequency*dt);
+    let next,speed;
+    if(damping===1){const c=velocity+frequency*x;next=(x+c*dt)*decay;speed=(velocity-frequency*c*dt)*decay;}
+    else{
+      const wd=frequency*Math.sqrt(1-damping*damping),sn=Math.sin(wd*dt),cs=Math.cos(wd*dt);
+      next=decay*(x*cs+(velocity+damping*frequency*x)/wd*sn);
+      speed=decay*(velocity*cs-(damping*frequency*velocity+frequency*frequency*x)/wd*sn);
+    }
+    this._pose[key]=target[key]+next;this._velocity[key]=speed;
+  }
+ }
+ render(t,dt=null){
   const mode=this.scene;const D=SCENES[mode].duration;const p=clamp(t/D);
-  const v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
-    scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,alpha:1};
+  let v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
+    scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,alpha:1};
   const personality=this.options.embedded&&this.options.personality!==false;
+  const frozen=!!this.options.frozen;
+  const clock=this.options.embedded&&dt!==null?this.motionTime:t;
   const visible={};const props=(...args)=>{for (const id of args)visible[id]=1};
   let text='';let bubble=0;let bagTransform='';let bulbTransform='';let rollVisible=0;
   // Every frame uses absolute coordinates; switching scenes never leaves stale transforms.
-  const breath = wave(t,0.23);
+  const breath = wave(clock,0.23);
   const blinkAt = (cycle, phase=0) => {
-    const f=((t+phase)%cycle)/cycle;
+    const f=((clock+phase)%cycle)/cycle;
     return f>.76 && f<.795 ? Math.max(.09,1-Math.sin((f-.76)/.035*PI)*.92) : 1;
   };
-  v.head=1.3*wave(t,.20);v.body=1+.011*breath;
-  v.scarf=4*wave(t,.31);v.tail=7*wave(t,.24);
-  v.leftArm=2.5*wave(t,.23);v.rightArm=-2.5*wave(t,.23);
+  v.head=1.3*wave(clock,.20);v.body=1+.011*breath;
+  v.scarf=4*wave(clock,.31);v.tail=7*wave(clock,.24);
+  v.leftArm=2.5*wave(clock,.23);v.rightArm=-2.5*wave(clock,.23);
   v.eyeL=blinkAt(4.7);v.eyeR=blinkAt(4.7);
   if(personality){v.grump=.24;v.lidL=.2;v.lidR=.26;}
   switch(mode){
     case 'idle':
-      v.dy=-3*breath;v.pupilX=3*wave(t,.12);v.head=2*wave(t,.17);v.hair=2*wave(t,.2);
+      v.dy=-3*breath;v.pupilX=3*wave(t,.12);v.head=2*wave(clock,.17);v.hair=2*wave(clock,.2);
       if(personality){
         // Mirada primero, cabeza después: una pausa de sospecha dentro del reposo.
         const glance=bump(t,.8,1.35,2.6,3.25);
         v.pupilX=-10*glance;v.head=4*bump(t,1.15,1.75,2.7,3.5);
-        v.dy=-1.5*breath;v.scarf=2*wave(t,.25);v.tail=3*wave(t,.21);
+        v.dy=-1.5*breath;v.scarf=2*wave(clock,.25);v.tail=3*wave(clock,.21);
         v.grump=.26+.16*glance;v.lidL=.25+.17*glance;v.lidR=.32+.12*glance;
       }
       break;
@@ -272,7 +297,7 @@ class GreenActor {
       v.head=0;v.dy=0;v.body=1;v.leftArm=0;v.rightArm=0;
       v.eyeL=1-.9*cover;v.eyeR=v.eyeL;v.pupilX=0;v.pupilY=0;
       props('hands-eyes');visible['hands-eyes']=cover;
-      this.transform('hands-eyes',`translate(0 ${180*(1-cover)})`);
+      v.cover=cover;
       break;}
     case 'tug':{
       const reach=between(t,0,.8),pull=bump(t,1.0,1.4,3.5,4.0);
@@ -280,35 +305,35 @@ class GreenActor {
       v.pupilX=t>4?10*wave(t,.6):7;v.leftArm=12*reach;
       v.angle=-3*pull;v.dy=4*pull;v.scarf=2*wave(t,.5);
       props('reach-arm');visible['reach-arm']=reach;
-      this.rot('reach-arm',-26*reach+4*pull,448,585);
+      v.reach=-26*reach+4*pull;
       if(personality){
         const tug=bump(t,1,1.25,1.55,1.9)+.7*bump(t,2.3,2.55,2.85,3.2);
         const check=bump(t,4,4.35,5.1,5.6);
         v.angle=-4*tug;v.dy=3*tug;v.leftArm=15*reach;v.head=-8*reach+14*check;v.pupilX=7-18*check;
         v.grump=.32;v.sly=.8*bump(t,1.3,1.8,4.1,4.7);v.lidL=.55;v.lidR=.38;
-        v.scarf=5*tug;this.rot('reach-arm',-26*reach+5*tug,448,585);
+        v.scarf=5*tug;v.reach=-26*reach+5*tug;
       }
       break;}
     case 'offer':{
       const reach=between(t,0,.8)*(1-between(t,3.8,5));
       v.head=-7*reach;v.pupilY=-9*reach;v.leftArm=8*reach;
       props('reach-arm','smile');visible['reach-arm']=reach;visible.smile=reach;
-      this.rot('reach-arm',-26*reach,448,585);this.show('mouth',1-reach);
+      v.reach=-26*reach;this.show('mouth',1-reach);
       if(personality){v.grump=.45*(1-between(t,2.1,3.5));v.lidL=.4*reach;v.lidR=.3*reach;visible.smile=.55*reach*between(t,2.2,3.6);}
       break;}
     case 'grump':{
-      const fold=bump(t,.12,.7,4.3,5.8),huff=bump(t,1.5,1.8,2.1,2.65),stamp=bump(t,3,3.25,3.4,3.7);
-      v.head=9*fold-5*huff;v.dy=3*fold;v.angle=2*fold;v.body=1-.012*huff;
-      v.leftArm=-34*fold;v.rightArm=34*fold;v.rightLeg=-13*stamp;v.leftLeg=0;
+      const prepare=bump(t,.05,.25,.4,.8),fold=bump(t,.35,1.05,4.25,5.8),huff=bump(t,1.65,1.9,2.15,2.8),stamp=bump(t,3.05,3.2,3.37,3.72);
+      v.head=9*fold-5*huff-3*prepare;v.dy=2*fold+2*prepare;v.angle=1.5*fold;v.body=1-.012*huff-.008*prepare;
+      v.leftArm=8*prepare-34*fold;v.rightArm=-6*prepare+34*bump(t,.45,1.2,4.35,5.8);v.rightLeg=-11*stamp;v.leftLeg=2*bump(t,2.85,3.05,3.6,3.9);
       v.pupilX=-12*fold;v.pupilY=2*fold;v.grump=fold;v.lidL=.78*fold;v.lidR=.68*fold;
       v.earL=6*fold;v.earR=-4*fold;v.scarf=-8*bump(t,1.9,2.1,2.3,2.85);
       break;}
     case 'plot':{
       const left=bump(t,.1,.4,1.05,1.4),right=bump(t,1.5,1.8,2.4,2.8),idea=bump(t,2.8,3.3,4.5,5.2);
-      const rub=2.5*wave(t,1.65)*idea;
+      const rub=2.2*Math.sin((t-3.2)*PI*2*1.15)*bump(t,3.2,3.5,4.1,4.45);
       v.pupilX=-13*left+12*right+7*idea;v.pupilY=-3*idea;
       v.head=5*bump(t,.35,.75,1.1,1.5)-5*bump(t,1.75,2.1,2.5,2.9)-6*idea;
-      v.leftArm=-31*idea+rub;v.rightArm=31*idea+rub;v.dy=2*idea;
+      v.leftArm=-31*idea+rub;v.rightArm=31*bump(t,2.98,3.45,4.55,5.2)+rub*.75;v.dy=1.5*idea;
       v.grump=.3*(left+right);v.sly=.9*idea;v.lidL=.45*(left+right)+.5*idea;v.lidR=.35*(left+right)+.22*idea;
       v.earL=-3*idea;v.earR=3*idea;v.tail=3*wave(t,.3);v.scarf=2*wave(t,.28);
       break;}
@@ -325,6 +350,33 @@ class GreenActor {
       this.rot('fw-right',-t*65,615,284);
       break;}
   }
+  if(frozen){
+    // Una pose estática, enfadada durante todo el deshielo; los ojos se animan por CSS.
+    Object.assign(v,{dx:0,dy:0,angle:0,head:0,body:1,leftArm:0,rightArm:0,leftLeg:0,rightLeg:0,
+      scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,
+      grump:1,sly:0,surprise:0,lidL:.7,lidR:.67});
+  }
+  this.settlePose(v,dt);v={...this._pose};
+  // Las capas auxiliares también se relevan sin aparecer de golpe.
+  for(const id of ['reach-arm','hands-eyes','smile','sweat','blush']){
+    const target=visible[id]||0;
+    this._visible[id]=dt===null||!this.options.embedded?target:lerp(this._visible[id]||0,target,1-Math.exp(-20*dt));
+    if(Math.abs(this._visible[id]-target)<.0001)this._visible[id]=target;
+    visible[id]=this._visible[id];
+  }
+  this.rot('reach-arm',v.reach,448,585);
+  // Los hombros permanecen anclados al torso al subir las manos, sin trasladar los brazos enteros.
+  const cover=clamp(v.cover),arc=Math.sin(PI*cover),headAngle=v.head*PI/180;
+  const eye=(x,y)=>({x:399+(x-399)*Math.cos(headAngle)-(y-474)*Math.sin(headAngle),y:474+(x-399)*Math.sin(headAngle)+(y-474)*Math.cos(headAngle)});
+  const le=eye(350,319),re=eye(449,326);
+  const lx=lerp(366,le.x,cover)-56*arc,ly=lerp(640,le.y,cover),rx=lerp(432,re.x,cover)+56*arc,ry=lerp(640,re.y,cover);
+  this.attr('cover-arm-left','d',`M352 580 C${lerp(324,285,cover)} ${lerp(596,520,cover)} ${lx-42*cover} ${ly+72*cover} ${lx-16*cover} ${ly+9*cover}`);
+  this.attr('cover-arm-right','d',`M445 580 C${lerp(478,516,cover)} ${lerp(596,518,cover)} ${rx+42*cover} ${ry+72*cover} ${rx+16*cover} ${ry+9*cover}`);
+  this.attr('cover-arm-shine','d',`M350 575 Q${lx-35*cover} ${ly+140*cover} ${lx-11*cover} ${ly+60*cover} M447 575 Q${rx+35*cover} ${ry+140*cover} ${rx+11*cover} ${ry+60*cover}`);
+  for(const [id,x,y,cx,cy,sign] of [['cover-hand-left',lx,ly,350,319,-1],['cover-hand-right',rx,ry,449,326,1]]){
+    this.transform(id,`translate(${x} ${y}) rotate(${sign*12*arc}) scale(${lerp(.55,1,cover)}) translate(${-cx} ${-cy})`);
+  }
+  this.transform('hands-eyes','translate(0 0)');
   this.transform('actor',`translate(${v.dx.toFixed(2)} ${v.dy.toFixed(2)}) rotate(${v.angle.toFixed(2)} 400 900) translate(400 960) scale(${v.s.toFixed(4)}) translate(-400 -960)`);
   this.attr('actor','opacity',v.alpha);
   this.rot('head',v.head,399,474);this.bodyScale(v.body);
@@ -361,15 +413,15 @@ class GreenActor {
   if(mode!=='nye')this.transform('celebration-fireworks','translate(0 0)');
   // Swap original legs for a connected, drawn seated pose (no detached feet).
   if(mode==='xmas'){const amount=visible['sitting-legs']||0;this.show('leg-left',1-amount);this.show('leg-right',1-amount)}else{this.show('leg-left',1);this.show('leg-right',1)}
-  this.show('arm-right',['steal','tug','offer'].includes(mode)?1-(visible['reach-arm']||0):mode==='privacy'?1-(visible['hands-eyes']||0):1);
-  this.show('arm-left',mode==='privacy'?1-(visible['hands-eyes']||0):1);
-  if(!['tug','offer'].includes(mode))this.transform('reach-arm','translate(0 0)');
-  if(mode!=='privacy')this.transform('hands-eyes','translate(0 0)');
+  this.show('arm-right',this.options.embedded?(1-(visible['reach-arm']||0))*(1-(visible['hands-eyes']||0)):['steal','tug','offer'].includes(mode)?1-(visible['reach-arm']||0):mode==='privacy'?1-(visible['hands-eyes']||0):1);
+  this.show('arm-left',this.options.embedded?1-(visible['hands-eyes']||0):mode==='privacy'?1-(visible['hands-eyes']||0):1);
+  if(!this.options.embedded&&!['tug','offer'].includes(mode))this.transform('reach-arm','translate(0 0)');
+
   // El login aporta los objetos reales: no dibujar otra tarjeta o guirnalda encima.
   if(this.options.embedded)for(const id of ['roof-card','roof-front','wire-bulb','lights-string','night-overlay','celebration-fireworks'])this.show(id,0);
   // Restore the default face when leaving the Nochebuena scene.
   if(mode!=='xmas'&&mode!=='offer')this.show('mouth',1);
-  const closedFace=(personality||['grump','plot'].includes(mode))*(1-v.surprise);
+  const closedFace=(frozen||personality||['grump','plot'].includes(mode))*(1-v.surprise);
   const happy=visible.smile||0;
   this.show('expression-mouth',closedFace*(1-happy));
   if(closedFace)this.show('mouth',(1-closedFace)*(1-happy));

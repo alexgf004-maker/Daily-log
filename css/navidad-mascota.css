@@ -23,25 +23,26 @@
 .nv-mascota-congelada #eye-left,
 .nv-mascota-congelada #eye-right{
   transform-box:view-box;
-  animation:nvOjosParpadeo 5.8s linear infinite;
+  animation:nvOjosParpadeo 13.4s linear infinite;
 }
 .nv-mascota-congelada #eye-left{transform-origin:351px 317px}
 .nv-mascota-congelada #eye-right{transform-origin:449px 325px}
 .nv-mascota-congelada #pupil-left,
-.nv-mascota-congelada #pupil-right{animation:nvOjosMirada 11.6s ease-in-out infinite}
+.nv-mascota-congelada #pupil-right{animation:nvOjosMirada 18.6s linear infinite}
 .nv-mascota-ojos-pausa #eye-left,
 .nv-mascota-ojos-pausa #eye-right,
 .nv-mascota-ojos-pausa #pupil-left,
 .nv-mascota-ojos-pausa #pupil-right,
 .nv-mascota-ojos-pausa .nv-hielo-fijo *{animation-play-state:paused}
 @keyframes nvOjosParpadeo{
-  0%,45%,49%,100%{transform:scaleY(1)}
-  47%{transform:scaleY(.08)}
+  0%,22%,23.4%,59%,60.3%,61%,62.2%,100%{transform:scaleY(1)}
+  22.5%,59.45%,61.45%{transform:scaleY(.07)}
 }
 @keyframes nvOjosMirada{
-  0%,10%,92%,100%{transform:translate(0,0)}
-  24%,38%{transform:translate(-10px,1px)}
-  55%,70%{transform:translate(12px,-3px)}
+  0%,16%,31.7%,62%,77.6%,100%{transform:translate(0,0)}
+  16.6%,30%{transform:translate(-11px,1px)}
+  30.5%,31%{transform:translate(-6px,0)}
+  62.6%,77%{transform:translate(9px,-2px)}
 }
 /* El agua crece sobre la pared, se desprende y termina en el charco.
    Los ciclos comparten reloj; la segunda gota rompe la simetría. */
