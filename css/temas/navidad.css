@@ -278,6 +278,18 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 .nav-pre .mk3-line .nvp-tr.mal{background:linear-gradient(90deg,#bfe3f7,#e2f1fc)}
 .nav-pre .mk3-line .nvp-tr.nuevo{transform:scaleX(0)}
 .nav-pre .mk3-line .nvp-tr.nuevo.va{transform:none;transition:transform .8s cubic-bezier(.4,0,.2,1)}
+/* "¡Listo, guardado!": la ventana empañada (escenaVentanaNV en js/navidad-guardado.js) */
+.fx-ok.nv{background:#0a2547!important;justify-content:flex-end;padding-bottom:13vh;overflow:hidden}
+.fx-ok.nv .fxn{position:absolute;inset:0;z-index:0;pointer-events:none}
+.fx-ok.nv .fxn>*{position:absolute;left:0;top:0;width:100%;height:100%}
+.fx-ok.nv>*:not(.fxn){position:relative;z-index:1}
+.fx-ok.nv .fx-ok-circ{display:none}
+.fx-ok.nv .fx-ok-t{color:#0b2a4e;font-size:24px;transition:.5s 0s}
+.fx-ok.nv .fx-ok-s{color:#1c5a8f;transition:.5s .15s}
+.fx-ok.nv .fx-ok-pills{transition:.5s .3s}
+.fx-ok.nv .fx-ok-pills span{background:rgba(11,42,78,.08);border-color:rgba(11,42,78,.22);color:#0b2a4e}
+.fx-ok.nv.on .fx-ok-t,.fx-ok.nv.on .fx-ok-s,.fx-ok.nv.on .fx-ok-pills{opacity:0;transform:translateY(10px)}
+.fx-ok.nv.on.nv-txt .fx-ok-t,.fx-ok.nv.on.nv-txt .fx-ok-s,.fx-ok.nv.on.nv-txt .fx-ok-pills{opacity:1;transform:none}
 /* Etiqueta de estado "de regalo" (etiquetaRegaloNV en js/navidad-marcaje.js) */
 .nav-pre .nvp-et-w{position:relative;display:inline-flex;margin-top:8px;max-width:100%}
 .nav-pre .nvp-et{position:relative;display:inline-flex;align-items:center;gap:5px;padding:6px 10px 6px 18px;font:800 12px var(--sans);white-space:nowrap;transform:rotate(-3deg);

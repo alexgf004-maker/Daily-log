@@ -399,6 +399,13 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     dice "Jornada completa" con estrella); tarde/salida antes escarchada en azul con copo; justificado en gris. Los
     minutos se dicen igual ("12 min tarde"). Elegida entre 3 diseños (regalo, listón, placa). Reportes, Excel y
     pantallas del admin siguen con el texto normal.
+  - **"¡Listo, guardado!" — la ventana empañada** (Pre-Navidad, `escenaVentanaNV` en `js/navidad-guardado.js`, clase
+    `.fx-ok.nv` + `.fxn`): ventana de madera con foquitos y un pueblito nevado afuera; el vidrio se empaña como con un
+    aliento y un dedo verde y peludo con uña (genérico, sin rasgos de ningún personaje) escribe "¡Listo!" trazo por
+    trazo (`LETRAS`, en orden de la mano, se levanta entre letras) y una palomita; se limpia el vaho con perlitas en la
+    orilla y algunas gotas resbalan a tirones. Al terminar de escribir sale "¡Listo, guardado! · Lo escribiste en tu
+    historial" con los datos (`.nv-txt`) y se cierra 3 s después (o al tocar). Elegida tras varias rondas: la usuaria
+    pidió ideas planas pero creativas y bien animadas (no 3D). Con movimiento reducido sale la ventana ya escrita.
   - **"Probar animaciones"** se muestra solo con Halloween, Muertos y Pre-Navidad (regla en `comun.css`; antes vivía en
     `halloween.css` y fuera de Halloween el botón salía sin hacer nada).
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
@@ -579,6 +586,11 @@ puede tumbar. Por eso:
 8. **Verifica que `index.html` no se truncó** tras subirlo (compara número de líneas).
 9. Tras cualquier cambio en el tablero de programación, probar en **vista de celular**
    (es el uso principal).
+10. **Propuestas de diseño: siempre 3 opciones, con ejemplos** (video o imágenes de cada una), nunca solo
+    texto. Lo que se aprendió con los temas: la idea y el encanto pesan más que la técnica (3D/perspectiva no
+    fue lo que se buscaba); cuidar la animación (anticipación, inercia, rebote, trazos en orden, ritmo); en
+    Navidad el nivel tiene que ser alto, pero sin saturar ("demasiado producido" tampoco gustó en Muertos).
+    Cuando se elige una, la duración aprobada no se cambia sin preguntar.
 
 ---
 
