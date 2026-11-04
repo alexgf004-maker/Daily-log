@@ -109,7 +109,7 @@ export function escarchaMarcaje(card, pt) {
   const d = { x: dr.left - cr.left + dr.width / 2, y: dr.top - cr.top + dr.height / 2 };
   const Rmax = Math.hypot(Math.max(d.x, W - d.x), Math.max(d.y, H - d.y)) + 30, Rfin = mal ? Rmax * .42 : Rmax;
   const gotas = [], vapor = [];
-  const T_HIELO = .75, T_DESHIELO = mal ? 1.3 : 1.1, FIN = mal ? 4.0 : 3.4, CRECE = 1.4;
+  const T_HIELO = 1.0, T_DESHIELO = mal ? 1.6 : 1.5, FIN = mal ? 5.0 : 4.4, CRECE = 1.05;   // los tiempos de la escena aprobada
   let R = 0, ultimoR = 0, tramo = false, iSeg = 0;
   if (hora) hora.classList.add('nvp-hielo');
   const cx = crist.x; cx.lineCap = 'round';
@@ -137,41 +137,41 @@ export function escarchaMarcaje(card, pt) {
       const td = clamp((t - T_HIELO) / T_DESHIELO);
       if (t > T_HIELO) {
         let obj = Rfin * easeOut(td);
-        if (mal && td >= 1) obj = Rfin * (1 - 0.18 * clamp((t - T_HIELO - T_DESHIELO) / 1.0));   // tarde: la escarcha regresa un poco
+        if (mal && td >= 1) obj = Rfin * (1 - 0.18 * clamp((t - T_HIELO - T_DESHIELO) / 1.2));   // tarde: la escarcha regresa un poco
         R = obj;
         f.globalCompositeOperation = 'destination-out';
         const g = f.createRadialGradient(d.x, d.y, Math.max(0, R * .7), d.x, d.y, R + 1); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
         f.fillStyle = g; f.beginPath(); f.arc(d.x, d.y, R + 2, 0, 7); f.fill();
         f.globalCompositeOperation = 'source-over';
-        if (R - ultimoR > 4 && gotas.length < 36) { for (let k = 0; k < 2; k++) { const a = Math.PI * (.1 + rnd() * .8); gotas.push({ x: d.x + Math.cos(a) * R * (.9 + rnd() * .1), y: d.y + Math.sin(a) * R * .95 - rnd() * 8, vy: 10 + rnd() * 10, r: 1.4 + rnd() * 1.6, vida: 1, y0: 0 }); gotas[gotas.length - 1].y0 = gotas[gotas.length - 1].y; } ultimoR = R; }
-        if (vapor.length < 30 && ((!mal && rnd() < .4) || rnd() < .12)) vapor.push({ x: d.x + (rnd() - .5) * R, y: d.y - rnd() * R * .4, v: 14 + rnd() * 10, vida: 1, r: 4 + rnd() * 6 });
+        if (R - ultimoR > 4 && gotas.length < 36) { for (let k = 0; k < 2; k++) { const a = Math.PI * (.1 + rnd() * .8); gotas.push({ x: d.x + Math.cos(a) * R * (.9 + rnd() * .1), y: d.y + Math.sin(a) * R * .95 - rnd() * 8, vy: 8 + rnd() * 10, r: 1.4 + rnd() * 1.6, vida: 1, y0: 0 }); gotas[gotas.length - 1].y0 = gotas[gotas.length - 1].y; } ultimoR = R; }
+        if (vapor.length < 30 && ((!mal && rnd() < .4) || rnd() < .12)) vapor.push({ x: d.x + (rnd() - .5) * R, y: d.y - rnd() * R * .4, v: 12 + rnd() * 10, vida: 1, r: 4 + rnd() * 6 });
       }
       // composición
       x.clearRect(0, 0, W, H);
-      const salida = clamp((t - (FIN - .6)) / .6);           // al final la escarcha se desvanece y deja la tarjeta legible
+      const salida = clamp((t - (FIN - .7)) / .7);           // al final la escarcha se desvanece y deja la tarjeta legible
       x.globalAlpha = 1 - salida; x.drawImage(frost.c, 0, 0, W, H);
       if (t > T_HIELO && R > 4 && td < 1) { x.globalCompositeOperation = 'lighter'; const g = x.createRadialGradient(d.x, d.y, R * .6, d.x, d.y, R * 1.08); g.addColorStop(0, 'rgba(255,170,60,0)'); g.addColorStop(.75, `rgba(255,170,60,${.2 * (mal ? 1 - td * .5 : 1)})`); g.addColorStop(1, 'rgba(255,170,60,0)'); x.fillStyle = g; x.beginPath(); x.arc(d.x, d.y, R * 1.1, 0, 7); x.fill(); x.globalCompositeOperation = 'source-over'; }
-      if (t > T_HIELO) { const k = (mal ? .18 + .1 * Math.sin(now * 18) : .28 * (1 - clamp((t - 2.4) / 1))) * (1 - salida); if (k > .01) { x.globalCompositeOperation = 'lighter'; const g = x.createRadialGradient(d.x, d.y, 2, d.x, d.y, 60); g.addColorStop(0, `rgba(255,190,90,${k})`); g.addColorStop(1, 'rgba(255,190,90,0)'); x.fillStyle = g; x.beginPath(); x.arc(d.x, d.y, 60, 0, 7); x.fill(); x.globalCompositeOperation = 'source-over'; } }
+      if (t > T_HIELO) { const k = (mal ? .18 + .1 * Math.sin(now * 18) : .28 * (1 - clamp((t - 3) / 1.4))) * (1 - salida); if (k > .01) { x.globalCompositeOperation = 'lighter'; const g = x.createRadialGradient(d.x, d.y, 2, d.x, d.y, 60); g.addColorStop(0, `rgba(255,190,90,${k})`); g.addColorStop(1, 'rgba(255,190,90,0)'); x.fillStyle = g; x.beginPath(); x.arc(d.x, d.y, 60, 0, 7); x.fill(); x.globalCompositeOperation = 'source-over'; } }
       // gotas con su rastro corto
       x.lineCap = 'round';
-      for (const g of gotas) { if (g.vida <= 0) continue; g.vy += 2.2; g.y += g.vy / 60; g.x += Math.sin(g.y * .3) * .15; g.vida -= .008; if (g.y > H + 6) { g.vida = 0; continue; }
+      for (const g of gotas) { if (g.vida <= 0) continue; g.vy += 1.8; g.y += g.vy / 60; g.x += Math.sin(g.y * .3) * .15; g.vida -= .006; if (g.y > H + 6) { g.vida = 0; continue; }
         x.strokeStyle = 'rgba(180,215,240,.5)'; x.lineWidth = g.r * .9; x.beginPath(); x.moveTo(g.x, Math.max(g.y0, g.y - 26)); x.lineTo(g.x, g.y); x.stroke();
         x.fillStyle = 'rgba(205,232,250,.9)'; x.beginPath(); x.ellipse(g.x, g.y, g.r, g.r * 1.25, 0, 0, 7); x.fill();
         x.fillStyle = 'rgba(255,255,255,.95)'; x.beginPath(); x.arc(g.x - g.r * .3, g.y - g.r * .4, g.r * .35, 0, 7); x.fill(); }
-      for (const v of vapor) { v.vida -= .016; v.y -= v.v / 60; v.r += .14; if (v.vida <= 0) continue; x.fillStyle = `rgba(255,255,255,${.22 * v.vida})`; x.beginPath(); x.arc(v.x, v.y, v.r, 0, 7); x.fill(); }
+      for (const v of vapor) { v.vida -= .012; v.y -= v.v / 60; v.r += .12; if (v.vida <= 0) continue; x.fillStyle = `rgba(255,255,255,${.22 * v.vida})`; x.beginPath(); x.arc(v.x, v.y, v.r, 0, 7); x.fill(); }
       x.globalAlpha = 1;
       bulbos.forEach((b, i) => {
         const dist = Math.hypot(b.x - d.x, cableY(W, b.x) + 14 - d.y);
         b.frio = cub * (dist < R * 1.02 ? clamp(1 - (R * 1.02 - dist) / 30) : 1);
-        if (!mal) { if (dist < R) b.luz = Math.min(1, b.luz + .1); if (b.luz >= 1) b.luz = .85 + .15 * Math.sin(now * 3 + b.fase); }
-        else if (dist < R) { const lat = Math.sin(now * 22 + i * 2) > .2 ? 1 : .15; b.luz = (t > 2.6 ? Math.max(0, 1 - (t - 2.6) * 1.4) : 1) * lat * .8; }
+        if (!mal) { if (dist < R) b.luz = Math.min(1, b.luz + .08); if (b.luz >= 1) b.luz = .85 + .15 * Math.sin(now * 3 + b.fase); }
+        else if (dist < R) { const lat = Math.sin(now * 22 + i * 2) > .2 ? 1 : .15; b.luz = (t > 3.2 ? Math.max(0, 1 - (t - 3.2) * 1.2) : 1) * lat * .8; }
       });
       if (salida > 0) bulbos.forEach(b => { if (mal) b.frio = Math.max(b.frio, salida); else { b.frio *= 1 - salida; b.luz = b.luz + (.9 - b.luz) * salida; } });
-      x.globalAlpha = clamp(t / 0.4); dibujaGuirnalda(x, W, bulbos, now, false); x.globalAlpha = 1;
+      x.globalAlpha = clamp(t / 0.5); dibujaGuirnalda(x, W, bulbos, now, false); x.globalAlpha = 1;
       if (hora) {
         if (!mal && td > .55 && !hora.classList.contains('nvp-oro')) { hora.classList.remove('nvp-hielo'); hora.classList.add('nvp-oro'); }
-        if (!mal && t > FIN - .8) hora.classList.remove('nvp-oro');
-        if (mal && t > FIN - .6) hora.classList.remove('nvp-hielo');
+        if (!mal && t > FIN - .9) hora.classList.remove('nvp-oro');
+        if (mal && t > FIN - .7) hora.classList.remove('nvp-hielo');
       }
       if (!tramo && (mal ? td > .9 : td > .55)) { tramo = true; card.querySelectorAll('.nvp-tr.nuevo').forEach(e => e.classList.add('va')); }
       if (t < FIN) requestAnimationFrame(paso);
