@@ -425,6 +425,12 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   columnas, las demás a todo lo ancho). Si así saldría más de ~1.5 veces más alta que ancha, pasa a 1620 de ancho
   y TODAS las tarjetas van en 3 columnas (`armarTodo(3)`), en orden de lectura columna por columna y repartidas
   para que queden parejas (`repartir`). Los adornos de Muertos se reparten según el ancho.
+- **Diseño principal sin señal** (script en el `<head>` junto a `css/styles.css`, `id="cssBase"`): si el archivo no
+  llega (se cortó la conexión), antes la app salía sin tamaños ni colores, con todas las pantallas encimadas y la de
+  mantenimiento arriba con sus engranes gigantes (le pasó a un técnico el 4 nov con el tema de Muertos). Ahora: un
+  `<style>` mínimo garantiza que solo se vea la pantalla activa; el script revisa que exista `--sans` (solo la define
+  styles.css), si no, vuelve a pedir el archivo hasta 2 veces y, si no llega, muestra un aviso "No se pudo cargar la
+  app" con "Reintentar". Si se cambia `?v=` de styles.css, cambiarlo también en ese script.
 - **El tema por fecha se recalcula** (`__temas.recalcular()`) en cada `aplicarTema`: al volver a la app
   (`visibilitychange`), cada 30 min y al cerrar la sesión a todos. Antes se calculaba solo al abrir, y un
   teléfono con la app abierta desde octubre seguía con Halloween en noviembre.
