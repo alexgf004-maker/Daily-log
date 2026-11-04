@@ -406,6 +406,16 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     orilla y algunas gotas resbalan a tirones. Al terminar de escribir sale "¡Listo, guardado! · Lo escribiste en tu
     historial" con los datos (`.nv-txt`) y se cierra 3 s después (o al tocar). Elegida tras varias rondas: la usuaria
     pidió ideas planas pero creativas y bien animadas (no 3D). Con movimiento reducido sale la ventana ya escrita.
+  - **Interior «Cristal escarchado»** (Pre-Navidad, `js/navidad-dentro.js` + bloque «Cristal escarchado» al final de
+    `css/temas/navidad.css`): carámbanos bajo la barra de arriba (`.nvd-car`, de los largos cae una gota de vez en
+    cuando), aurora boreal que se mece en los encabezados (`.nvd-au` dentro de `.page-header`, `.dash-hero`, `.rg-hero`,
+    `.pg-hero`, `.ps-hero`) y escarcha en helechos que crece desde dos esquinas de las tarjetas (`.fx-card`, `.mk3`,
+    `.nvp-adv`, `#dashAsistCard`, `.rban`; blanca en los cuadros de color `.dtile`). Los dibujos de escarcha se generan una
+    vez y llegan al CSS como variables en `<html>` (`--nvd-e1…3`, `--nvd-f1…3`, `--nvd-b1/b2`); el CSS decide dónde van.
+    Fondo celeste helado, pestaña activa escarchada, botón "Guardar registro" azul hielo. No cambia colores de estado.
+    El script vigila la clase `nav-pre` y los encabezados que se vuelven a pintar; al salir del tema quita todo. Cada copia
+    de SVG lleva sus propios `id` (un degradado definido en una pantalla oculta no se pinta en otra). Elegida entre 3
+    (pueblito nevado, suéter tejido, cristal escarchado) mostradas sobre la app real.
   - **"Probar animaciones"** se muestra solo con Halloween, Muertos y Pre-Navidad (regla en `comun.css`; antes vivía en
     `halloween.css` y fuera de Halloween el botón salía sin hacer nada).
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
