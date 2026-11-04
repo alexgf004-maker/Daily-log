@@ -278,6 +278,16 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 .nav-pre .mk3-line .nvp-tr.mal{background:linear-gradient(90deg,#bfe3f7,#e2f1fc)}
 .nav-pre .mk3-line .nvp-tr.nuevo{transform:scaleX(0)}
 .nav-pre .mk3-line .nvp-tr.nuevo.va{transform:none;transition:transform .8s cubic-bezier(.4,0,.2,1)}
+/* Etiqueta de estado "de regalo" (etiquetaRegaloNV en js/navidad-marcaje.js) */
+.nav-pre .nvp-et-w{position:relative;display:inline-flex;margin-top:8px;max-width:100%}
+.nav-pre .nvp-et{position:relative;display:inline-flex;align-items:center;gap:5px;padding:6px 10px 6px 18px;font:800 12px var(--sans);white-space:nowrap;transform:rotate(-3deg);
+  clip-path:polygon(9px 0,100% 0,100% 100%,9px 100%,0 50%);filter:drop-shadow(0 2px 2px rgba(11,58,106,.18))}
+.nav-pre .nvp-et::before{content:'';position:absolute;left:8px;top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1.2px rgba(0,0,0,.18)}
+.nav-pre .nvp-et.ok{background:linear-gradient(180deg,#fffaf0,#f6ead2);color:#a3132a}
+.nav-pre .nvp-et.mal{background:linear-gradient(180deg,#f4fbff,#dcefff);color:#1c5a8f}
+.nav-pre .nvp-et.neutro{background:linear-gradient(180deg,#fbfaf7,#ece8df);color:#57534e}
+.nav-pre .nvp-et svg{width:13px;height:13px;flex-shrink:0}
+.nav-pre .nvp-cordel{position:absolute;left:10px;top:-6px;width:2px;height:20px;background:repeating-linear-gradient(180deg,#c4152c 0 3px,#fff 3px 5px);transform:rotate(-28deg);transform-origin:50% 100%;border-radius:1px;z-index:2;pointer-events:none}
 .hw-prueba.nv{background:rgba(3,20,40,.88)}.hw-prueba.nv .hw-prueba-k{color:#bfe3f7}.hw-prueba.nv .hw-prueba-bt .x{background:#0b3a6a;box-shadow:inset 0 0 0 1px #1c5a8f}
 :where(.nav-pre) .dtile.t-b{background:linear-gradient(135deg,#031428,#0b3a6a);color:#c4152c}
 :where(.nav-pre) .pe{background:linear-gradient(120deg,#031428 0%,#0b3a6a 100%)}

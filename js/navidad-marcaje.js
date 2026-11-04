@@ -180,3 +180,22 @@ export function escarchaMarcaje(card, pt) {
     requestAnimationFrame(paso);
   });
 }
+
+// ── Etiqueta de estado "de regalo" (Pre-Navidad) ──
+// En la tarjeta del marcaje, en vez de la píldora de siempre: una etiquetita de regalo con su agujero, colgando
+// de un cordón de bastón de dulce y un poco ladeada. A tiempo: papel crema con letras rojas (foquito en la
+// entrada, estrella en la salida, que dice "Jornada completa"); tarde o salida antes: escarchada en azul con un
+// copo. Justificado: papel crema en gris. Los minutos se dicen igual que siempre ("12 min tarde").
+const ICO_ET = {
+  foco: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="9.5" y="2.5" width="5" height="4" rx="1"/><path d="M12 6.5c4 0 6 3.5 6 7 0 4-3 7.5-6 7.5s-6-3.5-6-7.5c0-3.5 2-7 6-7z"/></svg>',
+  estrella: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.8 6 6.5.7-4.9 4.4 1.4 6.4L12 16.8 6.2 20l1.4-6.4L2.7 9.2l6.5-.7z"/></svg>',
+  copo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M3.3 7l17.4 10M3.3 17l17.4-10M9 4l3 2 3-2M9 20l3-2 3 2"/></svg>'
+};
+const escTexto = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// tono: 'ok' | 'mal' | 'neutro'; tipo: 'Entrada' | 'Salida'; texto: el de chipEstado
+export function etiquetaRegaloNV(tono, texto, tipo) {
+  const salida = /salida/i.test(tipo || '');
+  const txt = tono === 'ok' && salida ? 'Jornada completa' : texto;
+  const ico = tono === 'ok' ? (salida ? ICO_ET.estrella : ICO_ET.foco) : tono === 'mal' ? ICO_ET.copo : '';
+  return `<span class="nvp-et-w"><span class="nvp-et ${tono}">${ico}${escTexto(txt)}</span><span class="nvp-cordel" aria-hidden="true"></span></span>`;
+}
