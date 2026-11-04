@@ -393,6 +393,12 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     ~11 cuadros/s y cuadros de 266 ms con CPU de celular; ahora >60 y el más pesado ~25 ms). También en
     "Probar animaciones". Nota para pruebas: el reloj falso de Playwright (`clock.install`) avanza ~3 veces más lento con
     escenas pesadas de canvas; probar con "Ver ahora" (`innova_tema=ver`, `innova_tema_ver=navidad`, `innova_tema_etapa=pre`).
+  - **Etiqueta de estado "de regalo"** (Pre-Navidad, `etiquetaRegaloNV` en `js/navidad-marcaje.js`, `.nvp-et`): en la
+    tarjeta del marcaje del técnico, en vez de la píldora: etiquetita de regalo con agujero, colgando de un cordón de
+    bastón de dulce (`.nvp-cordel`) y ladeada. A tiempo papel crema y letras rojas (foquito en la entrada; en la salida
+    dice "Jornada completa" con estrella); tarde/salida antes escarchada en azul con copo; justificado en gris. Los
+    minutos se dicen igual ("12 min tarde"). Elegida entre 3 diseños (regalo, listón, placa). Reportes, Excel y
+    pantallas del admin siguen con el texto normal.
   - **"Probar animaciones"** se muestra solo con Halloween, Muertos y Pre-Navidad (regla en `comun.css`; antes vivía en
     `halloween.css` y fuera de Halloween el botón salía sin hacer nada).
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias

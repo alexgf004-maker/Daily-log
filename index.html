@@ -143,7 +143,7 @@
   // activo. Al abrir se escribe aquí mismo, en el <head>, para que cargue antes de pintar (sin parpadeo);
   // si el tema cambia con la app abierta (fecha, "Ver ahora", "Tema para todos"), aplicarTema llama a
   // cargarCss. Subir TEMAS_V al cambiar cualquiera de esos archivos.
-  var TEMAS_V='50';
+  var TEMAS_V='51';
   T.cssDe=function(tema){ return tema&&tema.css?tema.css+'?v='+TEMAS_V:null; };
   if(t&&t.css) document.write('<link rel="stylesheet" data-tema-css="'+t.id+'" href="'+T.cssDe(t)+'">');
   T.cargarCss=function(tema){
@@ -900,7 +900,7 @@ import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, ob
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js?v=2";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { diaNavidad, diasDelCordon, cordonHTML, adventoHTML, abrirPuerta, lineaPersonalAdviento } from "./js/navidad-app.js?v=1";
-import { adornoNV, escarchaMarcaje, pintarGuirnaldaNV } from "./js/navidad-marcaje.js?v=2";
+import { adornoNV, escarchaMarcaje, pintarGuirnaldaNV, etiquetaRegaloNV } from "./js/navidad-marcaje.js?v=3";
 import { configurarAvisos, estadoAvisos, activarAvisos, refrescarAvisos, quitarAvisosDeEsteTelefono, apagarAvisos, probarAviso, esIOS } from "./js/avisos.js";
 import { iniciarMusica, subirMusica, activarMusica, quitarMusica, esperarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
@@ -2937,7 +2937,7 @@ async function renderMarcajeCard(msgHtml, recien){
       <div class="mk3-dot nvp ${tono}">${adornoNV(tono)}</div>
       <div class="mk3-t">${hora}</div>
       <div class="mk3-l">${etiqueta}</div>${otraSede(dato)}
-      ${etiquetaChip(chip)}
+      ${etiquetaRegaloNV(tono,chip.texto,etiqueta)}
     </div>`;
     if(muTema()) return `<div class="mk3-pt${nuevo?' recien':''}">
       <div class="mk3-dot mu ${tono}">${florMarcajeMU(tono)}</div>
@@ -4578,7 +4578,7 @@ window.probarMarcajeTema=function(){
     const mal=c==='mal', hora=mal?'07:12':'06:52';
     let punto, linea='<i style="width:50%"></i>';
     if(nv){
-      punto=`<div class="mk3-dot nvp ${mal?'mal':'ok'}">${adornoNV(mal?'mal':'ok')}</div><div class="mk3-t">${hora}</div><div class="mk3-l">Entrada</div>${etiquetaEstado(mal?'mal':'ok',mal?'12 min tarde':'A tiempo')}`;
+      punto=`<div class="mk3-dot nvp ${mal?'mal':'ok'}">${adornoNV(mal?'mal':'ok')}</div><div class="mk3-t">${hora}</div><div class="mk3-l">Entrada</div>${etiquetaRegaloNV(mal?'mal':'ok',mal?'12 min tarde':'A tiempo','Entrada')}`;
       linea+=`<b class="nvp-tr${mal?' mal':''} nuevo" style="left:0"></b>`;
     } else if(mu){
       const dato={estado:mal?'tarde':'a_tiempo',minDiff:mal?12:0,horaStr:hora};
