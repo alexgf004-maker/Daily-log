@@ -385,9 +385,11 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     arriba aparece una guirnalda de foquitos de vidrio congelados; desde el punto marcado sale una ola de calor que la
     derrite (gotas, vapor), cada foquito se enciende al llegarle el calor y la hora pasa a dorado (`.nvp-oro`). Tarde: el
     calor no alcanza, la escarcha regresa y los foquitos titilan y se apagan. Todo en un `<canvas class="nvp-fx">` que se
-    quita al terminar (~4.5 s); después queda fija la guirnalda (`canvas.nvp-guir`, `pintarGuirnaldaNV`): prendida si la
+    quita al terminar; después queda fija la guirnalda (`canvas.nvp-guir`, `pintarGuirnaldaNV`): prendida si la
     entrada fue a tiempo y la salida no fue antes, congelada si no. Punto: esfera roja con ✓ o gris con ✕ (`adornoNV`).
-    Línea por tramos (`tramosNV`, `.nvp-tr`). Con movimiento reducido sale directo el estado final. También en
+    Línea por tramos (`tramosNV`, `.nvp-tr`). Con movimiento reducido sale directo el estado final. Dura ~3.4 s
+    (tarde ~4 s). Rendimiento: los cristales se dibujan una sola vez en su capa conforme crecen, sin sombras durante
+    la escena y lienzo a 1.5x (antes se redibujaba todo en cada cuadro: ~8 cuadros/s con CPU de celular). También en
     "Probar animaciones". Nota para pruebas: el reloj falso de Playwright (`clock.install`) avanza ~3 veces más lento con
     escenas pesadas de canvas; probar con "Ver ahora" (`innova_tema=ver`, `innova_tema_ver=navidad`, `innova_tema_etapa=pre`).
   - **"Probar animaciones"** se muestra solo con Halloween, Muertos y Pre-Navidad (regla en `comun.css`; antes vivía en
