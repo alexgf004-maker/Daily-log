@@ -30,7 +30,7 @@ export function adornoNV(tono) {
 // ── Guirnalda ──
 const bulbosDe = W => { const n = Math.max(6, Math.round(W / 40)), b = []; for (let i = 0; i < n; i++) { const t = (i + .5) / n; b.push({ x: -8 + (W + 16) * t, col: COLS[i % COLS.length], luz: 0, frio: 1, fase: i * 1.7 }); } return b; };
 const cableY = (W, x) => { const t = (x + 8) / (W + 16); return 6 + 4 * t * (1 - t) * 4 + Math.sin(t * Math.PI * 6) * 1.2; };
-function dibujaGuirnalda(x, W, bulbos, now) {
+function dibujaGuirnalda(x, W, bulbos, now, sombra) {
   x.save(); x.strokeStyle = '#14532d'; x.lineWidth = 1.6; x.beginPath();
   for (let px = -8; px <= W + 8; px += 4) { const py = cableY(W, px); px === -8 ? x.moveTo(px, py) : x.lineTo(px, py); }
   x.stroke(); x.restore();
@@ -42,7 +42,7 @@ function dibujaGuirnalda(x, W, bulbos, now) {
     const g = x.createRadialGradient(-2, 10, 1, 0, 13, 11);
     if (L > 0.02) { g.addColorStop(0, '#fff'); g.addColorStop(.25, mezcla('#cfe6f5', c1, L)); g.addColorStop(1, mezcla('#8fb3cc', c2, L)); }
     else { g.addColorStop(0, '#f4fbff'); g.addColorStop(.4, '#cfe6f5'); g.addColorStop(1, '#8fb3cc'); }
-    x.fillStyle = g; x.shadowColor = L > 0.02 ? c1 : 'transparent'; x.shadowBlur = 14 * L;
+    x.fillStyle = g; if (sombra) { x.shadowColor = L > 0.02 ? c1 : 'transparent'; x.shadowBlur = 14 * L; }
     x.beginPath(); x.moveTo(-3.6, 5); x.bezierCurveTo(-8, 9, -7.5, 19, 0, 23); x.bezierCurveTo(7.5, 19, 8, 9, 3.6, 5); x.closePath(); x.fill(); x.shadowBlur = 0;
     x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 1.3; x.lineCap = 'round'; x.beginPath(); x.moveTo(-3.4, 9); x.quadraticCurveTo(-4.6, 13, -3, 17); x.stroke();
     if (b.frio > 0.02) {
@@ -52,7 +52,7 @@ function dibujaGuirnalda(x, W, bulbos, now) {
     x.restore();
   });
 }
-const preparar = (c, W, H) => { const dpr = Math.min(2, window.devicePixelRatio || 1); c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); return { x, dpr }; };
+const preparar = (c, W, H, tope = 2) => { const dpr = Math.min(tope, window.devicePixelRatio || 1); c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); return { x, dpr }; };
 
 // Guirnalda fija (después de la escena o al volver a abrir la app): prendida o congelada
 export function pintarGuirnaldaNV(canvas) {
@@ -61,7 +61,7 @@ export function pintarGuirnaldaNV(canvas) {
   const { x } = preparar(canvas, W, ALTO_GUIRNALDA);
   const luz = canvas.dataset.luz === '1', b = bulbosDe(W);
   b.forEach(p => { p.luz = luz ? .9 : 0; p.frio = luz ? 0 : 1; });
-  x.clearRect(0, 0, W, ALTO_GUIRNALDA); dibujaGuirnalda(x, W, b, 0);
+  x.clearRect(0, 0, W, ALTO_GUIRNALDA); dibujaGuirnalda(x, W, b, 0, true);
 }
 
 // ── Escarcha ──
@@ -87,6 +87,8 @@ function generaEscarcha(W, H, rnd) {
 }
 
 // Escena completa. card = .mk3, pt = .mk3-pt.recien. Devuelve una promesa que se cumple al terminar.
+// Rendimiento (en celular se veía trabada): los cristales se dibujan UNA vez en su propia capa conforme crecen
+// (antes se redibujaban todos en cada cuadro), sin sombras durante la escena y con el lienzo a 1.5x.
 export function escarchaMarcaje(card, pt) {
   const dot = pt && pt.querySelector('.mk3-dot.nvp');
   const fija = card && card.querySelector('canvas.nvp-guir');
@@ -96,33 +98,42 @@ export function escarchaMarcaje(card, pt) {
   const mal = dot.classList.contains('mal');
   const W = card.offsetWidth, H = card.offsetHeight;
   const c = document.createElement('canvas'); c.className = 'nvp-fx'; card.appendChild(c);
-  const { x, dpr } = preparar(c, W, H);
-  const off = () => { const o = document.createElement('canvas'); o.width = c.width; o.height = c.height; const ox = o.getContext('2d'); ox.setTransform(dpr, 0, 0, dpr, 0, 0); return { c: o, x: ox }; };
-  const frost = off(), gotasL = off();
+  const { x, dpr } = preparar(c, W, H, 1.5);
+  const capa = () => { const o = document.createElement('canvas'); o.width = c.width; o.height = c.height; const ox = o.getContext('2d'); ox.setTransform(dpr, 0, 0, dpr, 0, 0); return { c: o, x: ox }; };
+  const frost = capa(), crist = capa();
   const rnd = semilla(mal ? 29 : 11);
   const { segs, puntos } = generaEscarcha(W, H, rnd), bulbos = bulbosDe(W);
+  segs.sort((a, b) => a.t - b.t);
+  const brillos = puntos.filter((_, i) => i % 2 === 0).slice(0, 40);
   const cr = card.getBoundingClientRect(), dr = dot.getBoundingClientRect();
   const d = { x: dr.left - cr.left + dr.width / 2, y: dr.top - cr.top + dr.height / 2 };
   const Rmax = Math.hypot(Math.max(d.x, W - d.x), Math.max(d.y, H - d.y)) + 30, Rfin = mal ? Rmax * .42 : Rmax;
   const gotas = [], vapor = [];
-  const T_HIELO = 1.0, T_DESHIELO = mal ? 1.6 : 1.5, FIN = mal ? 5.0 : 4.4;
-  let R = 0, ultimoR = 0, tramo = false;
+  const T_HIELO = 1.0, T_DESHIELO = mal ? 1.6 : 1.5, FIN = mal ? 5.0 : 4.4, CRECE = 1.05;   // los tiempos de la escena aprobada
+  let R = 0, ultimoR = 0, tramo = false, iSeg = 0;
   if (hora) hora.classList.add('nvp-hielo');
+  const cx = crist.x; cx.lineCap = 'round';
   return new Promise(res => {
     const t0 = performance.now();
     const paso = ahora => {
       if (!c.isConnected) return res();                  // la tarjeta se volvió a pintar: se corta la escena
       const t = (ahora - t0) / 1000, now = t;
-      const f = frost.x; f.clearRect(0, 0, W, H); f.globalCompositeOperation = 'source-over';
+      // cristales nuevos de este cuadro (se dibujan una sola vez)
+      const tc = t * CRECE;
+      while (iSeg < segs.length && segs[iSeg].t <= tc) {
+        const s = segs[iSeg++];
+        cx.strokeStyle = 'rgba(127,184,220,.45)'; cx.lineWidth = s.w + 1.4; cx.beginPath(); cx.moveTo(s.x1, s.y1); cx.lineTo(s.x2, s.y2); cx.stroke();
+        cx.strokeStyle = 'rgba(255,255,255,.95)'; cx.lineWidth = s.w; cx.beginPath(); cx.moveTo(s.x1, s.y1); cx.lineTo(s.x2, s.y2); cx.stroke();
+      }
+      // capa de escarcha: velo desde las orillas + cristales + brillitos, menos lo que ya derritió el calor
+      const f = frost.x; f.globalCompositeOperation = 'source-over'; f.clearRect(0, 0, W, H);
       const cub = clamp(t / T_HIELO), prof = easeOut(cub) * Math.min(W, H) * 0.62;
       const velo = (x0, y0, x1, y1) => { const g = f.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, `rgba(226,241,252,${.88 * cub})`); g.addColorStop(1, 'rgba(226,241,252,0)'); return g; };
       f.fillStyle = velo(0, 0, 0, prof); f.fillRect(0, 0, W, prof); f.fillStyle = velo(0, H, 0, H - prof); f.fillRect(0, H - prof, W, prof);
       f.fillStyle = velo(0, 0, prof * 1.4, 0); f.fillRect(0, 0, prof * 1.4, H); f.fillStyle = velo(W, 0, W - prof * 1.4, 0); f.fillRect(W - prof * 1.4, 0, prof * 1.4, H);
-      f.lineCap = 'round'; f.strokeStyle = 'rgba(255,255,255,.95)'; f.shadowColor = 'rgba(127,184,220,.9)'; f.shadowBlur = 2;
-      const tc = t * 1.05;
-      for (const s of segs) { if (s.t > tc) continue; f.lineWidth = s.w; f.beginPath(); f.moveTo(s.x1, s.y1); f.lineTo(s.x2, s.y2); f.stroke(); }
-      f.shadowBlur = 0; f.fillStyle = '#fff';
-      for (const p of puntos) { if (p.t > tc) continue; f.globalAlpha = .6 + .4 * Math.sin(now * 6 + p.x); f.beginPath(); f.arc(p.x, p.y, p.r, 0, 7); f.fill(); } f.globalAlpha = 1;
+      f.drawImage(crist.c, 0, 0, W, H);
+      f.fillStyle = '#fff';
+      for (const p of brillos) { if (p.t > tc) continue; f.globalAlpha = .6 + .4 * Math.sin(now * 6 + p.x); f.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2); } f.globalAlpha = 1;
       const td = clamp((t - T_HIELO) / T_DESHIELO);
       if (t > T_HIELO) {
         let obj = Rfin * easeOut(td);
@@ -131,22 +142,22 @@ export function escarchaMarcaje(card, pt) {
         f.globalCompositeOperation = 'destination-out';
         const g = f.createRadialGradient(d.x, d.y, Math.max(0, R * .7), d.x, d.y, R + 1); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
         f.fillStyle = g; f.beginPath(); f.arc(d.x, d.y, R + 2, 0, 7); f.fill();
-        f.fillStyle = '#000'; f.beginPath(); f.arc(d.x, d.y, Math.max(0, R * .7), 0, 7); f.fill();
         f.globalCompositeOperation = 'source-over';
-        if (R - ultimoR > 3 && gotas.length < 60) { for (let k = 0; k < 2; k++) { const a = Math.PI * (.1 + rnd() * .8); gotas.push({ x: d.x + Math.cos(a) * R * (.9 + rnd() * .1), y: d.y + Math.sin(a) * R * .95 - rnd() * 8, vy: 8 + rnd() * 10, r: 1.4 + rnd() * 1.6, vida: 1 }); } ultimoR = R; }
-        if ((!mal && rnd() < .5) || rnd() < .15) vapor.push({ x: d.x + (rnd() - .5) * R, y: d.y - rnd() * R * .4, v: 12 + rnd() * 10, vida: 1, r: 4 + rnd() * 6 });
+        if (R - ultimoR > 4 && gotas.length < 36) { for (let k = 0; k < 2; k++) { const a = Math.PI * (.1 + rnd() * .8); gotas.push({ x: d.x + Math.cos(a) * R * (.9 + rnd() * .1), y: d.y + Math.sin(a) * R * .95 - rnd() * 8, vy: 8 + rnd() * 10, r: 1.4 + rnd() * 1.6, vida: 1, y0: 0 }); gotas[gotas.length - 1].y0 = gotas[gotas.length - 1].y; } ultimoR = R; }
+        if (vapor.length < 30 && ((!mal && rnd() < .4) || rnd() < .12)) vapor.push({ x: d.x + (rnd() - .5) * R, y: d.y - rnd() * R * .4, v: 12 + rnd() * 10, vida: 1, r: 4 + rnd() * 6 });
       }
+      // composición
       x.clearRect(0, 0, W, H);
-      // al final la escarcha se desvanece para dejar la tarjeta limpia y legible
-      const salida = clamp((t - (FIN - .7)) / .7);
-      x.globalAlpha = 1 - salida; x.drawImage(frost.c, 0, 0, W, H); x.globalAlpha = 1;
-      if (t > T_HIELO && R > 4 && td < 1) { x.save(); x.globalCompositeOperation = 'lighter'; const g = x.createRadialGradient(d.x, d.y, R * .6, d.x, d.y, R * 1.08); g.addColorStop(0, 'rgba(255,170,60,0)'); g.addColorStop(.75, `rgba(255,170,60,${.2 * (mal ? 1 - td * .5 : 1)})`); g.addColorStop(1, 'rgba(255,170,60,0)'); x.fillStyle = g; x.beginPath(); x.arc(d.x, d.y, R * 1.1, 0, 7); x.fill(); x.restore(); }
-      if (t > T_HIELO) { x.save(); x.globalCompositeOperation = 'lighter'; const k = mal ? .18 + .1 * Math.sin(now * 18) : .28 * (1 - clamp((t - 3) / 1.4)); const g = x.createRadialGradient(d.x, d.y, 2, d.x, d.y, 60); g.addColorStop(0, `rgba(255,190,90,${Math.max(0, k) * (1 - salida)})`); g.addColorStop(1, 'rgba(255,190,90,0)'); x.fillStyle = g; x.beginPath(); x.arc(d.x, d.y, 60, 0, 7); x.fill(); x.restore(); }
-      const gl = gotasL.x; gl.globalCompositeOperation = 'destination-out'; gl.fillStyle = 'rgba(0,0,0,.06)'; gl.fillRect(0, 0, W, H); gl.globalCompositeOperation = 'source-over';
-      for (const g of gotas) { if (g.vida <= 0) continue; const py = g.y; g.vy += 1.8; g.y += g.vy / 60; g.x += Math.sin(g.y * .3) * .15; g.vida -= .006;
-        gl.strokeStyle = 'rgba(180,215,240,.55)'; gl.lineWidth = g.r * .9; gl.lineCap = 'round'; gl.beginPath(); gl.moveTo(g.x, py); gl.lineTo(g.x, g.y); gl.stroke(); if (g.y > H + 6) g.vida = 0; }
-      x.globalAlpha = 1 - salida; x.drawImage(gotasL.c, 0, 0, W, H);
-      for (const g of gotas) { if (g.vida <= 0) continue; const gg = x.createRadialGradient(g.x - g.r * .3, g.y - g.r * .4, .2, g.x, g.y, g.r * 1.3); gg.addColorStop(0, 'rgba(255,255,255,.95)'); gg.addColorStop(.5, 'rgba(190,225,248,.75)'); gg.addColorStop(1, 'rgba(120,170,210,.5)'); x.fillStyle = gg; x.beginPath(); x.ellipse(g.x, g.y, g.r, g.r * 1.25, 0, 0, 7); x.fill(); }
+      const salida = clamp((t - (FIN - .7)) / .7);           // al final la escarcha se desvanece y deja la tarjeta legible
+      x.globalAlpha = 1 - salida; x.drawImage(frost.c, 0, 0, W, H);
+      if (t > T_HIELO && R > 4 && td < 1) { x.globalCompositeOperation = 'lighter'; const g = x.createRadialGradient(d.x, d.y, R * .6, d.x, d.y, R * 1.08); g.addColorStop(0, 'rgba(255,170,60,0)'); g.addColorStop(.75, `rgba(255,170,60,${.2 * (mal ? 1 - td * .5 : 1)})`); g.addColorStop(1, 'rgba(255,170,60,0)'); x.fillStyle = g; x.beginPath(); x.arc(d.x, d.y, R * 1.1, 0, 7); x.fill(); x.globalCompositeOperation = 'source-over'; }
+      if (t > T_HIELO) { const k = (mal ? .18 + .1 * Math.sin(now * 18) : .28 * (1 - clamp((t - 3) / 1.4))) * (1 - salida); if (k > .01) { x.globalCompositeOperation = 'lighter'; const g = x.createRadialGradient(d.x, d.y, 2, d.x, d.y, 60); g.addColorStop(0, `rgba(255,190,90,${k})`); g.addColorStop(1, 'rgba(255,190,90,0)'); x.fillStyle = g; x.beginPath(); x.arc(d.x, d.y, 60, 0, 7); x.fill(); x.globalCompositeOperation = 'source-over'; } }
+      // gotas con su rastro corto
+      x.lineCap = 'round';
+      for (const g of gotas) { if (g.vida <= 0) continue; g.vy += 1.8; g.y += g.vy / 60; g.x += Math.sin(g.y * .3) * .15; g.vida -= .006; if (g.y > H + 6) { g.vida = 0; continue; }
+        x.strokeStyle = 'rgba(180,215,240,.5)'; x.lineWidth = g.r * .9; x.beginPath(); x.moveTo(g.x, Math.max(g.y0, g.y - 26)); x.lineTo(g.x, g.y); x.stroke();
+        x.fillStyle = 'rgba(205,232,250,.9)'; x.beginPath(); x.ellipse(g.x, g.y, g.r, g.r * 1.25, 0, 0, 7); x.fill();
+        x.fillStyle = 'rgba(255,255,255,.95)'; x.beginPath(); x.arc(g.x - g.r * .3, g.y - g.r * .4, g.r * .35, 0, 7); x.fill(); }
       for (const v of vapor) { v.vida -= .012; v.y -= v.v / 60; v.r += .12; if (v.vida <= 0) continue; x.fillStyle = `rgba(255,255,255,${.22 * v.vida})`; x.beginPath(); x.arc(v.x, v.y, v.r, 0, 7); x.fill(); }
       x.globalAlpha = 1;
       bulbos.forEach((b, i) => {
@@ -156,7 +167,7 @@ export function escarchaMarcaje(card, pt) {
         else if (dist < R) { const lat = Math.sin(now * 22 + i * 2) > .2 ? 1 : .15; b.luz = (t > 3.2 ? Math.max(0, 1 - (t - 3.2) * 1.2) : 1) * lat * .8; }
       });
       if (salida > 0) bulbos.forEach(b => { if (mal) b.frio = Math.max(b.frio, salida); else { b.frio *= 1 - salida; b.luz = b.luz + (.9 - b.luz) * salida; } });
-      x.globalAlpha = clamp(t / 0.5); dibujaGuirnalda(x, W, bulbos, now); x.globalAlpha = 1;
+      x.globalAlpha = clamp(t / 0.5); dibujaGuirnalda(x, W, bulbos, now, false); x.globalAlpha = 1;
       if (hora) {
         if (!mal && td > .55 && !hora.classList.contains('nvp-oro')) { hora.classList.remove('nvp-hielo'); hora.classList.add('nvp-oro'); }
         if (!mal && t > FIN - .9) hora.classList.remove('nvp-oro');
