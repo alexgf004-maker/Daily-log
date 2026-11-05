@@ -509,3 +509,44 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 .nvp-ed-bt .guardar{border:0;color:#fff;background:#0b3a6a}
 .nvp-ed .nvp-cerrar{background:#eef3f8;color:#33526e;box-shadow:none}
 @media (prefers-reduced-motion:reduce){.nvp-adv *,.nvp-foq *,.nvp-modal *{animation:none!important;transition:none!important}}
+
+/* ═ Pre-Navidad dentro de la app: «Cristal escarchado» (js/navidad-dentro.js) ═
+   Carámbanos bajo la barra, aurora en los encabezados, escarcha en las esquinas de tarjetas y cuadros.
+   Los dibujos de escarcha llegan como variables (--nvd-e1…3 arriba a la izquierda, --nvd-f1…3 abajo a la
+   derecha, --nvd-b1/b2 blancos para los cuadros de color). No cambia los colores de estado. */
+.nav-pre .content{background:linear-gradient(180deg,#e2eff9,#f5faff 45%,#ecf5fc)}
+.nav-pre .topbar{background:linear-gradient(180deg,#031428,#0b3a6a)}
+.nvd-car{position:absolute;left:0;right:0;top:100%;height:60px;overflow:hidden;pointer-events:none}
+.nvd-car svg{display:block}
+.nvd-gota{fill:#bfe3f7;opacity:0;animation:nvdGota 6s ease-in infinite}
+@keyframes nvdGota{0%,70%{opacity:0;transform:translateY(0)}74%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(40px)}}
+.nav-pre .topbar+.tabs{padding-top:16px}
+.nav-pre #employeeScreen .tab.active{color:#0b3a6a;border-bottom-color:#4cc3ff}
+@media(max-width:899px){
+  .nav-pre #adminScreen .tab.active{background:linear-gradient(180deg,#e9f6ff,#cfe8f8);color:#0b3a6a;box-shadow:inset 0 1px 0 #fff,0 0 0 1px #a9d2ee,0 4px 10px -4px rgba(76,195,255,.7)}
+}
+/* aurora: dos bandas que se mecen despacio y estrellas que titilan, detrás del texto */
+.nvd-hero{position:relative;isolation:isolate;overflow:hidden}
+.nvd-au{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;border-radius:inherit}
+.nvd-au svg{position:absolute;left:0;top:-10%;width:200%;height:120%;filter:blur(6px);will-change:transform}
+.nvd-au .b1{animation:nvdAu 14s ease-in-out infinite alternate}
+.nvd-au .b2{animation:nvdAu 19s ease-in-out infinite alternate-reverse}
+@keyframes nvdAu{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.nvd-au i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;box-shadow:0 0 4px #fff;animation:nvdEst 3.2s ease-in-out infinite}
+@keyframes nvdEst{0%,100%{opacity:.25}50%{opacity:1}}
+/* tarjetas de cristal con escarcha en dos esquinas (tres dibujos distintos que se van turnando) */
+.nav-pre :is(.fx-card,.mk3,.nvp-adv,[id=dashAsistCard],.rban){--nvd-a:var(--nvd-e1);--nvd-z:var(--nvd-f1);
+  box-shadow:inset 0 0 22px rgba(169,210,238,.5),inset 0 1px 0 #fff,0 10px 22px -16px rgba(11,58,106,.5);
+  background-image:var(--nvd-a,none),var(--nvd-z,none);background-position:left top,right bottom;background-size:auto;background-repeat:no-repeat}
+.nav-pre :is(.fx-card,.mk3,.nvp-adv,[id=dashAsistCard],.rban):nth-child(3n+2){--nvd-a:var(--nvd-e2);--nvd-z:var(--nvd-f2)}
+.nav-pre :is(.fx-card,.mk3,.nvp-adv,[id=dashAsistCard],.rban):nth-child(3n){--nvd-a:var(--nvd-e3);--nvd-z:var(--nvd-f3)}
+.nav-pre .nvp-adv{background-image:var(--nvd-a,none),var(--nvd-z,none),linear-gradient(180deg,#fff,#f6fbff)}
+.nav-pre :is(.fx-card,.mk3,[id=dashAsistCard]){background-color:rgba(255,255,255,.86);border-color:#b9dcf2}
+.nav-pre .fx-k{color:#1c5a8f}
+/* cuadros de color del panel: escarcha blanca en la esquina, detrás del número */
+.nav-pre .dtile{isolation:isolate}
+.nav-pre .dtile::before{content:'';position:absolute;right:0;top:0;width:80px;height:80px;background:var(--nvd-b1,none) right top/80px 80px no-repeat;z-index:-1;pointer-events:none}
+.nav-pre .dtile:nth-child(even)::before{background-image:var(--nvd-b2,none)}
+.nav-pre .fx-save{background:linear-gradient(180deg,#3b82c4,#0b3a6a);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -6px 14px rgba(169,210,238,.25),0 12px 22px -12px rgba(11,58,106,.8)}
+.nav-pre .fx-tipo .tipo-btn.active{background:#eef7ff;color:#0b3a6a;box-shadow:0 0 0 1px #4cc3ff}
+@media (prefers-reduced-motion:reduce){.nvd-au svg,.nvd-au i,.nvd-gota{animation:none}.nvd-gota{display:none}}
