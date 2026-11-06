@@ -361,6 +361,13 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     pantalla, pinos con moños y esferas rojas, trineo; cordón de foquitos congelados que prenden más cada día (el
     17 todos); casita a lo lejos que se acerca y enciende ventanas; camino "Rumbo a Navidad" (24 huellitas y el
     trineo en el día de hoy) bajo el nombre de la app; tarjeta envuelta con cinta, moño y "Se abre el 24".
+  - Login `pre` en tablet y PC: el cordón de foquitos se dibuja al ancho y alto reales (`focos()`, se rehace al
+    cambiar el tamaño; antes se estiraba y los focos quedaban aplastados) y lleva más tramos en pantallas anchas. Las
+    montañas se repiten alternando el sentido en vez de estirarse; hay bosquecitos de 2–3 pinos hacia el centro (sin
+    llegar debajo de la tarjeta ni tapar la casita); la casita crece con el ancho y el trineo va sobre el lago a un
+    lado. En pantallas de PC bajas (≤860 px de alto) el panel sube y el logo se achica para que quepa sin moverse.
+    El acomodo del personaje del login y del letrero "¿Olvidaste tu PIN?" en teléfono/tablet es de
+    `css/navidad-mascota.css` (no se tocó).
   - Detalles del login en `pre`: "Recordar mi usuario" en rojo con copito; campos con borde escarcha y brillo helado;
     avisos (`#loginAlert .mk-av`) escarchados con foquito apagado (error) o copo (info); con un error la tarjeta tiembla
     (`form.animate`, para no reiniciar `.lg-anim`) y un foquito encendido falla; botón con destello y chispitas al

@@ -108,26 +108,37 @@
     ]);
     // montañas, lago congelado y pinos escarchados con moños y esferas rojas; trineo atrapado
     function montes(){
-    var Wv=Math.max(360,Math.round(window.innerWidth||412)), sx=Wv/412, dx=Wv-412;
+    var Wv=Math.max(360,Math.round(window.innerWidth||412)), sx=Math.min(Wv/412,1.45), dx=Wv-412;
+    // en teléfono el perfil ocupa todo el ancho; en tablet/PC se repite (alternando el sentido) en vez de estirarse
+    var tiraW=412*sx, tiras=Math.ceil(Wv/tiraW);
     var pinos=[[18,262,.9],[46,266,1.2],[78,262,.8],[332+dx,262,.9],[362+dx,266,1.3],[394+dx,262,.85]];
+    if(Wv>560){   // bosquecitos de 2 o 3 pinos hacia el centro (con huecos entre ellos), sin llegar debajo de la tarjeta ni tapar la casita
+      var lim=Wv*.5-240, casa=Wv*(Wv>=760?.2:.27), grupos=Math.max(1,Math.min(4,Math.floor((lim-120)/150)));
+      [[1,0],[-1,1]].forEach(function(ld){ for(var q=0;q<grupos;q++){
+        var cx=120+(lim-120)*(q+.5)/grupos+((q*53+ld[1]*31)%40-20); if(ld[0]>0&&Math.abs(cx-casa)<80) cx=casa+(cx<casa?-80:80);
+        var cuantos=2+((q+ld[1])%2), base=ld[0]>0?cx:Wv-cx;
+        for(var r=0;r<cuantos;r++){ var lejos=r===1, xr=base+(r-1)*(lejos?9:22)+(r===2?6:0);
+          pinos.push([Math.round(xr),lejos?257:263+((q+r)%2)*3,lejos?.62+((q*7+r)%3)*.06:.85+((q*5+r*3+ld[1])%4)*.12]); } } }); }
+    pinos.sort(function(a,b){ return a[1]-b[1]; });
     var m='<svg class="nv-montes" viewBox="0 0 '+Wv+' 330" preserveAspectRatio="xMidYMax slice"><defs>'+
       '<linearGradient id="nvMon1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#cfe6f6"/><stop offset="1" stop-color="#8db9da"/></linearGradient>'+
       '<linearGradient id="nvMon2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaf6ff"/><stop offset="1" stop-color="#a9d0ea"/></linearGradient>'+
       '<linearGradient id="nvLago" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe3f8"/><stop offset="1" stop-color="#e9f7ff"/></linearGradient>'+
       '<linearGradient id="nvPino" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d4a6a"/><stop offset="1" stop-color="#2f6a8f"/></linearGradient></defs>'+
-      '<g transform="scale('+sx.toFixed(4)+' 1)">'+
-      '<path d="M-10 230 L60 120 L90 150 L140 70 L200 160 L250 100 L300 150 L350 80 L420 190 L420 330 L-10 330Z" fill="url(#nvMon2)" opacity=".85"/>'+
-      '<path d="M140 70 L160 100 L150 98 L140 112 L128 96 L120 102Z M350 80 L368 108 L356 104 L348 116 L338 102 L332 106Z" fill="#fff"/>'+
-      '<path d="M-10 260 L40 190 L80 220 L130 160 L190 230 L240 180 L290 230 L340 170 L420 250 L420 330 L-10 330Z" fill="url(#nvMon1)"/>'+
-      '<rect x="0" y="262" width="412" height="70" fill="url(#nvLago)"/><path d="M0 262 H412" stroke="#fff" stroke-width="2"/>'+
-      '<g opacity=".5" stroke="#fff" stroke-width="1"><path d="M30 280 h60 M140 292 h90 M260 284 h70 M80 304 h50 M300 310 h60"/></g></g>';
+      (function(){ var t=''; for(var k=0;k<tiras;k++){ var x0=k*tiraW, esp=k%2;   // cada tira, la mitad al revés para que no se note la repetición
+        t+='<g transform="translate('+(x0+(esp?tiraW:0)).toFixed(1)+' 0) scale('+(esp?-sx:sx).toFixed(4)+' 1)">'+
+        '<path d="M0 220 L60 120 L90 150 L140 70 L200 160 L250 100 L300 150 L350 80 L412.5 175 L412.5 330 L0 330Z" fill="url(#nvMon2)" opacity=".85"/>'+
+        '<path d="M140 70 L160 100 L150 98 L140 112 L128 96 L120 102Z M350 80 L368 108 L356 104 L348 116 L338 102 L332 106Z" fill="#fff"/>'+
+        '<path d="M0 248 L40 190 L80 220 L130 160 L190 230 L240 180 L290 230 L340 170 L412.5 240 L412.5 330 L0 330Z" fill="url(#nvMon1)"/></g>'; } return t; })()+
+      '<rect x="0" y="262" width="'+Wv+'" height="70" fill="url(#nvLago)"/><path d="M0 262 H'+Wv+'" stroke="#fff" stroke-width="2"/>'+
+      '<g opacity=".5" stroke="#fff" stroke-width="1"><path d="'+(function(){ var d='', L=[[30,280,60],[140,292,90],[260,284,70],[80,304,50],[300,310,60]]; for(var k=0;k*412<Wv;k++) L.forEach(function(l){ d+='M'+(l[0]+k*412)+' '+l[1]+' h'+l[2]+' '; }); return d; })()+'"/></g>';
     pinos.forEach(function(p){
       m+='<g transform="translate('+p[0]+' '+p[1]+') scale('+p[2]+')"><path d="M0 -70 L14 -40 L8 -40 L20 -16 L12 -16 L24 6 L-24 6 L-12 -16 L-20 -16 L-8 -40 L-14 -40Z" fill="url(#nvPino)"/>'+
         '<path d="M0 -70 L8 -52 L0 -54 L-8 -52Z M-14 -40 L-4 -38 L0 -42 L6 -38 L14 -40 M-20 -16 L-6 -13 L2 -18 L10 -13 L20 -16 M-24 6 L-8 3 L4 0 L14 3 L24 6" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>'+
         '<g transform="translate(0 -70)"><path d="M0 0 C-9 -8 -12 2 -4 3Z M0 0 C9 -8 12 2 4 3Z" fill="#d81e34"/><path d="M-1 2 L-5 11 L-2 9 L-1 12Z M1 2 L5 11 L2 9 L1 12Z" fill="#a3132a"/><circle r="2" fill="#f24a5c"/></g>'+
         [[-8,-34],[9,-22],[-12,-6],[12,2]].map(function(b,j){ return '<g transform="translate('+b[0]+' '+b[1]+')"><circle r="'+(3.4-j*.2)+'" fill="'+(j%2?'#e3263c':'#c4152c')+'"/><path d="M-3 -1 a3.4 3.4 0 0 1 6 0" fill="#fff" opacity=".8"/></g>'; }).join('')+'</g>';
     });
-    m+='<g transform="translate('+(Wv/2+44).toFixed(0)+' 304)"><path d="M-30 0 H22 C30 0 32 -8 26 -10" stroke="#9aa8b4" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M-26 -4 L-22 -18 H18 L22 -4Z" fill="#c4152c"/><path d="M-22 -18 H18" stroke="#f2c45a" stroke-width="2"/><path d="M-27 -18 C-20 -24 10 -24 20 -18 C12 -21 -16 -21 -27 -18Z" fill="#fff"/><path d="M-30 1 C-16 -3 10 -3 30 1 L30 5 L-30 5Z" fill="#f2fbff"/></g></svg>';
+    m+='<g transform="translate('+(Wv<700?Wv/2+44:Math.max(Wv/2+260,Wv*.66)).toFixed(0)+' '+(Wv<700?304:294)+')'+(Wv<700?'':' scale(1.25)')+'"><path d="M-30 0 H22 C30 0 32 -8 26 -10" stroke="#9aa8b4" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M-26 -4 L-22 -18 H18 L22 -4Z" fill="#c4152c"/><path d="M-22 -18 H18" stroke="#f2c45a" stroke-width="2"/><path d="M-27 -18 C-20 -24 10 -24 20 -18 C12 -21 -16 -21 -27 -18Z" fill="#fff"/><path d="M-30 1 C-16 -3 10 -3 30 1 L30 5 L-30 5Z" fill="#f2fbff"/></g></svg>';
     var viejo=capa.querySelector('.nv-montes'); if(viejo) viejo.outerHTML=m; else capa.insertAdjacentHTML('afterbegin',m);
     }
     montes();
@@ -136,7 +147,8 @@
     // la casita de Navidad a lo lejos: cada día más cerca y con más ventanas encendidas
     var prog=(Math.min(d,24)-1)/23, k=.55+prog*.75, nv=Math.round(1+prog*5);
     var vs=[[-14,-6],[8,-6],[-14,6],[8,6],[-3,-17]];
-    capa.insertAdjacentHTML('beforeend','<svg class="nv-casita" viewBox="-40 -50 80 80" style="width:'+Math.round(64*k)+'px;height:'+Math.round(64*k)+'px"><defs><radialGradient id="nvHalo"><stop offset="0" stop-color="#ffcf70" stop-opacity="'+(.35+prog*.4).toFixed(2)+'"/><stop offset="1" stop-color="#ffcf70" stop-opacity="0"/></radialGradient></defs>'+
+    var kc=k*Math.min(1.7,Math.max(1,(window.innerWidth||412)/560));
+    capa.insertAdjacentHTML('beforeend','<svg class="nv-casita" viewBox="-40 -50 80 80" style="width:'+Math.round(64*kc)+'px;height:'+Math.round(64*kc)+'px"><defs><radialGradient id="nvHalo"><stop offset="0" stop-color="#ffcf70" stop-opacity="'+(.35+prog*.4).toFixed(2)+'"/><stop offset="1" stop-color="#ffcf70" stop-opacity="0"/></radialGradient></defs>'+
       '<circle r="38" cy="-4" fill="url(#nvHalo)"/><path d="M14 -30 V-18 H20 V-26Z" fill="#7a3a22"/><g class="nv-humo"><circle cx="17" cy="-34" r="3" fill="#fff" opacity=".5"/><circle cx="19" cy="-41" r="4" fill="#fff" opacity=".35"/></g>'+
       '<rect x="-22" y="-12" width="44" height="30" fill="#c4152c"/><path d="M-28 -10 L0 -32 L28 -10Z" fill="#fff"/>'+
       vs.map(function(v,i){ return '<rect x="'+v[0]+'" y="'+v[1]+'" width="7" height="7" rx="1" fill="'+(i<nv?'#ffd27a':'#4a1820')+'"/>'; }).join('')+
@@ -146,14 +158,20 @@
     // cordón de foquitos congelados: prenden más cada día; el 17 todos
     var cols=['#e3263c','#e3263c','#f2c45a','#e3263c','#2bb38a','#e3263c'];
     function curva(t,x0,x1,y0,y1,c){ var mx=(x0+x1)/2, my=(y0+y1)/2+c; return [(1-t)*(1-t)*x0+2*(1-t)*t*mx+t*t*x1,(1-t)*(1-t)*y0+2*(1-t)*t*my+t*t*y1]; }
-    var tramos=[[-10,215,14,22,58],[215,440,22,14,58]];
-    var g='<svg class="nv-focos" viewBox="0 0 430 120" preserveAspectRatio="none"><defs><filter id="nvBrillo" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    function focos(){
+    // ancho del dibujo = ancho real del cordón en pantalla, a la escala de su alto: los focos nunca se deforman
+    var hc=120, viejo=capa.querySelector('.nv-focos');
+    if(viejo){ hc=viejo.getBoundingClientRect().height||hc; viejo.remove(); }
+    else { var pr=document.createElement('div'); pr.className='nv-focos'; pr.style.visibility='hidden'; capa.appendChild(pr); hc=pr.getBoundingClientRect().height||hc; pr.remove(); }
+    var Wf=Math.round(((window.innerWidth||412)+20)*120/hc), nT=Math.max(2,Math.round(Wf/225)), anT=Wf/nT, tramos=[];
+    for(var it=0;it<nT;it++) tramos.push([it*anT-(it?0:10),(it+1)*anT+(it===nT-1?10:0),it%2?22:14,it%2?14:22,58]);
+    var g='<svg class="nv-focos" viewBox="0 0 '+Wf+' 120" preserveAspectRatio="none"><defs><filter id="nvBrillo" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
       '<linearGradient id="nvEsc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#cdeefc" stop-opacity=".55"/></linearGradient></defs>';
     tramos.forEach(function(tr){ var mx=(tr[0]+tr[1])/2, my=(tr[2]+tr[3])/2+tr[4];
       g+='<path d="M'+tr[0]+' '+tr[2]+' Q'+mx+' '+my+' '+tr[1]+' '+tr[3]+'" stroke="#2a3a4a" stroke-width="1.6" fill="none"/>'+
          '<path d="M'+tr[0]+' '+(tr[2]-1.5)+' Q'+mx+' '+(my-1.5)+' '+tr[1]+' '+(tr[3]-1.5)+'" stroke="url(#nvEsc)" stroke-width="3.2" fill="none" stroke-linecap="round" opacity=".9"/>';
       for(var i=1;i<18;i++){ var p=curva(i/18,tr[0],tr[1],tr[2],tr[3],tr[4]), L=4+((i*37)%9)*(1-avance*.6); g+='<path d="M'+(p[0]-2).toFixed(1)+' '+p[1].toFixed(1)+' L'+(p[0]+2).toFixed(1)+' '+p[1].toFixed(1)+' L'+p[0].toFixed(1)+' '+(p[1]+L).toFixed(1)+'Z" fill="#e8f8ff" opacity=".85"/>'; } });
-    var n=0, total=22, prenden=prendenTodos?total:Math.round(total*avance*.8), orden=[];
+    var n=0, total=nT*11, prenden=prendenTodos?total:Math.round(total*avance*.8), orden=[];
     for(i=0;i<total;i++) orden.push(i); orden.sort(function(a,b){ return ((a*7)%total)-((b*7)%total); });
     var on={}; orden.slice(0,prenden).forEach(function(i){ on[i]=1; });
     tramos.forEach(function(tr){ for(var i=1;i<12;i++){ var p=curva(i/12,tr[0],tr[1],tr[2],tr[3],tr[4]), col=cols[n%cols.length], e=!!on[n];
@@ -162,6 +180,9 @@
         (e?'':'<path d="M-4.4 7 C-4 5 4 5 4.4 7 C4 11 -4 11 -4.4 7Z" fill="url(#nvEsc)"/><path d="M0 3 C-6 5 -6 15 0 18 C6 15 6 5 0 3Z" fill="#dff4ff" opacity=".35"/>')+
         '<ellipse cx="-1.6" cy="8" rx="1.1" ry="2.2" fill="#fff" opacity=".6"/></g>'; n++; } });
     capa.insertAdjacentHTML('beforeend',g+'</svg>');
+    }
+    focos();
+    var tmF=null; window.addEventListener('resize',function(){ if(!capa.isConnected) return; clearTimeout(tmF); tmF=setTimeout(focos,250); });
     // los congelados titilan de vez en cuando, como queriendo prender
     if(!reducido&&!prendenTodos){ (function intentar(){ if(!capa.isConnected) return; var off=capa.querySelectorAll('.nv-fq.off'); if(off.length){ var x=off[(Math.random()*off.length)|0]; x.classList.add('intenta'); setTimeout(function(){ x.classList.remove('intenta'); },900); } setTimeout(intentar,1200+Math.random()*1800); })(); }
 
