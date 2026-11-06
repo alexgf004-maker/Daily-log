@@ -361,6 +361,16 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     pantalla, pinos con moños y esferas rojas, trineo; cordón de foquitos congelados que prenden más cada día (el
     17 todos); casita a lo lejos que se acerca y enciende ventanas; camino "Rumbo a Navidad" (24 huellitas y el
     trineo en el día de hoy) bajo el nombre de la app; tarjeta envuelta con cinta, moño y "Se abre el 24".
+  - `casa` (22–27 dic) «El árbol» (`js/navidad-casa.js`, `window.__nvCasa(capa)` lo llama `armarCasa`): ilustración en
+    canvas con técnica «producida»: ramas de pino aguja por aguja, listón dorado en espiral, esferas con reflejo y
+    sombra, regalos en 3/4 con satín, luces con resplandor que respiran, estrella con rayos, bokeh y viñeta. Sala
+    cálida desenfocada y piso de madera; en PC el árbol principal a la derecha de la tarjeta y otro desenfocado a la
+    izquierda con regalos; en teléfono el árbol detrás de la tarjeta con la estrella sobre el logo. Se arma leyendo
+    dónde están logo, nombre, tarjeta y la mascota del login (`.nv-mascota`, que no se toca): el piso queda a la
+    altura de sus pies, ella al pie del árbol con un charco de luz cálida, y nada se le encima. Se rehace al cambiar
+    el tamaño o si la mascota cambia de lugar. Dos lienzos (fijo + vivo); el vivo corre solo con el login a la vista;
+    con movimiento reducido queda quieto. El 24 se sigue abriendo el regalo de la tarjeta igual que antes.
+    Elegida entre 3 (guirnalda y luces, el árbol, noche nevada) tras descartar una versión de dibujos planos.
   - Login `pre` en tablet y PC: el cordón de foquitos se dibuja al ancho y alto reales (`focos()`, se rehace al
     cambiar el tamaño; antes se estiraba y los focos quedaban aplastados) y lleva más tramos en pantallas anchas. Las
     montañas se repiten alternando el sentido en vez de estirarse; hay bosquecitos de 2–3 pinos hacia el centro (sin
