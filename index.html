@@ -7401,18 +7401,7 @@ function encabezadoTemaProg(ctx,ti,W,H,base,top=0){
   g.addColorStop(0,stops[0]); g.addColorStop(.55,stops[1]); g.addColorStop(1,stops[2]); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   const flor=(x,y,r)=>{ [[r,'#ea580c'],[r*.76,'#f97316'],[r*.52,'#fb923c'],[r*.3,'#fdba74']].forEach(([rr,c],k)=>{ ctx.fillStyle=c; for(let j=0;j<11;j++){ const a=P*j/11+k*.3; ctx.beginPath(); ctx.arc(x+Math.cos(a)*rr*.6,y+Math.sin(a)*rr*.6,rr*.42,0,P); ctx.fill(); } }); ctx.fillStyle='#c2410c'; ctx.beginPath(); ctx.arc(x,y,r*.15,0,P); ctx.fill(); };
   if(ti==='mu'){ ofrendaProg(ctx,W,H,base,top);
-  } else if(ti==='pre'){
-    // aurora y estrellas, un cordón de foquitos fino arriba y, en la franja, lomas nevadas con pinos y una casita
-    const au=ctx.createRadialGradient(W*.72,0,10,W*.72,0,W*.55); au.addColorStop(0,'rgba(120,255,200,.26)'); au.addColorStop(1,'rgba(120,255,200,0)'); ctx.fillStyle=au; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#fff'; for(let i=0;i<46;i++){ const x=(i*97)%W, y=14+((i*53)%Math.max(30,base-10)); ctx.globalAlpha=.2+((i*7)%10)/16; ctx.beginPath(); ctx.arc(x,y,(i%3)?1:1.5,0,P); ctx.fill(); } ctx.globalAlpha=1;
-    focosProg(ctx,W,3,9,['#e3263c','#f2c45a','#e3263c','#2bb38a','#9cd7ff'],.62);
-    ctx.fillStyle='#d9ecf8'; ctx.beginPath(); ctx.moveTo(0,H); ctx.lineTo(0,H-26); ctx.bezierCurveTo(W*.2,H-50,W*.35,H-20,W*.55,H-34); ctx.bezierCurveTo(W*.75,H-50,W*.9,H-22,W,H-36); ctx.lineTo(W,H); ctx.fill();
-    ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.moveTo(0,H); ctx.lineTo(0,H-14); ctx.bezierCurveTo(W*.25,H-26,W*.5,H-6,W*.7,H-18); ctx.bezierCurveTo(W*.85,H-26,W*.95,H-12,W,H-16); ctx.lineTo(W,H); ctx.fill();
-    const pino=(x,y,s)=>{ ctx.save(); ctx.translate(x,y); ctx.scale(s,s); ctx.fillStyle='#1d4a6a'; ctx.beginPath(); ctx.moveTo(0,-46); ctx.lineTo(13,-24); ctx.lineTo(7,-24); ctx.lineTo(17,-6); ctx.lineTo(-17,-6); ctx.lineTo(-7,-24); ctx.lineTo(-13,-24); ctx.closePath(); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.moveTo(0,-46); ctx.lineTo(6,-35); ctx.lineTo(-6,-35); ctx.fill(); ctx.fillStyle='#e3263c'; ctx.beginPath(); ctx.arc(-6,-14,2.4,0,P); ctx.arc(7,-20,2.4,0,P); ctx.fill(); ctx.restore(); };
-    [[60,H-8,.9],[100,H-4,1.15],[140,H-10,.8],[W-150,H-12,.85],[W-104,H-6,1.2],[W-60,H-10,.9]].forEach(([x,y,k])=>pino(x,y,k));
-    ctx.save(); ctx.translate(W*.62,H-20); ctx.fillStyle='rgba(255,207,112,.35)'; ctx.beginPath(); ctx.arc(0,-8,24,0,P); ctx.fill(); ctx.fillStyle='#c4152c'; ctx.fillRect(-14,-12,28,16); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.moveTo(-18,-12); ctx.lineTo(0,-26); ctx.lineTo(18,-12); ctx.fill(); ctx.fillStyle='#ffd27a'; ctx.fillRect(-9,-7,6,6); ctx.fillRect(3,-7,6,6); ctx.restore();
-    copoProg(ctx,W*.3,base+20,10,'rgba(255,255,255,.75)'); copoProg(ctx,W*.82,base+14,8,'rgba(255,255,255,.6)');
+  } else if(ti==='pre'){ puebloNocheProg(ctx,W,H,base,top);
   } else if(ti==='casa'){
     // guirnalda fina arriba y, en la franja, una repisa con regalos y la estrella
     ctx.strokeStyle='#174d31'; ctx.lineWidth=10; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-10,2); ctx.quadraticCurveTo(W/4,24,W/2,6); ctx.quadraticCurveTo(W*.75,24,W+10,2); ctx.stroke();
@@ -7435,6 +7424,68 @@ function encabezadoTemaProg(ctx,ti,W,H,base,top=0){
       for(let yy=H-h+5;yy<H-3;yy+=8) for(let xx=x+4;xx<x+w-4;xx+=7) if(((xx*7+yy*3+k)%5)<2){ ctx.fillStyle=((xx+yy)%3)?'#ffcf70':'#9cc7ff'; ctx.globalAlpha=.85; ctx.fillRect(xx,yy,3,4); ctx.globalAlpha=1; }
       x+=w+2; k++; }
   }
+}
+// ── Pre-Navidad en la imagen de la programación: «Pueblito de noche» ──
+// Cordón de foquitos grandes arriba (en su propio espacio, TOPB), aurora y estrellas, y en la franja de abajo una
+// escena panorámica: montañas nevadas, lomas, pueblito con ventanas encendidas y humo, pinos con esferas, muñeco de
+// nieve y trineo con regalos; el borde es un banco de nieve con carámbanos que cuelgan sobre el cuerpo (en el espacio
+// de 30 px que hay antes de las tarjetas). Todo con una semilla fija: la misma imagen sale igual cada vez.
+function pnAzar(n){ return ()=>{ n=(n*16807)%2147483647; return (n-1)/2147483646; }; }
+function pnFoco(c,x,y,ang,col,k){ const P=Math.PI*2; c.save(); c.translate(x,y); c.rotate(ang); c.scale(k,k);
+  const g=c.createRadialGradient(0,12,0,0,12,26); g.addColorStop(0,col+'aa'); g.addColorStop(1,col+'00'); c.fillStyle=g; c.beginPath(); c.arc(0,12,26,0,P); c.fill();
+  c.fillStyle='#8a97a6'; c.fillRect(-4,-2,8,7); c.fillStyle='#5f6b78'; c.fillRect(-4,3,8,1.5);
+  c.fillStyle=col; c.beginPath(); c.moveTo(0,5); c.bezierCurveTo(-9,8,-9,22,0,27); c.bezierCurveTo(9,22,9,8,0,5); c.fill();
+  c.fillStyle='rgba(255,255,255,.65)'; c.beginPath(); c.ellipse(-2.6,12,1.8,4,-.2,0,P); c.fill(); c.restore(); }
+function pnPino(c,x,y,k){ const P=Math.PI*2; c.save(); c.translate(x,y); c.scale(k,k); c.fillStyle='#174a6e';
+  c.beginPath(); c.moveTo(0,-70); c.lineTo(15,-44); c.lineTo(8,-44); c.lineTo(22,-20); c.lineTo(12,-20); c.lineTo(27,4); c.lineTo(-27,4); c.lineTo(-12,-20); c.lineTo(-22,-20); c.lineTo(-8,-44); c.lineTo(-15,-44); c.closePath(); c.fill();
+  c.fillStyle='#3a2a20'; c.fillRect(-3,4,6,7); c.fillStyle='#fff'; c.beginPath(); c.moveTo(0,-70); c.lineTo(8,-55); c.quadraticCurveTo(0,-51,-8,-55); c.closePath(); c.fill();
+  [[-15,-44,15],[-22,-20,22],[-27,4,27]].forEach(([a,b,w])=>{ c.beginPath(); c.moveTo(a,b); c.quadraticCurveTo(0,b+5,w,b); c.lineTo(w-4,b+3); c.quadraticCurveTo(0,b+8,a+4,b+3); c.closePath(); c.fill(); });
+  [[-7,-32,'#e3263c'],[9,-24,'#f2c45a'],[-12,-8,'#f2c45a'],[12,-4,'#e3263c'],[0,-14,'#e3263c']].forEach(([a,b,cc])=>{ c.fillStyle=cc; c.beginPath(); c.arc(a,b,3.2,0,P); c.fill(); c.fillStyle='rgba(255,255,255,.6)'; c.beginPath(); c.arc(a-1,b-1,1.1,0,P); c.fill(); });
+  c.restore(); }
+function pnCasa(c,x,y,k,pared,humo){ const P=Math.PI*2; c.save(); c.translate(x,y); c.scale(k,k);
+  const g=c.createRadialGradient(0,-14,0,0,-14,60); g.addColorStop(0,'rgba(255,200,110,.35)'); g.addColorStop(1,'rgba(255,200,110,0)'); c.fillStyle=g; c.beginPath(); c.arc(0,-14,60,0,P); c.fill();
+  c.fillStyle='#4a2a20'; c.fillRect(12,-46,8,16); if(humo){ c.fillStyle='rgba(235,245,255,.45)'; [[18,-54,5],[22,-64,7],[17,-76,9]].forEach(([a,b,r])=>{ c.beginPath(); c.arc(a,b,r,0,P); c.fill(); }); }
+  c.fillStyle=pared; c.fillRect(-24,-28,48,30); c.fillStyle='#fff'; c.beginPath(); c.moveTo(-31,-26); c.lineTo(0,-50); c.lineTo(31,-26); c.lineTo(27,-22); c.quadraticCurveTo(0,-26,-27,-22); c.closePath(); c.fill();
+  c.fillStyle='#ffd27a'; c.fillRect(-17,-20,10,9); c.fillRect(7,-20,10,9); c.fillStyle='#2a1610'; c.fillRect(-4,-14,8,16); c.fillStyle=pared; c.fillRect(-12.5,-20,1,9); c.fillRect(11.5,-20,1,9);
+  c.fillStyle='#fff'; c.fillRect(-26,1,52,3); c.restore(); }
+function pnMuneco(c,x,y,k){ const P=Math.PI*2; c.save(); c.translate(x,y); c.scale(k,k); c.fillStyle='#fff'; c.strokeStyle='rgba(120,160,200,.6)'; c.lineWidth=1.5;
+  [[0,-14,16],[0,-38,12],[0,-56,9]].forEach(([a,b,r])=>{ c.beginPath(); c.arc(a,b,r,0,P); c.fill(); c.stroke(); });
+  c.fillStyle='#1b2a3a'; c.fillRect(-9,-66,18,3); c.fillRect(-6,-80,12,15); c.fillStyle='#c4152c'; c.fillRect(-6,-70,12,3); c.fillRect(-10,-48,20,5); c.fillRect(4,-48,5,14);
+  c.fillStyle='#1b2a3a'; [[-3,-58],[3,-58],[0,-40],[0,-32],[0,-24]].forEach(([a,b])=>{ c.beginPath(); c.arc(a,b,1.6,0,P); c.fill(); }); c.fillStyle='#f97316'; c.beginPath(); c.moveTo(0,-55); c.lineTo(10,-53); c.lineTo(0,-52); c.fill();
+  c.strokeStyle='#5a3a22'; c.lineWidth=2; c.beginPath(); c.moveTo(-10,-40); c.lineTo(-24,-50); c.moveTo(10,-40); c.lineTo(24,-50); c.stroke(); c.restore(); }
+function pnRegalo(c,x,y,w,h,col,cinta){ c.fillStyle=col; c.fillRect(x-w/2,y-h,w,h); c.fillStyle=cinta; c.fillRect(x-3,y-h,6,h); c.fillRect(x-w/2,y-h*.6,w,5);
+  c.beginPath(); c.moveTo(x,y-h); c.bezierCurveTo(x-14,y-h-14,x-18,y-h,x,y-h); c.bezierCurveTo(x+14,y-h-14,x+18,y-h,x,y-h); c.fill(); }
+function puebloNocheProg(c,W,H,base,top){ const P=Math.PI*2, R=pnAzar(9);
+  const g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#020c1e'); g.addColorStop(.55,'#0a2d55'); g.addColorStop(1,'#1c5a8f'); c.fillStyle=g; c.fillRect(0,0,W,H);
+  c.globalCompositeOperation='lighter';
+  [['80,255,170',.33,1.2,.5],['70,200,255',.4,1.7,.4],['190,110,255',.26,2.2,.3]].forEach(([col,yy,f,a])=>{ for(let x=0;x<=W;x+=4){
+    const yc=H*yy+Math.sin(x/W*Math.PI*f+1)*30+Math.sin(x/80)*9, al=a*(.55+.45*Math.sin(x/70+f)), h=120+Math.sin(x/55)*40;
+    const gg=c.createLinearGradient(0,yc-h,0,yc+20); gg.addColorStop(0,`rgba(${col},0)`); gg.addColorStop(.75,`rgba(${col},${al*.45})`); gg.addColorStop(1,`rgba(${col},0)`); c.fillStyle=gg; c.fillRect(x,yc-h,4,h+20); } });
+  c.globalCompositeOperation='source-over';
+  c.fillStyle='#fff'; for(let i=0;i<Math.round(W/12);i++){ c.globalAlpha=.25+R()*.7; c.beginPath(); c.arc(R()*W,R()*(base-20),R()*1.4+.4,0,P); c.fill(); } c.globalAlpha=1;
+  // montañas: lejanas con picos nevados y cercanas sin nieve
+  const mont=(col,y0,amp,n,nieve)=>{ const pts=[]; c.fillStyle=col; c.beginPath(); c.moveTo(0,H); for(let i=0;i<=n;i++){ const x=i/n*W, y=y0-(i%2?amp*(.6+R()*.4):amp*.1*R()); pts.push([x,y]); c.lineTo(x,y); } c.lineTo(W,H); c.closePath(); c.fill();
+    if(nieve) pts.forEach((p,i)=>{ if(!(i%2)) return; const d=W/n; c.fillStyle='rgba(255,255,255,.92)'; c.beginPath(); c.moveTo(p[0]-d*.28,p[1]+amp*.28); c.lineTo(p[0],p[1]); c.lineTo(p[0]+d*.28,p[1]+amp*.28); c.lineTo(p[0]+d*.1,p[1]+amp*.2); c.lineTo(p[0],p[1]+amp*.3); c.lineTo(p[0]-d*.12,p[1]+amp*.22); c.closePath(); c.fill(); }); };
+  mont('#1b4a7a',H-70,70,Math.round(W/120),true); mont('#2a6aa0',H-48,36,Math.round(W/70),false);
+  c.fillStyle='#cfe6f6'; c.beginPath(); c.moveTo(0,H); c.lineTo(0,H-46); for(let x=0;x<W;x+=W/8) c.quadraticCurveTo(x+W/16,H-62+R()*14,x+W/8,H-44-R()*10); c.lineTo(W,H); c.closePath(); c.fill();
+  // pueblito, pinos, muñeco y trineo (posiciones relativas al ancho: también vale para la imagen de 1620)
+  [[.6,'#c4152c'],[.665,'#7a4524'],[.73,'#1f6b4f'],[.795,'#c4152c'],[.36,'#1f6b4f'],[.3,'#7a4524']].forEach(([u,col],i)=>pnCasa(c,u*W,H-42-(i%2)*4,.85+(i%3)*.1,col,i%2===0));
+  [[.05,1],[.09,1.25],[.13,.9],[.2,1.1],[.24,.8],[.86,1.2],[.9,.9],[.95,1.3],[.99,1]].forEach(([u,k],i)=>pnPino(c,u*W,H-30-(i%3)*5,k*.95));
+  pnMuneco(c,W*.545,H-28,.85);
+  c.save(); c.translate(W*.455,H-24); c.strokeStyle='#c8d3dd'; c.lineWidth=3.5; c.lineCap='round'; c.beginPath(); c.moveTo(-44,6); c.lineTo(34,6); c.quadraticCurveTo(46,6,44,-6); c.stroke();
+  c.fillStyle='#c4152c'; c.beginPath(); c.moveTo(-40,0); c.lineTo(-36,-22); c.lineTo(28,-22); c.lineTo(34,0); c.closePath(); c.fill(); c.strokeStyle='#f2c45a'; c.lineWidth=3; c.beginPath(); c.moveTo(-36,-22); c.lineTo(28,-22); c.stroke();
+  pnRegalo(c,-18,-22,22,18,'#1f8a5c','#f2c45a'); pnRegalo(c,6,-22,18,24,'#f2c45a','#c4152c'); c.restore();
+  // banco de nieve del borde y carámbanos sobre el cuerpo
+  c.fillStyle='#fff'; c.beginPath(); c.moveTo(0,H+4); c.lineTo(0,H-14); for(let x=0;x<W;x+=W/14) c.quadraticCurveTo(x+W/28,H-24+R()*8,x+W/14,H-12-R()*6); c.lineTo(W,H+4); c.closePath(); c.fill();
+  let x=6; while(x<W-6){ const w=6+R()*10, L=R()<.22?30*(.7+R()*.3):6+R()*13.5, gg=c.createLinearGradient(x,0,x+w,0); gg.addColorStop(0,'#cbe6f7'); gg.addColorStop(.5,'#f8fcff'); gg.addColorStop(1,'#a9d2ee');
+    c.fillStyle=gg; c.beginPath(); c.moveTo(x,H+2); c.lineTo(x+w,H+2); c.quadraticCurveTo(x+w*.6,H+2+L*.6,x+w*.5,H+2+L); c.quadraticCurveTo(x+w*.4,H+2+L*.6,x,H+2); c.fill(); c.strokeStyle='#9cc9e8'; c.lineWidth=.8; c.stroke(); x+=w+R()*5; }
+  // cordón de foquitos arriba, en su propio espacio
+  const cols=['#e3263c','#f2c45a','#2bb38a','#4cc3ff','#ff7ad9'], tramos=Math.max(3,Math.round(W/330)); let n=0;
+  for(let t=0;t<tramos;t++){ const x0=-10+t*(W+20)/tramos, x1=-10+(t+1)*(W+20)/tramos, mx=(x0+x1)/2, y0=10, yc=y0+32;
+    c.strokeStyle='#1b2a3a'; c.lineWidth=2.4; c.beginPath(); c.moveTo(x0,y0); c.quadraticCurveTo(mx,yc,x1,y0); c.stroke();
+    const k=Math.round((x1-x0)/46); for(let i=0;i<k;i++){ const u=(i+.5)/k, fx=(1-u)*(1-u)*x0+2*(1-u)*u*mx+u*u*x1, fy=(1-u)*(1-u)*y0+2*(1-u)*u*yc+u*u*y0;
+      pnFoco(c,fx,fy,(u-.5)*.7+((n*37)%9-4)*.03,cols[n%5],1); n++; } }
+  [[.36,top+30,9],[.6,top+24,6]].forEach(([u,y,r])=>copoProg(c,u*W,y,r,'rgba(255,255,255,.7)'));   // arriba, lejos de las cifras
 }
 // ── Día de los Muertos en la imagen de la programación: papel picado, ofrenda y calaverita de azúcar ──
 function cempasuchilProg(ctx,x,y,r){ const P=Math.PI*2;
@@ -7526,12 +7577,6 @@ function ofrendaProg(ctx,W,H,base,top){
   // pétalos regados sobre el mantel
   ctx.fillStyle='#f97316'; for(let k=0;k<Math.round(W/41);k++){ ctx.save(); ctx.translate((k*83)%W,yM+22+((k*17)%10)); ctx.rotate(k); ctx.beginPath(); ctx.ellipse(0,0,4,2.4,0,0,P); ctx.fill(); ctx.restore(); }
 }
-function focosProg(ctx,W,y0,cae,cols,k=1){ const P=Math.PI*2, n=Math.round(W/(62*k));
-  ctx.strokeStyle='rgba(207,227,242,.6)'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(0,y0); ctx.quadraticCurveTo(W/2,y0+cae*2,W,y0); ctx.stroke();
-  for(let i=0;i<n;i++){ const t=(i+.5)/n, x=t*W, y=y0+cae*4*t*(1-t), c=cols[i%cols.length];
-    ctx.save(); ctx.translate(x,y); ctx.rotate(((i*37)%24-12)*Math.PI/180); ctx.scale(k,k);
-    ctx.fillStyle=c; ctx.shadowColor=c; ctx.shadowBlur=14; ctx.beginPath(); ctx.moveTo(0,4); ctx.bezierCurveTo(-8,7,-8,20,0,24); ctx.bezierCurveTo(8,20,8,7,0,4); ctx.fill(); ctx.shadowBlur=0;
-    ctx.fillStyle='#9fb4c8'; ctx.fillRect(-3.5,-1,7,6); ctx.fillStyle='rgba(255,255,255,.7)'; ctx.beginPath(); ctx.ellipse(-2.2,11,1.5,3,0,0,P); ctx.fill(); ctx.restore(); } }
 function copoProg(ctx,x,y,r,color){ ctx.save(); ctx.translate(x,y); ctx.strokeStyle=color; ctx.lineWidth=Math.max(1.6,r/9); ctx.lineCap='round';
   for(let k=0;k<6;k++){ ctx.rotate(Math.PI/3); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r); ctx.moveTo(0,-r*.45); ctx.lineTo(-r*.25,-r*.7); ctx.moveTo(0,-r*.45); ctx.lineTo(r*.25,-r*.7); ctx.stroke(); } ctx.restore(); }
 function nieveBordeProg(ctx,W,y){ ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.moveTo(0,y+2); let x=0, k=0;
@@ -7836,8 +7881,8 @@ window.progGenerarImagen=async()=>{
   fuente(700,20); const pillW=pills.map(t=>ancho(t)+36); const pillsTot=pillW.reduce((a,b)=>a+b,0)+10*(pills.length-1);
   fuente(800,48); const fechaW=ancho(tituloFecha);
   const pillsAlLado=pad+fechaW+28+pillsTot<=W-pad;
-  const BANDA=TI&&!HW?(TI==='mu'?112:62):0;   // Muertos y Navidad: franja de abajo del encabezado solo para los adornos
-  const TOPB=TI==='mu'?54:0;                  // Muertos: espacio arriba para el papel picado (el texto baja)
+  const BANDA=TI&&!HW?(TI==='mu'?112:TI==='pre'?170:62):0;   // Muertos y Navidad: franja de abajo del encabezado solo para los adornos (Pre-Navidad: el pueblito)
+  const TOPB=TI==='mu'?54:TI==='pre'?58:0;    // Muertos: espacio arriba para el papel picado; Pre-Navidad: para el cordón de foquitos (el texto baja)
   const headH=(pillsAlLado?164:224)+BANDA+TOPB;
 
   const cuerpoH=areas.reduce((a,ar)=>a+Math.max(ar.h,ar.railH),0)+26*(areas.length-1);
