@@ -557,3 +557,7 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 @media (prefers-reduced-motion:reduce){.nvd-au svg,.nvd-au i,.nvd-gota{animation:none}.nvd-gota{display:none}}
 /* «Responde al toque»: lienzo de la escarcha que florece, las migajas de nieve y el soplo de copos */
 .nvd-toque{position:fixed;inset:0;width:100vw;height:100vh;z-index:95;pointer-events:none}
+/* «Valle nevado»: el paisaje va en un lienzo fijo debajo de todo; el contenido deja de tener fondo propio para que se vea */
+.nvd-valle{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none}
+html.nvd-con-valle.nav-pre .content{background:transparent}
+html.nvd-con-valle.nav-pre body:has(#loginScreen.active) .nvd-valle{display:none}

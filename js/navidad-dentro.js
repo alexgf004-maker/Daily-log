@@ -1,7 +1,7 @@
 // ── Pre-Navidad dentro de la app: «Cristal escarchado» ──
 // Carámbanos bajo la barra de arriba (de los largos cae una gota de vez en cuando), aurora boreal en los
 // encabezados y escarcha que crece desde las esquinas de las tarjetas y de los cuadros del panel.
-// Además «Responde al toque» (escarcha donde tocas, botones con nieve, soplo de copos en las pestañas, foquitos que se mecen).
+// Además el «Valle nevado» de fondo y «Responde al toque» (escarcha donde tocas, botones con nieve, soplo de copos en las pestañas, foquitos que se mecen).
 // Solo con html.nav-pre. Los dibujos de escarcha se generan una vez y se pasan al CSS como variables
 // (--nvd-e1…); el CSS (css/temas/navidad.css, «Cristal escarchado») decide dónde van. Al salir del tema se quita todo.
 (function(){
@@ -59,10 +59,12 @@
     listo=true; decorar();
   }
   function decorar(){
+    verValle();
     document.querySelectorAll('.topbar').forEach(function(b){ if(!b.querySelector(':scope>.nvd-car')){ var d=document.createElement('div'); d.className='nvd-car'; d.setAttribute('aria-hidden','true'); d.innerHTML=propio(carSVG); b.appendChild(d); } });
     document.querySelectorAll(HEROES).forEach(function(h){ if(!h.querySelector(':scope>.nvd-au')){ var d=document.createElement('div'); d.className='nvd-au'; d.setAttribute('aria-hidden','true'); d.innerHTML=propio(auHTML); h.classList.add('nvd-hero'); h.insertBefore(d,h.firstChild); } });
   }
   function quitar(){
+    quitarValle();
     document.querySelectorAll('.nvd-car,.nvd-au').forEach(function(e){ e.remove(); });
     document.querySelectorAll('.nvd-hero').forEach(function(e){ e.classList.remove('nvd-hero'); });
     if(vars){ var st=document.documentElement.style; for(var k in vars) st.removeProperty(k); }
@@ -147,6 +149,65 @@
     empuje+=Math.max(-90,Math.min(90,d*6));
     if(!meceRaf){ mPrev=performance.now(); meceRaf=requestAnimationFrame(mece); }
   },{capture:true,passive:true});
+
+  /* ── «Valle nevado» de fondo ──
+     Detrás de las pantallas de adentro: cielo celeste con luz cálida, montañas con nieve, lomas con pinos y un
+     pueblito con humo, y un banco de nieve con pinos cerca. Al deslizar, cada capa se mueve a distinta velocidad
+     (profundidad, con tope para no destapar el borde). Las tres capas se dibujan una vez (y al cambiar el tamaño); en
+     cada cuadro solo se acomodan y se dibujan la nieve y el humo. Se detiene con la pantalla oculta o en el login.
+     Con movimiento reducido queda quieto. Lienzo .nvd-valle (z-index:-1, debajo de todo el contenido). */
+  var valle=null;
+  function semillaV(n){ return function(){ n=(n*16807)%2147483647; return (n-1)/2147483646; }; }
+  function armarValle(){
+    var W=innerWidth, H=innerHeight, D=Math.min(1.5,window.devicePixelRatio||1), rv=semillaV(11), TOPE=[14,34,70];
+    function hoja(extra){ var c=document.createElement('canvas'); c.width=Math.round(W*D); c.height=Math.round((H+extra)*D); var x=c.getContext('2d'); x.scale(D,D); return {c:c,x:x}; }
+    function perfil(n,amp,base){ var p=[]; for(var i=0;i<=n;i++) p.push([i/n,base+(rv()-.5)*amp]); return p; }
+    function loma(x,pts,col,alto){ x.fillStyle=col; x.beginPath(); x.moveTo(0,alto); pts.forEach(function(p,i){ var px=p[0]*W, py=p[1]*H; if(!i) x.lineTo(px,py); else { var q=pts[i-1]; x.quadraticCurveTo(q[0]*W,q[1]*H,(q[0]+p[0])/2*W,(q[1]+p[1])/2*H); } });
+      x.lineTo(W,pts[pts.length-1][1]*H); x.lineTo(W,alto); x.closePath(); x.fill(); }
+    function pino(x,px,py,s,col,nieve){ x.fillStyle=col; x.beginPath(); x.moveTo(px,py-34*s); x.lineTo(px+9*s,py-18*s); x.lineTo(px+5*s,py-18*s); x.lineTo(px+13*s,py-4*s); x.lineTo(px-13*s,py-4*s); x.lineTo(px-5*s,py-18*s); x.lineTo(px-9*s,py-18*s); x.closePath(); x.fill(); x.fillRect(px-1.5*s,py-4*s,3*s,5*s);
+      x.fillStyle=nieve; x.beginPath(); x.moveTo(px,py-34*s); x.lineTo(px+4*s,py-27*s); x.lineTo(px-4*s,py-27*s); x.closePath(); x.fill(); x.beginPath(); x.moveTo(px-8*s,py-17*s); x.quadraticCurveTo(px,py-14*s,px+8*s,py-17*s); x.lineTo(px+6*s,py-15*s); x.quadraticCurveTo(px,py-12*s,px-6*s,py-15*s); x.closePath(); x.fill(); }
+    var den=Math.max(1,W/412);
+    // capa lejana: cielo, luz cálida y montañas con nieve
+    var L=hoja(TOPE[0]), x=L.x, g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,'#b9d9f2'); g.addColorStop(.5,'#e3f1fc'); g.addColorStop(1,'#f4f9ff'); x.fillStyle=g; x.fillRect(0,0,W,H+TOPE[0]);
+    var so=x.createRadialGradient(W*.82,H*.2,0,W*.82,H*.2,Math.max(W,H)*.5); so.addColorStop(0,'rgba(255,246,225,.75)'); so.addColorStop(1,'rgba(255,246,225,0)'); x.fillStyle=so; x.fillRect(0,0,W,H);
+    var lejos=perfil(Math.round(9*den),.12,.52); loma(x,lejos,'#d3e5f4',H+TOPE[0]); x.fillStyle='rgba(255,255,255,.9)';
+    lejos.forEach(function(p,i){ if(i%2||!i||p[1]>=.53) return; var px=p[0]*W, py=p[1]*H; x.beginPath(); x.moveTo(px-14,py+9); x.lineTo(px,py-1); x.lineTo(px+14,py+9); x.closePath(); x.fill(); });
+    // capa media: lomas, pinos y el pueblito
+    var M=hoja(TOPE[1]); x=M.x; loma(x,perfil(Math.round(14*den),.07,.64),'#c2d9ec',H+TOPE[1]);
+    var pm=[]; for(var i=0;i<Math.round(26*den);i++) pm.push({x:rv(),y:.6+rv()*.1,s:.5+rv()*.3}); pm.sort(function(a,b){ return a.y-b.y; }).forEach(function(q){ pino(x,q.x*W,q.y*H,q.s,'#93b4cf','#eef6fd'); });
+    var casas=[]; for(i=0;i<5;i++) casas.push({x:(.56+i*.07)*W,y:H*.66,s:.8+rv()*.3});
+    casas.forEach(function(q){ var s=q.s; x.fillStyle='#a8c3da'; x.fillRect(q.x,q.y-12*s,16*s,12*s); x.fillStyle='#f6fbff'; x.beginPath(); x.moveTo(q.x-3*s,q.y-12*s); x.lineTo(q.x+8*s,q.y-20*s); x.lineTo(q.x+19*s,q.y-12*s); x.closePath(); x.fill(); x.fillStyle='rgba(255,207,110,.85)'; x.fillRect(q.x+4*s,q.y-8*s,4*s,4*s); });
+    // capa cercana: banco de nieve con pinos grandes
+    var C=hoja(TOPE[2]); x=C.x; var cerca=perfil(Math.round(10*den),.05,.82);
+    loma(x,cerca.map(function(p){ return [p[0],p[1]+.006]; }),'rgba(160,195,225,.35)',H+TOPE[2]); loma(x,cerca,'#f7fbff',H+TOPE[2]);
+    var pc=[]; for(i=0;i<Math.round(16*den);i++) pc.push({x:rv(),y:.8+rv()*.12,s:1+rv()*.5}); pc.sort(function(a,b){ return a.y-b.y; }).forEach(function(q){ pino(x,q.x*W,q.y*H,q.s,'#6f98bc','#ffffff'); });
+    var copos=[]; for(i=0;i<Math.round(40*den);i++) copos.push({x:rv(),y:rv(),r:.6+rv()*1.8,v:.01+rv()*.02});
+    return {W:W,H:H,D:D,capas:[L,M,C],f:[.05,.12,.25],tope:TOPE,casas:casas,copos:copos};
+  }
+  function pantallaAdentro(){ var a=document.querySelector('.screen.active'); return !!a&&(a.id==='employeeScreen'||a.id==='adminScreen'); }
+  function cuadroValle(n){
+    if(!valle) return; valle.raf=0;
+    if(!valle.lz.isConnected||!document.documentElement.classList.contains('nav-pre')||document.hidden||!pantallaAdentro()) return;   // se reanuda con verValle()
+    var v=valle.d, x=valle.x, t=n/1000, y=(document.scrollingElement||document.documentElement).scrollTop||0;
+    x.setTransform(v.D,0,0,v.D,0,0);
+    for(var i=0;i<3;i++){ var dy=-Math.min(v.tope[i],y*v.f[i]); x.drawImage(v.capas[i].c,0,dy,v.W,v.H+v.tope[i]); }
+    if(!reducido){
+      var dm=-Math.min(v.tope[1],y*v.f[1]);
+      v.casas.forEach(function(q,j){ for(var k=0;k<3;k++){ var u=(t*.25+j*.3+k*.33)%1; x.fillStyle='rgba(255,255,255,'+(.5*(1-u)).toFixed(3)+')'; x.beginPath(); x.arc(q.x+13*q.s+u*6,q.y+dm-22*q.s-u*18,2+u*4,0,6.283); x.fill(); } });
+      x.fillStyle='#fff'; v.copos.forEach(function(k){ var yy=((k.y+t*k.v)%1)*v.H, xx=k.x*v.W+Math.sin(t*.8+k.y*9)*10; x.globalAlpha=.55+k.r/5; x.beginPath(); x.arc(xx,yy,k.r,0,6.283); x.fill(); }); x.globalAlpha=1;
+      valle.raf=requestAnimationFrame(cuadroValle);
+    }
+  }
+  function verValle(){
+    if(!document.documentElement.classList.contains('nav-pre')) return;
+    if(!valle){ var lz=document.createElement('canvas'); lz.className='nvd-valle'; lz.setAttribute('aria-hidden','true'); document.body.insertBefore(lz,document.body.firstChild); valle={lz:lz,x:lz.getContext('2d'),raf:0,d:null}; document.documentElement.classList.add('nvd-con-valle'); }
+    if(!valle.d||valle.d.W!==innerWidth||valle.d.H!==innerHeight){ valle.d=armarValle(); valle.lz.width=Math.round(innerWidth*valle.d.D); valle.lz.height=Math.round(innerHeight*valle.d.D); }
+    if(!valle.raf) valle.raf=requestAnimationFrame(cuadroValle);
+  }
+  function quitarValle(){ if(!valle) return; if(valle.raf) cancelAnimationFrame(valle.raf); valle.lz.remove(); valle=null; document.documentElement.classList.remove('nvd-con-valle'); }
+  var tmV=0; window.addEventListener('resize',function(){ if(!valle) return; clearTimeout(tmV); tmV=setTimeout(verValle,250); });
+  document.addEventListener('visibilitychange',function(){ if(valle&&!document.hidden) verValle(); });
+  // con movimiento reducido no hay bucle: al deslizar no se vuelve a acomodar (queda quieto)
   function iniciar(){
     new MutationObserver(revisar).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
     // las pantallas se vuelven a pintar (encabezados nuevos): se revisa con calma, no en cada cambio
