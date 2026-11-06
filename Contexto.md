@@ -430,6 +430,13 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     técnico se mecen con un resorte (se envuelven en `g.nvd-mece`). Solo con toques reales (`isTrusted`, no teclado);
     no se activa al tocar campos de texto ni enlaces. El lienzo solo dibuja mientras hay algo animándose. Con
     movimiento reducido no hace nada. Elegida entre 3 (responde al toque, el invierno pasa, lo que haces enciende).
+  - **Fondo «Valle nevado»** (Pre-Navidad, `js/navidad-dentro.js`, lienzo fijo `.nvd-valle` con `z-index:-1` y clase
+    `html.nvd-con-valle`, que deja `.content` sin fondo propio): cielo celeste con luz cálida, montañas con nieve,
+    lomas con pinos y pueblito con humo, banco de nieve con pinos cerca y nieve cayendo. Al deslizar, cada capa se
+    mueve a distinta velocidad (con tope). Las 3 capas se dibujan una vez (y al cambiar el tamaño); en cada cuadro solo
+    se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
+    reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
+    cielos según la hora y estilos de letra/tarjetas.
   - **"Probar animaciones"** se muestra solo con Halloween, Muertos y Pre-Navidad (regla en `comun.css`; antes vivía en
     `halloween.css` y fuera de Halloween el botón salía sin hacer nada).
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
