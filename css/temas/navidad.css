@@ -550,3 +550,5 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 .nav-pre .fx-save{background:linear-gradient(180deg,#3b82c4,#0b3a6a);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -6px 14px rgba(169,210,238,.25),0 12px 22px -12px rgba(11,58,106,.8)}
 .nav-pre .fx-tipo .tipo-btn.active{background:#eef7ff;color:#0b3a6a;box-shadow:0 0 0 1px #4cc3ff}
 @media (prefers-reduced-motion:reduce){.nvd-au svg,.nvd-au i,.nvd-gota{animation:none}.nvd-gota{display:none}}
+/* «Responde al toque»: lienzo de la escarcha que florece, las migajas de nieve y el soplo de copos */
+.nvd-toque{position:fixed;inset:0;width:100vw;height:100vh;z-index:95;pointer-events:none}

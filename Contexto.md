@@ -416,6 +416,13 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     El script vigila la clase `nav-pre` y los encabezados que se vuelven a pintar; al salir del tema quita todo. Cada copia
     de SVG lleva sus propios `id` (un degradado definido en una pantalla oculta no se pinta en otra). Elegida entre 3
     (pueblito nevado, suéter tejido, cristal escarchado) mostradas sobre la app real.
+  - **«Responde al toque»** (Pre-Navidad, mismo `js/navidad-dentro.js`, lienzo `.nvd-toque`): al tocar una tarjeta
+    (`.fx-card`, `.mk3`, `.nvp-adv`, `#dashAsistCard`, `.rban`, `.dtile`) florece escarcha donde tocas y se derrite en
+    ~2 s (blanca en los cuadros de color); los botones `.mk3-btn`, `.fx-save` y `.btn-p` se hunden y sueltan migajas de
+    nieve; al cambiar de pestaña sale un soplo de copos; al deslizar, los foquitos del cordón del encabezado del
+    técnico se mecen con un resorte (se envuelven en `g.nvd-mece`). Solo con toques reales (`isTrusted`, no teclado);
+    no se activa al tocar campos de texto ni enlaces. El lienzo solo dibuja mientras hay algo animándose. Con
+    movimiento reducido no hace nada. Elegida entre 3 (responde al toque, el invierno pasa, lo que haces enciende).
   - **"Probar animaciones"** se muestra solo con Halloween, Muertos y Pre-Navidad (regla en `comun.css`; antes vivía en
     `halloween.css` y fuera de Halloween el botón salía sin hacer nada).
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
