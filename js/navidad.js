@@ -301,47 +301,8 @@
 
   /* ════════════════ NAVIDAD EN CASA ════════════════ */
   function armarCasa(capa,f){
-    capa.insertAdjacentHTML('beforeend','<div class="nv-tapiz"></div>');
-    // ventana con nieve afuera
-    var v='<div class="nv-ventana">'; for(var i=0;i<26;i++) v+='<i style="left:'+R(0,96).toFixed(0)+'px;animation-duration:'+R(3,6).toFixed(1)+'s;animation-delay:-'+R(0,6).toFixed(1)+'s;opacity:'+R(.5,1).toFixed(2)+'"></i>';
-    capa.insertAdjacentHTML('beforeend',v+'</div>');
-    // árbol con esferas, guirnalda dorada, luces que titilan y la estrella
-    var a='<svg class="nv-arbol" viewBox="0 0 230 430"><defs><linearGradient id="nvPinoA" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0f3d26"/><stop offset=".5" stop-color="#1f6b45"/><stop offset="1" stop-color="#0c3020"/></linearGradient>'+
-      '<radialGradient id="nvEstA"><stop offset="0" stop-color="#fff8d0"/><stop offset=".5" stop-color="#ffd35a"/><stop offset="1" stop-color="#d99a20"/></radialGradient>'+
-      '<filter id="nvLuz" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'+
-      '<rect x="104" y="388" width="22" height="34" fill="#4a2a14"/><path d="M70 400 h90 l-8 30 h-74z" fill="#8a1a1a"/><path d="M70 400 h90" stroke="#d9a840" stroke-width="4"/>';
-    [[115,40,40,80],[115,90,62,140],[115,150,84,210],[115,220,104,290],[115,290,118,380]].forEach(function(p){ var cx=p[0],top=p[1],w=p[2],bot=p[3];
-      a+='<path d="M'+cx+' '+top+' C'+(cx+w*.3)+' '+(top+30)+' '+(cx+w*.7)+' '+(bot-30)+' '+(cx+w)+' '+bot+' C'+(cx+w*.5)+' '+(bot+12)+' '+(cx-w*.5)+' '+(bot+12)+' '+(cx-w)+' '+bot+' C'+(cx-w*.7)+' '+(bot-30)+' '+(cx-w*.3)+' '+(top+30)+' '+cx+' '+top+'Z" fill="url(#nvPinoA)"/>'; });
-    [[60,120,170,150],[42,195,190,230],[26,268,206,305],[16,340,214,372]].forEach(function(q){ a+='<path d="M'+q[0]+' '+q[1]+' Q115 '+(q[3]+18)+' '+q[2]+' '+(q[3]-14)+'" stroke="#e9c15a" stroke-width="2.4" fill="none" opacity=".9"/>'; });
-    var cols=['#d4213a','#e9b44a','#f4f4f4','#2a7ad4','#d4213a','#e9b44a'];
-    [[95,118],[140,128],[80,175],[150,190],[118,165],[60,240],[170,250],[112,232],[40,320],[90,300],[150,315],[195,330],[120,350],[70,365],[175,365]].forEach(function(p,i){ a+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+R(7,10).toFixed(1)+'" fill="'+cols[i%6]+'"/><circle cx="'+(p[0]-2.5)+'" cy="'+(p[1]-3)+'" r="2.4" fill="#fff" opacity=".7"/>'; });
-    for(i=0;i<46;i++){ var t=R(.08,1), y=40+t*330, w=10+t*108, x=115+R(-w,w)*.85;
-      a+='<circle class="nv-luz" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.4" fill="'+['#ffd36b','#ff6b6b','#7ee2a8','#9cc7ff','#ffb36b'][i%5]+'" filter="url(#nvLuz)" style="animation-duration:'+R(1.2,2.6).toFixed(2)+'s;animation-delay:-'+R(0,2).toFixed(2)+'s"/>'; }
-    a+='<g transform="translate(115 34)" filter="url(#nvLuz)"><path class="nv-estrella" d="M0 -22 L6 -7 L22 -6 L10 4 L14 20 L0 11 L-14 20 L-10 4 L-22 -6 L-6 -7Z" fill="url(#nvEstA)"/></g></svg>';
-    capa.insertAdjacentHTML('beforeend',a);
-    // guirnalda de pino con luces y moño arriba
-    var g='<svg class="nv-guirnalda" viewBox="0 0 430 90" preserveAspectRatio="none"><path d="M0 10 Q107 70 215 18 Q322 70 430 10" stroke="#174d31" stroke-width="16" fill="none" stroke-linecap="round"/><path d="M0 10 Q107 70 215 18 Q322 70 430 10" stroke="#256b45" stroke-width="7" fill="none" stroke-dasharray="3 5"/>';
-    for(i=1;i<20;i++){ var tt=i/20, half=tt<.5, u=half?tt*2:(tt-.5)*2, x0=half?0:215, x1=half?215:430, y0=half?10:18, y1=half?18:10;
-      var px=(1-u)*(1-u)*x0+2*(1-u)*u*(x0+107)+u*u*x1, py=(1-u)*(1-u)*y0+2*(1-u)*u*70+u*u*y1;
-      g+='<circle class="nv-luz" cx="'+px.toFixed(1)+'" cy="'+(py+5).toFixed(1)+'" r="4" fill="'+['#ffd36b','#ff5a5f','#7ee2a8','#9cc7ff'][i%4]+'" style="animation-duration:'+R(1.2,2.2).toFixed(2)+'s;animation-delay:-'+R(0,2).toFixed(2)+'s"/>'; }
-    g+='<g transform="translate(215 24)"><path d="M0 0 C-14 -12 -20 2 -7 5Z M0 0 C14 -12 20 2 7 5Z" fill="#c81f35"/><path d="M-2 3 L-9 20 L-4 17 L-2 22Z M2 3 L9 20 L4 17 L2 22Z" fill="#a3132a"/><circle r="3.4" fill="#e2384d"/></g></svg>';
-    capa.insertAdjacentHTML('beforeend',g);
-    // chimenea con fuego
-    capa.insertAdjacentHTML('beforeend','<svg class="nv-chimenea" viewBox="0 0 250 230"><defs><linearGradient id="nvLadr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a3a22"/><stop offset="1" stop-color="#5a2010"/></linearGradient>'+
-      '<radialGradient id="nvFuego" cx=".5" cy=".9" r=".9"><stop offset="0" stop-color="#fff3b0"/><stop offset=".35" stop-color="#ffb02e"/><stop offset=".7" stop-color="#ff5a1f"/><stop offset="1" stop-color="#c0180a" stop-opacity="0"/></radialGradient>'+
-      '<radialGradient id="nvResp" cx=".5" cy=".8" r=".7"><stop offset="0" stop-color="#ffb060" stop-opacity=".65"/><stop offset="1" stop-color="#ffb060" stop-opacity="0"/></radialGradient></defs>'+
-      '<ellipse class="nv-resplandor" cx="125" cy="200" rx="160" ry="90" fill="url(#nvResp)"/><rect x="20" y="40" width="230" height="190" fill="url(#nvLadr)"/>'+
-      '<g stroke="#3e150a" stroke-width="1.4" opacity=".6">'+[60,80,100,120,140,160,180,200].map(function(y,i){ return '<path d="M20 '+y+' H250"/>'+[0,1,2,3,4,5].map(function(k){ return '<path d="M'+(20+k*40+(i%2?20:0))+' '+y+' v20"/>'; }).join(''); }).join('')+'</g>'+
-      '<rect x="8" y="28" width="250" height="18" rx="3" fill="#3a1a0c"/><rect x="8" y="28" width="250" height="5" fill="#5a2a16"/><path d="M60 230 V130 Q60 100 90 100 H200 Q230 100 230 130 V230Z" fill="#1a0805"/>'+
-      '<path class="nv-llama" d="M100 226 C90 200 104 186 112 170 C114 186 124 190 122 204 C130 196 132 182 128 168 C146 184 150 206 140 226Z" fill="url(#nvFuego)"/>'+
-      '<path class="nv-llama dos" d="M150 226 C144 206 152 194 160 184 C162 196 170 198 168 210 C176 202 174 192 172 186 C186 200 186 214 180 226Z" fill="url(#nvFuego)"/>'+
-      '<rect x="86" y="222" width="110" height="9" rx="4" fill="#4a2410"/><rect x="96" y="214" width="90" height="9" rx="4" fill="#5a2e14" transform="rotate(-4 141 218)"/></svg>');
-    // medias colgadas del manto: la primera con tu nombre
-    var n=nombre().toUpperCase().slice(0,7), med='<div class="nv-medias">';
-    [[n||'TÚ','#c81f35'],['EQUIPO','#1f6b45'],['INNOVA','#b98328'],[String(f.mes===1?new Date().getFullYear()-1:new Date().getFullYear()),'#1f6b45']].forEach(function(mm,i){
-      med+=('<svg class="nv-media m'+(i+1)+'" viewBox="0 0 46 70" style="animation-delay:-'+(i*1.3)+'s"><path d="M10 0 h24 v38 c0 6 4 8 10 12 c6 4 2 18 -8 16 c-8 -2 -14 -8 -20 -12 c-6 -4 -6 -8 -6 -14z" fill="'+mm[1]+'"/><rect x="8" y="0" width="28" height="12" rx="3" fill="#fff"/><text x="22" y="9" font-size="'+(mm[0].length>5?6:7)+'" font-weight="800" text-anchor="middle" fill="'+mm[1]+'" font-family="Plus Jakarta Sans,Inter,sans-serif">'+esc(mm[0])+'</text><circle cx="16" cy="24" r="2" fill="#fff" opacity=".7"/><circle cx="26" cy="32" r="2" fill="#fff" opacity=".7"/></svg>'); });
-    capa.insertAdjacentHTML('beforeend',med+'</div>');
-    for(i=0;i<12;i++) capa.insertAdjacentHTML('beforeend','<i class="nv-bokeh" style="left:'+R(0,100).toFixed(0)+'%;top:'+R(5,70).toFixed(0)+'%;width:'+R(10,32).toFixed(0)+'px;height:'+R(10,32).toFixed(0)+'px;background:rgba(255,'+(R(150,210)|0)+',90,'+R(.12,.3).toFixed(2)+');animation-delay:-'+R(0,3).toFixed(1)+'s"></i>');
+    // la escena «El árbol» vive en js/navidad-casa.js (canvas, se acomoda al logo, la tarjeta y la mascota)
+    if(window.__nvCasa) bucle=window.__nvCasa(capa);
     // 24 de diciembre: se abre el regalo (una vez por teléfono, el día de verdad o en la vista previa)
     if(f.mes===12&&f.dia===24){
       var clave='innova_nav_regalo', ya=null; try{ ya=localStorage.getItem(clave); }catch(e){}
