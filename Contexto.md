@@ -442,6 +442,15 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     El script vigila la clase `nav-pre` y los encabezados que se vuelven a pintar; al salir del tema quita todo. Cada copia
     de SVG lleva sus propios `id` (un degradado definido en una pantalla oculta no se pinta en otra). Elegida entre 3
     (pueblito nevado, suéter tejido, cristal escarchado) mostradas sobre la app real.
+    Actualización: las esquinas de escarcha se cambiaron por adornos de **pino y acebo** (`adornos()` en
+    `js/navidad-dentro.js`): 6 variaciones para tarjetas (ramita con esferita dorada; acebo con bastón; solo acebo;
+    ramita con piña y moño; ramita que sube desde abajo; ramita con esferas roja y plateada) y 4 en blanco para los
+    cuadros de color. `repartir()` le pone a cada tarjeta `data-nvd` (0–5, en orden 0,3,1,5,2,4 para que no se
+    repitan seguidas; las que tienen algo arriba a la derecha, `.fx-hd` como «8 h extra», van con uno de abajo) y a
+    cada cuadro `data-nvdt` (0–3); el CSS pone la imagen y la esquina. La sección «HOY» del panel (`#dashAsistCard`)
+    ya no lleva fondo de tarjeta ni adorno (se veía como recuadro forzado). El cordón de foquitos de los encabezados
+    pasó a 34 px de alto (con 24 se cortaban los focos) y se repite encima de la aurora (`.nvd-au::after`, variable
+    `--nvp-cordon`).
   - **«Responde al toque»** (Pre-Navidad, mismo `js/navidad-dentro.js`, lienzo `.nvd-toque`): al tocar una tarjeta
     (`.fx-card`, `.mk3`, `.nvp-adv`, `#dashAsistCard`, `.rban`, `.dtile`) florece escarcha donde tocas y se derrite en
     ~2 s (blanca en los cuadros de color); los botones `.mk3-btn`, `.fx-save` y `.btn-p` se hunden y sueltan migajas de

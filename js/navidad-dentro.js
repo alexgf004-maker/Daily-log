@@ -1,9 +1,10 @@
 // ── Pre-Navidad dentro de la app: «Cristal escarchado» ──
 // Carámbanos bajo la barra de arriba (de los largos cae una gota de vez en cuando), aurora boreal en los
-// encabezados y escarcha que crece desde las esquinas de las tarjetas y de los cuadros del panel.
+// encabezados y adornos de pino y acebo en las tarjetas (6 variaciones repartidas sin repetirse seguidas) y en blanco
+// en los cuadros de color del panel.
 // Además el «Valle nevado» de fondo y «Responde al toque» (escarcha donde tocas, botones con nieve, soplo de copos en las pestañas, foquitos que se mecen).
-// Solo con html.nav-pre. Los dibujos de escarcha se generan una vez y se pasan al CSS como variables
-// (--nvd-e1…); el CSS (css/temas/navidad.css, «Cristal escarchado») decide dónde van. Al salir del tema se quita todo.
+// Solo con html.nav-pre. Los adornos se generan una vez y se pasan al CSS como variables (--nvd-c0…5,
+// --nvd-t0…3); cada tarjeta lleva data-nvd y cada cuadro data-nvdt; el CSS (css/temas/navidad.css, «Cristal escarchado») decide dónde van. Al salir del tema se quita todo.
 (function(){
   'use strict';
   var R=function(a,b){ return a+Math.random()*(b-a); };
@@ -13,23 +14,42 @@
   function propio(html){ n++; return html.replace(/nvd([AG]\d?)/g,'nvd$1_'+n); }
 
   function svgUrl(s){ return 'url("data:image/svg+xml,'+encodeURIComponent(s)+'")'; }
-  // helecho de escarcha: una rama con ramitas a los lados que a su vez se abren
-  function helecho(x,y,ang,len,dep,o){
-    var x2=x+Math.cos(ang)*len, y2=y+Math.sin(ang)*len;
-    o.push('<path d="M'+x.toFixed(1)+' '+y.toFixed(1)+'L'+x2.toFixed(1)+' '+y2.toFixed(1)+'" stroke-width="'+(dep*.45+.5).toFixed(2)+'"/>');
-    if(dep<=0){ if(Math.random()<.5) o.push('<circle cx="'+x2.toFixed(1)+'" cy="'+y2.toFixed(1)+'" r="'+R(.8,1.5).toFixed(1)+'" fill="#fff" stroke="none"/>'); return; }
-    var n=Math.round(len/7);
-    for(var i=1;i<=n;i++){ var t=i/(n+1), px=x+(x2-x)*t, py=y+(y2-y)*t, l=len*R(.25,.42)*(1-t*.5);
-      helecho(px,py,ang-R(.8,1.1),l,dep-1,o); helecho(px,py,ang+R(.8,1.1),l,dep-1,o); }
-    helecho(x2,y2,ang+R(-.3,.3),len*.45,dep-1,o);
-  }
-  // esquina de escarcha (sale de la esquina superior izquierda; el CSS la gira para las otras)
-  function esquina(tam,col,op,giro){
-    var o=[], k=3+(Math.random()*2|0);
-    for(var i=0;i<k;i++) helecho(0,0,R(.05,1.5),tam*R(.45,.8),2,o);
-    var tr=giro==='br'?'rotate(180 '+tam/2+' '+tam/2+')':giro==='tr'?'translate('+tam+' 0) scale(-1 1)':'';
-    return svgUrl("<svg xmlns='http://www.w3.org/2000/svg' width='"+tam+"' height='"+tam+"'><g transform='"+tr+"' opacity='"+op+"' fill='none' stroke='"+col+"' stroke-linecap='round'>"+o.join('').replace(/"/g,"'")+'</g></svg>');
-  }
+  // ── adornos de pino y acebo para las tarjetas (6 variaciones) y en blanco para los cuadros de color (4) ──
+  var DEFS="<defs><radialGradient id='b' cx='.35' cy='.35' r='.7'><stop offset='0' stop-color='#ff9a9a'/><stop offset='1' stop-color='#a0081c'/></radialGradient>"+
+    "<radialGradient id='o' cx='.35' cy='.35' r='.75'><stop offset='0' stop-color='#fff2b0'/><stop offset='.5' stop-color='#d9a530'/><stop offset='1' stop-color='#6a4508'/></radialGradient>"+
+    "<radialGradient id='p' cx='.35' cy='.35' r='.75'><stop offset='0' stop-color='#fff'/><stop offset='.5' stop-color='#b9c6d2'/><stop offset='1' stop-color='#4a5866'/></radialGradient>"+
+    "<radialGradient id='r' cx='.35' cy='.35' r='.75'><stop offset='0' stop-color='#ff9a9a'/><stop offset='.5' stop-color='#d0142c'/><stop offset='1' stop-color='#5a0410'/></radialGradient></defs>";
+  function svgDe(w,h,cuerpo,mx,my){ return svgUrl("<svg xmlns='http://www.w3.org/2000/svg' width='"+w+"' height='"+h+"' viewBox='0 0 "+w+" "+h+"'>"+DEFS+"<g transform='translate("+(mx?w:0)+" "+(my?h:0)+") scale("+(mx?-1:1)+" "+(my?-1:1)+")'>"+cuerpo+"</g></svg>"); }
+  function rama(x0,y0,ang,len,blanca){ var V=blanca?['rgba(255,255,255,.9)','rgba(255,255,255,.62)']:['#0f4a2c','#1a6a42','#2a8456','#3c9a66'], x1=x0+Math.cos(ang)*len, y1=y0+Math.sin(ang)*len;
+    var s="<path d='M"+x0+" "+y0+" L"+x1.toFixed(1)+" "+y1.toFixed(1)+"' stroke='"+(blanca?'rgba(255,255,255,.7)':'#4a3220')+"' stroke-width='1.4'/>", n=Math.round(len/3.2);
+    for(var i=1;i<=n;i++){ var t=i/n, px=x0+(x1-x0)*t, py=y0+(y1-y0)*t, L=(9-t*4)*(blanca?.85:1);
+      [-1,1].forEach(function(d){ var a=ang+d*R(.6,1)+.25; s+="<path d='M"+px.toFixed(1)+" "+py.toFixed(1)+" l"+(Math.cos(a)*L).toFixed(1)+" "+(Math.sin(a)*L).toFixed(1)+"' stroke='"+V[(i+(d>0?1:0))%V.length]+"' stroke-width='"+(blanca?1.1:1.5)+"' stroke-linecap='round'/>"; }); }
+    return s; }
+  function ramas(w,lista,blanca){ return lista.map(function(q){ return rama(w+2,-2,q[0],w*q[1],blanca); }).join(''); }
+  function hoja(cx,cy,rot,col){ return "<g transform='translate("+cx+" "+cy+") rotate("+rot+")'><path d='M0 0 L5 -4 L9 -1 L13 -5 L17 -2 L22 -5 L26 0 L22 4 L17 2 L13 5 L9 1 L5 4Z' fill='"+(col||'#1f7a4a')+"'/><path d='M1 0 L25 0' stroke='#9fd9b0' stroke-width='.8'/></g>"; }
+  function bayas(l){ return l.map(function(q){ return "<circle cx='"+q[0]+"' cy='"+q[1]+"' r='4' fill='url(#b)'/><circle cx='"+(q[0]-1.3)+"' cy='"+(q[1]-1.3)+"' r='1' fill='#fff' opacity='.7'/>"; }).join(''); }
+  function esfera(x,y,r,g,hilo){ return "<path d='M"+x+" "+(y-r-hilo)+" L"+x+" "+(y-r)+"' stroke='#c9a24a' stroke-width='.8'/><circle cx='"+x+"' cy='"+y+"' r='"+r+"' fill='url(#"+g+")'/><rect x='"+(x-2.5)+"' y='"+(y-r-2.5)+"' width='5' height='3' fill='#b08d3a'/><ellipse cx='"+(x-r*.35)+"' cy='"+(y-r*.4)+"' rx='"+(r*.25)+"' ry='"+(r*.14)+"' fill='#fff' opacity='.8'/>"; }
+  function baston(x,y){ var d="M"+x+" "+(y+16)+" L"+x+" "+y+" A4.5 4.5 0 0 0 "+(x-9)+" "+y; return "<path d='"+d+"' stroke='#fff' stroke-width='3.4' fill='none' stroke-linecap='round'/><path d='"+d+"' stroke='#e3263c' stroke-width='3.4' fill='none' stroke-dasharray='2.4 2.4'/>"; }
+  function pina(x,y){ var s=''; for(var r=0;r<5;r++) for(var c=0;c<3;c++) s+="<ellipse cx='"+(x+(c-1)*3.6+(r%2)*1.8)+"' cy='"+(y+r*3.6)+"' rx='2.6' ry='2' fill='"+['#6a4022','#8a5530','#5a3418'][(r+c)%3]+"'/>"; return s; }
+  function monito(x,y){ return "<path d='M"+x+" "+y+" C"+(x-4)+" "+(y-8)+" "+(x-13)+" "+(y-6)+" "+(x-11)+" "+y+" C"+(x-10)+" "+(y+4)+" "+(x-4)+" "+(y+3)+" "+x+" "+y+"Z M"+x+" "+y+" C"+(x+4)+" "+(y-8)+" "+(x+13)+" "+(y-6)+" "+(x+11)+" "+y+" C"+(x+10)+" "+(y+4)+" "+(x+4)+" "+(y+3)+" "+x+" "+y+"Z' fill='#d0142c'/><path d='M"+(x-1)+" "+(y+1)+" L"+(x-6)+" "+(y+11)+" M"+(x+1)+" "+(y+1)+" L"+(x+6)+" "+(y+11)+"' stroke='#d0142c' stroke-width='2.4'/><circle cx='"+x+"' cy='"+y+"' r='2.4' fill='#9a0a1e'/>"; }
+  function adornos(){ var v={}, B='rgba(255,255,255,.85)';
+    v['--nvd-c0']=svgDe(130,90,ramas(130,[[2.3,.7],[2,.62],[2.65,.5],[1.75,.42]])+hoja(92,20,200)+hoja(94,22,250)+bayas([[94,22],[99,26],[90,27]])+esfera(72,41,7,'o',28));
+    v['--nvd-c1']=svgDe(96,62,hoja(52,40,200)+hoja(54,42,140)+hoja(56,40,265)+bayas([[54,40],[59,45],[49,45]])+baston(30,26));
+    v['--nvd-c2']=svgDe(80,62,hoja(40,40,200)+hoja(42,42,140)+hoja(44,40,265)+bayas([[42,40],[47,45],[37,45]]));
+    v['--nvd-c3']=svgDe(112,78,ramas(112,[[2.4,.66],[2.05,.55],[2.75,.42]])+pina(76,26)+monito(92,14));
+    v['--nvd-c4']=svgDe(120,76,ramas(120,[[2.35,.68],[2.0,.55],[2.7,.48]])+hoja(86,18,205)+hoja(88,20,250)+bayas([[88,20],[93,24]]),true,true);
+    v['--nvd-c5']=svgDe(126,96,ramas(126,[[2.2,.66],[2.55,.56],[1.85,.48]])+esfera(70,44,7.5,'r',30)+esfera(88,54,6,'p',42)+hoja(100,16,215)+bayas([[101,18],[96,22]]));
+    v['--nvd-t0']=svgDe(84,68,ramas(84,[[2.3,.72],[2,.6],[2.65,.5]],true));
+    v['--nvd-t1']=svgDe(84,64,ramas(84,[[2.3,.7],[2.0,.55],[2.7,.48]],true),false,true);
+    v['--nvd-t2']=svgDe(60,50,hoja(28,22,200,B)+hoja(30,24,250,B)+"<circle cx='30' cy='24' r='3.4' fill='rgba(255,255,255,.95)'/><circle cx='35' cy='28' r='3.4' fill='rgba(255,255,255,.95)'/>");
+    v['--nvd-t3']=svgDe(96,72,ramas(96,[[2.45,.64],[2.1,.55]],true));
+    return v; }
+  // a cada tarjeta y cuadro su variación, en un orden que no se repite seguido; las que llevan algo arriba a la
+  // derecha (como «8 h extra») van con un adorno de abajo
+  var ORDEN=[0,3,1,5,2,4], ABAJO=[2,1,4], ORDEN_T=[0,2,1,3];
+  function repartir(){ var i=0, j=0;
+    document.querySelectorAll('.fx-card,.mk3,.nvp-adv,.rban').forEach(function(e){ if(!e.offsetParent) return; var v=e.querySelector('.fx-hd')?ABAJO[i%3]:ORDEN[i%6]; if(e.getAttribute('data-nvd')!==String(v)) e.setAttribute('data-nvd',v); i++; });
+    document.querySelectorAll('.dtile').forEach(function(e){ var v=ORDEN_T[j%4]; if(e.getAttribute('data-nvdt')!==String(v)) e.setAttribute('data-nvdt',v); j++; }); }
   function carambanos(){
     var w=1600, x=-2, s='', g='', k=0;
     while(x<w){ var ww=R(5,10), L=Math.random()<.2?R(16,22):R(6,13);
@@ -50,16 +70,14 @@
 
   function armar(){
     if(!vars){
-      vars={};
-      for(var i=1;i<=3;i++){ vars['--nvd-e'+i]=esquina(Math.round(R(100,125)),'#8fc0e4',1,'tl'); vars['--nvd-f'+i]=esquina(Math.round(R(75,95)),'#8fc0e4',.85,'br'); }
-      vars['--nvd-b1']=esquina(80,'#ffffff',.6,'tr'); vars['--nvd-b2']=esquina(80,'#ffffff',.6,'tr');
+      vars=adornos();
       carSVG=carambanos(); auHTML=aurora();
     }
     var st=document.documentElement.style; for(var k in vars) st.setProperty(k,vars[k]);
     listo=true; decorar();
   }
   function decorar(){
-    verValle();
+    verValle(); repartir();
     document.querySelectorAll('.topbar').forEach(function(b){ if(!b.querySelector(':scope>.nvd-car')){ var d=document.createElement('div'); d.className='nvd-car'; d.setAttribute('aria-hidden','true'); d.innerHTML=propio(carSVG); b.appendChild(d); } });
     document.querySelectorAll(HEROES).forEach(function(h){ if(!h.querySelector(':scope>.nvd-au')){ var d=document.createElement('div'); d.className='nvd-au'; d.setAttribute('aria-hidden','true'); d.innerHTML=propio(auHTML); h.classList.add('nvd-hero'); h.insertBefore(d,h.firstChild); } });
   }
@@ -67,6 +85,7 @@
     quitarValle();
     document.querySelectorAll('.nvd-car,.nvd-au').forEach(function(e){ e.remove(); });
     document.querySelectorAll('.nvd-hero').forEach(function(e){ e.classList.remove('nvd-hero'); });
+    document.querySelectorAll('[data-nvd],[data-nvdt]').forEach(function(e){ e.removeAttribute('data-nvd'); e.removeAttribute('data-nvdt'); });
     if(vars){ var st=document.documentElement.style; for(var k in vars) st.removeProperty(k); }
     if(lz){ lz.remove(); lz=null; cx=null; efectos=[]; parts=[]; if(corre){ cancelAnimationFrame(corre); corre=0; } }
     listo=false;
