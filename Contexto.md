@@ -362,8 +362,9 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     17 todos); casita a lo lejos que se acerca y enciende ventanas; camino "Rumbo a Navidad" (24 huellitas y el
     trineo en el día de hoy) bajo el nombre de la app; tarjeta envuelta con cinta, moño y "Se abre el 24".
   - `casa` (22–27 dic) «El árbol» (`js/navidad-casa.js`, `window.__nvCasa(capa)` lo llama `armarCasa`): ilustración en
-    canvas con técnica «producida»: ramas de pino aguja por aguja, listón dorado en espiral, esferas con reflejo y
-    sombra, regalos en 3/4 con satín, luces con resplandor que respiran, estrella con rayos, bokeh y viñeta. Sala
+    canvas con técnica «producida»: árbol por pisos sólidos (sin huecos) con puntas de agujas que rompen la orilla,
+    sombra de piso a piso, luz desde la izquierda, guirnaldas doradas continuas, tiras de luces y esferas colgando de
+    las puntas (la primera versión, de ramas sueltas, se partía al centro); esferas con reflejo y sombra, regalos en 3/4 con satín, luces con resplandor que respiran, estrella con rayos, bokeh y viñeta. Sala
     cálida desenfocada y piso de madera; en PC el árbol principal a la derecha de la tarjeta y otro desenfocado a la
     izquierda con regalos; en teléfono el árbol detrás de la tarjeta con la estrella sobre el logo. Se arma leyendo
     dónde están logo, nombre, tarjeta y la mascota del login (`.nv-mascota`, que no se toca): el piso queda a la
