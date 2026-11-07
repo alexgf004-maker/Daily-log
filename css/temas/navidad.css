@@ -23,6 +23,40 @@ html.tema-navidad #loginScreen{
   html:is(.nav-pre,.nav-casa) #loginScreen .login-panel{margin-top:22px;margin-bottom:8px}
   html.nav-pre #loginScreen .login-logo{width:54px;height:54px;margin-bottom:8px}
 }
+/* Laptops con poca altura útil (1366×600 con barra del navegador y de tareas):
+   el login pedía ~730px y el botón «Ingresar», la mascota y el suelo quedaban bajo el pliegue. */
+@media (min-width:901px) and (max-height:760px){
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-panel{margin-top:6px;margin-bottom:0;padding-top:12px;padding-bottom:10px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-logo{width:44px;height:44px;margin-bottom:6px;border-radius:14px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-brand-eyebrow{margin-bottom:4px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-brand-name{font-size:25px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-brand-sub{margin-top:6px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-brand{margin-bottom:12px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .nv-camino{margin-top:8px;padding-top:5px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .nv-camino svg{height:22px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-form{padding:20px 22px 18px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-hola-sub{margin-bottom:12px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-form .fg{margin-bottom:10px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-form input{height:44px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .btn-login{height:46px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-footer{margin-top:10px}
+}
+@media (min-width:901px) and (max-height:640px){
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-panel{margin-top:2px;padding-top:8px;padding-bottom:6px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-logo{width:38px;height:38px;margin-bottom:4px;border-radius:12px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-brand-eyebrow{display:none}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-brand-name{font-size:23px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-brand-sub{margin-top:4px;font-size:12px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-brand{margin-bottom:10px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .nv-camino{margin-top:6px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-form{padding:16px 22px 16px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-hola-sub{margin-bottom:10px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-form .fg{margin-bottom:8px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-form .fl{margin-bottom:4px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-form input{height:42px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .btn-login{height:44px}
+  html:is(.nav-pre,.nav-casa) #loginScreen .login-footer{margin-top:8px;padding:4px 12px}
+}
 .nv-casita{position:absolute;left:27%;bottom:64px;transform:translateX(-50%);filter:drop-shadow(0 0 6px rgba(255,200,110,.5))}
 .nv-humo{animation:nvHumo 3s ease-in-out infinite}
 @keyframes nvHumo{0%{transform:translateY(2px);opacity:.2}50%{opacity:.8}100%{transform:translateY(-6px);opacity:0}}

@@ -465,6 +465,12 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Login en laptops bajas** (Pre-Navidad y Navidad en casa, `navidad.css`): en una laptop 1366×768 el navegador y
+    la barra de tareas dejan ~600px útiles y el login pedía ~730px, así que «Ingresar», la mascota y el suelo de la
+    escena quedaban abajo del pliegue (se veía «incompleto»). Dos escalones solo para PC (`min-width:901px`):
+    `max-height:760px` achica logo, nombre, camino, rellenos, campos (44px) y botón (46px); `max-height:640px` además
+    oculta «Registro de planilla» y aprieta un poco más. Medido sin desplazamiento a 1366×600, 1366×650, 1536×700 y
+    1280×560. No toca la mascota: baja junto con el panel porque se ancla a su borde inferior.
   - **"Probar animaciones"** se muestra solo con Halloween, Muertos y Pre-Navidad (regla en `comun.css`; antes vivía en
     `halloween.css` y fuera de Halloween el botón salía sin hacer nada).
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
