@@ -361,19 +361,25 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     pantalla, pinos con moños y esferas rojas, trineo; cordón de foquitos congelados que prenden más cada día (el
     17 todos); casita a lo lejos que se acerca y enciende ventanas; camino "Rumbo a Navidad" (24 huellitas y el
     trineo en el día de hoy) bajo el nombre de la app; tarjeta envuelta con cinta, moño y "Se abre el 24".
-  - `casa` (22–27 dic) «El pueblito de jengibre» (`js/navidad-casa.js`, `window.__nvCasa(capa)` lo llama
-    `armarCasa`): ilustración en canvas de postal con toque de cuento: anochecer índigo a rosa, luna creciente y
-    estrellas; colinas nevadas; casitas de jengibre con glaseado, gomitas, bastones y ventanas encendidas; faroles de
-    bastón con tiras de luces de colores; paletas y gomitas en la nieve; árbol con adornos (por pisos sólidos, puntas
-    de agujas, guirnaldas, luces y esferas) junto a la mascota. Teléfono con composición propia: luces colgando sobre
-    el logo, tira de luces entre la tarjeta y el letrero de abajo, fila de casitas sobre la calle (ninguna detrás de la
-    mascota). En tablet no se enciman casas, paletas ni tarjeta. Se arma leyendo dónde están logo, nombre, tarjeta,
-    letrero de abajo y la mascota del login (`.nv-mascota`, que no se toca): el piso a la altura de sus pies, con un
-    charco de luz, y nada se le encima. Se rehace al cambiar el tamaño o si la mascota cambia de lugar. Dos lienzos
-    (fijo + vivo); el vivo corre solo con el login a la vista; con movimiento reducido queda quieto. El 24 se sigue
-    abriendo el regalo de la tarjeta igual que antes. Elegida (estilo «postal clásica + mágica/ilustrada», igual todos
-    los días) entre 3: la noche de Santa, la sala de la chimenea y el pueblito de jengibre; antes se descartaron
-    una versión de dibujos planos y otra de sala con árbol.
+  - `casa` (22–27 dic) «Llegamos a la casita» (`js/navidad-casa.js`, `window.__nvCasa(capa)` lo llama `armarCasa`): es
+    el final de la historia de Pre-Navidad. Mismo mundo (aurora, montañas nevadas, lago congelado, pinos escarchados
+    con moño rojo); la casita roja que se acercaba, ya de cerca, con humo; el trineo del «Rumbo a Navidad» estacionado
+    con regalos; el cordón de foquitos arriba ya todo encendido; y el árbol de Navidad grande (estilo clásico: 8 pisos
+    de agujas, luz cálida desde dentro, cuentas doradas, esferas, bastones, moñitos, estrellitas, estrella facetada
+    con rayos y falda de terciopelo) junto a la mascota; en teléfono se asoma la mitad por la orilla derecha.
+    El cordón es SVG del DOM (`.nv-guirnalda .nv-luz`): lo usa la travesura de la mascota (`js/navidad-historia.js`).
+    La mascota no se toca: se lee su posición (piso a la altura de sus pies, su luz, la falda del árbol) y la escena se
+    rehace si cambia de lugar o de tamaño.
+    Easter eggs al tocar fuera de la tarjeta, campos y mascota: estrella del árbol (destello y lluvia de oro; al tercer
+    toque «¡Feliz Navidad!»), chimenea (humo en forma de corazón), puerta (se abre con luz), trineo (confeti) y cualquier
+    foquito del cordón (ola de luz por todo el cordón). Ambiente: estrellas fugaces en la aurora y Santa a lo lejos
+    cada 40–70 s.
+    Rendimiento: la escena pesada se pinta una vez (≈25 ms; ≈100 ms con el procesador 4× más lento); la capa viva usa
+    brillos precalculados por color (solo se escalan), resolución tope 1.5×, y se detiene del todo fuera del login o con
+    la app en segundo plano (se reanuda sola). Medido: ~57 cuadros/s en teléfono con CPU ÷4. Con movimiento reducido
+    queda quieta (los toques siguen funcionando). El 24 se sigue abriendo el regalo de la tarjeta.
+    Elegida entre 3 que siguen la historia (afuera de la casita, dentro de la casita, árbol al centro); antes se
+    descartaron una versión de dibujos planos, una sala con árbol, el pueblito de jengibre y símbolos sueltos.
   - Login `pre` en tablet y PC: el cordón de foquitos se dibuja al ancho y alto reales (`focos()`, se rehace al
     cambiar el tamaño; antes se estiraba y los focos quedaban aplastados) y lleva más tramos en pantallas anchas. Las
     montañas se repiten alternando el sentido en vez de estirarse; hay bosquecitos de 2–3 pinos hacia el centro (sin
