@@ -11,7 +11,7 @@
   'use strict';
   var NS='http://www.w3.org/2000/svg';
   var reducido=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var armada=null, bucle=null, soltarMedida=null;
+  var armada=null, bucle=null, soltarMedida=null, hieloListo=false;
   var R=function(a,b){ return a+Math.random()*(b-a); };
   var $=function(s,r){ return (r||document).querySelector(s); };
 
@@ -45,6 +45,7 @@
   function quitar(){
     if(soltarMedida){soltarMedida();soltarMedida=null;}
     document.querySelectorAll('.nv-capa,.nv-extra').forEach(function(e){ e.remove(); });
+    document.querySelectorAll('#loginScreen .nv-deshielo,#loginScreen .nv-libre').forEach(function(e){ e.classList.remove('nv-deshielo','nv-libre'); });
     if(bucle){ bucle.detener(); bucle=null; }
     armada=null;
   }
@@ -237,6 +238,28 @@
     // botón: chispitas blancas al tocarlo
     var btn=$('#loginScreen .btn-login');
     if(btn&&!btn.__nv){ btn.__nv=1; btn.addEventListener('pointerdown',function(e){ if(armada!=='pre'||reducido) return; chispas(e.clientX,e.clientY,14,['#fff','#e8f8ff','#ffd9de']); }); }
+    hieloCampos(btn);
+  }
+  // «Congelado»: los campos y el botón empiezan cubiertos de hielo; cada campo se descongela al llenarlo
+  // y el botón se libera con el usuario y el PIN (4+) completos. Estilos en navidad.css.
+  function hieloCampos(btn){
+    var u=document.getElementById('loginUser'), pin=document.getElementById('loginPin'), ls=document.getElementById('loginScreen');
+    if(!u||!pin||!btn) return;
+    btn.insertAdjacentHTML('afterbegin','<span class="nv-extra nv-hielo-btn" aria-hidden="true"></span>');
+    revisarHielo();
+    if(hieloListo) return; hieloListo=true;
+    ['input','change'].forEach(function(t){ u.addEventListener(t,revisarHielo); pin.addEventListener(t,revisarHielo); });
+    // al volver al login (cerrar sesión limpia los campos sin evento) y por el autollenado del navegador
+    if(ls) new MutationObserver(function(){ if(ls.classList.contains('active')){ revisarHielo(); setTimeout(revisarHielo,600); } }).observe(ls,{attributes:true,attributeFilter:['class']});
+    setTimeout(revisarHielo,800);
+  }
+  function revisarHielo(){
+    var u=document.getElementById('loginUser'), pin=document.getElementById('loginPin'), btn=$('#loginScreen .btn-login');
+    if(!u||!pin||!btn) return;
+    var pre=armada==='pre'||!!btn.querySelector('.nv-hielo-btn'), uOk=pre&&!!u.value.trim(), pOk=pre&&pin.value.length>=4;
+    var wu=u.closest('.lg-wrap'), wp=pin.closest('.lg-wrap');
+    if(wu) wu.classList.toggle('nv-deshielo',uOk); if(wp) wp.classList.toggle('nv-deshielo',pOk);
+    btn.classList.toggle('nv-libre',uOk&&pOk);
   }
   // Una sola vez: avisos del login y la bienvenida al entrar
   (function(){

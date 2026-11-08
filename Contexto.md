@@ -465,6 +465,13 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Login Pre-Navidad «Congelado»** (`navidad.css` bloque «Congelado», `js/navidad.js` `hieloCampos`/`revisarHielo`):
+    los campos y el botón empiezan cubiertos de hielo (degradado celeste, grietas y carámbanos colgando). Cada campo se
+    descongela al llenarlo (fondo crema, borde dorado, ícono rojo); el botón «Ingresar» está atrapado en hielo (capa
+    `.nv-hielo-btn` con `z-index:-1` dentro de `isolation:isolate`, debajo del texto) y se libera rojo y brillante con
+    usuario + PIN de 4 o más. Se revisa con `input`/`change`, al volver al login (cerrar sesión limpia los campos sin
+    evento) y por el autollenado. Solo en Pre-Navidad; `quitar()` limpia las clases. Elegida entre 3 (carta a Santa,
+    suéter navideño, congelado) después de descartar 3 más discretas (foquitos del PIN, hielo que se derrite, nieve).
   - **Carga de Navidad en casa sin «primer tema»** (`comun.css`, `navidad.css`, `js/navidad-casa.js`): la pantalla
     de carga (corona) y el fondo del login de la etapa casa seguían en el café del primer diseño, y la escena del lienzo
     se pintaba hasta ~200-700 ms después de mostrarse el login (esperaba al ResizeObserver o al temporizador de 700 ms).
