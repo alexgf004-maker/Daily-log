@@ -13,10 +13,10 @@ function fixture({stage='casa',theme='navidad'}={}){
  const hero=new Element(),other=new Element(),screen=new Element(),template={innerHTML:'<svg id="drawing"><g id="actor"/></svg><div class="nv-hielo-fijo"/>'},modal=new Element(),app=new Element();let chosen=hero;
  screen.classList.add('active');screen.querySelectorAll=()=>[chosen];screen.querySelector=()=>point;screen.contains=e=>e?.inside===true;
  const doc={hidden:false,readyState:'loading',activeElement:null,addEventListener:(k,f)=>events[k]=f,querySelector:s=>s.startsWith('#employeeScreen')?(selected?screen:null):s.startsWith('#loginScreen .nv-mascota')?template:s==='#fxOk.on'&&modalOn?modal:null,querySelectorAll:()=>modalOn?[modal]:[],getElementById:()=>app,createElement(){const e=new Element(),svg=new Element();svg.style={};e.querySelector=s=>s==='svg'?svg:null;e.querySelectorAll=()=>[];return e;}};
- class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene=options.initialScene;actors.push(this);}play(n){this.scene=n;return this;}pause(){this.paused=true;}resume(){this.paused=false;}render(t){this.rendered=t;}destroy(){this.destroyed=true;}lookAt(p){this.look=p;}}
- Actor.SCENES={idle:{duration:5},nye:{duration:5},privacy:{duration:.6},grump:{duration:5},plot:{duration:5},ack:{duration:2.8}};
+ class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene=options.initialScene;actors.push(this);}play(n){this.scene=n;return this;}pause(){this.paused=true;}resume(){this.paused=false;}render(t){this.rendered=t;}reachFor(p){this.target=p;return this;}destroy(){this.destroyed=true;}lookAt(p){this.look=p;}}
+ Actor.SCENES={idle:{duration:5},nye:{duration:5},privacy:{duration:.6},grump:{duration:5},plot:{duration:5},ack:{duration:2.8},mischief:{duration:4.4},trapped:{duration:3.6},caught:{duration:4.8}};
  let reduced=false;
- const ctx={window:null,document:doc,Date,Number,Array,GreenActor:Actor,NavidadHielo:{create(d,e,o){const ice={options:o,days:[d],update(d){this.days.push(d);},touch(){this.touched=true;},destroy(){this.destroyed=true;}};ices.push(ice);return ice;}},NavidadEntorno:{point:(svg,p)=>p,create(s,m,options){const world={options,resetGaze(){this.reset=true;},suspend(){},destroy(){this.destroyed=true;},react(d){options.react(d);}};worlds.push(world);return world;}},MutationObserver:class{observe(){}},setTimeout:f=>{timers.set(++id,f);return id;},clearTimeout:id=>timers.delete(id),setInterval(){},matchMedia:()=>({get matches(){return reduced;},addEventListener:(k,f)=>events.media=f})};ctx.window=ctx;ctx.__temas={modo:'auto',get activo(){return {id:enabled};},etapaDe:()=>({id:current})};vm.createContext(ctx);vm.runInContext(read('js/navidad-companero.js'),ctx);events.DOMContentLoaded();
+ const ctx={window:null,document:doc,Date,Number,Array,GreenActor:Actor,NavidadHielo:{create(d,e,o){const ice={options:o,days:[d],update(d){this.days.push(d);},touch(){this.touched=true;},destroy(){this.destroyed=true;}};ices.push(ice);return ice;}},NavidadEntorno:{point:(svg,p)=>p,create(s,m,options){const world={options,resetGaze(){this.reset=true;},suspend(){},destroy(){this.destroyed=true;},react(d){options.react(d);}};worlds.push(world);return world;}},MutationObserver:class{observe(){}},setTimeout:f=>{timers.set(++id,f);return id;},clearTimeout:id=>timers.delete(id),setInterval(){},matchMedia:()=>({get matches(){return reduced;},addEventListener:(k,f)=>events.media=f})};ctx.window=ctx;ctx.addEventListener=(k,f)=>events[k]=f;ctx.__temas={modo:'auto',get activo(){return {id:enabled};},etapaDe:()=>({id:current})};vm.createContext(ctx);vm.runInContext(read('js/navidad-companero.js'),ctx);events.DOMContentLoaded();
  return {ctx,doc,hero,other,screen,actors,ices,worlds,events,timers,setStage:s=>current=s,setTheme:s=>enabled=s,setSelected:s=>selected=s,setHero:h=>chosen=h,setModal:v=>modalOn=v,setPoint:p=>point=p,setReduced:v=>reduced=v,sync:ctx.NavidadCompanero.sync};
 }
 test('reutiliza el dibujo y aísla degradados, filtros, enlaces y etiquetas del login',()=>{
@@ -46,4 +46,28 @@ test('al editar un PIN aparta la mirada y pausa sin acceder al contenido',()=>{
 });
 test('movimiento reducido y pestaña oculta impiden las reacciones',()=>{
  const f=fixture();f.setReduced(true);f.sync();f.hero.children[0].click();assert.equal(f.actors[0].paused,true);assert.notEqual(f.actors[0].scene,'grump');f.setReduced(false);f.doc.hidden=true;f.sync();assert.equal(f.actors[0].paused,true);f.doc.hidden=false;f.sync();assert.equal(f.actors[0].paused,false);
+});
+test('no congela toda la respiración al editar un campo normal ni inicia travesuras al escribir',()=>{
+ const f=fixture();f.doc.activeElement={inside:true,type:'text',matches:()=>true};f.events.focusin();assert.equal(f.actors[0].paused,false);assert.equal(f.hero.children[0].dataset.estado,'editando');
+ f.actors[0].options.onFrame({elapsed:2},20);assert.equal(f.actors[0].scene,'idle');
+});
+test('los toques sucesivos tienen respuestas distintas en vez de repetir siempre el mismo gesto',()=>{
+ const f=fixture(),node=f.hero.children[0];node.click();assert.equal(f.actors[0].scene,'caught');node.click();assert.equal(f.actors[0].scene,'grump');node.click();assert.equal(f.actors[0].scene,'plot');
+});
+test('al tocar el hielo presiona, deja marcas de las manos y vuelve al reposo dentro del bloque',()=>{
+ const f=fixture({stage:'pre'});f.hero.children[0].click();assert.equal(f.actors[0].scene,'trapped');assert.equal(f.actors[0].paused,false);
+ f.actors[0].options.onFrame({elapsed:.8},.8);assert.equal(f.ices[0].touched,true);f.actors[0].options.onFrame({elapsed:3.6},3);assert.equal(f.actors[0].paused,true);assert.equal(f.actors[0].scene,'idle');assert.equal(f.ices.length,1);
+});
+test('un modal con opacidad cero no bloquea al personaje',()=>{
+ const f=fixture();f.ctx.getComputedStyle=()=>({opacity:'0',visibility:'visible',display:'flex'});f.setModal(true);f.sync();assert.equal(f.actors[0].paused,false);
+});
+function ornamentFixture(){
+ const f=fixture(),boot=new Element(),values={};boot.style={setProperty:(k,v)=>values[k]=v,removeProperty:k=>delete values[k]};
+ boot.querySelector=()=>({getScreenCTM:()=>({a:1,b:0,c:0,d:1,e:266,f:178})});let hand={e:400,f:300};
+ const ornament=f.ctx.NavidadCompanero.createOrnament({querySelector:()=>boot},{querySelector:()=>({getScreenCTM:()=>hand})});return {ornament,boot,values,setHand:p=>hand=p};
+}
+test('la botita original solo se mueve tras el contacto real de la mano y vuelve a su lugar',()=>{
+ const f=ornamentFixture();assert.equal(f.ornament.start(),true);f.ornament.pull(1.2);assert.equal(f.boot.classList.contains('nv-bota-tirada'),false);
+ f.setHand({e:300,f:200});f.ornament.pull(1.25);f.setHand({e:310,f:197});f.ornament.pull(1.8);assert.equal(f.values['--nv-bota-x'],'10.00px');
+ f.ornament.release();f.ornament.settle(.2);assert.ok(Math.abs(parseFloat(f.values['--nv-bota-x']))<10);f.ornament.settle(3);assert.equal(f.boot.classList.contains('nv-bota-tirada'),false);assert.deepEqual(f.values,{});
 });

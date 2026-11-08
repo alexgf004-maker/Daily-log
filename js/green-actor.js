@@ -1,4 +1,4 @@
-/* GreenActor 2 — articulated SVG limbs, 14 original scenes and 7 integrated poses.
+/* GreenActor 2 — articulated SVG limbs, 14 original scenes and 9 integrated poses.
    API: const actor = new GreenActor(document.querySelector('#green-character'));
    actor.play('steal'); actor.tap(); actor.pause(); actor.resume(); actor.destroy();
    Custom DOM events: greenactor:scenechange and greenactor:complete. */
@@ -31,6 +31,8 @@ const SCENES = Object.freeze({
  offer:    {duration:5.0,loop:false,title:'Devolver la luz',detail:'Levanta la mano y devuelve un foco a la guirnalda.',group:'Login integrado'},
  grump:    {duration:5.8,loop:false,title:'Refunfuñar',detail:'Entrecierra los ojos, cruza los brazos y protesta con una pequeña patada.',group:'Login integrado'},
  plot:     {duration:5.2,loop:false,title:'Tramar otra travesura',detail:'Comprueba ambos lados, junta las manos y esboza una sonrisa torcida.',group:'Login integrado'},
+ trapped:  {duration:3.6,loop:false,title:'Déjame salir',detail:'Apoya las manos contra el hielo, empuja y resopla sin salir del bloque.',group:'Interacciones'},
+ mischief: {duration:4.4,loop:false,title:'Tirar de la botita',detail:'Se acerca a la botita real, la agarra y da dos tirones antes de soltarla.',group:'Interacciones'},
  ack:      {duration:2.8,loop:false,title:'Registro recibido',detail:'Comprueba el registro, asiente una vez y vuelve a su expresión gruñona.',group:'Dentro de la app'},
  nye:      {duration:5.6,loop:true,title:'31 de diciembre', detail:'Los destellos lo asustan: tiembla y se tapa los oídos.', group:'Fechas especiales'},
 });
@@ -163,6 +165,7 @@ class GreenActor {
   const mode=this.scene;const D=SCENES[mode].duration;const p=clamp(t/D);
   let v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
     scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,headY:0,alpha:1,
+    trapPress:0,leftWorldReach:0,leftWorldHandX:this._pose?.leftWorldHandX??306,leftWorldHandY:this._pose?.leftWorldHandY??750,
     worldReach:0,worldHandX:this._pose?.worldHandX||494,worldHandY:this._pose?.worldHandY||750};
   const personality=this.options.embedded&&this.options.personality!==false;
   const frozen=!!this.options.frozen;
@@ -429,6 +432,17 @@ class GreenActor {
     visible['reach-arm']=0;
     v.worldHandX=a.x-v.dx-1.5*pull;v.worldHandY=a.y+pull;v.worldReach=extension;
   }
+  if(this._reachTarget&&this.options.embedded&&mode==='mischief'){
+    const a=this._reachTarget,dy=a.y-580,span=Math.sqrt(Math.max(0,173*173-dy*dy));
+    const step=clamp(a.x-352+span-12,-180,0)*between(t,0,.75);
+    const extend=between(t,.45,1.1)*(1-between(t,3.25,4.1));
+    const pull=72*bump(t,1.45,1.72,1.95,2.25)+54*bump(t,2.35,2.6,2.82,3.12);
+    const walk=Math.sin(t/.78*PI*2)*between(t,0,.12)*(1-between(t,.62,.8));
+    v.leftLeg=18*walk;v.rightLeg=-18*walk;v.dx=step+pull*.18;v.dy=-3*Math.abs(walk);v.angle=0;v.head=7*extend;v.pupilX=-12;v.pupilY=9;
+    v.leftArm=0;v.rightArm=15;v.grump=.75;v.sly=.4;v.lidL=.7;v.lidR=.55;
+    v.leftWorldReach=extend;v.leftWorldHandX=a.x-v.dx+pull;v.leftWorldHandY=a.y-pull*.3;
+    v.scarf=-5*bump(t,1.5,1.8,2,2.3);
+  }
   if(this._lookTarget&&this.motionTime<=this._lookTarget.until&&mode!=='privacy'&&!this._reachTarget){
     const dx=this._lookTarget.x-400-v.dx,dy=this._lookTarget.y-325-v.dy,length=Math.hypot(dx,dy)||1;
     v.pupilX=12*dx/length;v.pupilY=9*dy/length;v.head=lerp(v.head,v.pupilX*.35,.75);
@@ -439,6 +453,11 @@ class GreenActor {
       scarf:0,tail:0,knot:0,hair:0,earL:4,earR:-3,eyeL:1,eyeR:1,pupilX:-5,pupilY:0,
       grump:1,sly:.12,surprise:0,lidL:.9,lidR:.82});
     v.leftArm=-18;v.rightArm=16;
+    if(mode==='trapped'){
+      const press=bump(t,.08,.65,2.55,3.6),strain=bump(t,.85,1.1,1.35,1.65)+.7*bump(t,1.8,2.05,2.25,2.55);
+      v.trapPress=press;v.head=2*press;v.pupilX=-3+7*strain;v.pupilY=-2*press;
+      v.lidL=.94;v.lidR=.88;v.earL=4+3*strain;v.earR=-3-2*strain;
+    }
   }
   v.forearmL=v.leftArm;v.forearmR=v.rightArm;
   this.settlePose(v,dt);v={...this._pose};
@@ -468,15 +487,17 @@ class GreenActor {
   this.transform('head',`translate(0 ${v.headY.toFixed(2)}) rotate(${v.head.toFixed(2)} 399 474)`);this.bodyScale(v.body);
   if(this.n('leg-left-curve')){
     // Compensar la respiración en el apoyo, pero conservar los saltos y carreras.
-    const stride=['sneak','run','climb'].includes(mode);
-    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3','ack'].includes(mode);
+    const stride=['sneak','run','climb'].includes(mode)||mode==='mischief'&&t<.85;
+    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3','ack','mischief','trapped'].includes(mode);
     const ground=side=>planted?v.dy+Math.sin(v.angle*PI/180)*((side==='left'?365:445)-400):0;
     this.poseLeg('left',v.leftLeg,ground('left'),stride);this.poseLeg('right',v.rightLeg,ground('right'),stride);
   }else{
     this.rot('leg-left',v.leftLeg,370,807);this.rot('leg-right',v.rightLeg,432,805);
   }
   if(this.n('arm-left-curve')){
-    this.poseArm('left',v.leftArm,v.forearmL);this.poseArm('right',v.rightArm,v.forearmR,handGoal);
+    const leftGoal=v.trapPress>.0001?{x:215,y:530,amount:clamp(v.trapPress)}:v.leftWorldReach>.0001?{x:v.leftWorldHandX,y:v.leftWorldHandY,amount:clamp(v.leftWorldReach)}:null;
+    const rightGoal=v.trapPress>.0001?{x:605,y:530,amount:clamp(v.trapPress)}:handGoal;
+    this.poseArm('left',v.leftArm,v.forearmL,leftGoal);this.poseArm('right',v.rightArm,v.forearmR,rightGoal);
   }else{
     this.rot('arm-left',v.leftArm,352,580);this.rot('arm-right',v.rightArm,444,580);
   }

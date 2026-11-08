@@ -176,16 +176,16 @@
 /* El compañero pertenece al encabezado: reserva una columna, nunca flota sobre
    campos, botones ni navegación. Solo el encabezado que lo aloja cambia. */
 .tema-navidad :is(#employeeScreen,#adminScreen) .nv-con-companero{
-  position:relative;isolation:isolate;overflow:visible;padding-inline-end:126px!important;min-height:148px;
+  position:relative;isolation:isolate;overflow:visible;padding-inline-end:112px!important;min-height:112px;
 }
 .tema-navidad .nv-con-companero>.nv-mascota-interior{
-  display:block;position:absolute;inset:auto -8px -16px auto;width:148px;aspect-ratio:800 / 1067;
+  display:block;position:absolute;inset:auto -6px -10px auto;width:104px;aspect-ratio:800 / 1067;
   z-index:2;cursor:pointer;touch-action:manipulation;border-radius:20px;
   filter:drop-shadow(0 4px 3px #09293b38);outline-offset:-22px;
 }
 .tema-navidad .nv-mascota-interior:focus-visible{outline:2px solid #e8fbff}
 .tema-navidad .nv-mascota-interior>svg{pointer-events:none}
-.tema-navidad.nav-casa .nv-con-companero>.nvc-bota{right:124px}
+.tema-navidad.nav-casa .nv-con-companero>.nvc-bota{right:80px;top:calc(100% - 46px);width:30px}
 .tema-navidad .nv-mascota-interior [data-nv-part="background"],
 .tema-navidad .nv-mascota-interior [data-nv-part="cold-patina"]{display:none!important}
 .nav-pre .nv-mascota-interior .nv-hielo-fijo{display:block}
@@ -198,10 +198,16 @@
 .nv-mascota-interior.nv-mascota-ojos-pausa *{animation-play-state:paused!important}
 .nv-mascota-interior [data-nv-part="nvice-refraction"]{pointer-events:none}
 @media(max-width:370px){
-  .tema-navidad :is(#employeeScreen,#adminScreen) .nv-con-companero{padding-inline-end:108px!important;min-height:144px}
-  .tema-navidad .nv-con-companero>.nv-mascota-interior{width:132px;right:-12px;bottom:-14px}
+  .tema-navidad :is(#employeeScreen,#adminScreen) .nv-con-companero{padding-inline-end:100px!important;min-height:108px}
+  .tema-navidad .nv-con-companero>.nv-mascota-interior{width:96px;right:-8px;bottom:-10px}
   .nv-con-companero .dash-hero-top{flex-wrap:wrap}
 }
 .nv-con-companero>:not(.nv-mascota-interior):not(.nvd-au):not(.nvc-gorro):not(.nvc-bota){min-width:0;max-width:100%}
 .nv-con-companero :is(.ph-title,.rg-hero-t,.ps-hero-t,.dash-hero-name){overflow-wrap:anywhere}
 .nv-mascota-interior.nv-hielo-golpe [data-nv-part="nvice-cracks"]{stroke-opacity:.9;stroke-width:4}
+
+/* La botita sigue siendo la de Claude; solo se articula mientras la mano la sujeta. */
+.nv-con-companero>.nvc-bota.nv-bota-tirada{animation:none!important;transform:translate(var(--nv-bota-x,0px),var(--nv-bota-y,0px)) rotate(var(--nv-bota-giro,5deg))!important}
+.nv-mascota[data-accion="trapped"] [data-nv-part="nvice-palms"],.nv-mascota[data-gesto="trapped"] #nvice-palms{animation:nvPalmasHielo 3.6s ease-out both}
+.nv-mascota[data-accion="trapped"] [data-nv-part="eyebrows"]{translate:0 4px}
+@keyframes nvPalmasHielo{0%,10%,100%{opacity:0}25%,40%,58%{opacity:.8}48%,72%{opacity:.3}}
