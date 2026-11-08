@@ -465,6 +465,13 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Login de Navidad en casa «Galleta de jengibre»** (`navidad.css`, bloque del mismo nombre, solo CSS): tarjeta
+    crema con glaseado blanco que escurre arriba (sigue las esquinas redondeadas; reemplaza la franja de rayas recta que
+    se salía de la tarjeta), campos con borde de galleta tostada y costura de glaseado, botón de galleta con glaseado
+    arriba y abajo y cuatro dulces (capas `radial-gradient` del fondo, sin elementos extra) e interruptor de bastón de
+    caramelo. El borde de galleta suma 10px por campo, así que el campo por dentro mide 10px menos (40/34/32px según
+    la altura) y la tarjeta ocupa lo mismo que antes: cabe completa de 560 a 768px de alto. Elegida entre regalos por
+    abrir, galleta y suéter; la tarjeta entre glaseado que escurre, tarjeta-galleta y limpia con muñequito.
   - **Navidad en casa dentro de la app «Noche en la casita»** (`js/navidad-casa-dentro.js`, estilos en `navidad.css`
     «Navidad en casa dentro de la app»): detrás de las pantallas de adentro, la misma noche del login (aurora, luna,
     montañas, la casita con luces, el árbol clásico y el plato de galletas con leche para Santa en la nieve), dibujada

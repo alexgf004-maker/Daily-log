@@ -221,7 +221,6 @@ html.nav-pre #loginScreen .btn-login.nv-libre .nv-hielo-btn{opacity:0;transform:
 .nav-casa .login-brand-name .inn{color:#ffe1a0!important;text-shadow:0 2px 14px rgba(255,170,60,.35)}
 .nav-casa .nv-cuenta{background:rgba(60,12,8,.55);border:1px solid rgba(242,196,90,.4);color:#ffe7a3}
 .nav-casa .login-form{background:linear-gradient(180deg,#fff9ef,#f7ecd8);overflow:visible}
-.nav-casa .login-form::before{height:5px;background:repeating-linear-gradient(90deg,#b3192d 0 14px,#f6e7cf 14px 20px,#1f6b45 20px 34px,#f6e7cf 34px 40px)}
 .nav-casa .login-form>:not(.nv-extra){position:relative;z-index:1}
 .nav-casa .login-hola{color:#3a120c}.nav-casa .login-hola em{color:#b3192d}
 .nav-casa .lg-chip{color:#8a1a1a}
@@ -233,6 +232,35 @@ html.nav-pre #loginScreen .btn-login.nv-libre .nv-hielo-btn{opacity:0;transform:
 @keyframes nvCinta{to{transform:translateY(120%);opacity:0}}
 .nv-confeti{position:fixed;z-index:60;width:7px;height:10px;border-radius:2px;pointer-events:none;animation:nvConfeti 1.5s cubic-bezier(.2,.7,.4,1) forwards}
 @keyframes nvConfeti{to{transform:translate(var(--tx),var(--ty)) rotate(var(--rot));opacity:0}}
+
+/* ═ Navidad en casa · login «Galleta de jengibre» ═
+   Tarjeta crema con glaseado que escurre arriba (sigue las esquinas redondeadas; reemplaza la franja de rayas), campos
+   con borde de galleta y costura de glaseado, botón de galleta con glaseado y dulces, e interruptor de bastón de caramelo. */
+html.nav-casa #loginScreen .login-form{background:linear-gradient(180deg,#fffaf2,#f7ead6);box-shadow:0 30px 60px -20px rgba(20,5,0,.6),0 0 0 1px rgba(160,100,50,.18)}
+html.nav-casa #loginScreen .login-form::before{content:'';position:absolute;left:0;right:0;top:0;height:30px;border-radius:22px 22px 0 0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 22' preserveAspectRatio='none'%3E%3Cpath d='M0 0H120V7C114 7 113 15 108 15S104 8 98 8 94 18 88 18 84 8 78 8 75 12 70 12 66 7 60 7 56 16 50 16 46 8 40 8 37 13 32 13 28 7 22 7 18 18 12 18 8 8 0 8Z' fill='%23fff'/%3E%3C/svg%3E") 0 0/120px 30px repeat-x;filter:drop-shadow(0 2px 1px rgba(120,70,30,.18));z-index:0;pointer-events:none}
+html.nav-casa #loginScreen .login-form>.lg-hd{margin-top:6px}
+/* el borde de galleta suma 10px por campo: por dentro miden 10px menos para que el total quede igual (laptops bajas incluidas) */
+@media (min-width:901px) and (max-height:760px){html.nav-casa #loginScreen .login-form input{height:34px}}
+@media (min-width:901px) and (max-height:640px){html.nav-casa #loginScreen .login-form input{height:32px}}
+html.nav-casa #loginScreen .lg-wrap{border-radius:16px;padding:5px;background:radial-gradient(circle at 30% 25%,#d98b4a,#b4692f 55%,#8a4c1c);box-shadow:0 4px 10px -4px rgba(90,40,10,.55),inset 0 -2px 0 rgba(0,0,0,.18)}
+html.nav-casa #loginScreen .lg-wrap::after{content:'';position:absolute;inset:2.5px;border-radius:14px;border:2px dashed rgba(255,255,255,.95);pointer-events:none}
+html.nav-casa #loginScreen .login-form input{height:40px;border:0;border-radius:11px;background:#fff9f0;color:#3a1a0a;box-shadow:inset 0 2px 4px rgba(90,40,10,.18)}
+html.nav-casa #loginScreen .login-form input::placeholder{color:#c2a184}
+html.nav-casa #loginScreen .login-form input:focus{background:#fffdf8;box-shadow:inset 0 2px 4px rgba(90,40,10,.18),0 0 0 3px rgba(255,255,255,.9)}
+html.nav-casa #loginScreen .lg-ico{left:20px;color:#a85d27}
+html.nav-casa #loginScreen .lg-wrap:focus-within .lg-ico{color:#c4152c}
+html.nav-casa #loginScreen .lg-ver{right:11px;color:#a85d27}
+html.nav-casa #loginScreen .login-form .fl{color:#8a4c1c;font-weight:800}
+html.nav-casa #loginScreen .login-form .fl::after{content:'';display:inline-block;width:9px;height:9px;margin-left:7px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff8a95,#e3263c 60%,#9a0f22);vertical-align:0}
+html.nav-casa #loginScreen .btn-login{position:relative;background:radial-gradient(circle 6.5px at 26px 50%,#ff8a95,#e3263c 60%,#9a0f22 92%,transparent 100%),radial-gradient(circle 6.5px at 48px 50%,#8ff0b6,#2f9a62 60%,#145a35 92%,transparent 100%),radial-gradient(circle 6.5px at calc(100% - 48px) 50%,#fff3b0,#f2c45a 60%,#a8741c 92%,transparent 100%),radial-gradient(circle 6.5px at calc(100% - 26px) 50%,#ff8a95,#e3263c 60%,#9a0f22 92%,transparent 100%),radial-gradient(120% 140% at 30% 20%,#d98b4a,#b4692f 50%,#7c4119);box-shadow:0 12px 24px -10px rgba(90,40,10,.8),inset 0 -3px 0 rgba(0,0,0,.18);text-shadow:0 1px 2px rgba(60,25,5,.6)}
+html.nav-casa #loginScreen .btn-login::before,html.nav-casa #loginScreen .btn-login::after{content:'';position:absolute;left:12px;right:12px;height:7px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 10' preserveAspectRatio='none'%3E%3Cpath d='M0 5q5-5 10 0t10 0 10 0 10 0' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/24px 7px repeat-x;pointer-events:none}
+html.nav-casa #loginScreen .btn-login::before{top:6px}
+html.nav-casa #loginScreen .btn-login::after{bottom:6px;transform:scaleY(-1)}
+html.nav-casa #loginScreen .btn-login:hover{box-shadow:0 14px 28px -10px rgba(90,40,10,.9),inset 0 -3px 0 rgba(0,0,0,.18)}
+html.nav-casa #loginScreen .lg-rec{color:#5a3418}
+html.nav-casa #loginScreen .lg-rec-sw{background:#ead9c2}
+html.nav-casa #loginScreen .lg-rec input:checked+.lg-rec-sw{background:repeating-linear-gradient(-45deg,#e3263c 0 6px,#fff 6px 12px)}
+html.nav-casa #loginScreen .lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0 0 3px rgba(180,105,47,.35)}
 
 /* ═ Navidad en casa dentro de la app: «Noche en la casita» (js/navidad-casa-dentro.js) ═
    Detrás de las pantallas de adentro, la misma noche del login (lienzos .nvc-noche, z-index:-1); el cordón de
