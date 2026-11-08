@@ -59,7 +59,7 @@
   function decorar(){
     var nom=nombre();
     document.querySelectorAll('#employeeScreen .content,#adminScreen .content').forEach(function(c){
-      if(!c.querySelector(':scope>.nvc-cordon')){ var d=document.createElement('div'); d.className='nvc-cordon'; d.setAttribute('aria-hidden','true'); d.innerHTML=cordon(Math.max(320,c.clientWidth||innerWidth)); c.insertBefore(d,c.firstChild); } });
+      if(!c.querySelector(':scope>.nvc-cordon')){ var d=document.createElement('div'); d.className='nvc-cordon'; d.innerHTML=cordon(Math.max(320,c.clientWidth||innerWidth)); c.insertBefore(d,c.firstChild); } });
     document.querySelectorAll(HEROES).forEach(function(h){
       if(h.querySelector(':scope>.nvc-gorro')&&h.getAttribute('data-nvc')===nom) return;
       h.querySelectorAll(':scope>.nvc-gorro,:scope>.nvc-bota').forEach(function(e){ e.remove(); });

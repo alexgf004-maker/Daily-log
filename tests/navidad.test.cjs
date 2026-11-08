@@ -79,8 +79,8 @@ test('no crea una mascota con otro tema ni con tema apagado',()=>{
 test('movimiento reducido: no inicia travesuras automáticas',()=>{
  const f=fixture({date:'2026-12-22',reduced:true});f.ctx.__mascotaNavidadSync();f.advance(120);assert.equal(f.actors[0].scene,'idle');assert.equal(f.actors[0].paused,true);
 });
-test('se conservan las 14 animaciones originales y se agregan 9 poses integradas',()=>{
- const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,23);
+test('se conservan las 14 animaciones originales y se agregan 13 poses integradas',()=>{
+ const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,27);
  for(const name of ['idle','sneak','run','climb','steal','caught','drop','tantrum','hide','tap1','tap2','tap3','xmas','nye','thaw','privacy','tug','offer','grump','plot'])assert.match(scenes,new RegExp('\\b'+name+':'));
  for(const id of ['actor','head','body','tail','arm-left','arm-right','leg-left','leg-right','eye-left','eye-right'])assert.ok(read('index.html').includes('id="'+id+'"'));
 });
@@ -181,8 +181,8 @@ test('las gotas y las ondas mantienen el mismo punto de caída durante el deshie
 test('alterna gestos con pausas y todavía tira de una esfera: los gestos no reinician la espera',()=>{
  const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.Math=Object.create(Math);f.ctx.Math.random=()=>0;f.ctx.__mascotaNavidadSync();
  const scenes=new Set(),stories=new Set();
- for(let i=0;i<650;i++){f.advance(.1);scenes.add(f.actors.at(-1).scene);stories.add(f.ctx.__mascotaNavidadEstado().historia);}
- for(const name of ['idle','grump','plot','tug','caught'])assert.ok(scenes.has(name),name);
+ for(let i=0;i<3000;i++){f.advance(.1);scenes.add(f.actors.at(-1).scene);stories.add(f.ctx.__mascotaNavidadEstado().historia);}
+ for(const name of ['idle','hat','scoff','shoo','doze','grump','plot','tug','caught'])assert.ok(scenes.has(name),name);
  assert.ok(stories.has('travesura'));assert.ok(stories.has('descubierto'));
 });
 test('enfocar el PIN interrumpe el gesto y el cambio de tema limpia su estado',()=>{
@@ -376,4 +376,18 @@ test('la travesura alcanza con la mano izquierda y tira sin estirar el brazo',()
  const hand=()=>{const h=actor.n('hand-left').attrs.transform.match(/translate\(([-\d.]+) ([-\d.]+)\)/);return {x:+h[1],y:+h[2]};};
  let p=hand();assert.ok(Math.abs(p.x+actor._pose.dx-80)<.05);assert.ok(Math.abs(p.y-690)<.05);
  actor.render(1.8);p=hand();assert.ok(p.x+actor._pose.dx>140);assert.ok(Math.hypot(p.x-352,p.y-580)<180);
+});
+
+test('el gorro se acomoda al alcance del brazo y el gesto devuelve la cabeza a su sitio',()=>{
+ const {actor}=realActor();actor.play('hat');actor.render(1.5);
+ const hand=actor.n('hand-right').attrs.transform.match(/translate\(([-\d.]+) ([-\d.]+)\)/);
+ assert.ok(Math.abs(+hand[1]-492)<1);assert.ok(Math.abs(+hand[2]-(245+actor._pose.headY+actor._pose.hatSlip))<1);
+ actor.render(4.2);assert.equal(actor._pose.headY,0);assert.equal(actor._pose.hatTouch,0);
+ actor.play('idle');actor.render(0);assert.equal(actor._pose.hatTilt,0);
+});
+test('la somnolencia se distingue de la risa y del gesto de protesta',()=>{
+ const {actor}=realActor();actor.play('doze');actor.render(3);assert.ok(actor._pose.eyeL<.1);
+ actor.render(4.2);assert.ok(actor._pose.surprise>.9);
+ actor.play('scoff');actor.render(1.4);assert.ok(actor._pose.sly>.9);assert.ok(actor._pose.rightArm>60);
+ actor.play('shoo');actor.render(1.4);assert.ok(actor._pose.rightArm< -30);assert.ok(actor._pose.grump>.9);
 });

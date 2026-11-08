@@ -3,7 +3,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const read=name=>fs.readFileSync(path.join(__dirname,'../js',name),'utf8');
 class Node{
- constructor(){this.dataset={};this.listeners={};this.values={};this.style={setProperty:(k,v)=>this.values[k]=v,removeProperty:k=>delete this.values[k]};const c=new Set();this.classList={add:k=>c.add(k),remove:k=>c.delete(k),contains:k=>c.has(k)};}
+ constructor(){this.attrs={};this.dataset={};this.listeners={};this.values={};this.style={setProperty:(k,v)=>this.values[k]=v,removeProperty:k=>delete this.values[k]};const c=new Set();this.classList={add:k=>c.add(k),remove:k=>c.delete(k),contains:k=>c.has(k)};}
+ setAttribute(k,v){this.attrs[k]=v;}
  addEventListener(k,fn){(this.listeners[k]??=new Set()).add(fn)}removeEventListener(k,fn){this.listeners[k]?.delete(fn)}
  emit(k,e){for(const fn of this.listeners[k]||[])fn(e)}
 }
@@ -73,4 +74,31 @@ test('sin árbol no inventa un objeto ni inicia una travesura',()=>{
 test('la primera reacción ocurre al entrar, y se cancela si el usuario ya está escribiendo',()=>{
  const f=worldFixture(),intro=[...f.timers.values()][0];intro();assert.equal(f.calls.length,1);assert.equal(f.calls[0].kind,'ambiente');
  const silent=worldFixture();silent.setBusy(true);[...silent.timers.values()][0]();assert.equal(silent.calls.length,0);silent.w.destroy();assert.equal(silent.timers.size,0);
+});
+
+function switchFixture(){
+ const f=worldFixture(),button=new Node();button.classList.add('nv-foco-interactivo');
+ button.getBoundingClientRect=f.bulb.getBoundingClientRect;button.querySelector=f.bulb.querySelector;
+ f.login.contains=e=>e===button;f.setFrozen(false);
+ return {...f,button,touch(){f.login.emit('click',{type:'click',target:{closest:()=>button}});}};
+}
+test('tocar una luz navideña alterna su estado real y lo comunica al personaje',()=>{
+ const f=switchFixture();f.touch();assert.ok(f.button.classList.contains('nv-luz-apagada'));assert.equal(f.button.attrs['aria-pressed'],'false');assert.equal(f.calls[0].off,true);
+ f.touch();assert.equal(f.button.classList.contains('nv-luz-apagada'),false);assert.equal(f.button.attrs['aria-pressed'],'true');assert.equal(f.calls[1].off,false);
+ f.touch();f.w.destroy();assert.equal(f.button.classList.contains('nv-luz-apagada'),false);assert.equal(f.button.attrs['aria-label'],'Apagar luz navideña');assert.equal(f.login.listeners.keydown.size,0);
+});
+test('el interruptor también funciona con teclado y movimiento reducido sin animar al personaje',()=>{
+ const f=switchFixture();f.setReduced(true);let prevented=false;
+ f.login.emit('keydown',{type:'keydown',key:' ',target:{closest:()=>f.button},preventDefault(){prevented=true;}});
+ assert.equal(prevented,true);assert.equal(f.button.attrs['aria-pressed'],'false');assert.equal(f.calls.length,0);
+});
+test('en prenavidad tocar un foco conserva su comportamiento y no lo apaga',()=>{
+ const f=switchFixture();f.setFrozen(true);f.login.emit('pointerdown',{type:'pointerdown',target:{closest:()=>f.button}});assert.equal(f.button.classList.contains('nv-luz-apagada'),false);assert.equal(f.calls[0].off,null);
+});
+
+test('tocar el vidrio del foco cambia el estado del grupo completo una sola vez',()=>{
+ const f=switchFixture(),glass={closest:()=>f.button,classList:{contains:()=>false}};f.login.contains=()=>true;
+ f.login.emit('pointerdown',{type:'pointerdown',target:{closest:()=>glass}});
+ f.login.emit('click',{type:'click',target:{closest:s=>s==='.nv-foco-interactivo'?f.button:glass}});
+ assert.equal(f.calls.length,1);assert.equal(f.calls[0].off,true);assert.equal(f.button.attrs['aria-pressed'],'false');
 });

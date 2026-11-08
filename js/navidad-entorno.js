@@ -7,7 +7,7 @@ function point(svg,p){
   var x=p.x-m.e,y=p.y-m.f;return {x:(m.d*x-m.c*y)/d,y:(m.a*y-m.b*x)/d};
 }
 function create(login,mount,options){
-  var timer=0,lightTimer=0,last=0,turn=0,stopped=false,source=null,sourceTimer=0;
+  var timer=0,lightTimer=0,last=0,turn=0,stopped=false,source=null,sourceTimer=0,switched=new Set();
   var reduced=()=>!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   function active(){return !stopped&&!reduced()&&!document.hidden&&login.classList.contains('active');}
   function clearSource(){clearTimeout(sourceTimer);sourceTimer=0;source?.classList?.remove('nv-foco-llamada');source=null;}
@@ -39,10 +39,23 @@ function create(login,mount,options){
   }
   function event(e){react(e.detail);}
   function light(e){
-    var bulb=e.target?.closest?.(options.lightSelector||'.nv-fq,.nv-casita');if(!bulb||!login.contains(bulb))return;
-    var b=bulb.getBoundingClientRect(),color=bulb.querySelector('.vid')?.getAttribute('fill');
-    react({kind:bulb.classList.contains('nv-casita')?'casa':'foco',x:b.left+b.width/2,y:b.top+b.height/2,color:color||'#ffd38c'});
+    var bulb=e.target?.closest?.('.nv-foco-interactivo,'+(options.lightSelector||'.nv-fq,.nv-casita'));if(!bulb||!login.contains(bulb))return;
+    bulb=bulb.closest?.('.nv-foco-interactivo')||bulb;
+    var button=bulb.classList.contains('nv-foco-interactivo')?bulb:null;
+    if(button&&!options.frozen()&&e.type==='pointerdown')return;
+    if(e.type==='keydown'&&(!button||!['Enter',' '].includes(e.key)))return;
+    if(!login.classList.contains('active')||document.hidden)return;
+    var off=null;
+    if(button&&!options.frozen()){
+      if(e.type==='keydown')e.preventDefault();
+      off=!button.classList.contains('nv-luz-apagada');
+      if(off)button.classList.add('nv-luz-apagada');else button.classList.remove('nv-luz-apagada');
+      button.setAttribute('aria-pressed',String(!off));button.setAttribute('aria-label',off?'Encender luz navideña':'Apagar luz navideña');switched.add(button);
+    }
+    var b=bulb.getBoundingClientRect(),color=bulb.querySelector('.vid,.nv-luz,.nvc-luz')?.getAttribute('fill');
+    react({kind:bulb.classList.contains('nv-casita')?'casa':'foco',x:b.left+b.width/2,y:b.top+b.height/2,color:color||'#ffd38c',off:off});
   }
+  function clickLight(e){if(e.target?.closest?.('.nv-foco-interactivo')&&!options.frozen())light(e);}
   function ambient(){
     if(!active()||!options.frozen()||Date.now()-last<10000||options.busy?.())return;
     var targets=options.lightSelector?login.querySelectorAll(options.lightSelector):turn++%2===0?login.querySelectorAll('.nv-fq.on,.nv-fq.off'):login.querySelectorAll('.nv-casita');
@@ -53,10 +66,10 @@ function create(login,mount,options){
     react({kind:'ambiente',x:b.left+b.width/2,y:b.top+b.height/2,color:el.querySelector?.('.vid')?.getAttribute('fill')||'#ffe0a6'});
   }
   function visibility(){if(document.hidden||!login.classList.contains('active')){clearTimeout(intro);resetGaze();clearSource();clearTimeout(lightTimer);lightTimer=0;delete mount.dataset.reflejo;mount.style.removeProperty('--nv-reflejo');}else if(options.frozen()){clearTimeout(intro);intro=setTimeout(ambient,1800);}}
-  login.addEventListener('navidad:entorno',event);login.addEventListener('pointerdown',light,true);
+  login.addEventListener('navidad:entorno',event);login.addEventListener('pointerdown',light,true);login.addEventListener('keydown',light);login.addEventListener('click',clickLight);
   document.addEventListener('visibilitychange',visibility);
   var intro=setTimeout(ambient,1800),interval=setInterval(ambient,12000);
-  return {react:react,resetGaze:resetGaze,suspend:visibility,destroy:function(){stopped=true;clearTimeout(intro);clearSource();resetGaze();clearTimeout(lightTimer);clearInterval(interval);delete mount.dataset.reflejo;mount.style.removeProperty('--nv-reflejo');login.removeEventListener('navidad:entorno',event);login.removeEventListener('pointerdown',light,true);document.removeEventListener('visibilitychange',visibility);}};
+  return {react:react,resetGaze:resetGaze,suspend:visibility,destroy:function(){stopped=true;clearTimeout(intro);clearSource();resetGaze();clearTimeout(lightTimer);clearInterval(interval);delete mount.dataset.reflejo;mount.style.removeProperty('--nv-reflejo');login.removeEventListener('navidad:entorno',event);login.removeEventListener('pointerdown',light,true);login.removeEventListener('keydown',light);login.removeEventListener('click',clickLight);switched.forEach(function(el){el.classList.remove('nv-luz-apagada');el.setAttribute('aria-pressed','true');el.setAttribute('aria-label','Apagar luz navideña');});switched.clear();document.removeEventListener('visibilitychange',visibility);}};
 }
 window.NavidadEntorno={create:create,point:point};
 })();

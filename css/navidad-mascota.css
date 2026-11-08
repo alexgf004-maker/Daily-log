@@ -206,6 +206,16 @@
 .nv-con-companero :is(.ph-title,.rg-hero-t,.ps-hero-t,.dash-hero-name){overflow-wrap:anywhere}
 .nv-mascota-interior.nv-hielo-golpe [data-nv-part="nvice-cracks"]{stroke-opacity:.9;stroke-width:4}
 
+/* El gorro pertenece a la cabeza articulada y aparece solo en Navidad. */
+.nv-gorro-mascota{display:none}
+.nav-casa .nv-gorro-mascota{display:inline}
+.nav-casa .nv-mascota :is(#hair,[data-nv-part="hair"]){visibility:hidden}
+.nav-casa :is(.nv-guirnalda,.nvc-guirnalda) .nv-foco-interactivo{pointer-events:all;cursor:pointer;touch-action:manipulation;outline:none}
+.nav-casa .nv-foco-interactivo:focus-visible .nv-luz,.nav-casa .nv-foco-interactivo:focus-visible .nvc-luz{stroke:#fff;stroke-width:2}
+.nav-casa .nv-foco-interactivo.nv-luz-apagada :is(.nv-luz,.nvc-luz){fill:#4b5a64;filter:none}
+.nav-casa .nv-foco-interactivo.nv-luz-apagada .nvq-halo{animation:none!important;opacity:0!important}
+.nav-casa .nv-foco-interactivo.nv-luz-apagada ellipse{opacity:.12}
+
 /* La botita sigue siendo la de Claude; solo se articula mientras la mano la sujeta. */
 .nv-con-companero>.nvc-bota.nv-bota-tirada{animation:none!important;transform:translate(var(--nv-bota-x,0px),var(--nv-bota-y,0px)) rotate(var(--nv-bota-giro,5deg))!important}
 .nv-mascota[data-accion="trapped"] [data-nv-part="nvice-palms"],.nv-mascota[data-gesto="trapped"] #nvice-palms{animation:nvPalmasHielo 3.6s ease-out both}

@@ -429,7 +429,7 @@
     if(armada===et.id) return;
     quitar();
     var f=dia(et), capa=document.createElement('div');
-    capa.className='nv-capa nv-'+et.id; capa.setAttribute('aria-hidden','true');
+    capa.className='nv-capa nv-'+et.id; if(et.id!=='casa') capa.setAttribute('aria-hidden','true');
     ls.insertBefore(capa,ls.firstChild);
     if(et.id==='pre') armarPre(capa,f); else if(et.id==='casa'){ armarCasa(capa,f); cuenta(et,f); } else { armarAno(capa,f); cuenta(et,f); }
     // Pre-Navidad: nieve suave dentro de la app (CSS la esconde mientras el login está a la vista)
