@@ -280,3 +280,56 @@ test('la amortiguación y su reloj permanecen quietos durante la pausa',()=>{
  assert.equal(actor.n('arm-left').attrs.transform,before);assert.equal(actor.motionTime,time);
  tick(1/60);assert.ok(actor.motionTime-time<.02);assert.ok(Number.isFinite(actor._pose.leftArm));
 });
+
+test('el nuevo dibujo conserva huesos y manos conectadas en todas las escenas',()=>{
+ const {actor}=realActor();
+ for(const name of Object.keys(actor.constructor.SCENES)){
+  actor.play(name);
+  for(let step=0;step<=8;step++){
+   actor.render(actor.constructor.SCENES[name].duration*step/8);
+   for(const side of ['left','right']){
+    const points=actor.n('arm-'+side+'-curve').attrs.d.match(/-?\d+(?:\.\d+)?/g).map(Number);
+    const [sx,sy]=points,ex=points[6],ey=points[7],hx=points[12],hy=points[13];
+    assert.ok(Math.abs(Math.hypot(ex-sx,ey-sy)-85)<.02,name+' hombro');
+    assert.ok(Math.abs(Math.hypot(hx-ex,hy-ey)-95)<.02,name+' antebrazo');
+    const wrist=actor.n('hand-'+side).attrs.transform.match(/translate\(([-\d.]+) ([-\d.]+)\)/);
+    assert.equal(Number(wrist[1]),hx);assert.equal(Number(wrist[2]),hy);
+    const leg=actor.n('leg-'+side+'-curve').attrs.d.match(/-?\d+(?:\.\d+)?/g).map(Number);
+    assert.ok(Math.abs(Math.hypot(leg[6]-leg[0],leg[7]-leg[1])-60)<.02,name+' muslo');
+    assert.ok(Math.abs(Math.hypot(leg[12]-leg[6],leg[13]-leg[7])-60)<.02,name+' rodilla');
+   }
+  }
+ }
+});
+test('interrumpir un gesto conserva también los codos y las muñecas del dibujo nuevo',()=>{
+ const {actor,tick}=realActor();actor.play('grump');for(let i=0;i<100;i++)tick(1/60);
+ const curve=actor.n('arm-left-curve').attrs.d,hand=actor.n('hand-left').attrs.transform;
+ actor.play('caught');assert.equal(actor.n('arm-left-curve').attrs.d,curve);assert.equal(actor.n('hand-left').attrs.transform,hand);
+ tick(1/60);assert.ok(actor.n('arm-left-curve').attrs.d!==curve);
+});
+test('los pies mantienen su apoyo durante la respiración del reposo',()=>{
+ const {actor}=realActor();
+ for(let t=0;t<14;t+=.13){
+  actor.render(t);
+  const root=actor.n('actor').attrs.transform.match(/^translate\(([-\d.]+) ([-\d.]+)\)/),dy=Number(root[2]);
+  for(const side of ['left','right']){
+   const curve=actor.n('leg-'+side+'-curve').attrs.d.match(/-?\d+(?:\.\d+)?/g).map(Number);
+   assert.ok(Math.abs(curve[13]+dy-939)<.02);
+  }
+ }
+});
+test('la zancada alterna el pie que se levanta',()=>{
+ const {actor}=realActor();
+ actor.poseLeg('left',14,0,true);actor.poseLeg('right',-14,0,true);
+ const end=side=>Number(actor.n('leg-'+side+'-curve').attrs.d.match(/-?\d+(?:\.\d+)?/g).at(-1));
+ assert.ok(end('left')<920);assert.ok(Math.abs(end('right')-939)<.1);
+ actor.poseLeg('left',-14,0,true);actor.poseLeg('right',14,0,true);
+ assert.ok(end('right')<920);assert.ok(Math.abs(end('left')-939)<.1);
+});
+test('el SVG canónico y el incrustado son idénticos y mantienen todos los identificadores',()=>{
+ const svg=read('assets/navidad/personaje-animable.svg'),html=read('index.html');
+ const start=html.indexOf('<svg id="nv-green-character"'),end=html.indexOf('</svg>',start)+6;
+ assert.equal(html.slice(start,end),svg);
+ const ids=Array.from(svg.matchAll(/id="([^"]+)"/g),m=>m[1]);assert.equal(new Set(ids).size,ids.length);
+ for(const id of ['arm-left-curve','arm-right-curve','hand-left','hand-right','leg-left-curve','leg-right-curve','iris-clip-left','iris-clip-right'])assert.ok(ids.includes(id));
+});

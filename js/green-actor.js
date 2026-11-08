@@ -1,4 +1,4 @@
-/* GreenActor 1.3 — 14 original SVG animations and 6 integrated login poses. No external dependencies.
+/* GreenActor 2 — articulated SVG limbs, 14 original scenes and 6 login poses.
    API: const actor = new GreenActor(document.querySelector('#green-character'));
    actor.play('steal'); actor.tap(); actor.pause(); actor.resume(); actor.destroy();
    Custom DOM events: greenactor:scenechange and greenactor:complete. */
@@ -38,6 +38,8 @@ class GreenActor {
   if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error('GreenActor requires the actual inline <svg> element.');
   this.svg=svg; this.options=options; this.nodes={};
   const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','lid-left','lid-right','mouth','expression-mouth','expression-line','smirk-crease','smile','blush','sweat','hands-ears','hands-eyes','cover-arm-left','cover-arm-right','cover-arm-shine','cover-hand-left','cover-hand-right','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
+  ids.push('hand-left','hand-right','arm-left-outline','arm-right-outline','arm-left-curve','arm-right-curve','arm-left-light','arm-right-light',
+    'foot-left','foot-right','leg-left-outline','leg-right-outline','leg-left-curve','leg-right-curve','leg-left-light','leg-right-light');
   for (const id of ids) this.nodes[id]=svg.querySelector('#'+id);
   this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
   this.motionTime=0;this._pose=null;this._velocity={};this._visible={};
@@ -51,6 +53,51 @@ class GreenActor {
  rot(id,angle,x,y){this.transform(id,`rotate(${angle.toFixed(2)} ${x} ${y})`)}
  bodyScale(scale){this.transform('body',`translate(400 525) scale(1 ${scale.toFixed(4)}) translate(-400 -525)`)}
  faceScale(id,x,y,sx=1,sy=sx){this.transform(id,`translate(${x} ${y}) scale(${sx.toFixed(3)} ${sy.toFixed(3)}) translate(${-x} ${-y})`)}
+ // Una curva continua une hombro, codo y muñeca. La mano conserva su volumen;
+ // el antebrazo llega después del hombro, sin girar todo el miembro como una tabla.
+ poseArm(side,upper,forearm){
+  const sign=side==='left'?-1:1,shoulder={x:side==='left'?352:444,y:580};
+  const inward=angle=>side==='left'?-angle:angle;
+  const wristTarget=angle=>{
+    const a=inward(angle),fold=clamp(a/34),lift=clamp((a-34)/71),out=clamp(-a/65);
+    let x=lerp(94,-50,fold);
+    let y=lerp(750,side==='left'?638:658,fold);
+    x=lerp(x,80,lift);y=lerp(y,414,lift);
+    x=lerp(x,170,out);y=lerp(y,516,out);
+    return {x:400+sign*x,y};
+  };
+  const leading=wristTarget(upper),following=wristTarget(forearm);
+  const h={x:lerp(leading.x,following.x,.65),y:lerp(leading.y,following.y,.65)};
+  // Cinemática de dos huesos: el gesto no alarga los brazos al cruzarlos.
+  const upperLength=85,lowerLength=95;
+  let dx=h.x-shoulder.x,dy=h.y-shoulder.y,distance=Math.hypot(dx,dy)||1;
+  const reach=clamp(distance,lowerLength-upperLength+1,upperLength+lowerLength-.5);
+  dx/=distance;dy/=distance;
+  h.x=shoulder.x+dx*reach;h.y=shoulder.y+dy*reach;
+  const along=(upperLength*upperLength-lowerLength*lowerLength+reach*reach)/(2*reach);
+  const height=Math.sqrt(Math.max(0,upperLength*upperLength-along*along)),bend=-sign;
+  const e={x:shoulder.x+dx*along-dy*height*bend,y:shoulder.y+dy*along+dx*height*bend};
+  const tx=(h.x-shoulder.x)*.15,ty=(h.y-shoulder.y)*.15;
+  const d=`M${shoulder.x} ${shoulder.y} C${lerp(shoulder.x,e.x,.4).toFixed(2)} ${lerp(shoulder.y,e.y,.4).toFixed(2)} ${(e.x-tx).toFixed(2)} ${(e.y-ty).toFixed(2)} ${e.x.toFixed(2)} ${e.y.toFixed(2)} C${(e.x+tx).toFixed(2)} ${(e.y+ty).toFixed(2)} ${lerp(h.x,e.x,.3).toFixed(2)} ${lerp(h.y,e.y,.3).toFixed(2)} ${h.x.toFixed(2)} ${h.y.toFixed(2)}`;
+  for(const part of ['outline','curve','light'])this.attr('arm-'+side+'-'+part,'d',d);
+  this.transform('arm-'+side,'translate(0 0)');
+  this.transform('hand-'+side,`translate(${h.x.toFixed(2)} ${h.y.toFixed(2)}) rotate(${(sign*clamp(inward(forearm)/34)*-42).toFixed(2)})`);
+ }
+ poseLeg(side,angle,ground,stride=false){
+  const sign=side==='left'?-1:1,hip={x:side==='left'?370:432,y:823};
+  const lift=stride?Math.max(0,angle):Math.abs(angle);
+  const baseX=side==='left'?365:445,ankle={x:baseX+angle*.6,y:939-Math.min(52,lift*1.8)-ground};
+  let dx=ankle.x-hip.x,dy=ankle.y-hip.y,distance=Math.hypot(dx,dy)||1;
+  const reach=clamp(distance,1,119.5);dx/=distance;dy/=distance;
+  ankle.x=hip.x+dx*reach;ankle.y=hip.y+dy*reach;
+  const along=reach/2,height=Math.sqrt(Math.max(0,60*60-along*along));
+  const knee={x:hip.x+dx*along+dy*height*sign,y:hip.y+dy*along-dx*height*sign};
+  const tx=(ankle.x-hip.x)*.1,ty=(ankle.y-hip.y)*.1;
+  const d=`M${hip.x} ${hip.y} C${hip.x} ${(hip.y+24).toFixed(2)} ${(knee.x-tx).toFixed(2)} ${(knee.y-ty).toFixed(2)} ${knee.x.toFixed(2)} ${knee.y.toFixed(2)} C${(knee.x+tx).toFixed(2)} ${(knee.y+ty).toFixed(2)} ${ankle.x.toFixed(2)} ${(ankle.y-20).toFixed(2)} ${ankle.x.toFixed(2)} ${ankle.y.toFixed(2)}`;
+  for(const part of ['outline','curve','light'])this.attr('leg-'+side+'-'+part,'d',d);
+  this.transform('leg-'+side,'translate(0 0)');
+  this.transform('foot-'+side,`translate(${(ankle.x-baseX).toFixed(2)} ${(ankle.y-939).toFixed(2)}) rotate(${(angle*.28).toFixed(2)} ${baseX} 939)`);
+ }
  play(name){
   if(!SCENES[name])throw new Error('Unknown scene: '+name);
   this.scene=name;this.elapsed=0;this.completed=false;
@@ -94,6 +141,7 @@ class GreenActor {
     if(['pupilX','pupilY','lidL','lidR','grump','sly','surprise','cover'].includes(key)){frequency=26;damping=1;}
     else if(['scarf','tail','knot','hair','earL','earR'].includes(key)){frequency=9;damping=.78;}
     else if(['leftArm','rightArm','reach'].includes(key)){frequency=13;damping=.86;}
+    else if(['forearmL','forearmR'].includes(key)){frequency=10.5;damping=.9;}
     const x=this._pose[key]-target[key],velocity=this._velocity[key]||0,decay=Math.exp(-damping*frequency*dt);
     let next,speed;
     if(damping===1){const c=velocity+frequency*x;next=(x+c*dt)*decay;speed=(velocity-frequency*c*dt)*decay;}
@@ -108,7 +156,7 @@ class GreenActor {
  render(t,dt=null){
   const mode=this.scene;const D=SCENES[mode].duration;const p=clamp(t/D);
   let v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
-    scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,alpha:1};
+    scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,headY:0,alpha:1};
   const personality=this.options.embedded&&this.options.personality!==false;
   const frozen=!!this.options.frozen;
   const clock=this.options.embedded&&dt!==null?this.motionTime:t;
@@ -305,6 +353,7 @@ class GreenActor {
       v.eyeL=1-.9*cover;v.eyeR=v.eyeL;v.pupilX=0;v.pupilY=0;
       props('hands-eyes');visible['hands-eyes']=cover;
       v.cover=cover;
+      if(this.n('arm-left-curve')){v.headY=72*cover;v.body=1-.025*cover;v.grump=.6;}
       break;}
     case 'tug':{
       const reach=between(t,0,.8),pull=bump(t,1.0,1.4,3.5,4.0);
@@ -364,6 +413,7 @@ class GreenActor {
       grump:1,sly:.12,surprise:0,lidL:.9,lidR:.82});
     v.leftArm=-18;v.rightArm=16;
   }
+  v.forearmL=v.leftArm;v.forearmR=v.rightArm;
   this.settlePose(v,dt);v={...this._pose};
   // Las capas auxiliares también se relevan sin aparecer de golpe.
   for(const id of ['reach-arm','hands-eyes','smile','sweat','blush']){
@@ -375,7 +425,7 @@ class GreenActor {
   this.rot('reach-arm',v.reach,448,585);
   // Los hombros permanecen anclados al torso al subir las manos, sin trasladar los brazos enteros.
   const cover=clamp(v.cover),arc=Math.sin(PI*cover),headAngle=v.head*PI/180;
-  const eye=(x,y)=>({x:399+(x-399)*Math.cos(headAngle)-(y-474)*Math.sin(headAngle),y:474+(x-399)*Math.sin(headAngle)+(y-474)*Math.cos(headAngle)});
+  const eye=(x,y)=>({x:399+(x-399)*Math.cos(headAngle)-(y-474)*Math.sin(headAngle),y:474+(x-399)*Math.sin(headAngle)+(y-474)*Math.cos(headAngle)+v.headY});
   const le=eye(350,319),re=eye(449,326);
   const lx=lerp(366,le.x,cover)-56*arc,ly=lerp(640,le.y,cover),rx=lerp(432,re.x,cover)+56*arc,ry=lerp(640,re.y,cover);
   this.attr('cover-arm-left','d',`M352 580 C${lerp(324,285,cover)} ${lerp(596,520,cover)} ${lx-42*cover} ${ly+72*cover} ${lx-16*cover} ${ly+9*cover}`);
@@ -387,9 +437,21 @@ class GreenActor {
   this.transform('hands-eyes','translate(0 0)');
   this.transform('actor',`translate(${v.dx.toFixed(2)} ${v.dy.toFixed(2)}) rotate(${v.angle.toFixed(2)} 400 900) translate(400 960) scale(${v.s.toFixed(4)}) translate(-400 -960)`);
   this.attr('actor','opacity',v.alpha);
-  this.rot('head',v.head,399,474);this.bodyScale(v.body);
-  this.rot('leg-left',v.leftLeg,370,807);this.rot('leg-right',v.rightLeg,432,805);
-  this.rot('arm-left',v.leftArm,352,580);this.rot('arm-right',v.rightArm,444,580);
+  this.transform('head',`translate(0 ${v.headY.toFixed(2)}) rotate(${v.head.toFixed(2)} 399 474)`);this.bodyScale(v.body);
+  if(this.n('leg-left-curve')){
+    // Compensar la respiración en el apoyo, pero conservar los saltos y carreras.
+    const stride=['sneak','run','climb'].includes(mode);
+    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3'].includes(mode);
+    const ground=side=>planted?v.dy+Math.sin(v.angle*PI/180)*((side==='left'?365:445)-400):0;
+    this.poseLeg('left',v.leftLeg,ground('left'),stride);this.poseLeg('right',v.rightLeg,ground('right'),stride);
+  }else{
+    this.rot('leg-left',v.leftLeg,370,807);this.rot('leg-right',v.rightLeg,432,805);
+  }
+  if(this.n('arm-left-curve')){
+    this.poseArm('left',v.leftArm,v.forearmL);this.poseArm('right',v.rightArm,v.forearmR);
+  }else{
+    this.rot('arm-left',v.leftArm,352,580);this.rot('arm-right',v.rightArm,444,580);
+  }
   this.rot('scarf-tail',v.scarf,449,506);this.rot('scarf-knot',v.knot,399,490);
   this.rot('tail',v.tail,347,760);this.rot('hair',v.hair,400,231);
   this.rot('ear-left',v.earL,296,292);this.rot('ear-right',v.earR,504,290);
@@ -402,7 +464,13 @@ class GreenActor {
     const a=PI*(.025+.44*clamp(amount)),dx=rx*Math.sin(a),y=cy-46*Math.cos(a);
     // El párpado cae hacia el entrecejo: una mirada de fastidio, con iris redondos.
     const tilt=(id==='lid-left'?1:-1)*clamp(v.grump)*13;
-    this.attr(id,'d',`M${cx-dx} ${y} A${rx} 46 0 0 1 ${cx+dx} ${y} L${cx+dx} ${y+tilt} Q${cx} ${y+4*amount} ${cx-dx} ${y-tilt}Z`);
+    if(this.n('arm-left-curve')){
+      const depth=clamp(amount)*24;
+      const shape=id==='lid-left'
+        ?`M307 304C325 284 351 289 386 312Q347 ${297+depth} 307 ${304+depth*.3}Z`
+        :`M411 313C442 290 470 288 492 307L492 ${307+depth*.25}Q453 ${297+depth} 411 313Z`;
+      this.attr(id,'d',shape);
+    }else this.attr(id,'d',`M${cx-dx} ${y} A${rx} 46 0 0 1 ${cx+dx} ${y} L${cx+dx} ${y+tilt} Q${cx} ${y+4*amount} ${cx-dx} ${y-tilt}Z`);
     this.show(id,amount>0?1:0);
   }
   const g=clamp(v.grump),sly=clamp(v.sly);
