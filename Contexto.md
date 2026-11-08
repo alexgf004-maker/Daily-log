@@ -465,6 +465,10 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Casita sobre una loma en el teléfono** (`dibujar()` en `js/navidad-casa.js`): en el teléfono la casita queda a la
+    altura del horizonte y el suelo (pies de la mascota) mucho más abajo, así que parecía flotar. Ahora una loma nevada
+    baja desde la base de la casita hasta el suelo (curva suave, sombra azulada y brillo en la cresta) y los pinitos se
+    paran en su ladera. En PC no cambia (ahí la casita ya está sobre el suelo).
   - **Login de Navidad en casa: error y bienvenida con Santa** (`window.__nvSantaLogin` en `js/navidad-casa-marcaje.js`;
     los llama `vigilar()` en `js/navidad.js` cuando `armada==='casa'`). PIN equivocado: la tarjeta tiembla y Santa se
     asoma por detrás de ella con el ceño fruncido, niega con la mano y dice «Mmm… ese PIN no es» (SVG

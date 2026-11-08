@@ -300,11 +300,23 @@ function dibujar(x,C){
   const suelo=masc?masc.b-(pc?14:10):H-(pc?60:40), hz=pc?suelo-90:Math.min(suelo-60,(pie?pie.t:f.b+80)-6);
   N.cieloPre(x,W,H,hz); N.montesPre(x,W,hz+6,pc?300:180); N.lagoPre(x,W,hz,pc?40:24);
   // pinos de Pre-Navidad en la orilla
-  (pc?[[.03,1.3],[.08,1.6],[.13,1.1],[.34,1.2],[.66,1.1],[.97,1.4]]:[[.04,.9],[.16,.7]]).forEach(([u,k])=>{ if(pc&&u*W>f.l-20&&u*W<f.r+20) return; N.pinoPre(x,u*W,hz+(pc?30:20),k); });
+  if(pc) [[.03,1.3],[.08,1.6],[.13,1.1],[.34,1.2],[.66,1.1],[.97,1.4]].forEach(([u,k])=>{ if(u*W>f.l-20&&u*W<f.r+20) return; N.pinoPre(x,u*W,hz+30,k); });
   // la casita de cerca y el trineo en su puerta
   let casita=null, trineo=null;
   if(pc){ const cw=Math.min(300,f.l*.58), cx=Math.max(cw*.6+20,f.l*.42); N.casitaPre(x,cx,suelo+4,cw,C); casita={cx,base:suelo+4,w:cw,h:cw*.72}; trineo={x:cx+cw*.62,y:suelo+10,s:1.15}; N.trineoPre(x,trineo.x,trineo.y,trineo.s); }
-  else { const cw=Math.min(96,W*.26), cx=cw*.62+8, base=pie?Math.min(hz+30,pie.t-4):hz+30; N.casitaPre(x,cx,base,cw,C); casita={cx,base,w:cw,h:cw*.72}; }
+  else { const cw=Math.min(96,W*.26), cx=cw*.62+8, base=pie?Math.min(hz+30,pie.t-4):hz+30;
+    // en el teléfono la casita queda a la altura del horizonte y el suelo (los pies de la mascota) mucho más abajo:
+    // una loma nevada baja desde la casita hasta el suelo para que no flote; los pinitos se paran en la loma
+    const xf=cx+cw*1.75, alto=y=>{ const u=Math.min(1,Math.max(0,(y-(cx+cw*.75))/(xf-(cx+cw*.75)))); return lerpY(u); }, lerpY=u=>base+(suelo-base)*(u*u*(3-2*u));
+    const lomaY=px=>px<cx+cw*.75?base+Math.pow(Math.abs(px-cx)/(cw*.9),2)*4:alto(px);
+    let g=x.createLinearGradient(0,base-8,0,suelo+10); g.addColorStop(0,'#f4f9ff'); g.addColorStop(.6,'#dbe9f5'); g.addColorStop(1,'#c4d9ea'); x.fillStyle=g;
+    x.beginPath(); x.moveTo(-4,suelo+20); for(let px=-4;px<=xf+8;px+=4) x.lineTo(px,lomaY(px)+2); x.lineTo(xf+8,suelo+20); x.closePath(); x.fill();
+    // sombra azulada del lado derecho y brillo en la cresta
+    x.save(); x.globalAlpha=.35; x.strokeStyle='#9fbcd6'; x.lineWidth=6; x.beginPath(); for(let px=cx+cw*.8;px<=xf;px+=4) px===cx+cw*.8?x.moveTo(px,lomaY(px)+5):x.lineTo(px,lomaY(px)+5); x.stroke(); x.restore();
+    x.strokeStyle='rgba(255,255,255,.9)'; x.lineWidth=1.6; x.beginPath(); for(let px=0;px<=cx+cw*.9;px+=4) px?x.lineTo(px,lomaY(px)+1):x.moveTo(px,lomaY(px)+1); x.stroke();
+    [[.04,.9],[.16,.7]].forEach(([u,k])=>{ const px=u*W; if(px>cx-cw*.5&&px<cx+cw*.5) return; N.pinoPre(x,px,lomaY(px)+2,k); });
+    N.pinoPre(x,cx+cw*1.05,lomaY(cx+cw*1.05)+3,.55); N.pinoPre(x,cx+cw*1.3,lomaY(cx+cw*1.3)+3,.75);
+    N.casitaPre(x,cx,base,cw,C); casita={cx,base,w:cw,h:cw*.72}; }
   N.nieveSuelo(x,W,H,suelo);
   if(!pc){ trineo={x:Math.min(W*.3,(masc?masc.l:W)-70),y:H-2,s:.5}; N.trineoPre(x,trineo.x,trineo.y,trineo.s); }
   N.arbolGrande(x,C,suelo); N.luzMascota(x,C,suelo);
