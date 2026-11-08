@@ -186,7 +186,8 @@ html.tema-navidad #loginScreen{
 /* escena «El árbol» en canvas (js/navidad-casa.js): dos lienzos encimados que llenan la capa */
 .nvc{position:absolute;inset:0}
 .nvc canvas{position:absolute;left:0;top:0;width:100%;height:100%}
-.nav-casa #loginScreen{background:radial-gradient(90% 60% at 80% 100%,#7a2a12 0%,transparent 60%),radial-gradient(70% 50% at 15% 40%,rgba(255,170,80,.18),transparent 70%),linear-gradient(180deg,#2b0d0a 0%,#3d140e 45%,#2a0c08 100%)!important}
+/* fondo mientras se dibuja el lienzo: la misma noche nevada de la escena, para que no asome el café del primer diseño */
+.nav-casa #loginScreen{background:linear-gradient(180deg,#031428 0%,#0a2d55 38%,#1c5a8f 64%,#7fb8dc 86%,#d8efff 100%)!important}
 .nav-casa .login-logo{background:linear-gradient(160deg,#b3192d,#7d0d1f);border-color:rgba(242,196,90,.45)}
 .nav-casa .login-brand-name .inn{color:#ffe1a0!important;text-shadow:0 2px 14px rgba(255,170,60,.35)}
 .nav-casa .nv-cuenta{background:rgba(60,12,8,.55);border:1px solid rgba(242,196,90,.4);color:#ffe7a3}

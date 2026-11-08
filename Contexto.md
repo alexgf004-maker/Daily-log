@@ -465,6 +465,11 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Carga de Navidad en casa sin «primer tema»** (`comun.css`, `navidad.css`, `js/navidad-casa.js`): la pantalla
+    de carga (corona) y el fondo del login de la etapa casa seguían en el café del primer diseño, y la escena del lienzo
+    se pintaba hasta ~200-700 ms después de mostrarse el login (esperaba al ResizeObserver o al temporizador de 700 ms).
+    Se veía el diseño viejo y luego el nuevo encima. Ahora la carga y el fondo usan la misma noche nevada de la escena, y
+    al activarse el login el MutationObserver dibuja la escena en ese mismo cuadro (`if(!C) armar()`).
   - **Login en laptops bajas** (Pre-Navidad y Navidad en casa, `navidad.css`): en una laptop 1366×768 el navegador y
     la barra de tareas dejan ~600px útiles y el login pedía ~730px, así que «Ingresar», la mascota y el suelo de la
     escena quedaban abajo del pliegue (se veía «incompleto»). Dos escalones solo para PC (`min-width:901px`):

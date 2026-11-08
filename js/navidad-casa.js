@@ -321,7 +321,7 @@ window.__nvCasa=function(capa){
     if(h){ h.fn(performance.now()/1000,px,py); if(reducido){ var t0=performance.now(); (function paso(n){ NV.vivo(vivo,W,H,0,C.luces,[],[]); for(var j=0;j<C.anim.length;j++) C.anim[j](vivo,n/1000); if(n-t0<3500) requestAnimationFrame(paso); else NV.vivo(vivo,W,H,0,C.luces,[],[]); })(t0); } } }
   ls.addEventListener('pointerdown',toque);
   document.addEventListener('visibilitychange',seguir);
-  var mo=new MutationObserver(seguir); mo.observe(ls,{attributes:true,attributeFilter:['class']});
+  var mo=new MutationObserver(function(){ if(!C) armar(); seguir(); }); mo.observe(ls,{attributes:true,attributeFilter:['class']});   // al salir la carga se dibuja en ese mismo cuadro, sin esperar
   armar(); var t1=setTimeout(armar,700), t2=setTimeout(armar,1800);      // la mascota y las fuentes se acomodan un momento después
   var ro=window.ResizeObserver?new ResizeObserver(function(){ clearTimeout(t1); t1=setTimeout(armar,200); }):null; if(ro){ ro.observe(capa); var mm=ls.querySelector('.nv-mascota'); if(mm) ro.observe(mm); }
   return {detener:function(){ parado=true; if(raf) cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); if(ro) ro.disconnect(); mo.disconnect(); ls.removeEventListener('pointerdown',toque); document.removeEventListener('visibilitychange',seguir); cont.remove(); }};
