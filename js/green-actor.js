@@ -1,4 +1,4 @@
-/* GreenActor 2 — articulated SVG limbs, 14 original scenes and 9 integrated poses.
+/* GreenActor 2 — articulated SVG limbs, 14 original scenes and 13 integrated poses.
    API: const actor = new GreenActor(document.querySelector('#green-character'));
    actor.play('steal'); actor.tap(); actor.pause(); actor.resume(); actor.destroy();
    Custom DOM events: greenactor:scenechange and greenactor:complete. */
@@ -33,6 +33,10 @@ const SCENES = Object.freeze({
  plot:     {duration:5.2,loop:false,title:'Tramar otra travesura',detail:'Comprueba ambos lados, junta las manos y esboza una sonrisa torcida.',group:'Login integrado'},
  trapped:  {duration:3.6,loop:false,title:'Déjame salir',detail:'Apoya las manos contra el hielo, empuja y resopla sin salir del bloque.',group:'Interacciones'},
  mischief: {duration:4.4,loop:false,title:'Tirar de la botita',detail:'Se acerca a la botita real, la agarra y da dos tirones antes de soltarla.',group:'Interacciones'},
+ hat:      {duration:4.2,loop:false,title:'Acomodarse el gorro',detail:'Se le baja el gorro sobre los ojos, toma el borde y lo vuelve a acomodar.',group:'Interacciones'},
+ scoff:    {duration:3.6,loop:false,title:'Risa traviesa',detail:'Se tapa la boca, sacude los hombros y mira de reojo.',group:'Interacciones'},
+ shoo:     {duration:3.8,loop:false,title:'No toques mis luces',detail:'Niega con la cabeza y hace un gesto de protesta con la mano.',group:'Interacciones'},
+ doze:     {duration:6.0,loop:false,title:'Le vence el sueño',detail:'Cabecea, se le cierran los ojos y despierta disimulando.',group:'Interacciones'},
  ack:      {duration:2.8,loop:false,title:'Registro recibido',detail:'Comprueba el registro, asiente una vez y vuelve a su expresión gruñona.',group:'Dentro de la app'},
  nye:      {duration:5.6,loop:true,title:'31 de diciembre', detail:'Los destellos lo asustan: tiembla y se tapa los oídos.', group:'Fechas especiales'},
 });
@@ -41,7 +45,7 @@ class GreenActor {
   if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error('GreenActor requires the actual inline <svg> element.');
   this.svg=svg; this.options=options; this.nodes={};
   const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','lid-left','lid-right','mouth','expression-mouth','expression-line','smirk-crease','smile','blush','sweat','hands-ears','hands-eyes','cover-arm-left','cover-arm-right','cover-arm-shine','cover-hand-left','cover-hand-right','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
-  ids.push('hand-left','hand-right','arm-left-outline','arm-right-outline','arm-left-curve','arm-right-curve','arm-left-light','arm-right-light',
+  ids.push('santa-hat','hat-tip','hand-left','hand-right','arm-left-outline','arm-right-outline','arm-left-curve','arm-right-curve','arm-left-light','arm-right-light',
     'foot-left','foot-right','leg-left-outline','leg-right-outline','leg-left-curve','leg-right-curve','leg-left-light','leg-right-light');
   for (const id of ids) this.nodes[id]=svg.querySelector('#'+(options.idPrefix||'')+id);
   this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
@@ -165,7 +169,7 @@ class GreenActor {
   const mode=this.scene;const D=SCENES[mode].duration;const p=clamp(t/D);
   let v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
     scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,headY:0,alpha:1,
-    trapPress:0,leftWorldReach:0,leftWorldHandX:this._pose?.leftWorldHandX??306,leftWorldHandY:this._pose?.leftWorldHandY??750,
+    hatTilt:0,hatSlip:0,hatTouch:0,laughCover:0,trapPress:0,leftWorldReach:0,leftWorldHandX:this._pose?.leftWorldHandX??306,leftWorldHandY:this._pose?.leftWorldHandY??750,
     worldReach:0,worldHandX:this._pose?.worldHandX||494,worldHandY:this._pose?.worldHandY||750};
   const personality=this.options.embedded&&this.options.personality!==false;
   const frozen=!!this.options.frozen;
@@ -348,6 +352,24 @@ class GreenActor {
       props('stolen-bulb');visible['stolen-bulb']=bump(t,.6,1.1,3.3,3.9);
       bulbTransform=`translate(${lerp(490,485,give)} ${lerp(657,246,give)}) rotate(${180*give}) scale(.68)`;
       break;}
+    case 'hat':{
+      const bow=bump(t,.05,.65,2.6,3.65),fix=bump(t,.65,1.1,2.05,2.65);
+      v.headY=15*bow;v.head=0;v.hatSlip=155*bow;v.hatTouch=fix;
+      v.hatTilt=-8*bump(t,.7,1.1,1.5,2.1);v.pupilY=-10*fix;v.pupilX=9*fix;
+      v.leftArm=-20*bow;v.grump=.7;v.lidL=.7;v.lidR=.5;v.scarf=-5*bow;break;}
+    case 'scoff':{
+      const grin=bump(t,.1,.6,2.65,3.6),laugh=bump(t,.7,.95,2.0,2.55),shake=Math.abs(wave(t,2.6))*laugh;
+      v.laughCover=grin;v.rightArm=66*grin;v.leftArm=-22*grin;v.headY=18*grin;v.head=-8*grin+3*shake;
+      v.dy=-6*shake;v.body=1-.018*shake;v.sly=grin;v.grump=.15;v.lidL=.72*grin;v.lidR=.5*grin;v.pupilX=-11*grin;v.scarf=8*shake;break;}
+    case 'shoo':{
+      const protest=bump(t,.1,.55,2.6,3.8),wag=wave(t,1.6)*bump(t,.65,.9,2.1,2.7);
+      v.head=8*wag;v.rightArm=-48*protest-14*wag;v.leftArm=-30*protest;v.pupilY=-7*protest;
+      v.grump=protest;v.lidL=.85*protest;v.lidR=.7*protest;v.earL=5*protest;v.earR=-5*protest;break;}
+    case 'doze':{
+      const sleep=bump(t,.2,1.6,4.0,4.35),wake=bump(t,4.05,4.2,4.45,4.9);
+      v.headY=28*sleep;v.head=12*sleep-9*wake;v.eyeL=1-.98*sleep;v.eyeR=v.eyeL;
+      v.lidL=.92*sleep;v.lidR=.92*sleep;v.leftArm=-24*sleep;v.rightArm=24*sleep;
+      v.dy=4*sleep-13*wake;v.surprise=wake;v.pupilX=-12*bump(t,4.5,4.8,5.4,6);v.grump=.6*(1-wake);break;}
     case 'ack':{
       const nod=bump(t,.3,.8,1.15,1.8);v.head=10*nod;v.pupilY=6*nod;
       v.rightArm=-16*nod;v.grump=.58;v.lidL=.6;v.lidR=.5;v.sly=.12;
@@ -488,7 +510,7 @@ class GreenActor {
   if(this.n('leg-left-curve')){
     // Compensar la respiración en el apoyo, pero conservar los saltos y carreras.
     const stride=['sneak','run','climb'].includes(mode)||mode==='mischief'&&t<.85;
-    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3','ack','mischief','trapped'].includes(mode);
+    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3','ack','mischief','trapped','hat','scoff','shoo','doze'].includes(mode);
     const ground=side=>planted?v.dy+Math.sin(v.angle*PI/180)*((side==='left'?365:445)-400):0;
     this.poseLeg('left',v.leftLeg,ground('left'),stride);this.poseLeg('right',v.rightLeg,ground('right'),stride);
   }else{
@@ -496,12 +518,13 @@ class GreenActor {
   }
   if(this.n('arm-left-curve')){
     const leftGoal=v.trapPress>.0001?{x:215,y:530,amount:clamp(v.trapPress)}:v.leftWorldReach>.0001?{x:v.leftWorldHandX,y:v.leftWorldHandY,amount:clamp(v.leftWorldReach)}:null;
-    const rightGoal=v.trapPress>.0001?{x:605,y:530,amount:clamp(v.trapPress)}:handGoal;
+    const rightGoal=v.trapPress>.0001?{x:605,y:530,amount:clamp(v.trapPress)}:v.hatTouch>.0001?{x:492,y:245+v.headY+v.hatSlip,amount:clamp(v.hatTouch)}:v.laughCover>.0001?{x:448,y:445+v.headY,amount:clamp(v.laughCover)}:handGoal;
     this.poseArm('left',v.leftArm,v.forearmL,leftGoal);this.poseArm('right',v.rightArm,v.forearmR,rightGoal);
   }else{
     this.rot('arm-left',v.leftArm,352,580);this.rot('arm-right',v.rightArm,444,580);
   }
   this.rot('scarf-tail',v.scarf,449,506);this.rot('scarf-knot',v.knot,399,490);
+  this.transform('santa-hat',`translate(0 ${v.hatSlip.toFixed(2)}) rotate(${v.hatTilt.toFixed(2)} 400 235)`);this.rot('hat-tip',2*wave(clock,.45)+v.hatTilt*.5,400,215);
   this.rot('tail',v.tail,347,760);this.rot('hair',v.hair,400,231);
   this.rot('ear-left',v.earL,296,292);this.rot('ear-right',v.earR,504,290);
   this.faceScale('eye-left',351,317,1,v.eyeL);this.faceScale('eye-right',449,325,1,v.eyeR);

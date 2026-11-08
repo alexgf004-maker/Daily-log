@@ -98,13 +98,13 @@ function frame(info,dt){
     if(!released){ornament.pull(info.elapsed);if(info.elapsed>=3.25){ornament.release();released=true;}}
   }
   if(remaining>0){remaining-=dt;if(remaining<=0){idle();nap=7;}return;}
-  nap-=dt;if(nap<=0){nap=9;var n=mood++%3;if(n===0&&mischief())return;play(n===1?'plot':'grump');}
+  nap-=dt;if(nap<=0){nap=6;var n=mood++%7;if(n===0&&mischief())return;play(['plot','hat','scoff','shoo','doze','grump','plot'][n]);}
 }
 function touch(){
   if(!allowed())return;
   if(ice){pressIce();return;}
   if(mount.dataset.accion==='mischief'){ornament.release();released=true;play('caught');return;}
-  var n=taps++%3;if(n===0&&mischief())return;play(n===1?'grump':n===2?'plot':'caught');
+  var n=taps++%7;if(n===0&&mischief())return;play(['caught','grump','plot','hat','scoff','shoo','doze'][n]);
 }
 function destroy(){
   clearTimeout(touchTimer);intersection?.disconnect();intersection=null;world?.destroy();world=null;ornament?.destroy();ornament=null;
@@ -128,7 +128,7 @@ function build(s,h,next){
   }else mount.classList.add('nv-mascota-libre');
   ornament=createOrnament(h,svg);
   world=NavidadEntorno.create(s,mount,{idPrefix:prefix,frozen:function(){return !!ice;},busy:function(){return typing()||covered()||!inView;},
-    lightSelector:'.nvp-f,.nvc-luz',react:function(d){if(!allowed())return;if(ice){if(d.kind==='ambiente'||d.kind==='foco')pressIce();else setCold();}else if(mount.dataset.accion!=='mischief')play('plot',d);}});
+    lightSelector:'.nvp-f,.nvc-luz',react:function(d){if(!allowed())return;if(ice){if(d.kind==='ambiente'||d.kind==='foco')pressIce();else setCold();}else{ornament.restore();play(d.kind==='foco'?(d.off===true?'scoff':d.off===false?'shoo':'plot'):d.kind==='santa'?'shoo':'plot',d);}}});
   if(typeof IntersectionObserver==='function'){
     intersection=new IntersectionObserver(function(entries){inView=entries[0].isIntersecting;sync();},{threshold:.08});intersection.observe(mount);
   }

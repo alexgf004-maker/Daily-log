@@ -14,7 +14,7 @@ function fixture({stage='casa',theme='navidad'}={}){
  screen.classList.add('active');screen.querySelectorAll=()=>[chosen];screen.querySelector=()=>point;screen.contains=e=>e?.inside===true;
  const doc={hidden:false,readyState:'loading',activeElement:null,addEventListener:(k,f)=>events[k]=f,querySelector:s=>s.startsWith('#employeeScreen')?(selected?screen:null):s.startsWith('#loginScreen .nv-mascota')?template:s==='#fxOk.on'&&modalOn?modal:null,querySelectorAll:()=>modalOn?[modal]:[],getElementById:()=>app,createElement(){const e=new Element(),svg=new Element();svg.style={};e.querySelector=s=>s==='svg'?svg:null;e.querySelectorAll=()=>[];return e;}};
  class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene=options.initialScene;actors.push(this);}play(n){this.scene=n;return this;}pause(){this.paused=true;}resume(){this.paused=false;}render(t){this.rendered=t;}reachFor(p){this.target=p;return this;}destroy(){this.destroyed=true;}lookAt(p){this.look=p;}}
- Actor.SCENES={idle:{duration:5},nye:{duration:5},privacy:{duration:.6},grump:{duration:5},plot:{duration:5},ack:{duration:2.8},mischief:{duration:4.4},trapped:{duration:3.6},caught:{duration:4.8}};
+ Actor.SCENES={idle:{duration:5},nye:{duration:5},privacy:{duration:.6},grump:{duration:5},plot:{duration:5},ack:{duration:2.8},mischief:{duration:4.4},trapped:{duration:3.6},caught:{duration:4.8},hat:{duration:4.2},scoff:{duration:3.6},shoo:{duration:3.8},doze:{duration:6}};
  let reduced=false;
  const ctx={window:null,document:doc,Date,Number,Array,GreenActor:Actor,NavidadHielo:{create(d,e,o){const ice={options:o,days:[d],update(d){this.days.push(d);},touch(){this.touched=true;},destroy(){this.destroyed=true;}};ices.push(ice);return ice;}},NavidadEntorno:{point:(svg,p)=>p,create(s,m,options){const world={options,resetGaze(){this.reset=true;},suspend(){},destroy(){this.destroyed=true;},react(d){options.react(d);}};worlds.push(world);return world;}},MutationObserver:class{observe(){}},setTimeout:f=>{timers.set(++id,f);return id;},clearTimeout:id=>timers.delete(id),setInterval(){},matchMedia:()=>({get matches(){return reduced;},addEventListener:(k,f)=>events.media=f})};ctx.window=ctx;ctx.addEventListener=(k,f)=>events[k]=f;ctx.__temas={modo:'auto',get activo(){return {id:enabled};},etapaDe:()=>({id:current})};vm.createContext(ctx);vm.runInContext(read('js/navidad-companero.js'),ctx);events.DOMContentLoaded();
  return {ctx,doc,hero,other,screen,actors,ices,worlds,events,timers,setStage:s=>current=s,setTheme:s=>enabled=s,setSelected:s=>selected=s,setHero:h=>chosen=h,setModal:v=>modalOn=v,setPoint:p=>point=p,setReduced:v=>reduced=v,sync:ctx.NavidadCompanero.sync};
@@ -70,4 +70,15 @@ test('la botita original solo se mueve tras el contacto real de la mano y vuelve
  const f=ornamentFixture();assert.equal(f.ornament.start(),true);f.ornament.pull(1.2);assert.equal(f.boot.classList.contains('nv-bota-tirada'),false);
  f.setHand({e:300,f:200});f.ornament.pull(1.25);f.setHand({e:310,f:197});f.ornament.pull(1.8);assert.equal(f.values['--nv-bota-x'],'10.00px');
  f.ornament.release();f.ornament.settle(.2);assert.ok(Math.abs(parseFloat(f.values['--nv-bota-x']))<10);f.ornament.settle(3);assert.equal(f.boot.classList.contains('nv-bota-tirada'),false);assert.deepEqual(f.values,{});
+});
+
+test('los toques llegan a cuatro gestos nuevos sin perder el tamaño compacto',()=>{
+ const f=fixture(),node=f.hero.children[0],scenes=[];
+ for(let i=0;i<7;i++){node.click();scenes.push(f.actors[0].scene);}
+ assert.deepEqual(scenes,['caught','grump','plot','hat','scoff','shoo','doze']);
+});
+test('al apagar una luz se ríe; al encenderla protesta y mira el foco',()=>{
+ const f=fixture();f.worlds[0].react({kind:'foco',off:true,x:80,y:30});assert.equal(f.actors[0].scene,'scoff');assert.equal(f.actors[0].look.x,80);
+ f.worlds[0].react({kind:'foco',off:false,x:80,y:30});assert.equal(f.actors[0].scene,'shoo');
+ const frozen=fixture({stage:'pre'});frozen.worlds[0].react({kind:'foco',x:80,y:30});assert.equal(frozen.actors[0].scene,'trapped');
 });

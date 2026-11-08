@@ -56,6 +56,7 @@ function pressIce(){
 function reactToWorld(detail){
   if(ice){if(detail.kind==='ambiente'&&!form?.contains(document.activeElement))pressIce();if(['nieve','ambiente','foco','casa'].includes(detail.kind)){mount.dataset.reaccion='frio';clearTimeout(frostTimer);frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3200);}return;}
   if(!actor||focusTarget)return;
+  if(detail.kind==='foco'&&typeof detail.off==='boolean'){play(detail.off?'scoff':'shoo');var light=window.NavidadEntorno?.point(actor.svg,detail);if(light)actor.lookAt?.(light,3.5);return;}
   if(flow?.kind==='travesura'){if(detail.kind!=='santa')caught();return;}
   if(flow)return;
   if(detail.kind==='adorno'){startStory('travesura');return;}
@@ -91,9 +92,9 @@ function frame(info,dt){
   if(nap<=0){if(!startStory(giftDay()?'regalo':'travesura'))nap=28;return;}
   moodWait-=dt;
   if(moodWait<=0){
-    var name=['grump','plot','plot','grump'][moodIndex++%4];
+    var name=['hat','scoff','shoo','doze','plot','grump'][moodIndex++%6];
     actor.play(name);mount.dataset.gesto=name;manualRemaining=GreenActor.SCENES[name].duration;
-    moodWait=11+Math.random()*6;
+    moodWait=6+Math.random()*3;
   }
 }
 function play(name){
@@ -112,7 +113,7 @@ function onTap(event){
   if(focusTarget){focusTarget.blur?.();focusTarget=null;}
   if(!actor||reduced)return;
   if(flow?.kind==='travesura'){caught();return;}
-  touchStage=touchStage%3+1;play('tap'+touchStage);
+  touchStage=touchStage%7+1;play(['tap1','tap2','tap3','hat','scoff','shoo','doze'][touchStage-1]);
 }
 function onKey(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();onTap(event);}}
 function onFocus(event){
