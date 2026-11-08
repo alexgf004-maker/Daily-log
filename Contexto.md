@@ -465,6 +465,14 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Login de Navidad en casa: error y bienvenida con Santa** (`window.__nvSantaLogin` en `js/navidad-casa-marcaje.js`;
+    los llama `vigilar()` en `js/navidad.js` cuando `armada==='casa'`). PIN equivocado: la tarjeta tiembla y Santa se
+    asoma por detrás de ella con el ceño fruncido, niega con la mano y dice «Mmm… ese PIN no es» (SVG
+    `.nvc-login-santa` dentro de la tarjeta; ojo: necesita `html.nav-casa #loginScreen .login-form>…{position:absolute}`
+    porque `.nav-casa .login-form>:not(.nv-extra)` pone `position:relative`). Al entrar: Santa sale de la esquina de
+    abajo, saluda y dice «¡Hola, <primer nombre>!» (de `innova_session`), guiña y se va (`.nvc-bienvenida-santa`, fijo,
+    sin bloquear toques). Movimiento reducido: sin escenas. El 24 de dic el listón y el moño quedan dentro de la tarjeta
+    de galleta.
   - **«¡Listo, guardado!» de Navidad en casa: Santa lo anota en su lista** (`js/navidad-casa-guardado.js`,
     `escenaListaNV(cont,{nombre,alTexto})` → `{detener,duracion}`; la llama `mostrarGuardadoOK` con clase `.fx-ok.nvl`;
     estilos en `navidad.css`). Sala cálida (guirnalda con foquitos, chimenea); Santa de medio cuerpo (redibujado: banda
