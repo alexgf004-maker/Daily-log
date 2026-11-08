@@ -153,3 +153,46 @@ export function escenaSantaNV(card,pt,{tarde=false,hora='',cual='entrada'}={}){
   (function paso(n){ raf=0; if(parado) return; if(!sv.isConnected){ detener(); return; } const t=(n-t0)/1000; if(t>=3.8){ detener(); return; } cuadro(Math.max(0,t)); raf=requestAnimationFrame(paso); })(t0);
   return {detener};
 }
+
+// ── Login de Navidad en casa: Santa también avisa del PIN equivocado y da la bienvenida (los llama js/navidad.js) ──
+//  · error(form): la tarjeta tiembla; Santa se asoma por detrás de ella con el ceño fruncido, niega con la mano y dice
+//    «Mmm… ese PIN no es». · bienvenida(nombre): ya adentro, Santa sale desde la esquina de abajo, saluda con la mano,
+//    dice «¡Hola, <nombre>!» y guiña. Ninguna bloquea los toques. Con movimiento reducido no hay escenas.
+function correrNV(dur,f,fin){ const t0=performance.now(); let raf=0; (function p(n){ const t=(n-t0)/1000; f(Math.min(t,dur)); if(t<dur) raf=requestAnimationFrame(p); else fin&&fin(); })(t0); return ()=>{ cancelAnimationFrame(raf); fin&&fin(); }; }
+function svgSanta(W,H,html){ const sv=document.createElementNS(NS,'svg'); sv.setAttribute('viewBox',`0 0 ${W} ${H}`); sv.setAttribute('width',W); sv.setAttribute('height',H); sv.setAttribute('aria-hidden','true'); sv.innerHTML=propio(DEFS+html); return sv; }
+const $q=(sv,id)=>sv.querySelector('[id^="'+id+'_c"]');
+const tfq=(el,x,y,s=1,r=0)=>{ if(el) el.setAttribute('transform',`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${r.toFixed(2)}) scale(${s.toFixed(3)})`); }, opq=(el,a)=>{ if(el) el.setAttribute('opacity',cl(a).toFixed(3)); };
+let errorActivo=null;
+function errorLoginNV(form){
+  if(!form||reducido()) return;
+  if(form.animate) form.animate([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-4px)'},{transform:'translateX(3px)'},{transform:'translateX(0)'}],{duration:480,easing:'ease-out'});
+  if(errorActivo) errorActivo();
+  const M=140, W=form.offsetWidth, sx=Math.min(W*.74,W-56);
+  const sv=svgSanta(W,M+10,`<clipPath id="kDetras"><rect x="-300" y="-400" width="${W+600}" height="${M+400}"/></clipPath><g clip-path="url(#kDetras)"><g id="sant">${santaSVG()}</g></g><g id="mano"><g transform="translate(0 -6)">${manopla()}</g></g><g id="burb">${burbuja('Mmm… ese PIN no es',168,'#e3263c')}</g>`);
+  sv.setAttribute('class','nvc-login-santa'); sv.style.cssText=`left:0;top:${-M}px`; form.appendChild(sv);
+  errorActivo=correrNV(2.6,t=>{
+    const sube=back(seg(t,0,.45),1.3), baja=eIn(seg(t,2.15,2.55)), y=lerp(M+80,M-24,sube)+baja*110, no=t>.5&&t<1.7?Math.sin((t-.5)*16)*6:0;
+    tfq($q(sv,'sant'),sx,y,.92,no*.6);
+    const en=seg(t,.35,.55), habla=t>.7&&t<1.6;
+    opq($q(sv,'sOjoM'),en*.85); opq($q(sv,'sBocaM'),habla?0:en); const b=$q(sv,'sBoca'); opq(b,habla?1:0);
+    const h=habla?.3+.4*Math.abs(Math.sin((t-.7)*11)):.01; b.setAttribute('transform',`translate(0 ${(19*(1-h)).toFixed(2)}) scale(1 ${h.toFixed(3)})`);
+    $q(sv,'sCejaI').setAttribute('transform',`translate(0 ${(en*2.5).toFixed(2)}) rotate(${(en*14).toFixed(1)} -11 -12)`); $q(sv,'sCejaD').setAttribute('transform',`translate(0 ${(en*2.5).toFixed(2)}) rotate(${(-en*14).toFixed(1)} 11 -12)`);
+    const ms=back(seg(t,.4,.65)); tfq($q(sv,'mano'),sx-48,y+28+(1-ms)*40,1,t<1.9?Math.sin(t*14)*22:0); opq($q(sv,'mano'),seg(t,.4,.5)*(1-seg(t,1.95,2.15)));
+    const bb=back(seg(t,.65,.9))*(1-seg(t,1.95,2.15)); opq($q(sv,'burb'),bb>0?1:0); tfq($q(sv,'burb'),Math.max(90,sx-84),y-66,Math.max(.001,bb));
+  },()=>{ sv.remove(); errorActivo=null; });
+}
+function bienvenidaNV(nombre){
+  if(reducido()) return;
+  const W=innerWidth, H=innerHeight, sx=W-70, txt=nombre?'¡Hola, '+nombre+'!':'¡Hola!', bw=Math.max(96,txt.length*8.6+30);
+  const sv=svgSanta(W,H,`<g id="sant">${santaSVG()}</g><g id="mano"><g transform="translate(0 -6)">${manopla()}</g></g><g id="burb">${burbuja(txt.replace(/[&<>"]/g,''),bw)}</g>`);
+  sv.setAttribute('class','nvc-bienvenida-santa'); document.body.appendChild(sv);
+  correrNV(2.3,t=>{
+    const sube=back(seg(t,0,.45),1.4), baja=eIn(seg(t,1.85,2.25)), y=lerp(H+70,H-58,sube)+baja*140;
+    tfq($q(sv,'sant'),sx,y,1.1,-12+Math.sin(t*2)*3);
+    const feliz=t>.5&&t<1.6, guino=t>1.6&&t<1.85; opq($q(sv,'sOjoA'),feliz||guino?0:1); opq($q(sv,'sOjoF'),feliz?1:0); opq($q(sv,'sGuino'),guino?1:0);
+    const h=feliz?.4+.5*Math.abs(Math.sin((t-.5)*10)):.12; $q(sv,'sBoca').setAttribute('transform',`translate(0 ${(19*(1-h)).toFixed(2)}) scale(1 ${h.toFixed(3)})`);
+    tfq($q(sv,'mano'),sx-58,y-6+(1-back(seg(t,.3,.55)))*40,1.15,-20+Math.sin(t*13)*24); opq($q(sv,'mano'),seg(t,.3,.4)*(1-seg(t,1.8,1.95)));
+    const bb=back(seg(t,.45,.7))*(1-seg(t,1.75,1.95)); opq($q(sv,'burb'),bb>0?1:0); tfq($q(sv,'burb'),Math.min(sx-70,W-12-bw/2),y-82,Math.max(.001,bb));
+  },()=>sv.remove());
+}
+window.__nvSantaLogin={error:errorLoginNV,bienvenida:bienvenidaNV};
