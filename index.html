@@ -180,7 +180,7 @@
   // activo. Al abrir se escribe aquí mismo, en el <head>, para que cargue antes de pintar (sin parpadeo);
   // si el tema cambia con la app abierta (fecha, "Ver ahora", "Tema para todos"), aplicarTema llama a
   // cargarCss. Subir TEMAS_V al cambiar cualquiera de esos archivos.
-  var TEMAS_V='65';
+  var TEMAS_V='66';
   T.cssDe=function(tema){ return tema&&tema.css?tema.css+'?v='+TEMAS_V:null; };
   if(t&&t.css) document.write('<link rel="stylesheet" data-tema-css="'+t.id+'" href="'+T.cssDe(t)+'">');
   T.cargarCss=function(tema){
@@ -940,6 +940,7 @@ import { diaNavidad, diasDelCordon, cordonHTML, adventoHTML, abrirPuerta, lineaP
 import { adornoNV, escarchaMarcaje, pintarGuirnaldaNV, etiquetaRegaloNV } from "./js/navidad-marcaje.js?v=3";
 import { escenaVentanaNV } from "./js/navidad-guardado.js?v=1";
 import { adornoSantaNV, escenaSantaNV } from "./js/navidad-casa-marcaje.js?v=1";
+import { escenaListaNV } from "./js/navidad-casa-guardado.js?v=1";
 import { configurarAvisos, estadoAvisos, activarAvisos, refrescarAvisos, quitarAvisosDeEsteTelefono, apagarAvisos, probarAviso, esIOS } from "./js/avisos.js";
 import { iniciarMusica, subirMusica, activarMusica, quitarMusica, esperarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
@@ -3306,13 +3307,18 @@ function mostrarGuardadoOK(pills){
   o.querySelectorAll('.fxm-cf').forEach(e=>e.remove());
   // Pre-Navidad: la ventana empañada; un dedo verde y peludo escribe "¡Listo!" en el vaho (js/navidad-guardado.js)
   const nv=!hw&&!mu&&nvPreTema(); o.classList.toggle('nv',nv); o.classList.remove('nv-txt');
+  // Navidad en casa: Santa anota tu nombre en su lista y la sella (js/navidad-casa-guardado.js)
+  const nl=!hw&&!mu&&!nv&&nvCasaTema(); o.classList.toggle('nvl',nl);
   if(o._nvEsc){ o._nvEsc.detener(); o._nvEsc=null; } o.querySelector('.fxn')?.remove();
   if(nv&&sub) sub.textContent='Lo escribiste en tu historial';
+  if(nl&&sub) sub.textContent='Santa ya te anotó en su lista';
   o.classList.remove('on'); void o.offsetWidth; o.classList.add('on');
   if(mu) confetiGuardadoMU(o);
   if(nv){ const c=document.createElement('div'); c.className='fxn'; c.setAttribute('aria-hidden','true'); o.insertBefore(c,o.firstChild);
     o._nvEsc=escenaVentanaNV(c,{alTexto:()=>o.classList.add('nv-txt')}); }
-  clearTimeout(_fxOkTimer); _fxOkTimer=setTimeout(cerrarGuardadoOK,hw?4400:mu?4200:nv?Math.round(o._nvEsc.duracion*1000):3200);
+  if(nl){ const c=document.createElement('div'); c.className='fxn'; c.setAttribute('aria-hidden','true'); o.insertBefore(c,o.firstChild);
+    o._nvEsc=escenaListaNV(c,{nombre:me?.nombre||me?.username||'',alTexto:()=>o.classList.add('nv-txt')}); }
+  clearTimeout(_fxOkTimer); _fxOkTimer=setTimeout(cerrarGuardadoOK,hw?4400:mu?4200:(nv||nl)?Math.round(o._nvEsc.duracion*1000):3200);
 }
 const ESCENA_GUARDADO_MU=`<div class="fxm" aria-hidden="true"><div class="fxm-cal"><svg viewBox="0 0 120 130"><path fill="#fff7ed" d="M60 8C31 8 12 28 12 56c0 17 8 30 20 37v14c0 6 5 10 10 10h36c5 0 10-4 10-10V93c12-7 20-20 20-37C108 28 89 8 60 8z"/><g class="fxm-guino"><circle cx="40" cy="58" r="14" fill="#7e22ce"/><circle cx="40" cy="58" r="6" fill="#facc15"/></g><circle cx="80" cy="58" r="14" fill="#db2777"/><circle cx="80" cy="58" r="6" fill="#f97316"/><path fill="#4a044e" d="M60 72l-6 12h12z"/><path stroke="#4a044e" stroke-width="2.6" stroke-linecap="round" fill="none" d="M38 98h44M46 92v12M54 92v12M62 92v12M70 92v12M78 92v12"/><path fill="#16a34a" d="M60 20c-6 6-6 12 0 16 6-4 6-10 0-16z"/><circle cx="46" cy="28" r="3.5" fill="#f97316"/><circle cx="74" cy="28" r="3.5" fill="#db2777"/><path fill="none" stroke="#db2777" stroke-width="2.4" d="M22 70c4 4 8 4 12 0M86 70c4 4 8 4 12 0"/></svg></div><div class="fxm-sello">✓ GUARDADO</div></div>`;
 function confetiGuardadoMU(o){
@@ -4629,7 +4635,7 @@ window.probarMarcajeTema=function(){
   const w=document.createElement('div'); w.id='hwPrueba'; w.className='hw-prueba'+(mu?' mu':'')+(nv?' nv':'')+(nc?' nvc':'');
   w.innerHTML=`<div class="hw-prueba-in" role="dialog" aria-label="Probar animaciones"><div class="hw-prueba-k">Vista previa · no se guarda</div><div id="hwPruebaCard"></div>
     <div class="hw-prueba-bt"><button type="button" class="ok" data-c="ok">Llegar a tiempo</button><button type="button" class="mal" data-c="mal">Llegar tarde</button>
-    ${nc?'':'<button type="button" class="gd" data-c="gd">Guardar registro</button>'}${mu?'<button type="button" class="xo" data-c="xo">Llamar al xolo</button>':''}<button type="button" class="x" data-c="x">Cerrar</button></div></div>`;
+    <button type="button" class="gd" data-c="gd">Guardar registro</button>${mu?'<button type="button" class="xo" data-c="xo">Llamar al xolo</button>':''}<button type="button" class="x" data-c="x">Cerrar</button></div></div>`;
   const pintar=c=>{
     const mal=c==='mal', hora=mal?'07:12':'06:52';
     let punto, linea='<i style="width:50%"></i>';
@@ -4654,9 +4660,9 @@ window.probarMarcajeTema=function(){
   // "¡Listo, guardado!" de ejemplo; la vista previa se oculta mientras tanto y vuelve al cerrarse
   const guardado=()=>{
     if(!$('fxOk')) document.body.insertAdjacentHTML('beforeend',FX_OK_HTML);   // la oficina no tiene la pantalla de registro
-    w.style.visibility='hidden';
+    w.style.display='none';   // display, no visibility: su desenfoque de fondo seguía pintándose encima de la escena
     mostrarGuardadoOK([fechaCortaFx(today()),'7:00 a.m. – 5:00 p.m.','Ejemplo']);
-    const espera=setInterval(()=>{ if(!$('fxOk')?.classList.contains('on')){ clearInterval(espera); if(w.isConnected) w.style.visibility=''; } },250);
+    const espera=setInterval(()=>{ if(!$('fxOk')?.classList.contains('on')){ clearInterval(espera); if(w.isConnected) w.style.display=''; } },250);
   };
   w.addEventListener('click',e=>{ const c=e.target.closest('button')?.dataset.c;
     if(e.target===w||c==='x'){ w.remove(); return; }
