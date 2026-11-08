@@ -182,6 +182,35 @@ html.tema-navidad #loginScreen{
 .nv-bienvenida b{position:absolute;top:-12px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(27,132,201,.25),0 0 8px rgba(27,132,201,.4);animation:nvBvCopo 1.6s ease-in forwards}
 @keyframes nvBvCopo{0%{transform:translateY(0)}100%{transform:translateY(60vh) translateX(var(--dx,0));opacity:0}}
 
+/* ═ Pre-Navidad · «Congelado»: los campos y el botón empiezan cubiertos de hielo (grietas y carámbanos);
+     cada campo se descongela al llenarlo y el botón se libera con el usuario y el PIN completos (js/navidad.js, hieloCampos) ═ */
+html.nav-pre #loginScreen{--nv-grieta:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20120%2050%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23fff%27%20stroke-linecap%3D%27round%27%20opacity%3D%27.85%27%3E%3Cpath%20d%3D%27M120%206L92%2020%2080%2016%2066%2030M92%2020l4%2014M80%2016l-6-14%27%20stroke-width%3D%271.2%27%2F%3E%3Cpath%20d%3D%27M66%2030l-10%204M66%2030l2%2010%27%20stroke-width%3D%27.9%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");--nv-carambanos:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20200%2016%27%20preserveAspectRatio%3D%27none%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23e9f7ff%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%237fc3ea%27%20stop-opacity%3D%27.85%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%27M0%200h200v3l-6%204-3-4-5%2011-4-11-6%203-3-3-4%207-3-7-8%205-2-5-5%2013-4-13-7%204-3-4-4%208-4-8-6%202-3-2-6%2012-4-12-5%205-3-5-5%206-3-6-7%209-3-9-6%203-2-3-4%2010-4-10-6%204-3-4-5%207-3-7-5%203-3-3-6%2012-4-12-5%205-3-5-4%206-3-6-6%203-2-3-5%209-3-9z%27%20fill%3D%27url(%23g)%27%2F%3E%3C%2Fsvg%3E")}
+html.nav-pre #loginScreen .lg-wrap{border-radius:14px}
+html.nav-pre #loginScreen .lg-wrap::before{content:'';position:absolute;left:10px;right:10px;bottom:-12px;height:15px;z-index:3;pointer-events:none;
+  background:var(--nv-carambanos) center/100% 100% no-repeat;filter:drop-shadow(0 2px 1px rgba(30,100,150,.25));transition:opacity .6s,transform .6s}
+html.nav-pre #loginScreen .lg-wrap::after{content:'';position:absolute;right:6px;top:0;width:120px;height:100%;pointer-events:none;
+  background:var(--nv-grieta) right center/120px 50px no-repeat;transition:opacity .6s}
+html.nav-pre #loginScreen .lg-wrap:has(.lg-ver)::after{right:46px}
+html.nav-pre #loginScreen .login-form input{background:linear-gradient(160deg,rgba(240,250,255,.97),rgba(196,230,250,.92));border:1.5px solid rgba(255,255,255,.95);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.95),inset -3px -5px 10px rgba(80,160,215,.35),0 8px 16px -10px rgba(20,90,150,.55);color:#0b3b66;transition:background .6s,box-shadow .6s,border-color .6s}
+html.nav-pre #loginScreen .login-form input:focus{border-color:#8fd0f5;box-shadow:inset 2px 2px 0 rgba(255,255,255,.95),inset -3px -5px 10px rgba(80,160,215,.35),0 0 0 4px rgba(120,200,245,.22)}
+html.nav-pre #loginScreen .lg-wrap.nv-deshielo::before{opacity:0;transform:translateY(6px)}
+html.nav-pre #loginScreen .lg-wrap.nv-deshielo::after{opacity:0}
+html.nav-pre #loginScreen .lg-wrap.nv-deshielo input{background:#fffdf8;border-color:#f1d9a6;box-shadow:0 0 0 2px rgba(242,196,90,.45),0 8px 18px -10px rgba(200,120,30,.5)}
+html.nav-pre #loginScreen .lg-ico,html.nav-pre #loginScreen .lg-ver{color:#5c9ccc}
+html.nav-pre #loginScreen .lg-wrap.nv-deshielo .lg-ico{color:#d4283f}
+html.nav-pre #loginScreen .login-form .fl{color:#3a7fb5}
+/* botón atrapado en hielo: la capa va con z-index:-1 dentro de un contexto aislado, debajo del texto y encima del rojo */
+html.nav-pre #loginScreen .btn-login{isolation:isolate;transition:color .5s,box-shadow .5s,text-shadow .5s}
+html.nav-pre #loginScreen .btn-login:has(.nv-hielo-btn):not(.nv-libre){color:#1a4f7c;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+html.nav-pre #loginScreen .nv-hielo-btn{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+  background:var(--nv-grieta) 85% center/130px 50px no-repeat,var(--nv-grieta) 10% center/110px 44px no-repeat,linear-gradient(160deg,rgba(238,249,255,.9),rgba(170,215,245,.78));
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.9),inset -3px -5px 10px rgba(60,140,200,.4);transition:opacity .7s,transform .7s}
+html.nav-pre #loginScreen .nv-hielo-btn::after{content:'';position:absolute;left:8px;right:8px;bottom:-12px;height:14px;background:var(--nv-carambanos) center/100% 100% no-repeat}
+html.nav-pre #loginScreen .btn-login.nv-libre{box-shadow:0 0 0 3px rgba(255,214,120,.5),0 14px 30px -8px rgba(220,30,50,.9)}
+html.nav-pre #loginScreen .btn-login.nv-libre .nv-hielo-btn{opacity:0;transform:scale(1.06)}
+@media (prefers-reduced-motion:reduce){html.nav-pre #loginScreen .lg-wrap::before,html.nav-pre #loginScreen .lg-wrap::after,html.nav-pre #loginScreen .nv-hielo-btn{transition:none}}
+
 /* ═ Navidad en casa ═ */
 /* escena «El árbol» en canvas (js/navidad-casa.js): dos lienzos encimados que llenan la capa */
 .nvc{position:absolute;inset:0}

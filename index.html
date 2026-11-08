@@ -97,7 +97,7 @@
 <link rel="stylesheet" href="css/temas/comun.css?v=48">
 <link rel="stylesheet" href="css/navidad-mascota.css?v=12">
 <script src="js/navidad-casa.js?v=5" defer></script>
-<script src="js/navidad.js?v=9" defer></script>
+<script src="js/navidad.js?v=10" defer></script>
 <script src="js/navidad-dentro.js?v=4" defer></script>
 <script src="js/green-actor.js?v=4" defer></script>
 <script src="js/navidad-hielo.js?v=4" defer></script>
@@ -179,7 +179,7 @@
   // activo. Al abrir se escribe aquí mismo, en el <head>, para que cargue antes de pintar (sin parpadeo);
   // si el tema cambia con la app abierta (fecha, "Ver ahora", "Tema para todos"), aplicarTema llama a
   // cargarCss. Subir TEMAS_V al cambiar cualquiera de esos archivos.
-  var TEMAS_V='61';
+  var TEMAS_V='62';
   T.cssDe=function(tema){ return tema&&tema.css?tema.css+'?v='+TEMAS_V:null; };
   if(t&&t.css) document.write('<link rel="stylesheet" data-tema-css="'+t.id+'" href="'+T.cssDe(t)+'">');
   T.cargarCss=function(tema){
