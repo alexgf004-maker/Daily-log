@@ -185,7 +185,7 @@
 }
 .tema-navidad .nv-mascota-interior:focus-visible{outline:2px solid #e8fbff}
 .tema-navidad .nv-mascota-interior>svg{pointer-events:none}
-.tema-navidad .nv-con-companero>.nvc-bota{display:none}
+.tema-navidad.nav-casa .nv-con-companero>.nvc-bota{right:124px}
 .tema-navidad .nv-mascota-interior [data-nv-part="background"],
 .tema-navidad .nv-mascota-interior [data-nv-part="cold-patina"]{display:none!important}
 .nav-pre .nv-mascota-interior .nv-hielo-fijo{display:block}

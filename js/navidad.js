@@ -290,14 +290,21 @@
     }
     function vigilar(){
       var al=document.getElementById('loginAlert'), ls=document.getElementById('loginScreen'); if(!al||!ls) return;
-      new MutationObserver(function(){ if(!enPre()) return;
+      new MutationObserver(function(){
+        // Navidad en casa: Santa se asoma por detrás de la tarjeta y niega con la mano (js/navidad-casa-marcaje.js)
+        if(armada==='casa'){ var mm=al.querySelector('.mk-av.mal:not(.nvc-ok)'); if(mm){ mm.classList.add('nvc-ok'); if(window.__nvSantaLogin) window.__nvSantaLogin.error($('#loginScreen .login-form')); } return; }
+        if(!enPre()) return;
         al.querySelectorAll('.mk-av:not(.nv-ok)').forEach(function(m){ m.classList.add('nv-ok'); m.insertAdjacentHTML('beforeend','<div class="nv-helada">'+escarcha(92,64,31).replace('xMinYMin','xMaxYMin')+'</div>'); var h=m.querySelector('.nv-helada svg'); if(h) h.style.transform='scaleX(-1)'; });
         if(al.querySelector('.mk-av.mal')) falla(); }).observe(al,{childList:true});
       var antes=ls.classList.contains('active');
       new MutationObserver(function(){ var ahora=ls.classList.contains('active');
-        if(antes&&!ahora&&enPre()&&!reducido){ var m=document.getElementById('maintenanceScreen'); if(!(m&&m.classList.contains('active'))) bienvenida(); }
+        if(antes&&!ahora&&(enPre()||armada==='casa')&&!reducido){ var m=document.getElementById('maintenanceScreen'); if(!(m&&m.classList.contains('active'))){
+          if(armada==='casa'){ if(window.__nvSantaLogin) window.__nvSantaLogin.bienvenida(nombreSesion()); }   // Santa saluda desde la esquina
+          else bienvenida(); } }
         antes=ahora; }).observe(ls,{attributes:true,attributeFilter:['class']});
     }
+    // primer nombre de quien acaba de entrar (de la sesión); si no, el del usuario recordado
+    function nombreSesion(){ try{ var m=JSON.parse(localStorage.getItem('innova_session')||'null'); var t=((m&&(m.nombre||m.username))||'').trim().split(/[\s.]+/)[0].replace(/[^a-záéíóúñü]/gi,''); if(t) return t.charAt(0).toUpperCase()+t.slice(1).toLowerCase(); }catch(e){} return nombre(); }
     // al entrar: una guirnalda de foquitos se enciende arriba y caen copos, menos de un segundo
     function bienvenida(){
       var b=document.createElement('div'); b.className='nv-extra nv-bienvenida'; b.setAttribute('aria-hidden','true');

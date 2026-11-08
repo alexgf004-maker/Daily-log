@@ -465,6 +465,24 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Login de Navidad en casa: error y bienvenida con Santa** (`window.__nvSantaLogin` en `js/navidad-casa-marcaje.js`;
+    los llama `vigilar()` en `js/navidad.js` cuando `armada==='casa'`). PIN equivocado: la tarjeta tiembla y Santa se
+    asoma por detrás de ella con el ceño fruncido, niega con la mano y dice «Mmm… ese PIN no es» (SVG
+    `.nvc-login-santa` dentro de la tarjeta; ojo: necesita `html.nav-casa #loginScreen .login-form>…{position:absolute}`
+    porque `.nav-casa .login-form>:not(.nv-extra)` pone `position:relative`). Al entrar: Santa sale de la esquina de
+    abajo, saluda y dice «¡Hola, <primer nombre>!» (de `innova_session`), guiña y se va (`.nvc-bienvenida-santa`, fijo,
+    sin bloquear toques). Movimiento reducido: sin escenas. El 24 de dic el listón y el moño quedan dentro de la tarjeta
+    de galleta.
+  - **«¡Listo, guardado!» de Navidad en casa: Santa lo anota en su lista** (`js/navidad-casa-guardado.js`,
+    `escenaListaNV(cont,{nombre,alTexto})` → `{detener,duracion}`; la llama `mostrarGuardadoOK` con clase `.fx-ok.nvl`;
+    estilos en `navidad.css`). Sala cálida (guirnalda con foquitos, chimenea); Santa de medio cuerpo (redibujado: banda
+    de piel que abraza la frente, punta del gorro con pompón, barba con rizos, bigote de dos lóbulos) sostiene su «Lista
+    de Santa» por el rodillo; la lista se desenrolla, una pluma de ganso escribe en cursiva el **primer nombre de quien
+    guardó** (`me.nombre`), pone la palomita roja y cae el sello de lacre; Santa asiente, se ríe y guiña. La cursiva es
+    Hershey Script 1-stroke (A–Z, a–z, ~10 KB embebidos; tildes, diéresis y ñ se trazan aparte al final; el nombre se
+    achica si no cabe). Fondo pintado una vez; capa viva solo con foquitos, chimenea, tinta y chispas; ~6.2 s.
+    Movimiento reducido: sale la lista ya escrita. «Probar animaciones» → «Guardar registro» ya la muestra en la etapa
+    casa (la ventanita de prueba ahora se oculta con `display:none`: con `visibility` su desenfoque se pintaba encima).
   - **Marcaje de Navidad en casa «Santa se asoma»** (`js/navidad-casa-marcaje.js`, módulo importado por index.html:
     `adornoSantaNV(tono,hora)` para el punto y `escenaSantaNV(card,pt,{tarde,hora,cual})` al marcar; estilos en
     `navidad.css` «Navidad en casa · marcaje»). Santa ilustrado en SVG (lentes, barba, gorro) se asoma por detrás de la

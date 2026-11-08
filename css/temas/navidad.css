@@ -275,6 +275,25 @@ html.nav-casa #loginScreen .lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0
 .nav-casa .mk3-pt.nvc-espera :is(.mk3-t,.tg){opacity:0;transform:translateY(6px);animation:none}
 .nav-casa .mk3-pt.nvc-espera .mk3-dot{opacity:0;animation:none}
 
+/* ═ Navidad en casa · «¡Listo, guardado!»: Santa lo anota en su lista (escenaListaNV en js/navidad-casa-guardado.js) ═ */
+.fx-ok.nvl{background:#2a110a!important;justify-content:flex-end;padding-bottom:6vh;overflow:hidden}
+.fx-ok.nvl .fxn{position:absolute;inset:0;z-index:0;pointer-events:none}
+.fx-ok.nvl .fxn>*{position:absolute;left:0;top:0;width:100%;height:100%}
+.fx-ok.nvl>*:not(.fxn){position:relative;z-index:1}
+.fx-ok.nvl .fx-ok-circ{display:none}
+.fx-ok.nvl .fx-ok-t{font-size:25px;text-shadow:0 2px 12px rgba(0,0,0,.45);transition:.5s 0s}
+.fx-ok.nvl .fx-ok-s{color:#ffe1a0;transition:.5s .15s}
+.fx-ok.nvl .fx-ok-pills{transition:.5s .3s}
+.fx-ok.nvl.on .fx-ok-t,.fx-ok.nvl.on .fx-ok-s,.fx-ok.nvl.on .fx-ok-pills{opacity:0;transform:translateY(10px)}
+.fx-ok.nvl.on.nv-txt .fx-ok-t,.fx-ok.nvl.on.nv-txt .fx-ok-s,.fx-ok.nvl.on.nv-txt .fx-ok-pills{opacity:1;transform:none}
+
+/* ═ Navidad en casa · login: Santa avisa del PIN equivocado y da la bienvenida (js/navidad-casa-marcaje.js) ═ */
+html.nav-casa #loginScreen .login-form>.nvc-login-santa{position:absolute;z-index:4;pointer-events:none;overflow:visible}   /* gana a «.login-form>:not(.nv-extra){position:relative}» */
+.nvc-bienvenida-santa{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:400;pointer-events:none;overflow:visible}
+/* 24 de diciembre: el listón y el moño quedan dentro de la tarjeta de galleta (no se salen de la esquina redondeada) */
+.nav-casa .login-form>.nv-cinta{right:8px;top:8px;bottom:8px;width:12px;border-radius:6px}
+.nav-casa .login-form>.nv-mono{right:-16px;top:-22px}
+
 /* ═ Navidad en casa dentro de la app: «Noche en la casita» (js/navidad-casa-dentro.js) ═
    Detrás de las pantallas de adentro, la misma noche del login (lienzos .nvc-noche, z-index:-1); el cordón de
    foquitos arriba del contenido; encabezados rojo terciopelo con gorrito de Santa y la botita con el nombre. */
