@@ -465,6 +465,10 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **La mascota pisa el suelo en Navidad en casa** (`medir()`/`dibujar()` en `js/navidad-casa.js`): el SVG de la mascota
+    trae aire bajo los pies (~17 px en teléfono, ~25 en PC), así que el suelo y la sombra puestos al borde de su recuadro
+    la hacían flotar. La escena lee el borde inferior de `#foot-left`/`#foot-right` (solo lectura, sin tocar la mascota)
+    y pone ahí el suelo, la falda del árbol y la sombra.
   - **Casita sobre una loma en el teléfono** (`dibujar()` en `js/navidad-casa.js`): en el teléfono la casita queda a la
     altura del horizonte y el suelo (pies de la mascota) mucho más abajo, así que parecía flotar. Ahora una loma nevada
     baja desde la base de la casita hasta el suelo (curva suave, sombra azulada y brillo en la cresta) y los pinitos se
