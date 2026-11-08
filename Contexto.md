@@ -465,6 +465,19 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Marcaje de Navidad en casa «Santa se asoma»** (`js/navidad-casa-marcaje.js`, módulo importado por index.html:
+    `adornoSantaNV(tono,hora)` para el punto y `escenaSantaNV(card,pt,{tarde,hora,cual})` al marcar; estilos en
+    `navidad.css` «Navidad en casa · marcaje»). Santa ilustrado en SVG (lentes, barba, gorro) se asoma por detrás de la
+    tarjeta (un clipPath lo corta en su orilla). A tiempo: lanza un regalo girando al punto, se ríe «¡Jo, jo, jo!»,
+    saluda y guiña; el punto queda con el regalito. Tarde (o «Saliste antes»): saca el reloj de bolsillo, las manecillas
+    corren hasta la hora marcada, se molesta (cejas fruncidas, ojos entrecerrados, boca hacia abajo, rubor y marquita de
+    enojo), golpea el reloj, niega con la cabeza y dice «¡Ejem! Llegaste tarde»; deja el reloj (abierto, con la hora) en
+    el punto, sin chispas. La escena es un SVG `.nvc-mk-santa` absoluto dentro de la tarjeta (se desplaza con ella;
+    ojo: `.nvc-santa` ya es el lienzo de Santa cruzando en `navidad-casa-dentro.js`). Mientras corre (3.8 s), punto,
+    hora y etiqueta esperan con `.nvc-espera`. Ids únicos por copia (`propio()`); se detiene sola si la tarjeta se
+    vuelve a pintar. «Probar animaciones» ya sale en la etapa casa (solo marcaje: el botón de guardar se oculta hasta
+    que tenga su escena). Movimiento reducido: sin escena. Elegido entre Santa, Rodolfo y la botita (y antes entre
+    regalo/galleta/bola de nieve, descartadas por «chafas»); la llegada tarde se pidió con Santa molesto.
   - **Login de Navidad en casa «Galleta de jengibre»** (`navidad.css`, bloque del mismo nombre, solo CSS): tarjeta
     crema con glaseado blanco que escurre arriba (sigue las esquinas redondeadas; reemplaza la franja de rayas recta que
     se salía de la tarjeta), campos con borde de galleta tostada y costura de glaseado, botón de galleta con glaseado
