@@ -465,6 +465,18 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Navidad en casa dentro de la app «Noche en la casita»** (`js/navidad-casa-dentro.js`, estilos en `navidad.css`
+    «Navidad en casa dentro de la app»): detrás de las pantallas de adentro, la misma noche del login (aurora, luna,
+    montañas, la casita con luces, el árbol clásico y el plato de galletas con leche para Santa en la nieve), dibujada
+    con el motor de `navidad-casa.js` (expuesto como `window.__nvMotor`). En PC, si sobra margen, la casita y el árbol
+    van en los márgenes. Cordón de foquitos encendido arriba del contenido (clases propias `.nvc-guirnalda/.nvc-luz`
+    para no chocar con la historia de la mascota). Encabezados rojo terciopelo con gorrito de Santa y la botita con
+    el primer nombre de quien entró (de `innova_session`). Cada 40–70 s Santa y sus renos cruzan con estela dorada en
+    su propio lienzo `.nvc-santa` (z-index 90: encima del contenido, debajo de la barra; sin bloquear toques). Para
+    probar: `__nvcSanta()` en la consola. Rendimiento: paisaje pintado una vez (y al cambiar tamaño o pantalla); la
+    capa viva (luces, nieve, Santa) a ~30 cps solo con una pantalla de adentro a la vista; movimiento reducido: quieto
+    y sin Santa. Elegida entre 3 (noche en la casita, junto al árbol y la chimenea, papel de regalo de galletitas)
+    después de pedir los elementos clásicos (gorrito, botita, galletas, Santa).
   - **Login Pre-Navidad «Congelado»** (`navidad.css` bloque «Congelado», `js/navidad.js` `hieloCampos`/`revisarHielo`):
     los campos y el botón empiezan cubiertos de hielo (degradado celeste, grietas y carámbanos colgando). Cada campo se
     descongela al llenarlo (fondo crema, borde dorado, ícono rojo); el botón «Ingresar» está atrapado en hielo (capa
