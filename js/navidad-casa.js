@@ -218,7 +218,22 @@ const NV=(()=>{
     const puestas=[];
     pisos.forEach((p,i)=>{ if(!i) return; p.borde.forEach((b,j)=>{ if(j%2||R()<.3) return; const r=rr(9,15)*k*(.85+i/T*.4), x2=b[0]+rr(-3,3)*k, y2=b[1]-r*rr(.2,.8); if(fuera(x2,y2,r+4)||!x.isPointInPath(sil,x2,y2-r)||puestas.some(q=>Math.hypot(q[0]-x2,q[1]-y2)<q[2]+r+6*k)) return; puestas.push([x2,y2,r,'e']); }); });
     for(let s=0;s<120&&puestas.length<(pc?58:36);s++){ const y=top+h*rr(.14,.92), aw=anchoEn(y)*.82, px=cx+(R()*2-1)*aw, r=rr(7,12)*k; if(fuera(px,y,r+4)||puestas.some(q=>Math.hypot(q[0]-px,q[1]-y)<q[2]+r+9*k)) continue; puestas.push([px,y,r,R()<.62?'e':E.extras[(R()*E.extras.length)|0]]); }
-    puestas.forEach((q,i)=>{ const [px,py,r,t]=q; if(t==='e') N.esfera(x,px,py,r,N.ESF[E.esferas[i%E.esferas.length]],{brillo:.95}); else if(t==='baston') baston(x,px,py,r*.11); else if(t==='mono') monito(x,px,py,r*.11); else if(t==='estrella') estrellita(x,px,py,r*.9); else if(t==='copo') copito(x,px,py,r*1.1); });
+    // Una esfera del árbol queda articulada en el DOM: es el mismo objeto al
+    // estar en la rama, en la mano y al oscilar cuando el personaje la suelta.
+    let elegida=-1;
+    if(C.masc){ const m=C.masc, mano={x:m.l+m.w*.76,y:m.t+m.h*.54}; let menor=Infinity;
+      puestas.forEach((q,i)=>{ if(q[3]!=='e'||q[0]<m.l+m.w*.55||q[0]>Math.min(C.W-10,m.r+m.w*.3)||Math.abs(q[1]-mano.y)>m.w*.2) return;
+        const dx=(q[0]-m.l)/m.w*800-604,dy=(q[1]-m.t)/m.h*1067-580;if(dx>0&&Math.hypot(dx,dy)>165)return;const dist=Math.hypot(q[0]-mano.x,q[1]-mano.y); if(dist<menor){menor=dist;elegida=i;} }); }
+    if(C.masc&&elegida<0){
+      const m=C.masc,px=Math.min(C.W-12,m.l+m.w*.85),py=m.t+m.h*.54,r=Math.max(4,m.w*.027);
+      if(!fuera(px,py,r+2)&&x.isPointInPath(sil,px,py)){
+        for(let i=puestas.length-1;i>=0;i--)if(Math.hypot(puestas[i][0]-px,puestas[i][1]-py)<puestas[i][2]+r+4)puestas.splice(i,1);
+        elegida=puestas.length;puestas.push([px,py,r,'e']);
+      }
+    }
+    puestas.forEach((q,i)=>{ const [px,py,r,t]=q, colores=N.ESF[E.esferas[i%E.esferas.length]];
+      if(i===elegida){ C.adorno={x:px,y:py,r:r,colores:colores}; return; }
+      if(t==='e') N.esfera(x,px,py,r,colores,{brillo:.95}); else if(t==='baston') baston(x,px,py,r*.11); else if(t==='mono') monito(x,px,py,r*.11); else if(t==='estrella') estrellita(x,px,py,r*.9); else if(t==='copo') copito(x,px,py,r*1.1); });
     // tiras de luces
     for(let j=0;j<(pc?7:5);j++){ const y0=top+h*(.1+j*.125), y1=y0+h*.07, sag=h*.04, n=Math.max(4,Math.round(anchoEn(y0+sag)*2/(20*k)));
       for(let s=1;s<n;s++){ const u=s/n, yy=y0+(y1-y0)*u+Math.sin(u*Math.PI)*sag, aw=anchoEn(yy)*1.02, px=cx-aw+2*aw*u+rr(-2,2)*k; if(fuera(px,yy,6)||!x.isPointInPath(sil,px,yy)) continue;
@@ -236,43 +251,45 @@ const NV=(()=>{
       efectos.push((v,t)=>{ const u=t-t0; if(u>vida) return false; v.save(); v.globalCompositeOperation='lighter'; ps.forEach(p=>{ const x=px+p.vx*u, y=py+p.vy*u+grav*u*u, a=1-u/vida; v.fillStyle=`rgba(${p.c},${a})`; v.beginPath(); v.arc(x,y,p.r*(1+a),0,P); v.fill(); }); v.restore(); }); };
     // 1 · la estrella del árbol: destello y lluvia de oro; al tercer toque, un deseo
     let toquesEstrella=0; const st=C.arbolTop;
-    if(st) C.hits.push({x:st.x,y:st.y,r:st.r*2.2,fn:()=>{ toquesEstrella++; const t0=ahora();
+    if(st) C.hits.push({kind:'estrella',x:st.x,y:st.y,r:st.r*2.2,fn:()=>{ toquesEstrella++; const t0=ahora();
       efectos.push((v,t)=>{ const u=t-t0; if(u>.9) return false; v.save(); v.globalCompositeOperation='lighter'; const R=st.r*(2+u*10), g=v.createRadialGradient(st.x,st.y,0,st.x,st.y,R); g.addColorStop(0,`rgba(255,236,170,${.8*(1-u/.9)})`); g.addColorStop(1,'rgba(255,236,170,0)'); v.fillStyle=g; v.beginPath(); v.arc(st.x,st.y,R,0,P); v.fill(); v.restore(); });
       chispas(st.x,st.y,46,['255,220,120','255,245,200','255,190,80'],pc?160:110,140,1.8);
       if(toquesEstrella%3===0){ efectos.push((v,t)=>{ const u=t-t0; if(u>3.2) return false; const a=Math.min(1,u*2)*(u>2.4?1-(u-2.4)/.8:1); v.save(); v.globalAlpha=a; v.font=`italic 700 ${pc?34:22}px Georgia,serif`; v.textAlign=pc?'center':'right'; v.shadowColor='rgba(255,200,90,.9)'; v.shadowBlur=14; v.fillStyle='#ffe7a6';
         v.fillText('¡Feliz Navidad!',pc?st.x:W-12,st.y+(pc?70:56)-u*10); v.restore(); }); } }});
     // 2 · la chimenea: el humo sale en forma de corazón
-    if(casita){ const ch={x:casita.chx,y:casita.chy}; C.hits.push({x:ch.x,y:ch.y,r:Math.max(26,casita.w*.18),fn:()=>{ const t0=ahora();
+    if(casita){ const ch={x:casita.chx,y:casita.chy}; C.hits.push({kind:'chimenea',x:ch.x,y:ch.y,r:Math.max(26,casita.w*.18),fn:()=>{ const t0=ahora();
       efectos.push((v,t)=>{ const u=t-t0; if(u>3) return false; const s=(pc?1:.6)*(1+u*.6), cx=ch.x+u*8, cy=ch.y-30-u*36; v.save(); v.globalAlpha=Math.max(0,.75-u*.25); v.translate(cx,cy); v.scale(s,s); v.fillStyle='#ffe0e6';
         v.beginPath(); v.moveTo(0,10); v.bezierCurveTo(-26,-6,-14,-28,0,-14); v.bezierCurveTo(14,-28,26,-6,0,10); v.fill(); v.restore(); }); }});
       // 3 · la puerta: se abre y sale luz cálida
-      const pu={x:casita.cx,y:casita.base-casita.h*.28}; C.hits.push({x:pu.x,y:pu.y,r:Math.max(20,casita.w*.14),fn:()=>{ const t0=ahora();
+      const pu={x:casita.cx,y:casita.base-casita.h*.28}; C.hits.push({kind:'puerta',x:pu.x,y:pu.y,r:Math.max(20,casita.w*.14),fn:()=>{ const t0=ahora();
         efectos.push((v,t)=>{ const u=t-t0; if(u>3.4) return false; const a=u<.4?u/.4:u>2.6?1-(u-2.6)/.8:1, dw=casita.w*.2, dh=casita.h*.55, dx=casita.cx-dw/2, dy=casita.base-dh;
           v.save(); v.globalCompositeOperation='lighter'; let g=v.createRadialGradient(casita.cx,casita.base,4,casita.cx,casita.base,casita.w*.9); g.addColorStop(0,`rgba(255,200,110,${.55*a})`); g.addColorStop(1,'rgba(255,200,110,0)'); v.fillStyle=g; v.beginPath(); v.ellipse(casita.cx,casita.base,casita.w*.9,casita.w*.3,0,0,P); v.fill();
           v.fillStyle=`rgba(255,214,140,${.9*a})`; v.fillRect(dx,dy,dw*(.3+.7*Math.min(1,u/.4)),dh); v.restore(); }); chispas(pu.x,pu.y,16,['255,214,140','255,240,200'],60,20,1.2); }}); }
     // 4 · el trineo: los regalos brincan y uno suelta confeti
-    if(trineo) C.hits.push({x:trineo.x,y:trineo.y-30*trineo.s,r:70*trineo.s,fn:()=>{ chispas(trineo.x,trineo.y-60*trineo.s,60,['255,90,90','255,214,120','110,220,150','120,190,255','255,150,210'],pc?150:100,160,1.8); }});
+    if(trineo) C.hits.push({kind:'trineo',x:trineo.x,y:trineo.y-30*trineo.s,r:70*trineo.s,fn:()=>{ chispas(trineo.x,trineo.y-60*trineo.s,60,['255,90,90','255,214,120','110,220,150','120,190,255','255,150,210'],pc?150:100,160,1.8); }});
     // 5 · los foquitos del cordón: el que tocas destella y manda una ola de luz por todo el cordón
     { const luces=[...cont.querySelectorAll('.nv-guirnalda .nv-luz')], base=cont.getBoundingClientRect();
-      luces.forEach((l,i)=>{ const r=l.getBoundingClientRect(); C.hits.push({x:r.left-base.left+r.width/2,y:r.top-base.top+r.height/2,r:16,fn:()=>{ luces.forEach((m,j)=>setTimeout(()=>m.animate([{filter:'brightness(1)'},{filter:'brightness(2.4) drop-shadow(0 0 6px #fff)'},{filter:'brightness(1)'}],{duration:500}),Math.abs(j-i)*40));
+      luces.forEach((l,i)=>{ const r=l.getBoundingClientRect(); C.hits.push({kind:'foco',x:r.left-base.left+r.width/2,y:r.top-base.top+r.height/2,r:16,fn:()=>{ luces.forEach((m,j)=>setTimeout(()=>m.animate([{filter:'brightness(1)'},{filter:'brightness(2.4) drop-shadow(0 0 6px #fff)'},{filter:'brightness(1)'}],{duration:500}),Math.abs(j-i)*40));
         const rr2=l.getBoundingClientRect(); chispas(rr2.left-base.left+rr2.width/2,rr2.top-base.top+rr2.height/2,14,['255,240,200','255,214,140'],70,40,1); }}); }); }
     // ambiente premium: estrellas fugaces en la aurora y, de vez en cuando, Santa a lo lejos
     let sigFugaz=ahora()+rr(2,5), sigSanta=ahora()+rr(25,45);
     efectos.push((v,t)=>{ if(t>sigFugaz){ sigFugaz=t+rr(6,14); const t0=t, sx=rr(W*.1,W*.9), sy=rr(20,C.hz*.4), dx=rr(-1,1)<0?-1:1;
         efectos.push((v2,tt)=>{ const u=(tt-t0)/.8; if(u>1) return false; const x=sx+dx*u*W*.28, y=sy+u*80, L=70; const g=v2.createLinearGradient(x,y,x-dx*L,y-L*.3); g.addColorStop(0,`rgba(255,255,255,${1-u})`); g.addColorStop(1,'rgba(255,255,255,0)'); v2.strokeStyle=g; v2.lineWidth=2; v2.beginPath(); v2.moveTo(x,y); v2.lineTo(x-dx*L,y-L*.3); v2.stroke(); }); }
-      if(t>sigSanta){ sigSanta=t+rr(40,70); const t0=t, s=pc?.55:.35, y0=C.hz-(pc?70:40), trail=[];
-        efectos.push((v2,tt)=>{ const u=(tt-t0)/(pc?9:7); if(u>1) return false; const x=-160*s+(W+320*s)*u, y=y0-Math.sin(u*Math.PI)*(pc?90:50); trail.push([x-60*s,y+8*s,tt]); while(trail.length&&tt-trail[0][2]>1.2) trail.shift();
+      if(t>sigSanta){ sigSanta=t+rr(40,70); const t0=t, s=pc?.55:.35, y0=C.hz-(pc?70:40), trail=[];let visto=false;
+        efectos.push((v2,tt)=>{ const u=(tt-t0)/(pc?9:7); if(u>1) return false; const x=-160*s+(W+320*s)*u, y=y0-Math.sin(u*Math.PI)*(pc?90:50); if(!visto&&u>.4){visto=true;const b=cont.getBoundingClientRect();cont.closest('#loginScreen')?.dispatchEvent(new CustomEvent('navidad:entorno',{detail:{kind:'santa',x:b.left+x,y:b.top+y}}));}trail.push([x-60*s,y+8*s,tt]); while(trail.length&&tt-trail[0][2]>1.2) trail.shift();
           v2.save(); v2.globalCompositeOperation='lighter'; trail.forEach(q=>{ const a=1-(tt-q[2])/1.2; v2.fillStyle=`rgba(255,215,120,${.6*a})`; v2.beginPath(); v2.arc(q[0],q[1],1.4*a+.4,0,P); v2.fill(); }); v2.restore(); N.trineo(v2,x,y,s,tt,'rgba(8,20,48,.9)'); }); } });
   };
 })(NV);
 
 (function(N){ const P=Math.PI*2;
   // el árbol grande de Navidad; en teléfono, con el centro en la orilla derecha (se ve la mitad, detrás de la mascota)
-  N.arbolGrande=(x,C,suelo,{centro=false}={})=>{ const {W,H,pc,logo,f,masc}=C; const tapa=[C.marca,f].concat(masc?[masc]:[],C.pie?[C.pie]:[]);
+  N.arbolGrande=(x,C,suelo,{centro=false}={})=>{ const {W,H,pc,logo,f,masc}=C;
+    const silueta=masc?{l:masc.l+masc.w*.23,r:masc.l+masc.w*.73,t:masc.t+masc.h*.07,b:masc.b}:null;
+    const tapa=[C.marca,f].concat(silueta?[silueta]:[],C.pie?[C.pie]:[]);
     const fuera=(px,py,m=4)=>tapa.some(q=>px>q.l-m&&px<q.r+m&&py>q.t-m&&py<q.b+m);
     if(centro){ const top=Math.max(28,logo.t-34), h=suelo-top-10, w=Math.min(W*(pc?.62:1.1),h*.66); N.arbol(x,W/2,top,h,w,C,{pc,fuera}); return; }
-    if(pc){ const th=Math.min(H*.66,suelo-logo.t+10), tw=th*.62, cx=Math.min(W-tw*.45,(masc?masc.r:f.r)+tw*.32); N.arbol(x,cx,suelo-th-4,th,tw,C,{pc,fuera,estilo:'clasico'}); }
-    else { const top=Math.max(64,logo.t+8), h=suelo-top-8, w=h*.5; N.arbol(x,W-18,top,h,w,C,{pc,fuera,estilo:'clasico'}); } };
+    if(pc){ const th=Math.min(H*.66,suelo-logo.t+10), tw=th*.62, cx=Math.min(W-tw*.45,(masc?masc.l+masc.w*.76:f.r)+tw*.32); N.arbol(x,cx,suelo-th-4,th,tw,C,{pc,fuera,estilo:'clasico'}); }
+    else { const top=Math.max(64,logo.t+8), h=suelo-top-8, w=h*.5; N.arbol(x,W-32,top,h,w,C,{pc,fuera,estilo:'clasico'}); } };
   N.luzMascota=(x,C,suelo)=>{ const m=C.masc; if(!m) return; const g=x.createRadialGradient(m.cx,suelo+6,4,m.cx,suelo+6,m.w); g.addColorStop(0,'rgba(255,214,150,.45)'); g.addColorStop(1,'rgba(255,214,150,0)'); x.fillStyle=g; x.beginPath(); x.ellipse(m.cx,suelo+6,m.w,m.w*.3,0,0,P); x.fill();
     x.fillStyle='rgba(30,50,80,.28)'; x.beginPath(); x.ellipse(m.cx,suelo+8,m.w*.32,m.w*.07,0,0,P); x.fill(); };
   N.nieveSuelo=(x,W,H,suelo)=>{ const g=x.createLinearGradient(0,suelo-6,0,H); g.addColorStop(0,'#f2f8fe'); g.addColorStop(1,'#cfe2f2'); x.fillStyle=g; x.beginPath(); x.moveTo(0,H+4); x.lineTo(0,suelo+4); for(let i=0;i<=8;i++) x.quadraticCurveTo(i/8*W-W/16,suelo-6,i/8*W,suelo+4); x.lineTo(W,H+4); x.fill(); };
@@ -301,7 +318,35 @@ window.__nvCasa=function(capa){
   var ls=document.getElementById('loginScreen'); if(!ls) return {detener:function(){}};
   var reducido=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   var cont=document.createElement('div'); cont.className='nvc'; capa.appendChild(cont);
-  var C=null, vivo=null, cps=[], W=0, H=0, raf=0, firma='', parado=false;
+  var C=null, vivo=null, cps=[], W=0, H=0, raf=0, firma='', parado=false, adornoSVG=null;
+  var NS='http://www.w3.org/2000/svg';
+  function nodo(tag,attrs,parent){var n=document.createElementNS(NS,tag);Object.keys(attrs).forEach(function(k){n.setAttribute(k,attrs[k]);});if(parent)parent.appendChild(n);return n;}
+  function dibujarAdorno(){
+    if(adornoSVG)adornoSVG.remove();adornoSVG=null;if(!C?.adorno)return;
+    var a=C.adorno,r=a.r;
+    adornoSVG=nodo('svg',{'class':'nv-arbol-adorno',width:W,height:H,'aria-hidden':'true'});ls.appendChild(adornoSVG);
+    var defs=nodo('defs',{},adornoSVG),g=nodo('radialGradient',{id:'nv-esfera-real',cx:'.32',cy:'.28',r:'.8'},defs);
+    a.colores.forEach(function(c,i){nodo('stop',{offset:[0,.45,1][i],'stop-color':c},g);});
+    a.hilo=nodo('path',{fill:'none',stroke:'#d6ba72','stroke-width':'.9','stroke-linecap':'round'},adornoSVG);
+    a.node=nodo('g',{'class':'nv-esfera-real'},adornoSVG);
+    nodo('rect',{x:-r*.22,y:-r*1.18,width:r*.44,height:r*.26,rx:r*.08,fill:'#ddbd6e'},a.node);
+    nodo('circle',{r:r,fill:'url(#nv-esfera-real)',stroke:'#533525','stroke-width':'.6'},a.node);
+    nodo('ellipse',{cx:-r*.35,cy:-r*.4,rx:r*.21,ry:r*.13,fill:'#fff5d7',opacity:'.8',transform:'rotate(-30)'},a.node);
+    a.p={x:a.x,y:a.y};moverAdorno(a.p);
+    C.hits.push({x:a.x,y:a.y,r:Math.max(12,r*1.7),kind:'adorno',fn:function(){}});
+  }
+  function moverAdorno(p){
+    var a=C?.adorno;if(!a?.node)return;
+    a.p=p;a.node.setAttribute('transform','translate('+p.x.toFixed(2)+' '+p.y.toFixed(2)+')');
+    a.hilo.setAttribute('d','M'+a.x+' '+(a.y-a.r*2.2)+' Q'+(a.x+(p.x-a.x)*.2)+' '+(p.y-a.r*1.4)+' '+p.x+' '+(p.y-a.r));
+    ls.dataset.adorno=Math.hypot(p.x-a.x,p.y-a.y)>1?'tirando':'rama';
+  }
+  var enlace={
+    target:function(){var a=C?.adorno;if(!a?.node?.isConnected)return null;var b=capa.getBoundingClientRect();return {x:a.x+b.left,y:a.y+b.top,r:a.r,node:a.node};},
+    move:function(p){var b=capa.getBoundingClientRect();moverAdorno({x:p.x-b.left,y:p.y-b.top});},
+    reset:function(){if(C?.adorno)moverAdorno({x:C.adorno.x,y:C.adorno.y});},
+    react:function(kind){if(!C)return;var b=capa.getBoundingClientRect(),a=C.adorno;if(a)ls.dispatchEvent(new CustomEvent('navidad:entorno',{detail:{kind:kind,x:a.x+b.left,y:a.y+b.top}}));}
+  };ls.__nvArbol=enlace;
   function rc(e,base){ var r=e.getBoundingClientRect(); var l=r.left-base.left, t=r.top-base.top; return {l:l,t:t,r:l+r.width,b:t+r.height,w:r.width,h:r.height,cx:l+r.width/2,cy:t+r.height/2}; }
   function medir(){ var base=capa.getBoundingClientRect(), q=function(s){ var e=ls.querySelector(s); return e&&e.offsetWidth?rc(e,base):null; };
     if(!q('.login-logo')||!q('.login-brand')||!q('.login-form')) return null;
@@ -311,7 +356,7 @@ window.__nvCasa=function(capa){
     W=M.W; H=M.H; var D=Math.min(1.5,window.devicePixelRatio||1); M.luces=[]; M.chispas=[]; M.anim=[]; M.hits=[]; NV.sem(101);
     var fijo=NV.lienzo(W,H,D); dibujar(fijo.x,M); var v=NV.lienzo(W,H,D);
     cont.innerHTML=''; cont.appendChild(fijo.c); cont.appendChild(v.c); if(M.dom) cont.insertAdjacentHTML('beforeend',M.dom);
-    C=M; vivo=v.x; cps=reducido?[]:NV.copos(W,H,M.nCopos||(M.pc?90:45)); if(M.huevos) M.huevos(cont);
+    C=M; vivo=v.x; cps=reducido?[]:NV.copos(W,H,M.nCopos||(M.pc?90:45)); if(M.huevos) M.huevos(cont);dibujarAdorno();
     if(reducido) NV.vivo(vivo,W,H,0,C.luces,[],[]); else seguir(); }
   function aLaVista(){ return !document.hidden&&ls.classList.contains('active'); }
   function cuadro(n){ raf=0; if(parado||!capa.isConnected||!aLaVista()) return;   // fuera de la vista no corre; se reanuda solo
@@ -320,12 +365,12 @@ window.__nvCasa=function(capa){
   function toque(e){ if(!C||e.target.closest('.login-form,.nv-mascota,button,input,a,label,.login-footer')) return;
     var r=cont.getBoundingClientRect(), px=e.clientX-r.left, py=e.clientY-r.top, h=null;
     for(var i=0;i<C.hits.length;i++){ var q=C.hits[i]; if(Math.hypot(q.x-px,q.y-py)<q.r){ h=q; break; } }
-    if(h){ h.fn(performance.now()/1000,px,py); if(reducido){ var t0=performance.now(); (function paso(n){ NV.vivo(vivo,W,H,0,C.luces,[],[]); for(var j=0;j<C.anim.length;j++) C.anim[j](vivo,n/1000); if(n-t0<3500) requestAnimationFrame(paso); else NV.vivo(vivo,W,H,0,C.luces,[],[]); })(t0); } } }
+    if(h){ h.fn(performance.now()/1000,px,py);ls.dispatchEvent(new CustomEvent('navidad:entorno',{detail:{kind:h.kind||'destello',x:e.clientX,y:e.clientY}})); if(reducido){ var t0=performance.now(); (function paso(n){ NV.vivo(vivo,W,H,0,C.luces,[],[]); for(var j=0;j<C.anim.length;j++) C.anim[j](vivo,n/1000); if(n-t0<3500) requestAnimationFrame(paso); else NV.vivo(vivo,W,H,0,C.luces,[],[]); })(t0); } } }
   ls.addEventListener('pointerdown',toque);
   document.addEventListener('visibilitychange',seguir);
   var mo=new MutationObserver(function(){ if(!C) armar(); seguir(); }); mo.observe(ls,{attributes:true,attributeFilter:['class']});   // al salir la carga se dibuja en ese mismo cuadro, sin esperar
   armar(); var t1=setTimeout(armar,700), t2=setTimeout(armar,1800);      // la mascota y las fuentes se acomodan un momento después
   var ro=window.ResizeObserver?new ResizeObserver(function(){ clearTimeout(t1); t1=setTimeout(armar,200); }):null; if(ro){ ro.observe(capa); var mm=ls.querySelector('.nv-mascota'); if(mm) ro.observe(mm); }
-  return {detener:function(){ parado=true; if(raf) cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); if(ro) ro.disconnect(); mo.disconnect(); ls.removeEventListener('pointerdown',toque); document.removeEventListener('visibilitychange',seguir); cont.remove(); }};
+  return {detener:function(){ parado=true; if(raf) cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); if(ro) ro.disconnect(); mo.disconnect(); ls.removeEventListener('pointerdown',toque); document.removeEventListener('visibilitychange',seguir);if(adornoSVG)adornoSVG.remove();if(ls.__nvArbol===enlace)delete ls.__nvArbol;delete ls.dataset.adorno;cont.remove(); }};
 };
 })();

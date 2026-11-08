@@ -333,3 +333,22 @@ test('el SVG canónico y el incrustado son idénticos y mantienen todos los iden
  const ids=Array.from(svg.matchAll(/id="([^"]+)"/g),m=>m[1]);assert.equal(new Set(ids).size,ids.length);
  for(const id of ['arm-left-curve','arm-right-curve','hand-left','hand-right','leg-left-curve','leg-right-curve','iris-clip-left','iris-clip-right'])assert.ok(ids.includes(id));
 });
+test('la mano alcanza el objeto real y se retira sin saltar al interrumpir la travesura',()=>{
+ const {actor,tick}=realActor();actor.reachFor({x:650,y:580});actor.play('tug');actor.render(1.4);
+ const h=actor.n('hand-right').attrs.transform.match(/translate\(([-\d.]+) ([-\d.]+)\)/),root=actor.n('actor').attrs.transform.match(/^translate\(([-\d.]+) ([-\d.]+)\)/);
+ assert.ok(Math.abs(Number(h[1])+Number(root[1])-650)<.05);assert.ok(Math.abs(Number(h[2])+Number(root[2])-580)<.05);
+ const curve=actor.n('arm-right-curve').attrs.d;actor.reachFor(null);actor.play('caught');assert.equal(actor.n('arm-right-curve').attrs.d,curve);
+ for(let i=0;i<80;i++)tick(1/60);assert.ok(actor._pose.worldReach<.001);
+});
+test('puede mirar un punto de la escena sin interferir con la pose del PIN',()=>{
+ const {actor,tick}=realActor();actor.lookAt({x:0,y:0},3);for(let i=0;i<20;i++)tick(1/60);
+ assert.ok(actor._pose.pupilX<0);assert.ok(actor._pose.pupilY<0);
+ actor.play('privacy');actor.render(.6);assert.equal(actor._pose.pupilX,0);assert.equal(actor._pose.pupilY,0);
+ actor.reachFor({x:NaN,y:0});assert.equal(actor._reachTarget,null);
+});
+test('la pausa de revisión no está disponible fuera de Ver ahora ni estando congelado',()=>{
+ const actual=fixture({date:'2026-12-22'});actual.ctx.__mascotaNavidadSync();assert.equal(actual.ctx.__mascotaNavidadPausa(true),false);
+ const frozen=fixture({mode:'ver'});frozen.ctx.__mascotaNavidadSync();assert.equal(frozen.ctx.__mascotaNavidadPausa(true),false);
+ const local=fixture({date:'2026-12-22',mode:'ver'});local.ctx.__mascotaNavidadSync();assert.equal(local.ctx.__mascotaNavidadPausa(true),true);assert.equal(local.actors.at(-1).paused,true);
+ local.ctx.__mascotaNavidadPausa(false);assert.equal(local.actors.at(-1).paused,false);
+});

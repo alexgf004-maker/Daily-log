@@ -43,6 +43,7 @@ class GreenActor {
   for (const id of ids) this.nodes[id]=svg.querySelector('#'+id);
   this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
   this.motionTime=0;this._pose=null;this._velocity={};this._visible={};
+  this._reachTarget=null;this._lookTarget=null;
   this._raf=requestAnimationFrame(t=>this.frame(t));
   this.play(options.initialScene||'idle');
  }
@@ -55,7 +56,7 @@ class GreenActor {
  faceScale(id,x,y,sx=1,sy=sx){this.transform(id,`translate(${x} ${y}) scale(${sx.toFixed(3)} ${sy.toFixed(3)}) translate(${-x} ${-y})`)}
  // Una curva continua une hombro, codo y muñeca. La mano conserva su volumen;
  // el antebrazo llega después del hombro, sin girar todo el miembro como una tabla.
- poseArm(side,upper,forearm){
+ poseArm(side,upper,forearm,goal=null){
   const sign=side==='left'?-1:1,shoulder={x:side==='left'?352:444,y:580};
   const inward=angle=>side==='left'?-angle:angle;
   const wristTarget=angle=>{
@@ -68,6 +69,7 @@ class GreenActor {
   };
   const leading=wristTarget(upper),following=wristTarget(forearm);
   const h={x:lerp(leading.x,following.x,.65),y:lerp(leading.y,following.y,.65)};
+  if(goal){h.x=lerp(h.x,goal.x,goal.amount);h.y=lerp(h.y,goal.y,goal.amount);}
   // Cinemática de dos huesos: el gesto no alarga los brazos al cruzarlos.
   const upperLength=85,lowerLength=95;
   let dx=h.x-shoulder.x,dy=h.y-shoulder.y,distance=Math.hypot(dx,dy)||1;
@@ -105,6 +107,9 @@ class GreenActor {
   this.render(0,0);
   return this;
  }
+ // Coordenadas del SVG principal, calculadas a partir del objeto real de la escena.
+ reachFor(point){this._reachTarget=point&&Number.isFinite(point.x)&&Number.isFinite(point.y)?point:null;return this;}
+ lookAt(point,seconds=2.8){this._lookTarget=point&&Number.isFinite(point.x)&&Number.isFinite(point.y)?{...point,until:this.motionTime+seconds}:null;return this;}
  tap(){this.tapCount=this.tapCount%3+1;this.play('tap'+this.tapCount);return this.tapCount}
  pause(){this.paused=true; return this}
  resume(){if(this.paused){this.paused=false;this.last=0;}return this}
@@ -156,7 +161,8 @@ class GreenActor {
  render(t,dt=null){
   const mode=this.scene;const D=SCENES[mode].duration;const p=clamp(t/D);
   let v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
-    scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,headY:0,alpha:1};
+    scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,headY:0,alpha:1,
+    worldReach:0,worldHandX:this._pose?.worldHandX||494,worldHandY:this._pose?.worldHandY||750};
   const personality=this.options.embedded&&this.options.personality!==false;
   const frozen=!!this.options.frozen;
   const clock=this.options.embedded&&dt!==null?this.motionTime:t;
@@ -406,6 +412,22 @@ class GreenActor {
       this.rot('fw-right',-t*65,615,284);
       break;}
   }
+  let handGoal=null;
+  if(this._reachTarget&&this.options.embedded&&['tug','offer'].includes(mode)){
+    const a=this._reachTarget,dy=a.y-580,span=Math.sqrt(Math.max(0,170*170-dy*dy));
+    const step=clamp(a.x-444-span+18,0,160)*between(t,0,.95);
+    const extension=between(t,.65,1.35)*(mode==='offer'?1-between(t,3.2,4):1);
+    const pull=mode==='tug'?12*between(t,1.45,1.7)+9*(bump(t,1.7,1.95,2.2,2.5)+.7*bump(t,2.9,3.15,3.4,3.75)):0;
+    v.dx=step;v.dy=0;v.angle=0;v.leftLeg=5*Math.sin(Math.PI*between(t,0,.95));v.rightLeg=-v.leftLeg;
+    v.head=-4*extension;v.pupilX=9;v.pupilY=clamp((a.y-325)/25,-8,8);
+    v.rightArm=0;v.grump=.6;v.sly=.4*extension;v.lidL=.6;v.lidR=.4;
+    visible['reach-arm']=0;
+    v.worldHandX=a.x-step-2*pull;v.worldHandY=a.y+pull;v.worldReach=extension;
+  }
+  if(this._lookTarget&&this.motionTime<=this._lookTarget.until&&mode!=='privacy'&&!this._reachTarget){
+    const dx=this._lookTarget.x-400-v.dx,dy=this._lookTarget.y-325-v.dy,length=Math.hypot(dx,dy)||1;
+    v.pupilX=12*dx/length;v.pupilY=9*dy/length;v.head=lerp(v.head,v.pupilX*.35,.75);
+  }
   if(frozen){
     // Una pose estática, enfadada durante todo el deshielo; los ojos se animan por CSS.
     Object.assign(v,{dx:0,dy:0,angle:0,head:0,body:1,leftArm:0,rightArm:0,leftLeg:0,rightLeg:0,
@@ -415,6 +437,7 @@ class GreenActor {
   }
   v.forearmL=v.leftArm;v.forearmR=v.rightArm;
   this.settlePose(v,dt);v={...this._pose};
+  handGoal=v.worldReach>.0001?{x:v.worldHandX,y:v.worldHandY,amount:clamp(v.worldReach)}:null;
   // Las capas auxiliares también se relevan sin aparecer de golpe.
   for(const id of ['reach-arm','hands-eyes','smile','sweat','blush']){
     const target=visible[id]||0;
@@ -448,7 +471,7 @@ class GreenActor {
     this.rot('leg-left',v.leftLeg,370,807);this.rot('leg-right',v.rightLeg,432,805);
   }
   if(this.n('arm-left-curve')){
-    this.poseArm('left',v.leftArm,v.forearmL);this.poseArm('right',v.rightArm,v.forearmR);
+    this.poseArm('left',v.leftArm,v.forearmL);this.poseArm('right',v.rightArm,v.forearmR,handGoal);
   }else{
     this.rot('arm-left',v.leftArm,352,580);this.rot('arm-right',v.rightArm,444,580);
   }

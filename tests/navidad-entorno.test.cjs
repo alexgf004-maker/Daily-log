@@ -1,0 +1,71 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const read=name=>fs.readFileSync(path.join(__dirname,'../js',name),'utf8');
+class Node{
+ constructor(){this.dataset={};this.listeners={};this.values={};this.style={setProperty:(k,v)=>this.values[k]=v,removeProperty:k=>delete this.values[k]};const c=new Set();this.classList={add:k=>c.add(k),remove:k=>c.delete(k),contains:k=>c.has(k)};}
+ addEventListener(k,fn){(this.listeners[k]??=new Set()).add(fn)}removeEventListener(k,fn){this.listeners[k]?.delete(fn)}
+ emit(k,e){for(const fn of this.listeners[k]||[])fn(e)}
+}
+function worldFixture(){
+ let frozen=true,reduce=false,now=20000,restored=0;
+ const login=new Node(),mount=new Node(),document=new Node(),svg={getScreenCTM:()=>({a:.2,b:0,c:0,d:.2,e:100,f:200})},pupil={},calls=[],timers=new Map(),intervals=new Map();let id=0;
+ login.classList.add('active');document.hidden=false;
+ const bulb={classList:{contains:()=>false},getBoundingClientRect:()=>({left:280,top:40,width:10,height:18}),querySelector:()=>({getAttribute:()=>'#ffbbee'})};
+ const house={getBoundingClientRect:()=>({left:30,top:700,width:40,height:40})};
+ mount.querySelector=s=>s==='svg'?svg:pupil;login.contains=n=>n===bulb;login.querySelectorAll=s=>s.includes('casita')?[house]:[bulb];
+ const ctx={window:null,document,Date:{now:()=>now},Math,Number,getComputedStyle:()=>({translate:'-4px -2px'}),setTimeout:fn=>{timers.set(++id,fn);return id},clearTimeout:i=>timers.delete(i),setInterval:fn=>{intervals.set(++id,fn);return id},clearInterval:i=>intervals.delete(i)};ctx.window=ctx;ctx.matchMedia=()=>({matches:reduce});vm.createContext(ctx);vm.runInContext(read('navidad-entorno.js'),ctx);
+ const w=ctx.NavidadEntorno.create(login,mount,{frozen:()=>frozen,react:d=>calls.push(d),restoreFocus:()=>restored++});
+ return {w,ctx,login,mount,document,bulb,calls,timers,intervals,setReduced:v=>reduce=v,setFrozen:v=>frozen=v,setNow:v=>now=v,restored:()=>restored};
+}
+test('la mirada se calcula en coordenadas del SVG, también con giro y escalado',()=>{
+ const f=worldFixture(),p=f.ctx.NavidadEntorno.point({getScreenCTM:()=>({a:0,b:.2,c:-.2,d:0,e:300,f:100})},{x:200,y:200});
+ assert.ok(Math.abs(p.x-500)<1e-8);assert.ok(Math.abs(p.y-500)<1e-8);
+ assert.equal(f.ctx.NavidadEntorno.point({}, {x:0,y:0}),null);
+});
+test('un foco real dirige la mirada, aporta su color y no toca los campos',()=>{
+ const f=worldFixture();Object.defineProperty(f.bulb,'value',{get(){throw Error('No leer campos')}});
+ f.login.emit('pointerdown',{target:{closest:()=>f.bulb}});
+ assert.equal(f.mount.dataset.mirada,'entorno');assert.equal(f.mount.dataset.reflejo,'foco');assert.equal(f.mount.values['--nv-reflejo'],'#ffbbee');
+ assert.equal(f.calls[0].x,285);assert.equal(f.calls[0].y,49);
+ assert.ok(parseFloat(f.mount.values['--nv-mirada-y'])<0);
+});
+test('las reacciones terminan, restauran el foco y no dejan temporizadores al salir',()=>{
+ const f=worldFixture();f.w.react({kind:'nieve',x:180,y:100,color:'#d5f3ff'});
+ const [id,end]=[...f.timers.entries()][0];f.timers.delete(id);end();assert.equal(f.mount.dataset.mirada,undefined);assert.equal(f.restored(),1);
+ f.w.react({kind:'foco',x:220,y:30,color:'#ffcc88'});f.w.destroy();
+ assert.equal(f.timers.size,0);assert.equal(f.intervals.size,0);assert.equal(f.mount.dataset.reflejo,undefined);assert.equal(f.login.listeners['navidad:entorno'].size,0);
+});
+test('sin actividad visible o con movimiento reducido no reacciona',()=>{
+ const f=worldFixture(),d={kind:'nieve',x:180,y:120};
+ f.setReduced(true);assert.equal(f.w.react(d),false);f.setReduced(false);f.document.hidden=true;assert.equal(f.w.react(d),false);
+ f.document.hidden=false;f.login.classList.remove('active');assert.equal(f.w.react(d),false);assert.equal(f.calls.length,0);
+});
+test('el ambiente alterna objetos con pausas y no distrae mientras se escribe',()=>{
+ const f=worldFixture(),tick=[...f.intervals.values()][0];tick();assert.equal(f.calls.length,1);
+ f.setNow(24000);tick();assert.equal(f.calls.length,1);f.setNow(40000);tick();assert.equal(f.calls.length,2);
+ f.setFrozen(false);f.setNow(60000);tick();assert.equal(f.calls.length,2);
+});
+test('rechaza coordenadas no válidas y un color que no venga de la paleta',()=>{
+ const f=worldFixture();assert.equal(f.w.react({kind:'foco',x:NaN,y:20}),false);
+ f.w.react({kind:'foco',x:180,y:30,color:'url(no)'});assert.equal(f.mount.dataset.reflejo,undefined);
+});
+function storyFixture(){
+ let h={x:300,y:200},a={x:300,y:200,r:6,node:{}},resets=0;
+ const moves=[],bridge={target:()=>a,move:p=>moves.push(p),reset:()=>resets++};
+ const ctx={window:null,Math,document:{createElement(){throw Error('No crear copias de la esfera')}}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(read('navidad-historia.js'),ctx);
+ const story=ctx.NavidadHistoria.create({__nvArbol:bridge},{querySelector:()=>({getScreenCTM:()=>({e:h.x,f:h.y})})});
+ return {story,moves,bridge,setHand:p=>h=p,setAnchor:p=>a=p,resets:()=>resets};
+}
+test('la esfera solo pasa a la mano después de contacto físico',()=>{
+ const f=storyFixture();assert.equal(f.story.start(),true);f.setHand({x:390,y:250});f.story.pull(3.4);assert.equal(f.moves.length,0);
+ f.setHand({x:300,y:200});f.story.pull(3.5);f.setHand({x:308,y:205});f.story.pull(4);assert.deepEqual({...f.moves.at(-1)},{x:308,y:205});
+});
+test('al soltar, el mismo adorno vuelve amortiguado a su rama',()=>{
+ const f=storyFixture();f.story.start();f.story.pull(3);f.setHand({x:310,y:208});f.story.pull(4);f.story.release();f.story.drop(.2);
+ assert.ok(f.moves.at(-1).x>300&&f.moves.at(-1).x<310);f.story.drop(4.5);assert.equal(f.resets(),1);
+});
+test('sin árbol no inventa un objeto ni inicia una travesura',()=>{
+ const ctx={window:null,Math};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(read('navidad-historia.js'),ctx);
+ const s=ctx.NavidadHistoria.create({},{});assert.equal(s.start(),false);s.destroy();
+});

@@ -43,11 +43,16 @@
 .nv-eye-gaze{translate:0 0;transition:translate .3s cubic-bezier(.18,.72,.25,1)}
 .nv-mascota-congelada[data-mirada] .nv-eye-gaze{translate:-6px -5px}
 .nv-mascota-congelada[data-mirada="apartada"] .nv-eye-gaze{translate:12px 2px}
+.nv-mascota-congelada[data-mirada="entorno"] .nv-eye-gaze{translate:var(--nv-mirada-x,0px) var(--nv-mirada-y,0px)}
 .nv-mascota-congelada[data-reaccion="molesto"] .nv-eye-gaze{translate:0 -3px}
 .nv-mascota-congelada:is([data-mirada],[data-reaccion]) #pupil-left,
 .nv-mascota-congelada:is([data-mirada],[data-reaccion]) #pupil-right{animation-play-state:paused}
 .nv-mascota-congelada[data-reaccion="molesto"] #eyebrows{translate:0 5px;transition:translate .16s ease-out}
 .nv-mascota-congelada[data-reaccion="molesto"] .nv-vaho{animation:nvResoplidoToque 2.4s ease-out both}
+.nv-mascota-congelada[data-reaccion="frio"] .nv-vaho{animation:nvResoplidoToque 2.6s .4s ease-out both}
+.nv-mascota[data-reflejo] #nvice-reflection{fill:var(--nv-reflejo);fill-opacity:.28}
+.nv-mascota[data-reflejo] #nvice-contour{stroke:var(--nv-reflejo)}
+.nav-pre .nv-casita{pointer-events:auto;cursor:pointer}
 .nv-mascota-ojos-pausa #eye-left,
 .nv-mascota-ojos-pausa #eye-right,
 .nv-mascota-ojos-pausa #pupil-left,
@@ -157,3 +162,4 @@
 }
 /* Cable y foco de la guirnalda real: decoración sin superficie interactiva. */
 .tema-navidad .nv-historia-capa{position:absolute;left:0;top:0;z-index:3;pointer-events:none;overflow:hidden}
+.tema-navidad .nv-arbol-adorno{position:absolute;left:0;top:0;z-index:3;pointer-events:none;overflow:visible}
