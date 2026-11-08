@@ -173,3 +173,35 @@
 @keyframes nvCristalEmpanado{0%{opacity:0}18%,32%{opacity:.9}65%{opacity:.6}100%{opacity:0}}
 @keyframes nvVahoCrece{0%{transform:scale(.12)}26%{transform:scale(1)}100%{transform:translateY(-12px) scale(1.65,1.3)}}
 @keyframes nvFocoLlama{0%,12%,24%,100%{opacity:.4}6%,18%,32%,60%{opacity:1;filter:drop-shadow(0 0 7px #ffedc2)}}
+/* El compañero pertenece al encabezado: reserva una columna, nunca flota sobre
+   campos, botones ni navegación. Solo el encabezado que lo aloja cambia. */
+.tema-navidad :is(#employeeScreen,#adminScreen) .nv-con-companero{
+  position:relative;isolation:isolate;overflow:visible;padding-inline-end:126px!important;min-height:148px;
+}
+.tema-navidad .nv-con-companero>.nv-mascota-interior{
+  display:block;position:absolute;inset:auto -8px -16px auto;width:148px;aspect-ratio:800 / 1067;
+  z-index:2;cursor:pointer;touch-action:manipulation;border-radius:20px;
+  filter:drop-shadow(0 4px 3px #09293b38);outline-offset:-22px;
+}
+.tema-navidad .nv-mascota-interior:focus-visible{outline:2px solid #e8fbff}
+.tema-navidad .nv-mascota-interior>svg{pointer-events:none}
+.tema-navidad .nv-con-companero>.nvc-bota{display:none}
+.tema-navidad .nv-mascota-interior [data-nv-part="background"],
+.tema-navidad .nv-mascota-interior [data-nv-part="cold-patina"]{display:none!important}
+.nav-pre .nv-mascota-interior .nv-hielo-fijo{display:block}
+.nv-mascota-interior.nv-mascota-congelada [data-nv-part="eye-left"]{transform-origin:351px 317px;animation:nvOjosParpadeo 13.4s linear infinite}
+.nv-mascota-interior.nv-mascota-congelada [data-nv-part="eye-right"]{transform-origin:449px 325px;animation:nvOjosParpadeo 13.4s linear infinite}
+.nv-mascota-interior [data-nv-part="eye-left"],.nv-mascota-interior [data-nv-part="eye-right"]{transform-box:view-box}
+.nv-mascota-interior[data-reflejo] [data-nv-part="nvice-reflection"]{fill:var(--nv-reflejo);fill-opacity:.28}
+.nv-mascota-interior[data-reflejo] [data-nv-part="nvice-contour"]{stroke:var(--nv-reflejo)}
+.nv-mascota-interior[data-reaccion] [data-nv-part="nvice-breath"]{animation:nvCristalEmpanado 2.6s .35s ease-out both}
+.nv-mascota-interior.nv-mascota-ojos-pausa *{animation-play-state:paused!important}
+.nv-mascota-interior [data-nv-part="nvice-refraction"]{pointer-events:none}
+@media(max-width:370px){
+  .tema-navidad :is(#employeeScreen,#adminScreen) .nv-con-companero{padding-inline-end:108px!important;min-height:144px}
+  .tema-navidad .nv-con-companero>.nv-mascota-interior{width:132px;right:-12px;bottom:-14px}
+  .nv-con-companero .dash-hero-top{flex-wrap:wrap}
+}
+.nv-con-companero>:not(.nv-mascota-interior):not(.nvd-au):not(.nvc-gorro):not(.nvc-bota){min-width:0;max-width:100%}
+.nv-con-companero :is(.ph-title,.rg-hero-t,.ps-hero-t,.dash-hero-name){overflow-wrap:anywhere}
+.nv-mascota-interior.nv-hielo-golpe [data-nv-part="nvice-cracks"]{stroke-opacity:.9;stroke-width:4}

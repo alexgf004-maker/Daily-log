@@ -1,4 +1,4 @@
-/* GreenActor 2 — articulated SVG limbs, 14 original scenes and 6 login poses.
+/* GreenActor 2 — articulated SVG limbs, 14 original scenes and 7 integrated poses.
    API: const actor = new GreenActor(document.querySelector('#green-character'));
    actor.play('steal'); actor.tap(); actor.pause(); actor.resume(); actor.destroy();
    Custom DOM events: greenactor:scenechange and greenactor:complete. */
@@ -31,6 +31,7 @@ const SCENES = Object.freeze({
  offer:    {duration:5.0,loop:false,title:'Devolver la luz',detail:'Levanta la mano y devuelve un foco a la guirnalda.',group:'Login integrado'},
  grump:    {duration:5.8,loop:false,title:'Refunfuñar',detail:'Entrecierra los ojos, cruza los brazos y protesta con una pequeña patada.',group:'Login integrado'},
  plot:     {duration:5.2,loop:false,title:'Tramar otra travesura',detail:'Comprueba ambos lados, junta las manos y esboza una sonrisa torcida.',group:'Login integrado'},
+ ack:      {duration:2.8,loop:false,title:'Registro recibido',detail:'Comprueba el registro, asiente una vez y vuelve a su expresión gruñona.',group:'Dentro de la app'},
  nye:      {duration:5.6,loop:true,title:'31 de diciembre', detail:'Los destellos lo asustan: tiembla y se tapa los oídos.', group:'Fechas especiales'},
 });
 class GreenActor {
@@ -40,7 +41,7 @@ class GreenActor {
   const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','lid-left','lid-right','mouth','expression-mouth','expression-line','smirk-crease','smile','blush','sweat','hands-ears','hands-eyes','cover-arm-left','cover-arm-right','cover-arm-shine','cover-hand-left','cover-hand-right','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
   ids.push('hand-left','hand-right','arm-left-outline','arm-right-outline','arm-left-curve','arm-right-curve','arm-left-light','arm-right-light',
     'foot-left','foot-right','leg-left-outline','leg-right-outline','leg-left-curve','leg-right-curve','leg-left-light','leg-right-light');
-  for (const id of ids) this.nodes[id]=svg.querySelector('#'+id);
+  for (const id of ids) this.nodes[id]=svg.querySelector('#'+(options.idPrefix||'')+id);
   this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
   this.motionTime=0;this._pose=null;this._velocity={};this._visible={};
   this._reachTarget=null;this._lookTarget=null;
@@ -344,6 +345,10 @@ class GreenActor {
       props('stolen-bulb');visible['stolen-bulb']=bump(t,.6,1.1,3.3,3.9);
       bulbTransform=`translate(${lerp(490,485,give)} ${lerp(657,246,give)}) rotate(${180*give}) scale(.68)`;
       break;}
+    case 'ack':{
+      const nod=bump(t,.3,.8,1.15,1.8);v.head=10*nod;v.pupilY=6*nod;
+      v.rightArm=-16*nod;v.grump=.58;v.lidL=.6;v.lidR=.5;v.sly=.12;
+      v.scarf=2*wave(clock,.25);v.dy=-1.5*breath;break;}
     case 'thaw':{
       const look=bump(t,.2,.7,1.45,1.9),shiver=bump(t,1.5,1.8,2.55,2.9),stretch=bump(t,2.9,3.6,4.9,6.2);
       v.pupilY=14*look;v.head=8*look-9*stretch;
@@ -464,7 +469,7 @@ class GreenActor {
   if(this.n('leg-left-curve')){
     // Compensar la respiración en el apoyo, pero conservar los saltos y carreras.
     const stride=['sneak','run','climb'].includes(mode);
-    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3'].includes(mode);
+    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3','ack'].includes(mode);
     const ground=side=>planted?v.dy+Math.sin(v.angle*PI/180)*((side==='left'?365:445)-400):0;
     this.poseLeg('left',v.leftLeg,ground('left'),stride);this.poseLeg('right',v.rightLeg,ground('right'),stride);
   }else{
