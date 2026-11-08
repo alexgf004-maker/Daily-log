@@ -3,7 +3,7 @@
 'use strict';
 var mount=null,actor=null,ice=null,environment=null,observer=null,login=null,form=null;
 var stageNow='',previewDay=null,touchStage=0,flow=null,nap=28,manualRemaining=0,focusTarget=null,moodWait=7,moodIndex=0;
-var frostTimer=0;
+var frostTimer=0,frozenRemaining=0;
 var world=null;
 var previewPaused=false;
 var media=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)'),reduced=!!media?.matches;
@@ -17,7 +17,7 @@ function shouldIntroduce(){if(preview())return true;try{return localStorage.getI
 function stopStory(){if(environment)environment.restore();actor?.reachFor?.(null);if(mount){delete mount.dataset.historia;delete mount.dataset.gesto;}flow=null;manualRemaining=0;nap=28;moodWait=7;}
 function idle(){if(!actor)return;if(mount)delete mount.dataset.gesto;actor.play(stageNow==='ano'?'nye':'idle');}
 function clearAll(){
-  clearTimeout(frostTimer);frostTimer=0;
+  clearTimeout(frostTimer);frostTimer=0;frozenRemaining=0;
   if(world){world.destroy();world=null;}
   stopStory();if(observer){observer.disconnect();observer=null;}
   if(form){form.removeEventListener('focusin',onFocus);form.removeEventListener('focusout',onBlur);}
@@ -34,7 +34,7 @@ function regulate(){
   if(hidden)world?.suspend();
   // Dejar el foco de la escena tal como estaba al abandonar el login.
   if(!login?.classList.contains('active')&&flow&&flow.kind!=='liberacion'){stopStory();idle();}
-  if(ice||hidden||previewPaused)actor.pause();else actor.resume();
+  if((ice&&!frozenRemaining)||hidden||previewPaused)actor.pause();else actor.resume();
 }
 function startStory(kind){
   if(!actor||ice||reduced||focusTarget||stageNow!=='casa')return false;
@@ -49,8 +49,12 @@ function aim(){
   var target=environment?.target?.(),p=target&&window.NavidadEntorno?.point(actor.svg,target);
   if(p)actor.reachFor?.(p);
 }
+function pressIce(){
+  if(!actor||!ice||reduced||document.hidden||!login?.classList.contains('active'))return;
+  frozenRemaining=GreenActor.SCENES.trapped.duration;actor.play('trapped');mount.dataset.gesto='trapped';actor.resume();
+}
 function reactToWorld(detail){
-  if(ice){if(['nieve','ambiente','foco','casa'].includes(detail.kind)){mount.dataset.reaccion='frio';clearTimeout(frostTimer);frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3200);}return;}
+  if(ice){if(detail.kind==='ambiente'&&!form?.contains(document.activeElement))pressIce();if(['nieve','ambiente','foco','casa'].includes(detail.kind)){mount.dataset.reaccion='frio';clearTimeout(frostTimer);frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3200);}return;}
   if(!actor||focusTarget)return;
   if(flow?.kind==='travesura'){if(detail.kind!=='santa')caught();return;}
   if(flow)return;
@@ -63,7 +67,8 @@ function caught(){
 }
 function finishStory(){var first=flow?.kind==='liberacion';stopStory();delete mount.dataset.historia;idle();nap=first?2.4:28+Math.random()*8;}
 function frame(info,dt){
-  if(!actor||ice||reduced||document.hidden||!login?.classList.contains('active')||focusTarget)return;
+  if(!actor||reduced||document.hidden||!login?.classList.contains('active')||focusTarget)return;
+  if(ice){if(frozenRemaining>0){frozenRemaining-=dt;if(frozenRemaining<=0){frozenRemaining=0;actor.play('idle');actor.render(0);actor.pause();delete mount.dataset.gesto;}}return;}
   if(flow){
     flow.time+=dt;var t=flow.time;
     if(flow.kind==='liberacion'){
@@ -101,10 +106,11 @@ function onTap(event){
   event.stopPropagation();if(ice){
     if(reduced||document.hidden||!login?.classList.contains('active'))return;
     // Primero clava la mirada; luego resopla. Nunca se mueve el cuerpo preso.
-    ice.touch();mount.dataset.reaccion='molesto';clearTimeout(frostTimer);
+    ice.touch();pressIce();mount.dataset.reaccion='molesto';clearTimeout(frostTimer);
     frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3200);return;
   }
-  if(!actor||reduced||focusTarget)return;
+  if(focusTarget){focusTarget.blur?.();focusTarget=null;}
+  if(!actor||reduced)return;
   if(flow?.kind==='travesura'){caught();return;}
   touchStage=touchStage%3+1;play('tap'+touchStage);
 }
@@ -112,7 +118,7 @@ function onKey(event){if(event.key==='Enter'||event.key===' '){event.preventDefa
 function onFocus(event){
   if(!actor)return;
   world?.resetGaze();
-  if(ice){mount.dataset.mirada=event.target.id==='loginPin'?'apartada':'formulario';return;}
+  if(ice){frozenRemaining=0;actor.play('idle');actor.render(0);actor.pause();delete mount.dataset.gesto;mount.dataset.mirada=event.target.id==='loginPin'?'apartada':'formulario';return;}
   focusTarget=event.target;stopStory();delete mount.dataset.historia;
   actor.play(event.target.id==='loginPin'?'privacy':'idle');regulate();
   // Con movimiento reducido mostrar directamente la pose final, sin transición.

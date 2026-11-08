@@ -79,8 +79,8 @@ test('no crea una mascota con otro tema ni con tema apagado',()=>{
 test('movimiento reducido: no inicia travesuras automáticas',()=>{
  const f=fixture({date:'2026-12-22',reduced:true});f.ctx.__mascotaNavidadSync();f.advance(120);assert.equal(f.actors[0].scene,'idle');assert.equal(f.actors[0].paused,true);
 });
-test('se conservan las 14 animaciones originales y se agregan 7 poses integradas',()=>{
- const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,21);
+test('se conservan las 14 animaciones originales y se agregan 9 poses integradas',()=>{
+ const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,23);
  for(const name of ['idle','sneak','run','climb','steal','caught','drop','tantrum','hide','tap1','tap2','tap3','xmas','nye','thaw','privacy','tug','offer','grump','plot'])assert.match(scenes,new RegExp('\\b'+name+':'));
  for(const id of ['actor','head','body','tail','arm-left','arm-right','leg-left','leg-right','eye-left','eye-right'])assert.ok(read('index.html').includes('id="'+id+'"'));
 });
@@ -232,7 +232,8 @@ test('congelado mira al formulario y aparta la mirada del PIN sin leer los campo
 });
 test('el fastidio al tocar el hielo termina y se limpia al cambiar de tema',()=>{
  const f=fixture();f.ctx.__mascotaNavidadSync();f.svg.emit('pointerdown');
- assert.equal(f.mount.dataset.reaccion,'molesto');assert.equal(f.actors[0].paused,true);
+ assert.equal(f.mount.dataset.reaccion,'molesto');assert.equal(f.actors[0].scene,'trapped');assert.equal(f.actors[0].paused,false);
+ f.advance(4);assert.equal(f.actors[0].paused,true);assert.equal(f.mount.dataset.gesto,undefined);assert.equal(f.iceNode.dataset.dia,'1');
  const [timer,end]=[...f.timers.entries()].at(-1);f.timers.delete(timer);end();assert.equal(f.mount.dataset.reaccion,undefined);
  f.svg.emit('pointerdown');f.ctx.__temas.activo=null;f.ctx.__mascotaNavidadSync();
  assert.equal(f.mount.dataset.reaccion,undefined);assert.equal(f.mount.dataset.mirada,undefined);assert.equal(f.timers.size,0);
@@ -360,4 +361,19 @@ test('el tirón del adorno tiene recorrido visible y conserva las longitudes del
  const {actor}=realActor();actor.reachFor({x:680,y:580});actor.play('tug');actor.render(1.4);
  const point=()=>{const h=actor.n('hand-right').attrs.transform.match(/translate\(([-\d.]+) ([-\d.]+)\)/),r=actor.n('actor').attrs.transform.match(/^translate\(([-\d.]+) ([-\d.]+)\)/);return {x:Number(h[1])+Number(r[1]),y:Number(h[2])+Number(r[2]),localX:Number(h[1]),localY:Number(h[2])};};
  const contact=point();actor.render(1.95);const pulled=point();assert.ok(contact.x-pulled.x>90);assert.ok(Math.hypot(pulled.localX-444,pulled.localY-580)<180);
+});
+test('presiona el hielo con las dos manos sin desplazarse ni perder la cara enojada',()=>{
+ const {actor}=realActor();actor.options.frozen=true;actor.play('trapped');actor.render(1.2);
+ assert.equal(actor._pose.dx,0);assert.equal(actor._pose.dy,0);assert.equal(actor._pose.grump,1);
+ for(const [side,sx] of [['left',352],['right',444]]){
+  const m=actor.n('hand-'+side).attrs.transform.match(/translate\(([-\d.]+) ([-\d.]+)\)/),x=+m[1],y=+m[2];
+  assert.ok(Math.hypot(x-sx,y-580)<180);assert.ok(y<550);
+ }
+ actor.render(3.6);assert.equal(actor._pose.trapPress,0);
+});
+test('la travesura alcanza con la mano izquierda y tira sin estirar el brazo',()=>{
+ const {actor}=realActor();actor.reachFor({x:80,y:690});actor.play('mischief');actor.render(1.2);
+ const hand=()=>{const h=actor.n('hand-left').attrs.transform.match(/translate\(([-\d.]+) ([-\d.]+)\)/);return {x:+h[1],y:+h[2]};};
+ let p=hand();assert.ok(Math.abs(p.x+actor._pose.dx-80)<.05);assert.ok(Math.abs(p.y-690)<.05);
+ actor.render(1.8);p=hand();assert.ok(p.x+actor._pose.dx>140);assert.ok(Math.hypot(p.x-352,p.y-580)<180);
 });
