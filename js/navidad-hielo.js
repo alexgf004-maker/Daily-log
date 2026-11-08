@@ -3,13 +3,14 @@
 (function(){
 'use strict';
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-function create(day,element){
+function create(day,element,options){
+  var prefix=options?.idPrefix||'';
   var node=element&&element.querySelector('.nv-hielo-fijo');
   if(!node)throw new Error('Falta el bloque de hielo del HTML');
   var paths={};
   ['melt-mask','body','left','top','right','reflection','rim','cracks','puddle',
    'frost-body','contour','runoff-a','runoff-b','wet-edge','ripple-a','ripple-b'].forEach(function(id){
-    paths[id]=node.querySelector('#nvice-'+id);
+    paths[id]=node.querySelector('#'+prefix+'nvice-'+id);
     if(!paths[id])throw new Error('El SVG del bloque está incompleto: '+id);
   });
   var drops=node.querySelectorAll('.nv-hielo-gota'),timer=0,frameId=0,shown=null,target=null;

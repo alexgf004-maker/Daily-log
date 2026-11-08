@@ -62,13 +62,16 @@
       var alto=Math.ceil(Math.max(ls.clientHeight,panel.offsetTop+panel.offsetHeight+espacio+pie));
       if(capa.style.height!==alto+'px')capa.style.height=alto+'px';
       ls.style.setProperty('--nv-escena-alto',alto+'px');
+      // La base del bloque toca el primer plano nevado, no la ladera del fondo.
+      var mascota=panel.querySelector('.nv-mascota');
+      if(mascota)ls.style.setProperty('--nv-mascota-apoyo',(panel.offsetTop+panel.offsetHeight-alto+38-mascota.offsetHeight*.045).toFixed(1)+'px');
     }
     function programar(){if(!pendiente)pendiente=requestAnimationFrame(medir);}
     if(typeof ResizeObserver==='function'){ro=new ResizeObserver(programar);ro.observe(ls);ro.observe(panel);}
     window.addEventListener('resize',programar);medir();
     return function(){
       if(ro)ro.disconnect();if(pendiente)cancelAnimationFrame(pendiente);
-      window.removeEventListener('resize',programar);ls.style.removeProperty('--nv-escena-alto');
+      window.removeEventListener('resize',programar);ls.style.removeProperty('--nv-escena-alto');ls.style.removeProperty('--nv-mascota-apoyo');
     };
   }
 
@@ -99,13 +102,28 @@
     var bandas=[{c:'80,255,170',y:.2,a:1.1,f:1.2,s:.00035},{c:'70,220,255',y:.26,a:.8,f:1.7,s:.00028},{c:'200,110,255',y:.14,a:.65,f:2.1,s:.0004},{c:'120,255,200',y:.33,a:.45,f:2.6,s:.0005}];
     var est=[]; for(var i=0;i<80;i++) est.push({x:Math.random(),y:Math.random()*.45,r:R(.5,1.6),f:R(0,6)});
     var cop=[]; for(i=0;i<60;i++) cop.push({x:Math.random(),y:Math.random(),r:R(.6,2.3),v:R(.0004,.0012)});
+    var techo=null,medido=-1000,ultimoCopo=-15000,posados=[];
     bucle=lienzo(capa,[
       function(c,W,H,t){ est.forEach(function(e){ c.fillStyle='rgba(255,255,255,'+(.35+.65*Math.abs(Math.sin(t/900+e.f)))+')'; c.beginPath(); c.arc(e.x*W,e.y*H,e.r,0,6.283); c.fill(); }); },
       function(c,W,H,t){ c.globalCompositeOperation='lighter';
         bandas.forEach(function(b){ for(var x=0;x<=W;x+=5){ var yc=H*b.y+Math.sin(x/W*Math.PI*b.f+t*b.s*3)*34+Math.sin(x/90+t*b.s*5)*10, alto=110+Math.sin(x/60+t*b.s*4)*40, al=b.a*(.55+.45*Math.sin(x/70+t*b.s*6));
           var g=c.createLinearGradient(0,yc-alto,0,yc+20); g.addColorStop(0,'rgba('+b.c+',0)'); g.addColorStop(.75,'rgba('+b.c+','+(al*.5)+')'); g.addColorStop(1,'rgba('+b.c+',0)'); c.fillStyle=g; c.fillRect(x,yc-alto,5,alto+20); } });
         c.globalCompositeOperation='source-over'; },
-      function(c,W,H){ c.fillStyle='#fff'; cop.forEach(function(k){ if(!reducido){ k.y+=k.v; if(k.y>1.02) k.y=-.02; } c.globalAlpha=.4+k.r/4; c.beginPath(); c.arc(k.x*W+Math.sin(k.y*12)*8,k.y*H,k.r,0,6.283); c.fill(); }); c.globalAlpha=1; }
+      function(c,W,H,t){
+        // La nieve comparte el espacio físico del bloque y se posa en su cara superior.
+        if(t-medido>300){medido=t;var hielo=$('#loginScreen .nv-mascota-congelada #nvice-body');techo=null;
+          if(hielo){var r=hielo.getBoundingClientRect(),b=c.canvas.getBoundingClientRect();if(r.width&&b.width)techo={l:r.left-b.left+r.width*.12,r:r.right-b.left-r.width*.12,y:r.top-b.top,b:b};}}
+        c.fillStyle='#fff';cop.forEach(function(k){var antes=k.y*H;if(!reducido){ k.y+=k.v; if(k.y>1.02)k.y=-.02; }
+          var x=k.x*W+Math.sin(k.y*12)*8,y=k.y*H;
+          if(techo&&antes<techo.y&&y>=techo.y&&x>techo.l&&x<techo.r){
+            posados.push({x:x,y:techo.y,t:t,r:k.r});k.y=-.02;
+            if(t-ultimoCopo>14000&&!reducido){ultimoCopo=t;var ls=document.getElementById('loginScreen');ls.dispatchEvent(new CustomEvent('navidad:entorno',{detail:{kind:'nieve',x:techo.b.left+x,y:techo.b.top+techo.y,color:'#d5f3ff'}}));}
+            return;
+          }
+          c.globalAlpha=.4+k.r/4;c.beginPath();c.arc(x,y,k.r,0,6.283);c.fill();
+        });
+        posados=posados.filter(function(p){var u=(t-p.t)/1500;if(u>1)return false;c.globalAlpha=(1-u)*.8;c.beginPath();c.ellipse(p.x,p.y-1,p.r*1.5,p.r*.6,0,0,6.283);c.fill();return true;});c.globalAlpha=1;
+      }
     ]);
     // montañas, lago congelado y pinos escarchados con moños y esferas rojas; trineo atrapado
     function montes(){

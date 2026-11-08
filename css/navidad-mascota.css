@@ -8,6 +8,14 @@
   touch-action:manipulation;filter:drop-shadow(0 8px 8px rgba(2,30,55,.22));
 }
 .nv-mascota>svg{display:block;width:100%;height:100%;overflow:visible;cursor:pointer}
+.nv-mascota #cold-patina{display:none}
+.nav-pre .nv-mascota-congelada #cold-patina{display:block;opacity:calc(.2 + var(--nv-frio,1) * .65)}
+.nav-pre .nv-mascota{isolation:isolate}
+.nav-pre .nv-mascota::before{
+  content:'';position:absolute;z-index:-1;left:7%;right:5%;bottom:1.5%;height:7%;
+  border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#98c4da88 0 22%,#ebf8ff 48%,#d3eaf5cc 65%,transparent 72%);
+  box-shadow:0 6px 8px -6px #37668570;pointer-events:none;
+}
 .nv-mascota #actor:focus:not(:focus-visible){outline:none}
 .nv-mascota #actor:focus-visible{outline:2px solid #c9edff;outline-offset:5px}
 .nv-mascota #background{display:none!important}
@@ -17,7 +25,7 @@
 }
 .nv-hielo-fijo>svg{display:block;width:100%;height:100%;overflow:visible}
 .nav-pre #loginScreen .nv-mascota:not(.nv-mascota-libre) .nv-hielo-fijo{display:block}
-.nv-mascota-congelada>svg{filter:url(#nvice-refraction) saturate(calc(1 - var(--nv-frio,1) * .28)) brightness(1.02)}
+.nv-mascota-congelada>svg{filter:url(#nvice-refraction) saturate(calc(1 - var(--nv-frio,1) * .14)) brightness(.98)}
 /* Solo los ojos se animan sobre la pose detenida de GreenActor. Las coordenadas
    del viewBox coinciden con los centros que utiliza su motor vectorial. */
 .nv-mascota-congelada #eye-left,
@@ -28,22 +36,46 @@
 .nv-mascota-congelada #eye-left{transform-origin:351px 317px}
 .nv-mascota-congelada #eye-right{transform-origin:449px 325px}
 .nv-mascota-congelada #pupil-left,
-.nv-mascota-congelada #pupil-right{animation:nvOjosMirada 18.6s linear infinite}
+.nv-mascota-congelada #pupil-right{animation:nvOjosMirada 19.6s cubic-bezier(.18,.72,.25,1) infinite}
+.nv-mascota-congelada #brow-left{transform-origin:340px 290px;animation:nvCeno 19.6s ease-in-out infinite}
+.nv-mascota-congelada #brow-right{transform-origin:450px 290px;animation:nvCeno 19.6s ease-in-out -.2s infinite reverse}
+.nv-vaho{opacity:0;transform-origin:402px 438px;animation:nvResoplido 19.6s ease-out infinite}
+.nv-eye-gaze{translate:0 0;transition:translate .3s cubic-bezier(.18,.72,.25,1)}
+.nv-mascota-congelada[data-mirada] .nv-eye-gaze{translate:-6px -5px}
+.nv-mascota-congelada[data-mirada="apartada"] .nv-eye-gaze{translate:12px 2px}
+.nv-mascota-congelada[data-mirada="entorno"] .nv-eye-gaze{translate:var(--nv-mirada-x,0px) var(--nv-mirada-y,0px)}
+.nv-mascota-congelada[data-reaccion="molesto"] .nv-eye-gaze{translate:0 -3px}
+.nv-mascota-congelada:is([data-mirada],[data-reaccion]) #pupil-left,
+.nv-mascota-congelada:is([data-mirada],[data-reaccion]) #pupil-right{animation-play-state:paused}
+.nv-mascota-congelada[data-reaccion="molesto"] #eyebrows{translate:0 5px;transition:translate .16s ease-out}
+.nv-mascota-congelada[data-reaccion="molesto"] .nv-vaho{animation:nvResoplidoToque 2.4s ease-out both}
+.nv-mascota-congelada[data-reaccion="frio"] .nv-vaho{animation:nvResoplidoToque 2.6s .4s ease-out both}
+.nv-mascota[data-reflejo] #nvice-reflection{fill:var(--nv-reflejo);fill-opacity:.28}
+.nv-mascota[data-reflejo] #nvice-contour{stroke:var(--nv-reflejo)}
+.nav-pre .nv-casita{pointer-events:auto;cursor:pointer}
 .nv-mascota-ojos-pausa #eye-left,
 .nv-mascota-ojos-pausa #eye-right,
 .nv-mascota-ojos-pausa #pupil-left,
 .nv-mascota-ojos-pausa #pupil-right,
+.nv-mascota-ojos-pausa #brow-left,
+.nv-mascota-ojos-pausa #brow-right,
+.nv-mascota-ojos-pausa .nv-vaho,
 .nv-mascota-ojos-pausa .nv-hielo-fijo *{animation-play-state:paused}
 @keyframes nvOjosParpadeo{
   0%,22%,23.4%,59%,60.3%,61%,62.2%,100%{transform:scaleY(1)}
   22.5%,59.45%,61.45%{transform:scaleY(.07)}
 }
 @keyframes nvOjosMirada{
-  0%,16%,31.7%,62%,77.6%,100%{transform:translate(0,0)}
-  16.6%,30%{transform:translate(-11px,1px)}
-  30.5%,31%{transform:translate(-6px,0)}
-  62.6%,77%{transform:translate(9px,-2px)}
+  0%,12%,39%,64%,90%,100%{translate:0 0}
+  13%,27%{translate:-12px -4px}
+  28%,36%{translate:-9px -2px}
+  65%,77%{translate:10px 0}
+  78%,87%{translate:7px -2px}
 }
+@keyframes nvCeno{0%,12%,39%,64%,90%,100%{rotate:0deg}15%,34%{rotate:4deg}68%,85%{rotate:-2deg}}
+/* Una exhalación breve se condensa contra la cara interior del hielo y se disipa. */
+@keyframes nvResoplido{0%,43%,59%,100%{opacity:0;transform:translateY(0) scale(.35)}46%{opacity:.34;transform:translateY(-2px) scale(.75)}57%{opacity:0;transform:translateY(-19px) scale(1.6)}}
+@keyframes nvResoplidoToque{0%,14%{opacity:0;transform:scale(.3)}24%{opacity:.5;transform:translateY(-2px) scale(.8)}85%,100%{opacity:0;transform:translateY(-22px) scale(1.8)}}
 /* El agua crece sobre la pared, se desprende y termina en el charco.
    Los ciclos comparten reloj; la segunda gota rompe la simetría. */
 .nv-hielo-gota{animation:nvHieloGota 5.6s linear infinite;opacity:0}
@@ -117,9 +149,59 @@
 /* En escritorio el bloque se sitúa junto al panel, dentro del ancho disponible. */
 @media(min-width:901px){
   .tema-navidad #loginScreen .login-panel{margin-top:48px;margin-bottom:24px}
+  .nav-pre #loginScreen .nv-mascota{width:240px;bottom:var(--nv-mascota-apoyo,24px)}
+}
+@media(min-width:360px) and (max-width:900px){.nav-pre #loginScreen .login-panel{--nv-mascota-ancho:clamp(132px,calc(45dvh - 220px),164px)}}
+@media(max-width:900px) and (max-height:850px){
+  .nav-pre #loginScreen .login-panel{padding-top:40px}
+  .nav-pre #loginScreen .login-logo{width:36px;height:36px}
+  .nav-pre #loginScreen .login-brand{margin-bottom:6px}
 }
 @media(prefers-reduced-motion:reduce){
   .nv-mascota,.nv-mascota *{animation:none!important;transition:none!important}
 }
 /* Cable y foco de la guirnalda real: decoración sin superficie interactiva. */
 .tema-navidad .nv-historia-capa{position:absolute;left:0;top:0;z-index:3;pointer-events:none;overflow:hidden}
+.tema-navidad .nv-arbol-adorno{position:absolute;left:0;top:0;z-index:3;pointer-events:none;overflow:visible}
+
+/* Resoplido contra la pared interior: nace en la boca, se extiende y se evapora. */
+.nv-mascota-congelada:is([data-reaccion="frio"],[data-reaccion="molesto"]) #nvice-breath{animation:nvCristalEmpanado 2.6s .35s ease-out both}
+.nv-condensacion{transform-origin:0 0;transform-box:view-box;animation:inherit}
+.nv-mascota-congelada:is([data-reaccion="frio"],[data-reaccion="molesto"]) .nv-condensacion{animation:nvVahoCrece 2.6s .35s ease-out both}
+.nv-foco-llamada .vid{animation:nvFocoLlama 3.2s ease-in-out both!important}
+.nv-casita.nv-foco-llamada{filter:drop-shadow(0 0 9px #ffe7a9)}
+@keyframes nvCristalEmpanado{0%{opacity:0}18%,32%{opacity:.9}65%{opacity:.6}100%{opacity:0}}
+@keyframes nvVahoCrece{0%{transform:scale(.12)}26%{transform:scale(1)}100%{transform:translateY(-12px) scale(1.65,1.3)}}
+@keyframes nvFocoLlama{0%,12%,24%,100%{opacity:.4}6%,18%,32%,60%{opacity:1;filter:drop-shadow(0 0 7px #ffedc2)}}
+/* El compañero pertenece al encabezado: reserva una columna, nunca flota sobre
+   campos, botones ni navegación. Solo el encabezado que lo aloja cambia. */
+.tema-navidad :is(#employeeScreen,#adminScreen) .nv-con-companero{
+  position:relative;isolation:isolate;overflow:visible;padding-inline-end:126px!important;min-height:148px;
+}
+.tema-navidad .nv-con-companero>.nv-mascota-interior{
+  display:block;position:absolute;inset:auto -8px -16px auto;width:148px;aspect-ratio:800 / 1067;
+  z-index:2;cursor:pointer;touch-action:manipulation;border-radius:20px;
+  filter:drop-shadow(0 4px 3px #09293b38);outline-offset:-22px;
+}
+.tema-navidad .nv-mascota-interior:focus-visible{outline:2px solid #e8fbff}
+.tema-navidad .nv-mascota-interior>svg{pointer-events:none}
+.tema-navidad.nav-casa .nv-con-companero>.nvc-bota{right:124px}
+.tema-navidad .nv-mascota-interior [data-nv-part="background"],
+.tema-navidad .nv-mascota-interior [data-nv-part="cold-patina"]{display:none!important}
+.nav-pre .nv-mascota-interior .nv-hielo-fijo{display:block}
+.nv-mascota-interior.nv-mascota-congelada [data-nv-part="eye-left"]{transform-origin:351px 317px;animation:nvOjosParpadeo 13.4s linear infinite}
+.nv-mascota-interior.nv-mascota-congelada [data-nv-part="eye-right"]{transform-origin:449px 325px;animation:nvOjosParpadeo 13.4s linear infinite}
+.nv-mascota-interior [data-nv-part="eye-left"],.nv-mascota-interior [data-nv-part="eye-right"]{transform-box:view-box}
+.nv-mascota-interior[data-reflejo] [data-nv-part="nvice-reflection"]{fill:var(--nv-reflejo);fill-opacity:.28}
+.nv-mascota-interior[data-reflejo] [data-nv-part="nvice-contour"]{stroke:var(--nv-reflejo)}
+.nv-mascota-interior[data-reaccion] [data-nv-part="nvice-breath"]{animation:nvCristalEmpanado 2.6s .35s ease-out both}
+.nv-mascota-interior.nv-mascota-ojos-pausa *{animation-play-state:paused!important}
+.nv-mascota-interior [data-nv-part="nvice-refraction"]{pointer-events:none}
+@media(max-width:370px){
+  .tema-navidad :is(#employeeScreen,#adminScreen) .nv-con-companero{padding-inline-end:108px!important;min-height:144px}
+  .tema-navidad .nv-con-companero>.nv-mascota-interior{width:132px;right:-12px;bottom:-14px}
+  .nv-con-companero .dash-hero-top{flex-wrap:wrap}
+}
+.nv-con-companero>:not(.nv-mascota-interior):not(.nvd-au):not(.nvc-gorro):not(.nvc-bota){min-width:0;max-width:100%}
+.nv-con-companero :is(.ph-title,.rg-hero-t,.ps-hero-t,.dash-hero-name){overflow-wrap:anywhere}
+.nv-mascota-interior.nv-hielo-golpe [data-nv-part="nvice-cracks"]{stroke-opacity:.9;stroke-width:4}
