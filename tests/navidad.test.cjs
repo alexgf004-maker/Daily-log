@@ -178,7 +178,7 @@ test('las gotas y las ondas mantienen el mismo punto de caída durante el deshie
  }
 });
 
-test('alterna gestos con pausas y todavía roba una luz: los gestos no reinician la espera',()=>{
+test('alterna gestos con pausas y todavía tira de una esfera: los gestos no reinician la espera',()=>{
  const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.Math=Object.create(Math);f.ctx.Math.random=()=>0;f.ctx.__mascotaNavidadSync();
  const scenes=new Set(),stories=new Set();
  for(let i=0;i<650;i++){f.advance(.1);scenes.add(f.actors.at(-1).scene);stories.add(f.ctx.__mascotaNavidadEstado().historia);}
@@ -351,4 +351,13 @@ test('la pausa de revisión no está disponible fuera de Ver ahora ni estando co
  const frozen=fixture({mode:'ver'});frozen.ctx.__mascotaNavidadSync();assert.equal(frozen.ctx.__mascotaNavidadPausa(true),false);
  const local=fixture({date:'2026-12-22',mode:'ver'});local.ctx.__mascotaNavidadSync();assert.equal(local.ctx.__mascotaNavidadPausa(true),true);assert.equal(local.actors.at(-1).paused,true);
  local.ctx.__mascotaNavidadPausa(false);assert.equal(local.actors.at(-1).paused,false);
+});
+
+test('tras liberarse se interesa por el árbol en los primeros segundos',()=>{
+ const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.advance(9);assert.equal(f.ctx.__mascotaNavidadEstado().historia,'travesura');
+});
+test('el tirón del adorno tiene recorrido visible y conserva las longitudes del brazo',()=>{
+ const {actor}=realActor();actor.reachFor({x:680,y:580});actor.play('tug');actor.render(1.4);
+ const point=()=>{const h=actor.n('hand-right').attrs.transform.match(/translate\(([-\d.]+) ([-\d.]+)\)/),r=actor.n('actor').attrs.transform.match(/^translate\(([-\d.]+) ([-\d.]+)\)/);return {x:Number(h[1])+Number(r[1]),y:Number(h[2])+Number(r[2]),localX:Number(h[1]),localY:Number(h[2])};};
+ const contact=point();actor.render(1.95);const pulled=point();assert.ok(contact.x-pulled.x>90);assert.ok(Math.hypot(pulled.localX-444,pulled.localY-580)<180);
 });

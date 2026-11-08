@@ -50,7 +50,7 @@ function aim(){
   if(p)actor.reachFor?.(p);
 }
 function reactToWorld(detail){
-  if(ice){if(detail.kind==='nieve'){mount.dataset.reaccion='frio';clearTimeout(frostTimer);frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},2600);}return;}
+  if(ice){if(['nieve','ambiente','foco','casa'].includes(detail.kind)){mount.dataset.reaccion='frio';clearTimeout(frostTimer);frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3200);}return;}
   if(!actor||focusTarget)return;
   if(flow?.kind==='travesura'){if(detail.kind!=='santa')caught();return;}
   if(flow)return;
@@ -61,7 +61,7 @@ function reactToWorld(detail){
 function caught(){
   if(environment)environment.release();actor?.reachFor?.(null);flow={kind:'descubierto',time:0,phase:0};mount.dataset.historia='descubierto';actor.play('caught');
 }
-function finishStory(){stopStory();delete mount.dataset.historia;idle();nap=24+Math.random()*12;}
+function finishStory(){var first=flow?.kind==='liberacion';stopStory();delete mount.dataset.historia;idle();nap=first?2.4:28+Math.random()*8;}
 function frame(info,dt){
   if(!actor||ice||reduced||document.hidden||!login?.classList.contains('active')||focusTarget)return;
   if(flow){
@@ -102,7 +102,7 @@ function onTap(event){
     if(reduced||document.hidden||!login?.classList.contains('active'))return;
     // Primero clava la mirada; luego resopla. Nunca se mueve el cuerpo preso.
     ice.touch();mount.dataset.reaccion='molesto';clearTimeout(frostTimer);
-    frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},2400);return;
+    frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3200);return;
   }
   if(!actor||reduced||focusTarget)return;
   if(flow?.kind==='travesura'){caught();return;}

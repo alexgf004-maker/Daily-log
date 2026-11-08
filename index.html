@@ -95,16 +95,16 @@
 })();
 </script>
 <link rel="stylesheet" href="css/temas/comun.css?v=49">
-<link rel="stylesheet" href="css/navidad-mascota.css?v=14">
+<link rel="stylesheet" href="css/navidad-mascota.css?v=15">
 <script src="js/navidad-casa.js?v=7" defer></script>
 <script src="js/navidad-casa-dentro.js?v=1" defer></script>
 <script src="js/navidad.js?v=12" defer></script>
 <script src="js/navidad-dentro.js?v=4" defer></script>
-<script src="js/green-actor.js?v=7" defer></script>
+<script src="js/green-actor.js?v=8" defer></script>
 <script src="js/navidad-hielo.js?v=4" defer></script>
 <script src="js/navidad-historia.js?v=2" defer></script>
-<script src="js/navidad-entorno.js?v=1" defer></script>
-<script src="js/navidad-mascota.js?v=12" defer></script>
+<script src="js/navidad-entorno.js?v=2" defer></script>
+<script src="js/navidad-mascota.js?v=13" defer></script>
 <script>
 // ── Temas de temporada ──
 // Se aplican solos según la fecha (mes-día, cualquier año). Para agregar otro tema:
@@ -789,6 +789,7 @@
             <feTurbulence type="fractalNoise" baseFrequency=".018 .035" numOctaves="1" seed="9" result="grain"/>
             <feDisplacementMap in="SourceGraphic" in2="grain" scale="7" xChannelSelector="R" yChannelSelector="G"/>
           </filter>
+          <radialGradient id="nvice-condensation"><stop stop-color="#f0fbff" stop-opacity=".88"/><stop offset=".58" stop-color="#ddf7ff" stop-opacity=".6"/><stop offset="1" stop-color="#e5faff" stop-opacity="0"/></radialGradient>
           <clipPath id="nvice-melt"><path id="nvice-melt-mask" d="M213 54C320 38 498 53 579 48Q627 51 649 94L669 172L655 947Q638 1000 575 1010L218 1015Q151 1008 139 954L127 232Q135 145 165 91Q184 60 213 54Z"/></clipPath>
         </defs>
         <g id="nvice-puddle" opacity=".18">
@@ -823,6 +824,9 @@
           </g>
           <g fill="none" stroke="#f0fcff" stroke-width="3" stroke-linecap="round">
             <path id="nvice-runoff-a" pathLength="100" class="nv-hielo-reguero"/><path id="nvice-runoff-b" pathLength="100" class="nv-hielo-reguero nv-hielo-reguero-b"/>
+          </g>
+          <g id="nvice-breath" opacity="0" transform="translate(405 440)">
+            <g class="nv-condensacion"><ellipse rx="106" ry="60" fill="url(#nvice-condensation)"/><path d="M-38 32Q-43 61-41 92M25 42Q29 65 27 112" fill="none" stroke="#dff7ff" stroke-width="3" stroke-linecap="round" stroke-opacity=".48"/></g>
           </g>
           <path id="nvice-wet-edge" fill="none" stroke="#effcff" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>
         </g>

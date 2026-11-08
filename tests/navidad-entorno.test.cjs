@@ -8,15 +8,15 @@ class Node{
  emit(k,e){for(const fn of this.listeners[k]||[])fn(e)}
 }
 function worldFixture(){
- let frozen=true,reduce=false,now=20000,restored=0;
+ let frozen=true,reduce=false,busy=false,now=20000,restored=0;
  const login=new Node(),mount=new Node(),document=new Node(),svg={getScreenCTM:()=>({a:.2,b:0,c:0,d:.2,e:100,f:200})},pupil={},calls=[],timers=new Map(),intervals=new Map();let id=0;
  login.classList.add('active');document.hidden=false;
- const bulb={classList:{contains:()=>false},getBoundingClientRect:()=>({left:280,top:40,width:10,height:18}),querySelector:()=>({getAttribute:()=>'#ffbbee'})};
+ const bulb={classList:{contains:()=>false,add(){},remove(){}},getBoundingClientRect:()=>({left:280,top:40,width:10,height:18}),querySelector:()=>({getAttribute:()=>'#ffbbee'})};
  const house={getBoundingClientRect:()=>({left:30,top:700,width:40,height:40})};
  mount.querySelector=s=>s==='svg'?svg:pupil;login.contains=n=>n===bulb;login.querySelectorAll=s=>s.includes('casita')?[house]:[bulb];
  const ctx={window:null,document,Date:{now:()=>now},Math,Number,getComputedStyle:()=>({translate:'-4px -2px'}),setTimeout:fn=>{timers.set(++id,fn);return id},clearTimeout:i=>timers.delete(i),setInterval:fn=>{intervals.set(++id,fn);return id},clearInterval:i=>intervals.delete(i)};ctx.window=ctx;ctx.matchMedia=()=>({matches:reduce});vm.createContext(ctx);vm.runInContext(read('navidad-entorno.js'),ctx);
- const w=ctx.NavidadEntorno.create(login,mount,{frozen:()=>frozen,react:d=>calls.push(d),restoreFocus:()=>restored++});
- return {w,ctx,login,mount,document,bulb,calls,timers,intervals,setReduced:v=>reduce=v,setFrozen:v=>frozen=v,setNow:v=>now=v,restored:()=>restored};
+ const w=ctx.NavidadEntorno.create(login,mount,{frozen:()=>frozen,busy:()=>busy,react:d=>calls.push(d),restoreFocus:()=>restored++});
+ return {w,ctx,login,mount,document,bulb,calls,timers,intervals,setReduced:v=>reduce=v,setBusy:v=>busy=v,setFrozen:v=>frozen=v,setNow:v=>now=v,restored:()=>restored};
 }
 test('la mirada se calcula en coordenadas del SVG, también con giro y escalado',()=>{
  const f=worldFixture(),p=f.ctx.NavidadEntorno.point({getScreenCTM:()=>({a:0,b:.2,c:-.2,d:0,e:300,f:100})},{x:200,y:200});
@@ -32,7 +32,7 @@ test('un foco real dirige la mirada, aporta su color y no toca los campos',()=>{
 });
 test('las reacciones terminan, restauran el foco y no dejan temporizadores al salir',()=>{
  const f=worldFixture();f.w.react({kind:'nieve',x:180,y:100,color:'#d5f3ff'});
- const [id,end]=[...f.timers.entries()][0];f.timers.delete(id);end();assert.equal(f.mount.dataset.mirada,undefined);assert.equal(f.restored(),1);
+ const [id,end]=[...f.timers.entries()].at(-2);f.timers.delete(id);end();assert.equal(f.mount.dataset.mirada,undefined);assert.equal(f.restored(),1);
  f.w.react({kind:'foco',x:220,y:30,color:'#ffcc88'});f.w.destroy();
  assert.equal(f.timers.size,0);assert.equal(f.intervals.size,0);assert.equal(f.mount.dataset.reflejo,undefined);assert.equal(f.login.listeners['navidad:entorno'].size,0);
 });
@@ -68,4 +68,9 @@ test('al soltar, el mismo adorno vuelve amortiguado a su rama',()=>{
 test('sin árbol no inventa un objeto ni inicia una travesura',()=>{
  const ctx={window:null,Math};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(read('navidad-historia.js'),ctx);
  const s=ctx.NavidadHistoria.create({},{});assert.equal(s.start(),false);s.destroy();
+});
+
+test('la primera reacción ocurre al entrar, y se cancela si el usuario ya está escribiendo',()=>{
+ const f=worldFixture(),intro=[...f.timers.values()][0];intro();assert.equal(f.calls.length,1);assert.equal(f.calls[0].kind,'ambiente');
+ const silent=worldFixture();silent.setBusy(true);[...silent.timers.values()][0]();assert.equal(silent.calls.length,0);silent.w.destroy();assert.equal(silent.timers.size,0);
 });

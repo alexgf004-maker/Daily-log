@@ -417,12 +417,12 @@ class GreenActor {
     const a=this._reachTarget,dy=a.y-580,span=Math.sqrt(Math.max(0,170*170-dy*dy));
     const step=clamp(a.x-444-span+18,0,160)*between(t,0,.95);
     const extension=between(t,.65,1.35)*(mode==='offer'?1-between(t,3.2,4):1);
-    const pull=mode==='tug'?12*between(t,1.45,1.7)+9*(bump(t,1.7,1.95,2.2,2.5)+.7*bump(t,2.9,3.15,3.4,3.75)):0;
-    v.dx=step;v.dy=0;v.angle=0;v.leftLeg=5*Math.sin(Math.PI*between(t,0,.95));v.rightLeg=-v.leftLeg;
+    const pull=mode==='tug'?44*between(t,1.45,1.85)+24*(bump(t,1.7,1.95,2.2,2.5)+.7*bump(t,2.9,3.15,3.4,3.75)):0;
+    v.dx=step-pull*.35;v.dy=0;v.angle=0;v.leftLeg=5*Math.sin(Math.PI*between(t,0,.95));v.rightLeg=-v.leftLeg;
     v.head=-4*extension;v.pupilX=9;v.pupilY=clamp((a.y-325)/25,-8,8);
-    v.rightArm=0;v.grump=.6;v.sly=.4*extension;v.lidL=.6;v.lidR=.4;
+    v.rightArm=0;v.grump=.6+.3*clamp(pull/60);v.sly=.4*extension;v.lidL=.6;v.lidR=.4;
     visible['reach-arm']=0;
-    v.worldHandX=a.x-step-2*pull;v.worldHandY=a.y+pull;v.worldReach=extension;
+    v.worldHandX=a.x-v.dx-1.5*pull;v.worldHandY=a.y+pull;v.worldReach=extension;
   }
   if(this._lookTarget&&this.motionTime<=this._lookTarget.until&&mode!=='privacy'&&!this._reachTarget){
     const dx=this._lookTarget.x-400-v.dx,dy=this._lookTarget.y-325-v.dy,length=Math.hypot(dx,dy)||1;

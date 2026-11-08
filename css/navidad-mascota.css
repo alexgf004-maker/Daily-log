@@ -163,3 +163,13 @@
 /* Cable y foco de la guirnalda real: decoración sin superficie interactiva. */
 .tema-navidad .nv-historia-capa{position:absolute;left:0;top:0;z-index:3;pointer-events:none;overflow:hidden}
 .tema-navidad .nv-arbol-adorno{position:absolute;left:0;top:0;z-index:3;pointer-events:none;overflow:visible}
+
+/* Resoplido contra la pared interior: nace en la boca, se extiende y se evapora. */
+.nv-mascota-congelada:is([data-reaccion="frio"],[data-reaccion="molesto"]) #nvice-breath{animation:nvCristalEmpanado 2.6s .35s ease-out both}
+.nv-condensacion{transform-origin:0 0;transform-box:view-box;animation:inherit}
+.nv-mascota-congelada:is([data-reaccion="frio"],[data-reaccion="molesto"]) .nv-condensacion{animation:nvVahoCrece 2.6s .35s ease-out both}
+.nv-foco-llamada .vid{animation:nvFocoLlama 3.2s ease-in-out both!important}
+.nv-casita.nv-foco-llamada{filter:drop-shadow(0 0 9px #ffe7a9)}
+@keyframes nvCristalEmpanado{0%{opacity:0}18%,32%{opacity:.9}65%{opacity:.6}100%{opacity:0}}
+@keyframes nvVahoCrece{0%{transform:scale(.12)}26%{transform:scale(1)}100%{transform:translateY(-12px) scale(1.65,1.3)}}
+@keyframes nvFocoLlama{0%,12%,24%,100%{opacity:.4}6%,18%,32%,60%{opacity:1;filter:drop-shadow(0 0 7px #ffedc2)}}
