@@ -213,12 +213,33 @@ function realActor(options={}){
 }
 test('dentro del hielo mantiene cejas, párpados y boca enojados sin mover el cuerpo',()=>{
  const {actor}=realActor({frozen:true,personality:false});
- actor.render(0);const root=actor.n('actor').attrs.transform;
+ actor.render(0);const root=actor.n('actor').attrs.transform,brow=actor.n('brow-left').attrs.d;
+ const arms=[actor.n('arm-left').attrs.transform,actor.n('arm-right').attrs.transform];
  for(const t of [0,1,5,20]){
-  actor.render(t);assert.equal(actor.n('brow-left').attrs.d,'M316 284 Q342 281 364 302');
+  actor.render(t);assert.equal(actor.n('brow-left').attrs.d,brow);
   assert.equal(actor.n('expression-mouth').attrs.opacity,'1');assert.equal(actor.n('mouth').attrs.opacity,'0');
   assert.equal(actor.n('lid-left').attrs.opacity,'1');assert.equal(actor.n('actor').attrs.transform,root);
+  assert.deepEqual([actor.n('arm-left').attrs.transform,actor.n('arm-right').attrs.transform],arms);
  }
+});
+
+test('congelado mira al formulario y aparta la mirada del PIN sin leer los campos',()=>{
+ const f=fixture();
+ for(const field of [f.pin,f.user])Object.defineProperty(field,'value',{get(){throw Error('No se debe leer el campo')}});
+ f.ctx.__mascotaNavidadSync();f.form.emit('focusin',{target:f.user});assert.equal(f.mount.dataset.mirada,'formulario');
+ f.form.emit('focusin',{target:f.pin});assert.equal(f.mount.dataset.mirada,'apartada');assert.equal(f.actors[0].paused,true);
+ f.form.emit('focusout',{relatedTarget:null});assert.equal(f.mount.dataset.mirada,undefined);
+});
+test('el fastidio al tocar el hielo termina y se limpia al cambiar de tema',()=>{
+ const f=fixture();f.ctx.__mascotaNavidadSync();f.svg.emit('pointerdown');
+ assert.equal(f.mount.dataset.reaccion,'molesto');assert.equal(f.actors[0].paused,true);
+ const [timer,end]=[...f.timers.entries()].at(-1);f.timers.delete(timer);end();assert.equal(f.mount.dataset.reaccion,undefined);
+ f.svg.emit('pointerdown');f.ctx.__temas.activo=null;f.ctx.__mascotaNavidadSync();
+ assert.equal(f.mount.dataset.reaccion,undefined);assert.equal(f.mount.dataset.mirada,undefined);assert.equal(f.timers.size,0);
+});
+test('el hielo no reacciona a toques con movimiento reducido ni con el login oculto',()=>{
+ const reduced=fixture({reduced:true});reduced.ctx.__mascotaNavidadSync();reduced.svg.emit('pointerdown');assert.equal(reduced.timers.size,0);
+ const hidden=fixture();hidden.ctx.__mascotaNavidadSync();hidden.login.classList.remove('active');hidden.svg.emit('pointerdown');assert.equal(hidden.timers.size,0);
 });
 test('las interrupciones conservan la pose y la velocidad; no vuelven al origen de golpe',()=>{
  const {actor,tick}=realActor();actor.play('grump');for(let i=0;i<150;i++)tick(1/60);

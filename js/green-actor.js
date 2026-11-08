@@ -124,16 +124,23 @@ class GreenActor {
   v.scarf=4*wave(clock,.31);v.tail=7*wave(clock,.24);
   v.leftArm=2.5*wave(clock,.23);v.rightArm=-2.5*wave(clock,.23);
   v.eyeL=blinkAt(4.7);v.eyeR=blinkAt(4.7);
-  if(personality){v.grump=.24;v.lidL=.2;v.lidR=.26;}
+  if(personality){
+    const blink=clock%13.7;
+    const close=bump(blink,2.8,2.86,2.91,3.04)+bump(blink,9.1,9.16,9.21,9.34)+bump(blink,9.51,9.57,9.61,9.75);
+    v.eyeL=1-.94*close;v.eyeR=1-.92*close;
+    v.grump=.48;v.lidL=.43;v.lidR=.5;
+    v.leftArm=.8*wave(clock,.23);v.rightArm=-.6*wave(clock-.2,.23);
+  }
   switch(mode){
     case 'idle':
       v.dy=-3*breath;v.pupilX=3*wave(t,.12);v.head=2*wave(clock,.17);v.hair=2*wave(clock,.2);
       if(personality){
         // Mirada primero, cabeza después: una pausa de sospecha dentro del reposo.
-        const glance=bump(t,.8,1.35,2.6,3.25);
-        v.pupilX=-10*glance;v.head=4*bump(t,1.15,1.75,2.7,3.5);
+        const watch=clock%17.3,glance=bump(watch,1.2,1.37,4.1,4.32),check=bump(watch,10.7,10.9,13.5,13.7);
+        v.pupilX=-10*glance+8*check;
+        v.head=3.5*bump(watch,1.5,2.15,4.3,5.1)-2.5*bump(watch,11.1,11.8,13.7,14.4);
         v.dy=-1.5*breath;v.scarf=2*wave(clock,.25);v.tail=3*wave(clock,.21);
-        v.grump=.26+.16*glance;v.lidL=.25+.17*glance;v.lidR=.32+.12*glance;
+        v.grump=.48+.2*glance;v.lidL=.43+.19*glance;v.lidR=.5+.12*glance;
       }
       break;
     case 'sneak':{
@@ -353,8 +360,9 @@ class GreenActor {
   if(frozen){
     // Una pose estática, enfadada durante todo el deshielo; los ojos se animan por CSS.
     Object.assign(v,{dx:0,dy:0,angle:0,head:0,body:1,leftArm:0,rightArm:0,leftLeg:0,rightLeg:0,
-      scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,
-      grump:1,sly:0,surprise:0,lidL:.7,lidR:.67});
+      scarf:0,tail:0,knot:0,hair:0,earL:4,earR:-3,eyeL:1,eyeR:1,pupilX:-5,pupilY:0,
+      grump:1,sly:.12,surprise:0,lidL:.9,lidR:.82});
+    v.leftArm=-18;v.rightArm=16;
   }
   this.settlePose(v,dt);v={...this._pose};
   // Las capas auxiliares también se relevan sin aparecer de golpe.
@@ -392,13 +400,15 @@ class GreenActor {
   // Párpados reales sobre los ojos: la pupila mantiene su forma al entrecerrarlos.
   for(const [id,cx,cy,rx,amount] of [['lid-left',351,317,38,v.lidL],['lid-right',449,325,39,v.lidR]]){
     const a=PI*(.025+.44*clamp(amount)),dx=rx*Math.sin(a),y=cy-46*Math.cos(a);
-    this.attr(id,'d',`M${cx-dx} ${y} A${rx} 46 0 0 1 ${cx+dx} ${y} Q${cx} ${y+4*amount} ${cx-dx} ${y}Z`);
+    // El párpado cae hacia el entrecejo: una mirada de fastidio, con iris redondos.
+    const tilt=(id==='lid-left'?1:-1)*clamp(v.grump)*13;
+    this.attr(id,'d',`M${cx-dx} ${y} A${rx} 46 0 0 1 ${cx+dx} ${y} L${cx+dx} ${y+tilt} Q${cx} ${y+4*amount} ${cx-dx} ${y-tilt}Z`);
     this.show(id,amount>0?1:0);
   }
   const g=clamp(v.grump),sly=clamp(v.sly);
   this.attr('brow-left','d',`M316 ${273+11*g} Q342 ${256+25*g} 364 ${275+27*g-7*sly}`);
   this.attr('brow-right','d',`M425 ${282+21*g-12*sly} Q448 ${253+27*g-8*sly} 477 ${278+6*g}`);
-  const expression=clamp((1-g+sly)/2),frown=[374,431,392,417,408,417,428,432],smirk=[369,419,391,440,420,437,442,408];
+  const expression=clamp((1-g+sly)/2),frown=[363,432,384,413,416,414,440,430],smirk=[369,419,391,440,420,437,442,408];
   const m=frown.map((value,i)=>lerp(value,smirk[i],expression));
   this.attr('expression-line','d',`M${m[0]} ${m[1]} C${m[2]} ${m[3]} ${m[4]} ${m[5]} ${m[6]} ${m[7]}`);
   this.show('smirk-crease',sly);

@@ -62,13 +62,16 @@
       var alto=Math.ceil(Math.max(ls.clientHeight,panel.offsetTop+panel.offsetHeight+espacio+pie));
       if(capa.style.height!==alto+'px')capa.style.height=alto+'px';
       ls.style.setProperty('--nv-escena-alto',alto+'px');
+      // La base del bloque toca el primer plano nevado, no la ladera del fondo.
+      var mascota=panel.querySelector('.nv-mascota');
+      if(mascota)ls.style.setProperty('--nv-mascota-apoyo',(panel.offsetTop+panel.offsetHeight-alto+38-mascota.offsetHeight*.045).toFixed(1)+'px');
     }
     function programar(){if(!pendiente)pendiente=requestAnimationFrame(medir);}
     if(typeof ResizeObserver==='function'){ro=new ResizeObserver(programar);ro.observe(ls);ro.observe(panel);}
     window.addEventListener('resize',programar);medir();
     return function(){
       if(ro)ro.disconnect();if(pendiente)cancelAnimationFrame(pendiente);
-      window.removeEventListener('resize',programar);ls.style.removeProperty('--nv-escena-alto');
+      window.removeEventListener('resize',programar);ls.style.removeProperty('--nv-escena-alto');ls.style.removeProperty('--nv-mascota-apoyo');
     };
   }
 
