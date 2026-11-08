@@ -295,6 +295,8 @@ function dibujar(x,C){
   C.hz=hz; C.huevos=cont=>N.huevos(C,{casita,trineo,cont});
   C.dom=N.cordonPre(W,pc?56:40); C.nCopos=pc?90:45;
 }
+// el motor de dibujo también lo usa js/navidad-casa-dentro.js (la noche detrás de las pantallas de adentro)
+window.__nvMotor=NV;
 window.__nvCasa=function(capa){
   var ls=document.getElementById('loginScreen'); if(!ls) return {detener:function(){}};
   var reducido=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);

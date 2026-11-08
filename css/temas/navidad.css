@@ -234,6 +234,44 @@ html.nav-pre #loginScreen .btn-login.nv-libre .nv-hielo-btn{opacity:0;transform:
 .nv-confeti{position:fixed;z-index:60;width:7px;height:10px;border-radius:2px;pointer-events:none;animation:nvConfeti 1.5s cubic-bezier(.2,.7,.4,1) forwards}
 @keyframes nvConfeti{to{transform:translate(var(--tx),var(--ty)) rotate(var(--rot));opacity:0}}
 
+/* ═ Navidad en casa dentro de la app: «Noche en la casita» (js/navidad-casa-dentro.js) ═
+   Detrás de las pantallas de adentro, la misma noche del login (lienzos .nvc-noche, z-index:-1); el cordón de
+   foquitos arriba del contenido; encabezados rojo terciopelo con gorrito de Santa y la botita con el nombre. */
+.nvc-noche{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none}
+/* Santa vuela por encima del contenido y por debajo de la barra de arriba (z-index 100) y de las ventanas */
+.nvc-santa{position:fixed;inset:0;width:100vw;height:100vh;z-index:90;pointer-events:none}
+html.nvc-con-noche body:has(#loginScreen.active) .nvc-santa,html.nvc-con-noche body:has(#bootScreen.active) .nvc-santa{display:none}
+html.nvc-con-noche body:has(#loginScreen.active) .nvc-noche,html.nvc-con-noche body:has(#bootScreen.active) .nvc-noche,html.nvc-con-noche body:has(#maintenanceScreen.active) .nvc-noche{display:none}
+html.nvc-con-noche.nav-casa .content{background:transparent}
+.nav-casa .topbar{background:linear-gradient(180deg,#031428,#0a2d55);border-bottom:1px solid rgba(242,196,90,.35)}
+.nav-casa .tb-name .inn{color:#ffd27a}
+.nav-casa #employeeScreen .tabs,.nav-casa #adminScreen .tabs{background:rgba(3,20,40,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid rgba(242,196,90,.25);box-shadow:none}
+.nav-casa #employeeScreen .tab{color:rgba(230,240,255,.78)}
+.nav-casa #employeeScreen .tab.active{color:#ffd27a;border-bottom-color:#f2c45a}
+@media(max-width:899px){
+  .nav-casa #adminScreen .tab{background:rgba(255,255,255,.1);color:rgba(235,243,255,.88)}
+  .nav-casa #adminScreen .tab.active{background:linear-gradient(135deg,#f2c45a,#d99a2b);color:#3a1a05;box-shadow:0 4px 12px -2px rgba(0,0,0,.4)}
+}
+@media(min-width:900px){
+  .nav-casa #adminScreen .tabs{background:linear-gradient(180deg,#031428 0%,#0a2d55 70%,#123d6e 140%);border-right:1px solid rgba(242,196,90,.25)}
+  .nav-casa #adminScreen .tab.active{background:linear-gradient(135deg,#f2c45a,#d99a2b);color:#3a1a05}
+}
+/* el cordón de foquitos, colgando arriba del contenido */
+.nvc-cordon{position:relative;height:38px;margin:-16px -6px 0;pointer-events:none}
+.nvc-cordon svg{position:static!important;display:block;width:100%!important;height:46px!important;overflow:visible}
+.nav-casa.nvc-con-noche .dt-hd .dt-lbl{color:#e6f0ff;text-shadow:0 1px 3px rgba(0,10,30,.6)}
+/* encabezados: rojo terciopelo con borde dorado, gorrito de Santa en la esquina y la botita colgando */
+.nav-casa .nvc-hero{position:relative;z-index:2;overflow:visible;background:radial-gradient(120% 90% at 85% 0%,rgba(255,200,110,.25),transparent 55%),linear-gradient(135deg,#c4152c,#7d0d1f);border:1px solid rgba(242,196,90,.55);box-shadow:0 14px 30px -14px rgba(120,10,25,.8),inset 0 1px 0 rgba(255,230,180,.35)}
+.nav-casa .nvc-hero::after,.nav-casa .nvc-hero:after{display:none}
+html.nav-casa .nvc-hero>.nvc-gorro{position:absolute;left:-18px;top:-34px;width:62px;transform:rotate(-18deg);pointer-events:none;filter:drop-shadow(0 4px 4px rgba(0,0,0,.3));z-index:3}
+html.nav-casa .nvc-hero>.nvc-bota{position:absolute;right:28px;top:calc(100% - 16px);width:38px;transform:rotate(5deg);transform-origin:top center;pointer-events:none;filter:drop-shadow(0 5px 5px rgba(0,0,0,.3));z-index:3;animation:nvcBota 5s ease-in-out infinite}
+.nvc-gorro svg,.nvc-bota svg{display:block;width:100%;height:auto}
+@keyframes nvcBota{0%,100%{transform:rotate(5deg)}50%{transform:rotate(-3deg)}}
+/* tarjetas cálidas sobre la noche */
+.nav-casa.nvc-con-noche :is(#employeeScreen,#adminScreen) :is(.card,.fx-card,.mk3,.rban){background:linear-gradient(180deg,#fffdf8,#fff6e8);border-color:rgba(214,170,90,.35);box-shadow:0 12px 26px -16px rgba(0,10,30,.75)}
+.nav-casa.nvc-con-noche .dtile{box-shadow:0 10px 22px -12px rgba(0,10,30,.8)}
+@media (prefers-reduced-motion:reduce){html.nav-casa .nvc-hero>.nvc-bota{animation:none}}
+
 /* ═ Año Nuevo: noche de pólvora ═ */
 .nav-ano #loginScreen{background:radial-gradient(100% 60% at 50% 110%,#5a1d6e 0%,transparent 60%),linear-gradient(180deg,#05030f 0%,#120a2e 45%,#2a0f45 80%,#3b1450 100%)!important}
 .nv-ciudad{position:absolute;left:0;right:0;bottom:0;width:100%;height:170px}
