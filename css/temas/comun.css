@@ -124,4 +124,4 @@ html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) #bootScreen .boo
 @media (prefers-reduced-motion:reduce){#bootScreen .boot-tema *,#bootScreen .boot-tema *::before,#bootScreen .bt-txt::after{animation:none!important}#bootScreen .bt-p{display:none!important}}
 /* "Probar animaciones" (perfil y panel del admin): solo con un tema que tenga escena de marcaje */
 .tema-probar{display:none!important}
-:is(.tema-halloween,.tema-muertos,.nav-pre) .tema-probar{display:flex!important}
+:is(.tema-halloween,.tema-muertos,.nav-pre,.nav-casa) .tema-probar{display:flex!important}

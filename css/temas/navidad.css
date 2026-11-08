@@ -262,6 +262,19 @@ html.nav-casa #loginScreen .lg-rec-sw{background:#ead9c2}
 html.nav-casa #loginScreen .lg-rec input:checked+.lg-rec-sw{background:repeating-linear-gradient(-45deg,#e3263c 0 6px,#fff 6px 12px)}
 html.nav-casa #loginScreen .lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0 0 3px rgba(180,105,47,.35)}
 
+/* ═ Navidad en casa · marcaje «Santa se asoma» (js/navidad-casa-marcaje.js) ═
+   El punto lleva el regalito de Santa o su reloj de bolsillo; al marcar, la escena (SVG .nvc-mk-santa dentro de la
+   tarjeta) corre mientras el punto, la hora y la etiqueta esperan ocultos (.nvc-espera). */
+.nav-casa .mk3-dot.nvc{background:none!important;border:0;width:44px;height:44px;color:inherit}
+.nav-casa .mk3-dot.nvc svg{display:block;overflow:visible}
+.nav-casa .mk3-pt.recien .mk3-dot.nvc{animation:none}
+.nav-casa .mk3-pt.recien .mk3-dot.nvc::after{display:none}
+.mk3.nvc-con-santa{position:relative}
+.nvc-mk-santa{position:absolute;z-index:3;pointer-events:none;overflow:visible}
+.nav-casa .mk3-pt :is(.mk3-dot,.mk3-t,.tg){transition:opacity .35s,transform .35s}
+.nav-casa .mk3-pt.nvc-espera :is(.mk3-t,.tg){opacity:0;transform:translateY(6px);animation:none}
+.nav-casa .mk3-pt.nvc-espera .mk3-dot{opacity:0;animation:none}
+
 /* ═ Navidad en casa dentro de la app: «Noche en la casita» (js/navidad-casa-dentro.js) ═
    Detrás de las pantallas de adentro, la misma noche del login (lienzos .nvc-noche, z-index:-1); el cordón de
    foquitos arriba del contenido; encabezados rojo terciopelo con gorrito de Santa y la botita con el nombre. */
