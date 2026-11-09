@@ -297,7 +297,7 @@ const NV=(()=>{
 
 function dibujar(x,C){
  const N=NV, {W,H,pc,logo,marca,f,masc,pie}=C; N.sem(101);
-  const suelo=masc?masc.b-(pc?14:10):H-(pc?60:40), hz=pc?suelo-90:Math.min(suelo-60,(pie?pie.t:f.b+80)-6);
+  const suelo=masc?masc.pies-6:H-(pc?60:40), hz=pc?suelo-90:Math.min(suelo-60,(pie?pie.t:f.b+80)-6);
   N.cieloPre(x,W,H,hz); N.montesPre(x,W,hz+6,pc?300:180); N.lagoPre(x,W,hz,pc?40:24);
   // pinos de Pre-Navidad en la orilla
   if(pc) [[.03,1.3],[.08,1.6],[.13,1.1],[.34,1.2],[.66,1.1],[.97,1.4]].forEach(([u,k])=>{ if(u*W>f.l-20&&u*W<f.r+20) return; N.pinoPre(x,u*W,hz+30,k); });
@@ -362,9 +362,10 @@ window.__nvCasa=function(capa){
   function rc(e,base){ var r=e.getBoundingClientRect(); var l=r.left-base.left, t=r.top-base.top; return {l:l,t:t,r:l+r.width,b:t+r.height,w:r.width,h:r.height,cx:l+r.width/2,cy:t+r.height/2}; }
   function medir(){ var base=capa.getBoundingClientRect(), q=function(s){ var e=ls.querySelector(s); return e&&e.offsetWidth?rc(e,base):null; };
     if(!q('.login-logo')||!q('.login-brand')||!q('.login-form')) return null;
-    return {W:Math.round(capa.clientWidth),H:Math.round(capa.clientHeight),pc:capa.clientWidth>=760,logo:q('.login-logo'),marca:q('.login-brand'),f:q('.login-form'),masc:q('.nv-mascota'),pie:q('.login-footer')}; }
+    var masc=q('.nv-mascota'); if(masc){ var pies=0; ls.querySelectorAll('.nv-mascota [id="foot-left"],.nv-mascota [id="foot-right"]').forEach(function(e){ var r=e.getBoundingClientRect(); if(r.height) pies=Math.max(pies,r.bottom-base.top); }); masc.pies=pies||masc.b; }   // el dibujo trae aire bajo los pies: se lee dónde pisa (sin tocar la mascota)
+    return {W:Math.round(capa.clientWidth),H:Math.round(capa.clientHeight),pc:capa.clientWidth>=760,logo:q('.login-logo'),marca:q('.login-brand'),f:q('.login-form'),masc:masc,pie:q('.login-footer')}; }
   function armar(){ if(parado||!capa.isConnected) return; var M=medir(); if(!M||!M.W||!M.H) return;
-    var fi=[M.W,M.H,Math.round(M.f.t),M.masc?[Math.round(M.masc.l),Math.round(M.masc.t),Math.round(M.masc.w)].join(','):'-'].join('|'); if(fi===firma) return; firma=fi;
+    var fi=[M.W,M.H,Math.round(M.f.t),M.masc?[Math.round(M.masc.l),Math.round(M.masc.t),Math.round(M.masc.w),Math.round(M.masc.pies)].join(','):'-'].join('|'); if(fi===firma) return; firma=fi;
     W=M.W; H=M.H; var D=Math.min(1.5,window.devicePixelRatio||1); M.luces=[]; M.chispas=[]; M.anim=[]; M.hits=[]; NV.sem(101);
     var fijo=NV.lienzo(W,H,D); dibujar(fijo.x,M); var v=NV.lienzo(W,H,D);
     cont.innerHTML=''; cont.appendChild(fijo.c); cont.appendChild(v.c); if(M.dom) cont.insertAdjacentHTML('beforeend',M.dom);
