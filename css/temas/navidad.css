@@ -294,6 +294,13 @@ html.nav-casa #loginScreen .login-form>.nvc-login-santa{position:absolute;z-inde
 .nav-casa .login-form>.nv-cinta{right:8px;top:8px;bottom:8px;width:12px;border-radius:6px}
 .nav-casa .login-form>.nv-mono{right:-16px;top:-22px}
 
+/* ═ Descuadre horizontal en el teléfono: el encabezado que aloja al compañero (.nv-con-companero) deja ver lo que
+   sale de sus bordes (overflow visible, para que asome el bloque de hielo). Su círculo decorativo (::after de
+   .dash-hero / .ps-hero, con right negativo) dependía del recorte y empujaba la página ~50 px a la derecha. ═ */
+html.tema-navidad .nv-con-companero::after{display:none}
+/* por si otro adorno se sale de la pantalla: el documento nunca se desplaza de lado (clip no rompe sticky) */
+html.tema-navidad body{overflow-x:clip}
+
 /* ═ Navidad en casa dentro de la app: «Noche en la casita» (js/navidad-casa-dentro.js) ═
    Detrás de las pantallas de adentro, la misma noche del login (lienzos .nvc-noche, z-index:-1); el cordón de
    foquitos arriba del contenido; encabezados rojo terciopelo con gorrito de Santa y la botita con el nombre. */

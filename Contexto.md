@@ -465,6 +465,11 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     se acomodan y se pintan nieve y humo. Se detiene con la pantalla oculta o en el login (ahí no se ve). Con movimiento
     reducido queda quieto. Elegido entre 3 (valle nevado, noche de invierno, luces detrás del cristal) tras descartar
     cielos según la hora y estilos de letra/tarjetas.
+  - **Descuadre horizontal en el teléfono (Dashboard)**: el encabezado con el compañero (`.nv-con-companero`, de
+    `css/navidad-mascota.css`) usa `overflow:visible` para que asome el bloque de hielo, y el círculo decorativo
+    `::after` de `.dash-hero`/`.ps-hero` (con `right` negativo) empujaba la página ~50 px a la derecha. En `navidad.css`
+    se oculta ese círculo cuando hay compañero y `html.tema-navidad body{overflow-x:clip}` evita cualquier otro
+    desplazamiento lateral (clip no rompe la barra sticky). No se tocó el CSS de la mascota.
   - **La mascota pisa el suelo en Navidad en casa** (`medir()`/`dibujar()` en `js/navidad-casa.js`): el SVG de la mascota
     trae aire bajo los pies (~17 px en teléfono, ~25 en PC), así que el suelo y la sombra puestos al borde de su recuadro
     la hacían flotar. La escena lee el borde inferior de `#foot-left`/`#foot-right` (solo lectura, sin tocar la mascota)
