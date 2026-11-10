@@ -100,6 +100,20 @@
      encabezado se mecen. Un solo lienzo que solo dibuja mientras hay algo animándose (en reposo no gasta nada).
      Con movimiento reducido no hace nada. */
   var reducido=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // «Reposo»: tras 25 s sin tocar la pantalla (ni deslizar ni escribir), los fondos animados de adentro se detienen y
+  // las animaciones decorativas se pausan (clase html.nv-reposo); al primer toque siguen. Así un celular que se queda
+  // en la app abierta no gasta batería en nieve que nadie mira. Lo comparten js/navidad-dentro.js y
+  // js/navidad-casa-dentro.js (el primero que carga lo crea); otros módulos pueden escucharlo con
+  // window.__nvReposo.escuchar(function(quieto){…}).
+  var Rp=window.__nvReposo||(window.__nvReposo=(function(){
+    var ult=Date.now(), quieto=false, subs=[], ESPERA=25000;
+    function avisar(){ document.documentElement.classList.toggle('nv-reposo',quieto); subs.forEach(function(f){ try{ f(quieto); }catch(e){} }); }
+    function tocar(){ ult=Date.now(); if(quieto){ quieto=false; avisar(); } }
+    ['pointerdown','keydown','wheel','touchstart','scroll'].forEach(function(ev){ document.addEventListener(ev,tocar,{capture:true,passive:true}); });
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden) tocar(); });
+    setInterval(function(){ if(!quieto&&!document.hidden&&Date.now()-ult>ESPERA){ quieto=true; avisar(); } },2000);
+    return {quieto:function(){ return quieto; }, escuchar:function(f){ subs.push(f); }};
+  })());
   var TARJ='.fx-card,.mk3,.nvp-adv,#dashAsistCard,.rban,.dtile', BOT='.mk3-btn,.fx-save,.btn-p';
   var lz=null, cx=null, efectos=[], parts=[], corre=0, prevT=0;
   function activo(){ return !reducido&&document.documentElement.classList.contains('nav-pre'); }
@@ -204,26 +218,32 @@
     return {W:W,H:H,D:D,capas:[L,M,C],f:[.05,.12,.25],tope:TOPE,casas:casas,copos:copos};
   }
   function pantallaAdentro(){ var a=document.querySelector('.screen.active'); return !!a&&(a.id==='employeeScreen'||a.id==='adminScreen'); }
+  // Dos lienzos: el paisaje (3 capas) solo se vuelve a pintar cuando cambia el deslizamiento o el tamaño; la nieve y el
+  // humo van en otro lienzo encima, a 30 cuadros por segundo. En reposo se detiene todo (se queda quieto como está).
   function cuadroValle(n){
     if(!valle) return; valle.raf=0;
     if(!valle.lz.isConnected||!document.documentElement.classList.contains('nav-pre')||document.hidden||!pantallaAdentro()) return;   // se reanuda con verValle()
-    var v=valle.d, x=valle.x, t=n/1000, y=(document.scrollingElement||document.documentElement).scrollTop||0;
-    x.setTransform(v.D,0,0,v.D,0,0);
-    for(var i=0;i<3;i++){ var dy=-Math.min(v.tope[i],y*v.f[i]); x.drawImage(v.capas[i].c,0,dy,v.W,v.H+v.tope[i]); }
-    if(!reducido){
-      var dm=-Math.min(v.tope[1],y*v.f[1]);
-      v.casas.forEach(function(q,j){ for(var k=0;k<3;k++){ var u=(t*.25+j*.3+k*.33)%1; x.fillStyle='rgba(255,255,255,'+(.5*(1-u)).toFixed(3)+')'; x.beginPath(); x.arc(q.x+13*q.s+u*6,q.y+dm-22*q.s-u*18,2+u*4,0,6.283); x.fill(); } });
-      x.fillStyle='#fff'; v.copos.forEach(function(k){ var yy=((k.y+t*k.v)%1)*v.H, xx=k.x*v.W+Math.sin(t*.8+k.y*9)*10; x.globalAlpha=.55+k.r/5; x.beginPath(); x.arc(xx,yy,k.r,0,6.283); x.fill(); }); x.globalAlpha=1;
-      valle.raf=requestAnimationFrame(cuadroValle);
-    }
+    var v=valle.d, t=n/1000, y=(document.scrollingElement||document.documentElement).scrollTop||0;
+    if(valle.sucio||y!==valle.yUlt){ var x=valle.x; valle.sucio=false; valle.yUlt=y; x.setTransform(v.D,0,0,v.D,0,0);
+      for(var i=0;i<3;i++){ var dy=-Math.min(v.tope[i],y*v.f[i]); x.drawImage(v.capas[i].c,0,dy,v.W,v.H+v.tope[i]); } }
+    if(reducido||Rp.quieto()) return;
+    valle.raf=requestAnimationFrame(cuadroValle);
+    if(n-valle.ult<31) return; valle.ult=n;
+    var xv=valle.xv; xv.setTransform(1,0,0,1,0,0); xv.clearRect(0,0,v.W,v.H);
+    var dm=-Math.min(v.tope[1],y*v.f[1]);
+    v.casas.forEach(function(q,j){ for(var k=0;k<3;k++){ var u=(t*.25+j*.3+k*.33)%1; xv.fillStyle='rgba(255,255,255,'+(.5*(1-u)).toFixed(3)+')'; xv.beginPath(); xv.arc(q.x+13*q.s+u*6,q.y+dm-22*q.s-u*18,2+u*4,0,6.283); xv.fill(); } });
+    xv.fillStyle='#fff'; v.copos.forEach(function(k){ var yy=((k.y+t*k.v)%1)*v.H, xx=k.x*v.W+Math.sin(t*.8+k.y*9)*10; xv.globalAlpha=.55+k.r/5; xv.beginPath(); xv.arc(xx,yy,k.r,0,6.283); xv.fill(); }); xv.globalAlpha=1;
   }
   function verValle(){
     if(!document.documentElement.classList.contains('nav-pre')) return;
-    if(!valle){ var lz=document.createElement('canvas'); lz.className='nvd-valle'; lz.setAttribute('aria-hidden','true'); document.body.insertBefore(lz,document.body.firstChild); valle={lz:lz,x:lz.getContext('2d'),raf:0,d:null}; document.documentElement.classList.add('nvd-con-valle'); }
-    if(!valle.d||valle.d.W!==innerWidth||valle.d.H!==innerHeight){ valle.d=armarValle(); valle.lz.width=Math.round(innerWidth*valle.d.D); valle.lz.height=Math.round(innerHeight*valle.d.D); }
+    if(!valle){ var lz=document.createElement('canvas'), lv=document.createElement('canvas'); lz.className=lv.className='nvd-valle'; lz.setAttribute('aria-hidden','true'); lv.setAttribute('aria-hidden','true');
+      document.body.insertBefore(lv,document.body.firstChild); document.body.insertBefore(lz,lv);
+      valle={lz:lz,lv:lv,x:lz.getContext('2d'),xv:lv.getContext('2d'),raf:0,d:null,ult:0,yUlt:-1,sucio:true}; document.documentElement.classList.add('nvd-con-valle'); }
+    if(!valle.d||valle.d.W!==innerWidth||valle.d.H!==innerHeight){ valle.d=armarValle(); valle.lz.width=Math.round(innerWidth*valle.d.D); valle.lz.height=Math.round(innerHeight*valle.d.D); valle.lv.width=innerWidth; valle.lv.height=innerHeight; /* nieve y humo a 1× */ valle.sucio=true; }
     if(!valle.raf) valle.raf=requestAnimationFrame(cuadroValle);
   }
-  function quitarValle(){ if(!valle) return; if(valle.raf) cancelAnimationFrame(valle.raf); valle.lz.remove(); valle=null; document.documentElement.classList.remove('nvd-con-valle'); }
+  Rp.escuchar(function(q){ if(!q&&valle) verValle(); });
+  function quitarValle(){ if(!valle) return; if(valle.raf) cancelAnimationFrame(valle.raf); valle.lz.remove(); valle.lv.remove(); valle=null; document.documentElement.classList.remove('nvd-con-valle'); }
   var tmV=0; window.addEventListener('resize',function(){ if(!valle) return; clearTimeout(tmV); tmV=setTimeout(verValle,250); });
   document.addEventListener('visibilitychange',function(){ if(valle&&!document.hidden) verValle(); });
   // con movimiento reducido no hay bucle: al deslizar no se vuelve a acomodar (queda quieto)
