@@ -1,0 +1,84 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const root=path.resolve(__dirname,'..');
+const source=fs.readFileSync(path.join(root,'js/green-actor.js'),'utf8');
+const sprite=fs.readFileSync(path.join(root,'assets/navidad/personaje-animable.svg'),'utf8');
+
+function fixture(options={},direct=false){
+ const frames=new Map(),nodes={};let sequence=0,writes=0;
+ const context={Math,requestAnimationFrame:fn=>{frames.set(++sequence,fn);return sequence;},cancelAnimationFrame:id=>frames.delete(id),CustomEvent:class{}};
+ context.window=context;vm.createContext(context);vm.runInContext(source,context);
+ for(const id of [...sprite.matchAll(/id="([^"]+)"/g)].map(m=>m[1]).concat(['speech-heat','speech-mouth'])){
+  nodes['#'+id]={attrs:{},textContent:'',setAttribute(k,v){this.attrs[k]=String(v);writes++;}};
+ }
+ const svg={tagName:'svg',querySelector:s=>nodes[s]||null,dispatchEvent(){}};
+ // Referencia sin caché ni agrupación: todas las asignaciones llegan al SVG.
+ if(direct)context.GreenActor.prototype.attr=function(id,k,v){this.n(id)?.setAttribute(k,String(v));};
+ const actor=new context.GreenActor(svg,options);
+ return {actor,frames,nodes,get writes(){return writes;},snapshot(){return JSON.stringify(nodes);},step(t){const current=[...frames.values()];frames.clear();for(const fn of current)fn(t);}};
+}
+
+test('pausa sin diálogo no deja solicitudes de fotogramas; reanudar no duplica el bucle',()=>{
+ const f=fixture();assert.equal(f.frames.size,1);f.step(1000);
+ f.actor.pause();assert.equal(f.frames.size,0);const before=f.actor.motionTime;
+ f.actor.resume();f.actor.resume();assert.equal(f.frames.size,1);
+ f.step(61000);assert.equal(f.actor.motionTime,before);f.step(61000+1000/60);
+ assert.ok(f.actor.motionTime>before&&f.actor.motionTime-before<.02);
+ f.actor.destroy();assert.equal(f.frames.size,0);f.actor.resume();assert.equal(f.frames.size,0);
+});
+
+test('una pausa o destrucción desde onFrame tampoco vuelve a programar el motor',()=>{
+ for(const action of ['pause','destroy']){
+  let actor;const f=fixture({onFrame(){actor[action]();}});actor=f.actor;
+  f.step(1000);assert.equal(f.frames.size,0,action);
+ }
+});
+
+test('hablar despierta solo la cara congelada y termina su bucle al retirar la expresión',()=>{
+ const f=fixture({embedded:true,frozen:true});f.actor.pause();
+ const elapsed=f.actor.elapsed,motion=f.actor.motionTime;
+ f.actor.speak({tone:'angry',level:.95,animated:true});assert.equal(f.frames.size,1);
+ for(let i=0;i<60;i++)f.step(1000+i*1000/60);
+ assert.ok(f.actor._pose.heat>.9);assert.equal(f.actor.elapsed,elapsed);assert.equal(f.actor.motionTime,motion);
+ f.actor.speak(null);
+ for(let i=0;i<60;i++)f.step(2000+i*1000/60);
+ assert.equal(f.frames.size,0);assert.ok(f.actor._pose.heat<.02);assert.equal(f.actor.paused,true);
+});
+
+test('el diálogo estático de movimiento reducido no necesita fotogramas',()=>{
+ const f=fixture({embedded:true,frozen:true});f.actor.pause();
+ f.actor.speak({tone:'angry',level:.8,animated:false});assert.equal(f.frames.size,0);assert.equal(f.actor._pose.heat,.8);
+ f.actor.speak(null);assert.equal(f.frames.size,0);assert.equal(f.actor._pose.heat,0);
+});
+
+test('las 28 escenas conservan todos los atributos finales en 6.720 fotogramas',()=>{
+ for(const embedded of [false,true]){
+  const options={embedded,contextOnly:embedded,personality:embedded},cached=fixture(options),direct=fixture(options,true);
+  for(const [name,meta] of Object.entries(cached.actor.constructor.SCENES)){
+   cached.actor.play(name);direct.actor.play(name);
+   for(let i=0;i<120;i++){
+    const time=meta.duration*i/119;
+    cached.actor.motionTime=direct.actor.motionTime=time;
+    if(i===30)for(const f of [cached,direct])f.actor.speak({tone:'angry',level:.95,animated:true});
+    if(i===90)for(const f of [cached,direct])f.actor.speak(null);
+    cached.actor._speechTime=direct.actor._speechTime=i/60;
+    cached.actor.render(time,1/60);direct.actor.render(time,1/60);
+    assert.equal(cached.snapshot(),direct.snapshot(),name+' '+embedded+' '+i);
+   }
+  }
+ }
+});
+
+test('reposo contextual reduce escrituras y repetir una pose no invalida el SVG',t=>{
+ const options={embedded:true,contextOnly:true,personality:true},cached=fixture(options),direct=fixture(options,true);
+ const before=cached.writes,reference=direct.writes;
+ for(let i=0;i<600;i++)for(const f of [cached,direct]){f.actor.motionTime=i/60;f.actor.render(i/60,1/60);}
+ assert.ok((cached.writes-before)/(direct.writes-reference)<.1);
+ t.diagnostic('600 cuadros de reposo: '+(direct.writes-reference)+' escrituras directas; '+(cached.writes-before)+' con caché.');
+ assert.equal(cached.snapshot(),direct.snapshot());
+ cached.actor.render(2);const writes=cached.writes;
+ cached.actor.render(2);assert.equal(cached.writes,writes);
+});

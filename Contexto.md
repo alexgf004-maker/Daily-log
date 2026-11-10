@@ -144,13 +144,14 @@ importante — ver sección 7.**
   (13.688409755143281, -89.27993065477382), Plantel Central · Gestión de la
   medida (13.687696, -89.280831), Subestación Cucumacayán
   (13.693570433295193, -89.20564341328895), Subestación Zacatecoluca
-  (13.508016211954466, -88.86875891706555). Hora de servidor, no del teléfono.
+  (13.508016211954466, -88.86875891706555), Subestación San Vicente (13.645885, -88.786376;
+  radio 110 m). Hora de servidor, no del teléfono.
   Horario: L-J 07:00-17:00, V 07:00-16:00, Sáb 06:00-14:00, Dom sin evaluación.
   Tolerancia 0 min (7:00 en punto). El horario es global (igual para todas las
   sedes); si más adelante una sede necesita horario propio, se agregará como
   override por sede. Las sedes viven en SEDES (js/marcaje.js) y se listan a mano
   en 3 <select> de index.html (uSede, adPerfilSede, sedeTempSede): agregar una
-  requiere tocar los 4 lugares.
+  requiere tocar los 4 lugares, más la lista `SEDES` de `functions/avisos.js` (recordatorios).
 - **Detección automática de sede** (el personal rota): quien tiene sede asignada (fija o
   temporal) puede marcar entrada y salida en CUALQUIER sede oficial; se guarda la que
   detectó el GPS en `sedeUsada` (`ubicarSede` en js/marcaje.js). Si está dentro de dos
@@ -675,6 +676,22 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   `AUTO-COLORES` de `css/temas/halloween.css` y `css/temas/muertos.css` (con `:where(.tema-halloween)` para no subir especificidad).
   **Correrlo después de cambiar styles.css** (`python3 herramientas/tema-colores.py`) y subir `TEMAS_V` en el `<head>` de `index.html`.
   Lo decorativo hecho a mano (login, sangre en encabezados, barra, cementerio) va arriba en `css/temas/halloween.css`.
+
+### Sorpresas escondidas de Navidad (`js/navidad-sorpresas.js`)
+Detallitos que nadie anuncia, para que la gente los descubra y se los cuente. Solo con el tema de Navidad activo y
+adentro de la app (técnico o admin); con «reducir movimiento» no salen. Estilos `.nvs-*` en `css/temas/navidad.css`.
+1. **Bola de nieve**: agitar el celular (3 tirones fuertes en menos de 1 s; espera 8 s entre una y otra). Toda la pantalla
+   se vuelve el vidrio de una bola de nieve (orilla azulada, reflejo) y la nieve gira y se asienta abajo en ~5 s; si la
+   vuelven a agitar se alborota más. Solo Android/Chrome: en iPhone el sensor pide permiso con un botón, así que ahí no sale.
+2. **Chocolatito**: dejar presionado ~0.65 s el encabezado de la página (`.page-header`, `.dash-hero`, etc., no sus botones
+   ni la mascota). Sale una taza con malvaviscos, vapor y un corazón, y un mensaje con el primer nombre que cambia por
+   etapa (`MENSAJES.pre/casa/ano`). Se cancela si mueve el dedo o desliza. En los encabezados no sale el menú de copiar.
+3. **Barra sacudida**: tres toques seguidos (en menos de 0.7 s) sobre «INNOVA · Registro de Planilla». La barra se sacude y le
+   cae nieve (en Pre-Navidad también gotitas de los carámbanos).
+4. **Mediodía**: a las 12:00 en punto, si la app está abierta y visible, el trineo (`__nvMotor.trineo`) cruza con
+   «🍗 ¡Buen provecho!». Una vez al día (`localStorage.innova_nv_mediodia`); se revisa cada 20 s.
+Para probarlas en el navegador: `__nvSorpresa.probar('globo'|'chocolate'|'barra'|'mediodia')`. Lienzos efímeros (se
+borran al terminar); no hay nada corriendo mientras no se disparan, salvo el `setInterval` de 20 s del mediodía.
 
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.

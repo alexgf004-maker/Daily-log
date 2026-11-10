@@ -45,6 +45,7 @@ class GreenActor {
  constructor(svg, options={}){
   if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error('GreenActor requires the actual inline <svg> element.');
   this.svg=svg; this.options=options; this.nodes={};
+  this._attributes=new WeakMap();this._pendingAttributes=null;
   const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','lid-left','lid-right','mouth','expression-mouth','expression-line','smirk-crease','smile','blush','sweat','hands-ears','hands-eyes','cover-arm-left','cover-arm-right','cover-arm-shine','cover-hand-left','cover-hand-right','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
   ids.push('speech-heat','speech-mouth','santa-hat','hat-tip','hand-left','hand-right','arm-left-outline','arm-right-outline','arm-left-curve','arm-right-curve','arm-left-light','arm-right-light',
     'foot-left','foot-right','leg-left-outline','leg-right-outline','leg-left-curve','leg-right-curve','leg-left-light','leg-right-light');
@@ -52,8 +53,9 @@ class GreenActor {
   this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
   this.motionTime=0;this._pose=null;this._velocity={};this._visible={};
   this._reachTarget=null;this._lookTarget=null;this._speech=null;this._speechTime=0;this._speechTail=0;this.initSpeech();
-  this._raf=requestAnimationFrame(t=>this.frame(t));
+  this._raf=0;this._tick=t=>{this._raf=0;this.frame(t);};
   this.play(options.initialScene||'idle');
+  this.scheduleFrame();
  }
  // Capas de actuación, dentro de la cabeza articulada y debajo de los ojos.
  initSpeech(){
@@ -77,13 +79,36 @@ class GreenActor {
  }
  speak(expression){
   if(!expression&&!this._speech)return this;
+  const wasAnimating=this.needsFrame();
   const staticFace=expression?.animated===false||!expression&&this._speech?.animated===false;
   this._speech=expression?{...expression,level:clamp(expression.level)}:null;this._speechTime=0;this._speechTail=staticFace?0:.5;
   if(staticFace)this.render(this.elapsed);
+  if(!wasAnimating)this.last=0;
+  this.scheduleFrame();
   return this;
  }
  n(id){return this.nodes[id]}
- attr(id,property,value){const node=this.n(id); if(node) node.setAttribute(property,String(value))}
+ // Conservar solo el valor final de cada atributo; algunas escenas lo ajustan
+ // varias veces antes de dibujar. No invalidar el SVG si ese valor ya está aplicado.
+ attr(id,property,value){
+  const node=this.n(id);if(!node)return;
+  const text=String(value);
+  if(this._pendingAttributes){
+    let changes=this._pendingAttributes.get(node);
+    if(!changes){changes=new Map();this._pendingAttributes.set(node,changes);}
+    changes.set(property,text);
+  }else this.writeAttribute(node,property,text);
+ }
+ writeAttribute(node,property,text){
+  let previous=this._attributes.get(node);
+  if(!previous){previous=new Map();this._attributes.set(node,previous);}
+  if(previous.get(property)===text)return;
+  node.setAttribute(property,text);previous.set(property,text);
+ }
+ flushAttributes(){
+  const pending=this._pendingAttributes;this._pendingAttributes=null;
+  for(const [node,changes] of pending)for(const [property,text] of changes)this.writeAttribute(node,property,text);
+ }
  show(id,opacity){this.attr(id,'opacity',clamp(opacity))}
  transform(id,content){this.attr(id,'transform',content)}
  rot(id,angle,x,y){this.transform(id,`rotate(${angle.toFixed(2)} ${x} ${y})`)}
@@ -146,12 +171,20 @@ class GreenActor {
  reachFor(point){this._reachTarget=point&&Number.isFinite(point.x)&&Number.isFinite(point.y)?point:null;return this;}
  lookAt(point,seconds=2.8){this._lookTarget=point&&Number.isFinite(point.x)&&Number.isFinite(point.y)?{...point,until:this.motionTime+seconds}:null;return this;}
  tap(){this.tapCount=this.tapCount%3+1;this.play('tap'+this.tapCount);return this.tapCount}
- pause(){this.paused=true; return this}
- resume(){if(this.paused){this.paused=false;this.last=0;}return this}
+ needsFrame(){return !this.paused||!!this._speech&&this._speech.animated!==false||this._speechTail>0;}
+ scheduleFrame(){
+  if(this.stopped||!this.needsFrame()){
+    if(this._raf)cancelAnimationFrame(this._raf);
+    this._raf=0;return;
+  }
+  if(!this._raf)this._raf=requestAnimationFrame(this._tick);
+ }
+ pause(){this.paused=true;this.scheduleFrame();return this}
+ resume(){if(this.paused){this.paused=false;this.last=0;}this.scheduleFrame();return this}
  togglePause(){return this.paused?this.resume():this.pause()}
  resetTouches(){this.tapCount=0;return this}
  getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...SCENES[this.scene]}}
- destroy(){this.stopped=true;cancelAnimationFrame(this._raf);this.n('speech-heat')?.remove?.();this.n('speech-mouth')?.remove?.();this.svg.querySelector('#'+(this.options.idPrefix||'')+'speech-warmth')?.remove?.();}
+ destroy(){this.stopped=true;cancelAnimationFrame(this._raf);this._raf=0;this.n('speech-heat')?.remove?.();this.n('speech-mouth')?.remove?.();this.svg.querySelector('#'+(this.options.idPrefix||'')+'speech-warmth')?.remove?.();}
  frame(now){
   if(this.stopped)return;
   if(!this.last) this.last=now;
@@ -171,7 +204,7 @@ class GreenActor {
     if(this.options.onFrame)this.options.onFrame(this.getSceneInfo(),dt);
   }
   else if(this._speech&&this._speech.animated!==false||this._speechTail>0){this._speechTail=Math.max(0,this._speechTail-dt);this.render(this.elapsed,dt);}
-  this._raf=requestAnimationFrame(t=>this.frame(t));
+  this.scheduleFrame();
  }
  // Respuesta amortiguada exacta: conserva posición y velocidad al cambiar de gesto.
  // Ojos rápidos, cabeza intermedia y ropa más lenta, sin un filtro dependiente de FPS.
@@ -196,6 +229,7 @@ class GreenActor {
   }
  }
  render(t,dt=null){
+  this._pendingAttributes=new Map();
   const mode=this.scene;const D=SCENES[mode].duration;const p=clamp(t/D);
   let v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
     scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,headY:0,alpha:1,
@@ -622,7 +656,8 @@ class GreenActor {
   this.show('expression-mouth',closedFace*(1-happy)*(1-speaking));
   if(closedFace)this.show('mouth',(1-closedFace)*(1-happy)*(1-speaking));else if(speaking)this.show('mouth',0);
   // La actitud se entiende por la actuación; el login no necesita globos de texto.
-  this.show('bubble',this.options.embedded?0:bubble);if(text)this.n('bubble-text').textContent=text;
+  this.show('bubble',this.options.embedded?0:bubble);if(text&&this.n('bubble-text').textContent!==text)this.n('bubble-text').textContent=text;
+  this.flushAttributes();
  }
 }
 GreenActor.SCENES=SCENES;
