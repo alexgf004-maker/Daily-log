@@ -243,3 +243,4 @@
 .nv-dialogo[data-tono="angry"]{background:#fff3e9;border-color:#cf7967;color:#6a3028;border-radius:13px 13px 10px 10px}
 .nv-dialogo[data-tono="angry"]::after{background:#fff3e9;border-color:#cf7967}
 .nv-dialogo[data-tono="startled"]{border-radius:16px;background:#fff9ee}
+@media(max-width:370px){.nv-dialogo-interior{max-width:126px}}
