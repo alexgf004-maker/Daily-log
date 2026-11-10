@@ -878,7 +878,7 @@ import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "htt
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { getMessaging, getToken, deleteToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
-import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, alUbicar, ubicarSede, justificarMarcaje } from "./js/marcaje.js?v=2";
+import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, alUbicar, ubicarSede, justificarMarcaje } from "./js/marcaje.js?v=3";
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js?v=2";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { diaNavidad, diasDelCordon, cordonHTML, adventoHTML, abrirPuerta, lineaPersonalAdviento } from "./js/navidad-app.js?v=1";
@@ -1401,6 +1401,7 @@ function renderAdmin(){
                 <option value="gestionmedida">Plantel Central · Gestión de la medida</option>
                 <option value="cucumacayan">Subestación Cucumacayán</option>
                 <option value="zacatecoluca">Subestación Zacatecoluca</option>
+                <option value="sanvicente">Subestación San Vicente</option>
               </select>
             </span><span class="chev"></span></label>
           <div class="pf-row pf-tap" id="adPerfilAvisos" onclick="tocarAvisos('adPerfil')"><span class="pf-ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg></span><span class="pf-tx"><b>Avisos al celular</b><span class="av-est">…</span></span><span class="chev"></span></div>
@@ -1619,6 +1620,7 @@ function modalsHTML(){
           <option value="gestionmedida">Plantel Central · Gestión de la medida</option>
           <option value="cucumacayan">Subestación Cucumacayán</option>
           <option value="zacatecoluca">Subestación Zacatecoluca</option>
+          <option value="sanvicente">Subestación San Vicente</option>
           <option value="prueba">⚠️ Prueba — no usar</option>
         </select>
         <div class="sx-hint">Sin sede asignada, el empleado no verá el marcaje.</div>
@@ -1681,6 +1683,7 @@ function modalsHTML(){
         <option value="gestionmedida" data-ic="pin">Plantel Central · Gestión de la medida</option>
         <option value="cucumacayan" data-ic="pin">Subestación Cucumacayán</option>
         <option value="zacatecoluca" data-ic="pin">Subestación Zacatecoluca</option>
+        <option value="sanvicente" data-ic="pin">Subestación San Vicente</option>
         <option value="prueba" data-ic="pin">Prueba — no usar</option>
       </select>
       <div class="sx-ops lista" data-for="sedeTempSede"></div>

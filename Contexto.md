@@ -144,13 +144,14 @@ importante — ver sección 7.**
   (13.688409755143281, -89.27993065477382), Plantel Central · Gestión de la
   medida (13.687696, -89.280831), Subestación Cucumacayán
   (13.693570433295193, -89.20564341328895), Subestación Zacatecoluca
-  (13.508016211954466, -88.86875891706555). Hora de servidor, no del teléfono.
+  (13.508016211954466, -88.86875891706555), Subestación San Vicente (13.645885, -88.786376;
+  radio 110 m). Hora de servidor, no del teléfono.
   Horario: L-J 07:00-17:00, V 07:00-16:00, Sáb 06:00-14:00, Dom sin evaluación.
   Tolerancia 0 min (7:00 en punto). El horario es global (igual para todas las
   sedes); si más adelante una sede necesita horario propio, se agregará como
   override por sede. Las sedes viven en SEDES (js/marcaje.js) y se listan a mano
   en 3 <select> de index.html (uSede, adPerfilSede, sedeTempSede): agregar una
-  requiere tocar los 4 lugares.
+  requiere tocar los 4 lugares, más la lista `SEDES` de `functions/avisos.js` (recordatorios).
 - **Detección automática de sede** (el personal rota): quien tiene sede asignada (fija o
   temporal) puede marcar entrada y salida en CUALQUIER sede oficial; se guarda la que
   detectó el GPS en `sedeUsada` (`ubicarSede` en js/marcaje.js). Si está dentro de dos

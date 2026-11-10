@@ -8,6 +8,7 @@ export const SEDES = {
   gestionmedida:{ nombre:'Plantel Central · Gestión de la medida', corto:'Gestión de la medida', lat:13.687696, lng:-89.280831, radio:100 },
   cucumacayan:  { nombre:'Subestación Cucumacayán',             corto:'Cucumacayán',  lat:13.693570433295193, lng:-89.20564341328895, radio:100 },
   zacatecoluca: { nombre:'Subestación Zacatecoluca',            corto:'Zacatecoluca', lat:13.508016211954466, lng:-88.86875891706555, radio:100 },
+  sanvicente:   { nombre:'Subestación San Vicente',             corto:'San Vicente',  lat:13.645885, lng:-88.786376, radio:110 },
   prueba:       { nombre:'Prueba — no usar',                    corto:'Prueba',       lat:13.828394851402207, lng:-89.26711982035171, radio:100 },
 };
 

@@ -86,7 +86,7 @@ async function enviarA(uid, { titulo, cuerpo, url = './', tag = 'innova', fijo, 
 //   (Empleados, y la admin si tiene "Sede para marcar" en su perfil.)
 //   Salida:  a quien marcó entrada y no salida.
 const AUS_TIPOS = ['vacaciones', 'incapacidad', 'permiso', 'bienestar', 'injustificado'];
-const SEDES = ['plantel', 'gestionmedida', 'cucumacayan', 'zacatecoluca', 'prueba']; // js/marcaje.js
+const SEDES = ['plantel', 'gestionmedida', 'cucumacayan', 'zacatecoluca', 'sanvicente', 'prueba']; // js/marcaje.js
 const VENTANA = { entrada: 60, salida: 4 * 60 }; // hasta cuántos min después de la hora se manda el 2.º aviso
 
 // Asuetos fijos (igual que asuetosFijos() de js/utils.js) + los que agregó el admin
