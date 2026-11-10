@@ -367,13 +367,16 @@ window.__nvCasa=function(capa){
   function armar(){ if(parado||!capa.isConnected) return; var M=medir(); if(!M||!M.W||!M.H) return;
     var fi=[M.W,M.H,Math.round(M.f.t),M.masc?[Math.round(M.masc.l),Math.round(M.masc.t),Math.round(M.masc.w),Math.round(M.masc.pies)].join(','):'-'].join('|'); if(fi===firma) return; firma=fi;
     W=M.W; H=M.H; var D=Math.min(1.5,window.devicePixelRatio||1); M.luces=[]; M.chispas=[]; M.anim=[]; M.hits=[]; NV.sem(101);
-    var fijo=NV.lienzo(W,H,D); dibujar(fijo.x,M); var v=NV.lienzo(W,H,D);
+    var fijo=NV.lienzo(W,H,D); dibujar(fijo.x,M); var v=NV.lienzo(W,H,1);   // capa viva a 1×: nieve y brillos suaves, se pinta mucho menos
     cont.innerHTML=''; cont.appendChild(fijo.c); cont.appendChild(v.c); if(M.dom) cont.insertAdjacentHTML('beforeend',M.dom);
     C=M; vivo=v.x; cps=reducido?[]:NV.copos(W,H,M.nCopos||(M.pc?90:45)); if(M.huevos) M.huevos(cont);dibujarAdorno();
     if(reducido) NV.vivo(vivo,W,H,0,C.luces,[],[]); else seguir(); }
   function aLaVista(){ return !document.hidden&&ls.classList.contains('active'); }
+  var ultCuadro=0;
   function cuadro(n){ raf=0; if(parado||!capa.isConnected||!aLaVista()) return;   // fuera de la vista no corre; se reanuda solo
-    var t=n/1000; NV.vivo(vivo,W,H,t,C.luces,cps,C.chispas); for(var i=0;i<C.anim.length;i++) C.anim[i](vivo,t); raf=requestAnimationFrame(cuadro); }
+    raf=requestAnimationFrame(cuadro);
+    if(n-ultCuadro<31) return; ultCuadro=n;   // 30 cuadros por segundo: todo se mueve con el tiempo, no por cuadro
+    var t=n/1000; NV.vivo(vivo,W,H,t,C.luces,cps,C.chispas); for(var i=0;i<C.anim.length;i++) C.anim[i](vivo,t); }
   function seguir(){ if(!raf&&!reducido&&!parado&&C&&aLaVista()) raf=requestAnimationFrame(cuadro); }
   function toque(e){ if(!C||e.target.closest('.login-form,.nv-mascota,button,input,a,label,.login-footer')) return;
     var r=cont.getBoundingClientRect(), px=e.clientX-r.left, py=e.clientY-r.top, h=null;

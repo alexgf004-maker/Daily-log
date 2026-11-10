@@ -672,6 +672,27 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   **Correrlo después de cambiar styles.css** (`python3 herramientas/tema-colores.py`) y subir `TEMAS_V` en el `<head>` de `index.html`.
   Lo decorativo hecho a mano (login, sangre en encabezados, barra, cementerio) va arriba en `css/temas/halloween.css`.
 
+### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
+Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.
+Sin tema la app quieta usa 0 %. Con procesador normal (×1), antes → después de `mejoras/rendimiento`:
+Pre-Navidad login 62 → 24 %, Pre-Navidad adentro 33 → 21 % (11 % en reposo), Navidad en casa login 24 → 24 %,
+Navidad en casa adentro 33 → 23 % (17 % en reposo). Simulando un celular económico (CPU ×4) todo sale cerca del
+100 % (el simulador no tiene tarjeta gráfica: exagera el pintado, pero el orden de lo que pesa es el mismo).
+- Lo que pesa: los lienzos animados de pantalla completa (aurora, nieve, luces) y **la mascota**: con la app quieta y en
+  reposo, casi todo lo que queda es `js/green-actor.js` (pide ~115 cuadros por segundo sin descanso, también adentro).
+  Escondiendo la mascota, adentro en reposo baja a ~3–4 %. Las animaciones CSS decorativas pesan poco.
+- Hecho: lienzos de Pre-Navidad y de la casita a 30 cps (el movimiento depende del tiempo; la nieve del login usa
+  `ritmo`); la aurora del login se pinta a media resolución ~11 veces por segundo en un lienzo aparte; las capas vivas
+  (nieve, luces, humo) a resolución 1×; el valle de adentro en dos lienzos (el paisaje solo se repinta al deslizar);
+  el ciclo del login de Pre se detiene con el login oculto; **reposo** (`window.__nvReposo`, clase `html.nv-reposo`):
+  tras 25 s sin tocar, los fondos de adentro se detienen y las animaciones decorativas se pausan; al primer toque
+  siguen. Visualmente igual (comparado con capturas).
+- Pendiente (de la mascota, otro asistente): limitar su ciclo a 30 cps, no animar cuando no se ve y escuchar
+  `window.__nvReposo.escuchar(q=>…)` para quedarse quieta en reposo.
+- Carga: `index.html` pesa 580 KB (169 KB comprimido; casi todo es el módulo principal en línea) y no se guarda en
+  caché (el service worker no cachea); los scripts de Navidad (~100 KB comprimidos) se descargan aunque no sea
+  temporada. El login aparece igual de rápido con o sin tema.
+
 ## 7. Carencias conocidas / deuda técnica (buenos objetivos de auditoría)
 
 1. *(Resuelto)* Reglas de la base por rol en `database.rules.json` (se publican solas con

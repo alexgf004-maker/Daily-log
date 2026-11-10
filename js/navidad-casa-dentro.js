@@ -13,6 +13,20 @@
   'use strict';
   var HEROES='.page-header,.dash-hero,.rg-hero,.pg-hero,.ps-hero';
   var reducido=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // «Reposo»: tras 25 s sin tocar la pantalla (ni deslizar ni escribir), los fondos animados de adentro se detienen y
+  // las animaciones decorativas se pausan (clase html.nv-reposo); al primer toque siguen. Así un celular que se queda
+  // en la app abierta no gasta batería en nieve que nadie mira. Lo comparten js/navidad-dentro.js y
+  // js/navidad-casa-dentro.js (el primero que carga lo crea); otros módulos pueden escucharlo con
+  // window.__nvReposo.escuchar(function(quieto){…}).
+  var Rp=window.__nvReposo||(window.__nvReposo=(function(){
+    var ult=Date.now(), quieto=false, subs=[], ESPERA=25000;
+    function avisar(){ document.documentElement.classList.toggle('nv-reposo',quieto); subs.forEach(function(f){ try{ f(quieto); }catch(e){} }); }
+    function tocar(){ ult=Date.now(); if(quieto){ quieto=false; avisar(); } }
+    ['pointerdown','keydown','wheel','touchstart','scroll'].forEach(function(ev){ document.addEventListener(ev,tocar,{capture:true,passive:true}); });
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden) tocar(); });
+    setInterval(function(){ if(!quieto&&!document.hidden&&Date.now()-ult>ESPERA){ quieto=true; avisar(); } },2000);
+    return {quieto:function(){ return quieto; }, escuchar:function(f){ subs.push(f); }};
+  })());
   var n=0, listo=false, pend=0, noche=null;
 
   function activo(){ return document.documentElement.classList.contains('nav-casa'); }
@@ -105,9 +119,9 @@
   function armarNoche(){
     var N=window.__nvMotor, K=composicion(), D=Math.min(1.5,window.devicePixelRatio||1), firma=[K.W,K.H,K.lado].join('|');
     if(noche.firma===firma) return; noche.firma=firma;
-    [noche.f,noche.v,noche.s].forEach(function(c){ c.width=Math.round(K.W*D); c.height=Math.round(K.H*D); });
+    [noche.f,noche.s].forEach(function(c){ c.width=Math.round(K.W*D); c.height=Math.round(K.H*D); }); noche.v.width=K.W; noche.v.height=K.H;   // la capa viva (luces y nieve) a 1×
     var fx=noche.f.getContext('2d'); fx.setTransform(D,0,0,D,0,0); noche.fx=fx;
-    var vx=noche.v.getContext('2d'); vx.setTransform(D,0,0,D,0,0); noche.vx=vx;
+    var vx=noche.v.getContext('2d'); vx.setTransform(1,0,0,1,0,0); noche.vx=vx;
     var sx=noche.s.getContext('2d'); sx.setTransform(D,0,0,D,0,0); noche.sx=sx;
     var C={luces:[],chispas:[],anim:[],hits:[],W:K.W,H:K.H,pc:K.ancho};
     noche.p=pintar(fx,K,C); noche.C=C; noche.K=K;
@@ -115,7 +129,7 @@
     noche.santa=null; noche.sig=performance.now()/1000+(reducido?1e9:N.rr(8,16));
     N.vivo(vx,K.W,K.H,0,C.luces,noche.copos,C.chispas);
   }
-  function corre(){ return noche&&noche.f.isConnected&&activo()&&!document.hidden&&!!pantallaAdentro(); }
+  function corre(){ return noche&&noche.f.isConnected&&activo()&&!document.hidden&&!!pantallaAdentro()&&!Rp.quieto(); }
   function cuadro(ms){
     noche.raf=0; if(!corre()){ if(noche.santa){ noche.santa=null; noche.sx.clearRect(0,0,noche.K.W,noche.K.H); } return; }   // se reanuda con verNoche()
     noche.raf=requestAnimationFrame(cuadro);
@@ -132,6 +146,7 @@
       S.rastro.forEach(function(q){ var a=1-(t-q[2])/1.2; sx.fillStyle='rgba(255,205,90,'+(.75*a).toFixed(3)+')'; sx.beginPath(); sx.arc(q[0],q[1],1.6*a+.5,0,N.P); sx.fill(); });
       sx.save(); sx.shadowColor='rgba(255,236,190,.9)'; sx.shadowBlur=6; N.trineo(sx,x,y,s,t,'rgba(10,24,56,.94)'); sx.restore(); }
   }
+  Rp.escuchar(function(q){ if(!q&&noche) verNoche(); });
   function verNoche(){
     if(!activo()||!window.__nvMotor) return;
     if(!noche){

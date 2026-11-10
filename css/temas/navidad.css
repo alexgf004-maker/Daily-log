@@ -301,6 +301,10 @@ html.tema-navidad .nv-con-companero::after{display:none}
 /* por si otro adorno se sale de la pantalla: el documento nunca se desplaza de lado (clip no rompe sticky) */
 html.tema-navidad body{overflow-x:clip}
 
+/* ═ Reposo (window.__nvReposo en js/navidad-dentro.js / js/navidad-casa-dentro.js): tras 25 s sin tocar la pantalla
+   adentro, las animaciones decorativas se pausan y siguen al primer toque. No toca la mascota. ═ */
+html.nv-reposo body:not(:has(#loginScreen.active)) :is(.nvd-gota,.nvd-au svg,.nvd-au i,.nv-amb i,.nvp-anillo,.vid,.nvq-halo,.nvc-bota,.nvp-adv-regalo,.nvd-car *):not(.nv-mascota *){animation-play-state:paused!important}
+
 /* ═ Navidad en casa dentro de la app: «Noche en la casita» (js/navidad-casa-dentro.js) ═
    Detrás de las pantallas de adentro, la misma noche del login (lienzos .nvc-noche, z-index:-1); el cordón de
    foquitos arriba del contenido; encabezados rojo terciopelo con gorrito de Santa y la botita con el nombre. */

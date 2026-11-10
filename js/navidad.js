@@ -76,21 +76,30 @@
   }
 
   /* ── canvas compartido: dibuja solo con el login a la vista y la app en primer plano ── */
-  function lienzo(capa,pasos){
+  // opc.fps: tope de cuadros por segundo (Pre-Navidad dibuja a 30: en un celular económico la escena a 60 saturaba el
+  // procesador). Lo que avanza por cuadro usa «ritmo» (1 = un cuadro a 60 cps) para moverse igual de rápido.
+  var ritmo=1;
+  function lienzo(capa,pasos,opc){
     var cv=document.createElement('canvas'); cv.className='nv-lienzo'; capa.appendChild(cv);
-    var ctx=cv.getContext('2d'), W=0, H=0, b={vivo:true},tamano=null;
-    function medir(){ var d=Math.min(window.devicePixelRatio||1,2); W=cv.clientWidth; H=cv.clientHeight; cv.width=W*d; cv.height=H*d; ctx.setTransform(d,0,0,d,0,0); }
+    var ctx=cv.getContext('2d'), W=0, H=0, b={vivo:true},tamano=null, minMs=opc&&opc.fps?1000/opc.fps-2:0, ult=0;
+    function medir(){ var d=Math.min(window.devicePixelRatio||1,opc&&opc.dpr||1.5); W=cv.clientWidth; H=cv.clientHeight; cv.width=W*d; cv.height=H*d; ctx.setTransform(d,0,0,d,0,0); }
     medir(); window.addEventListener('resize',medir);
     if(typeof ResizeObserver==='function'){tamano=new ResizeObserver(medir);tamano.observe(cv);}
     b.detener=function(){b.vivo=false;window.removeEventListener('resize',medir);if(tamano)tamano.disconnect();};
     var ls=document.getElementById('loginScreen');
+    // con el login oculto (adentro de la app o en segundo plano) el ciclo se detiene del todo y se reanuda al volver
+    var raf=0;
+    function aLaVista(){ return !document.hidden&&ls&&ls.classList.contains('active'); }
     function cuadro(t){
-      if(!b.vivo)return;
-      if(!document.hidden&&ls&&ls.classList.contains('active')){ if(!W) medir(); ctx.clearRect(0,0,W,H); pasos.forEach(function(f){ f(ctx,W,H,t); }); }
-      requestAnimationFrame(cuadro);
+      raf=0; if(!b.vivo||!aLaVista()) return;
+      raf=requestAnimationFrame(cuadro);
+      if(minMs&&t-ult<minMs) return;
+      ritmo=ult?Math.min(6,(t-ult)/16.67):1; ult=t;
+      if(!W) medir(); ctx.clearRect(0,0,W,H); pasos.forEach(function(f){ f(ctx,W,H,t); });
     }
+    function seguir(){ if(!raf&&b.vivo&&!reducido&&aLaVista()){ ult=0; raf=requestAnimationFrame(cuadro); } }
     if(reducido){ setTimeout(function(){ if(!b.vivo)return; medir(); pasos.forEach(function(f){ f(ctx,W,H,0); }); },60); }
-    else requestAnimationFrame(cuadro);
+    else { seguir(); if(ls){ var mo=new MutationObserver(seguir); mo.observe(ls,{attributes:true,attributeFilter:['class']}); } document.addEventListener('visibilitychange',seguir); var det=b.detener; b.detener=function(){ det(); if(mo) mo.disconnect(); document.removeEventListener('visibilitychange',seguir); if(raf) cancelAnimationFrame(raf); }; }
     b.ctx=ctx; b.tam=function(){ return [W,H]; };
     return b;
   }
@@ -102,18 +111,22 @@
     var bandas=[{c:'80,255,170',y:.2,a:1.1,f:1.2,s:.00035},{c:'70,220,255',y:.26,a:.8,f:1.7,s:.00028},{c:'200,110,255',y:.14,a:.65,f:2.1,s:.0004},{c:'120,255,200',y:.33,a:.45,f:2.6,s:.0005}];
     var est=[]; for(var i=0;i<80;i++) est.push({x:Math.random(),y:Math.random()*.45,r:R(.5,1.6),f:R(0,6)});
     var cop=[]; for(i=0;i<60;i++) cop.push({x:Math.random(),y:Math.random(),r:R(.6,2.3),v:R(.0004,.0012)});
-    var techo=null,medido=-1000,ultimoCopo=-15000,posados=[];
+    var techo=null,medido=-1000,ultimoCopo=-15000,posados=[], aurora=document.createElement('canvas'), auroraT=-1e9;
     bucle=lienzo(capa,[
       function(c,W,H,t){ est.forEach(function(e){ c.fillStyle='rgba(255,255,255,'+(.35+.65*Math.abs(Math.sin(t/900+e.f)))+')'; c.beginPath(); c.arc(e.x*W,e.y*H,e.r,0,6.283); c.fill(); }); },
-      function(c,W,H,t){ c.globalCompositeOperation='lighter';
-        bandas.forEach(function(b){ for(var x=0;x<=W;x+=5){ var yc=H*b.y+Math.sin(x/W*Math.PI*b.f+t*b.s*3)*34+Math.sin(x/90+t*b.s*5)*10, alto=110+Math.sin(x/60+t*b.s*4)*40, al=b.a*(.55+.45*Math.sin(x/70+t*b.s*6));
-          var g=c.createLinearGradient(0,yc-alto,0,yc+20); g.addColorStop(0,'rgba('+b.c+',0)'); g.addColorStop(.75,'rgba('+b.c+','+(al*.5)+')'); g.addColorStop(1,'rgba('+b.c+',0)'); c.fillStyle=g; c.fillRect(x,yc-alto,5,alto+20); } });
-        c.globalCompositeOperation='source-over'; },
+      function(c,W,H,t){
+        // la aurora se mueve muy despacio: se pinta a media resolución unas 11 veces por segundo y se copia en cada cuadro
+        var aw=Math.ceil(W/2), ah=Math.ceil(H/2);
+        if(aurora.width!==aw||aurora.height!==ah){ aurora.width=aw; aurora.height=ah; auroraT=-1e9; }
+        if(t-auroraT>90){ auroraT=t; var a=aurora.getContext('2d'); a.setTransform(.5,0,0,.5,0,0); a.clearRect(0,0,W,H); a.globalCompositeOperation='lighter';
+          bandas.forEach(function(b){ for(var x=0;x<=W;x+=6){ var yc=H*b.y+Math.sin(x/W*Math.PI*b.f+t*b.s*3)*34+Math.sin(x/90+t*b.s*5)*10, alto=110+Math.sin(x/60+t*b.s*4)*40, al=b.a*(.55+.45*Math.sin(x/70+t*b.s*6));
+            var g=a.createLinearGradient(0,yc-alto,0,yc+20); g.addColorStop(0,'rgba('+b.c+',0)'); g.addColorStop(.75,'rgba('+b.c+','+(al*.5)+')'); g.addColorStop(1,'rgba('+b.c+',0)'); a.fillStyle=g; a.fillRect(x,yc-alto,6,alto+20); } }); }
+        c.globalCompositeOperation='lighter'; c.drawImage(aurora,0,0,W,H); c.globalCompositeOperation='source-over'; },
       function(c,W,H,t){
         // La nieve comparte el espacio físico del bloque y se posa en su cara superior.
         if(t-medido>300){medido=t;var hielo=$('#loginScreen .nv-mascota-congelada #nvice-body');techo=null;
           if(hielo){var r=hielo.getBoundingClientRect(),b=c.canvas.getBoundingClientRect();if(r.width&&b.width)techo={l:r.left-b.left+r.width*.12,r:r.right-b.left-r.width*.12,y:r.top-b.top,b:b};}}
-        c.fillStyle='#fff';cop.forEach(function(k){var antes=k.y*H;if(!reducido){ k.y+=k.v; if(k.y>1.02)k.y=-.02; }
+        c.fillStyle='#fff';cop.forEach(function(k){var antes=k.y*H;if(!reducido){ k.y+=k.v*ritmo; if(k.y>1.02)k.y=-.02; }
           var x=k.x*W+Math.sin(k.y*12)*8,y=k.y*H;
           if(techo&&antes<techo.y&&y>=techo.y&&x>techo.l&&x<techo.r){
             posados.push({x:x,y:techo.y,t:t,r:k.r});k.y=-.02;
@@ -124,7 +137,7 @@
         });
         posados=posados.filter(function(p){var u=(t-p.t)/1500;if(u>1)return false;c.globalAlpha=(1-u)*.8;c.beginPath();c.ellipse(p.x,p.y-1,p.r*1.5,p.r*.6,0,0,6.283);c.fill();return true;});c.globalAlpha=1;
       }
-    ]);
+    ],{fps:30,dpr:1});   // aurora, estrellas y nieve: suaves, a 1× se ven igual y cuestan menos de la mitad
     // montañas, lago congelado y pinos escarchados con moños y esferas rojas; trineo atrapado
     function montes(){
     var Wv=Math.max(360,Math.round(window.innerWidth||412)), sx=Math.min(Wv/412,1.45), dx=Wv-412;
