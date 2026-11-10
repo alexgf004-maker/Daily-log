@@ -102,3 +102,28 @@ test('tocar el vidrio del foco cambia el estado del grupo completo una sola vez'
  f.login.emit('click',{type:'click',target:{closest:s=>s==='.nv-foco-interactivo'?f.button:glass}});
  assert.equal(f.calls.length,1);assert.equal(f.calls[0].off,true);assert.equal(f.button.attrs['aria-pressed'],'false');
 });
+
+function blowFixture(){
+ const f=switchFixture(),nodes=[];f.button.isConnected=true;
+ f.mount.querySelector=s=>s.endsWith('head')?{getScreenCTM:()=>({a:.2,b:0,c:0,d:.2,e:218,f:114})}:null;
+ f.login.querySelectorAll=()=>[f.button];f.login.getBoundingClientRect=()=>({left:0,top:0,width:390,height:844});
+ f.login.appendChild=n=>nodes.push(n);
+ f.document.createElementNS=()=>{const n=new Node();n.appendChild=()=>{};n.remove=()=>nodes.splice(nodes.indexOf(n),1);return n;};
+ return {...f,nodes};
+}
+test('el soplo sale de la boca hacia un foco existente y solo lo apaga al llegar',()=>{
+ const f=blowFixture();assert.ok(f.w.startBlow());f.w.blowFrame(.5);assert.equal(f.nodes.length,0);assert.equal(f.button.classList.contains('nv-luz-apagada'),false);
+ f.w.blowFrame(1.5);assert.equal(f.nodes.length,1);assert.equal(f.button.classList.contains('nv-luz-apagada'),false);
+ f.w.blowFrame(1.86);assert.equal(f.button.classList.contains('nv-luz-apagada'),true);assert.equal(f.button.attrs['aria-label'],'Encender luz navideña');
+ f.w.blowFrame(2.3);assert.equal(f.nodes.length,0);f.touch();assert.equal(f.button.classList.contains('nv-luz-apagada'),false);
+ f.w.destroy();assert.equal(f.timers.size,0);
+});
+test('no sopla sin luces, a través de toda la pantalla, congelado ni al escribir',()=>{
+ const f=blowFixture();f.setFrozen(true);assert.equal(f.w.startBlow(),null);f.setFrozen(false);f.setBusy(true);assert.equal(f.w.startBlow(),null);
+ f.setBusy(false);f.button.getBoundingClientRect=()=>({left:280,top:-500,width:10,height:18});assert.equal(f.w.startBlow(),null);
+ f.login.querySelectorAll=()=>[];assert.equal(f.w.startBlow(),null);assert.equal(f.nodes.length,0);
+});
+test('interrumpir el soplo limpia el aire sin apagar una luz antes de tiempo',()=>{
+ const f=blowFixture();f.w.startBlow();f.w.blowFrame(1.2);f.w.cancelBlow();f.w.blowFrame(2);assert.equal(f.nodes.length,0);assert.equal(f.button.classList.contains('nv-luz-apagada'),false);
+ f.w.startBlow();f.w.blowFrame(1.9);f.w.destroy();assert.equal(f.button.classList.contains('nv-luz-apagada'),false);assert.equal(f.nodes.length,0);
+});

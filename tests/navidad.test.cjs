@@ -69,7 +69,7 @@ test('cambiar de tema retira el motor y sus escuchadores; volver no duplica toqu
  const f=fixture({date:'2026-12-22'});
  for(let i=0;i<3;i++){
   f.ctx.__temas.activo={id:'navidad'};f.ctx.__mascotaNavidadSync();assert.equal(f.svg.events.pointerdown.size,1);
-  f.svg.emit('pointerdown');assert.equal(f.actors.at(-1).scene,'tap1');
+  f.advance(6.3);f.svg.emit('pointerdown');assert.equal(f.actors.at(-1).scene,'sneak');
   f.ctx.__temas.activo={id:'muertos'};f.ctx.__mascotaNavidadSync();assert.equal(f.svg.events.pointerdown.size,0);assert.equal(f.actors.at(-1).destroyed,true);assert.equal(f.timers.size,0);
  }
 });
@@ -79,8 +79,8 @@ test('no crea una mascota con otro tema ni con tema apagado',()=>{
 test('movimiento reducido: no inicia travesuras automáticas',()=>{
  const f=fixture({date:'2026-12-22',reduced:true});f.ctx.__mascotaNavidadSync();f.advance(120);assert.equal(f.actors[0].scene,'idle');assert.equal(f.actors[0].paused,true);
 });
-test('se conservan las 14 animaciones originales y se agregan 13 poses integradas',()=>{
- const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,27);
+test('se conservan las 14 animaciones originales y se agregan 14 poses integradas',()=>{
+ const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,28);
  for(const name of ['idle','sneak','run','climb','steal','caught','drop','tantrum','hide','tap1','tap2','tap3','xmas','nye','thaw','privacy','tug','offer','grump','plot'])assert.match(scenes,new RegExp('\\b'+name+':'));
  for(const id of ['actor','head','body','tail','arm-left','arm-right','leg-left','leg-right','eye-left','eye-right'])assert.ok(read('index.html').includes('id="'+id+'"'));
 });
@@ -147,7 +147,7 @@ test('motor real: todas las escenas conservan transformaciones finitas y restaur
 });
 test('sin guirnalda no inicia una travesura ni deja la pose bloqueada',()=>{
  const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.envs.at(-1).start=()=>false;
- assert.equal(f.ctx.__mascotaNavidadHistoria('travesura'),false);assert.equal(f.ctx.__mascotaNavidadEstado().historia,null);assert.equal(f.actors.at(-1).scene,'idle');f.advance(100);assert.ok(['idle','grump','plot'].includes(f.actors.at(-1).scene));assert.equal(f.ctx.__mascotaNavidadEstado().historia,null);
+ assert.equal(f.ctx.__mascotaNavidadHistoria('travesura'),false);assert.equal(f.ctx.__mascotaNavidadEstado().historia,null);assert.equal(f.actors.at(-1).scene,'idle');f.advance(100);assert.ok(['idle'].includes(f.actors.at(-1).scene));assert.equal(f.ctx.__mascotaNavidadEstado().historia,null);
 });
 test('activar movimiento reducido durante el PIN conserva las manos sobre los ojos',()=>{
  const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.form.emit('focusin',{target:f.pin});f.callbacks.mediachange({matches:true});
@@ -178,12 +178,12 @@ test('las gotas y las ondas mantienen el mismo punto de caída durante el deshie
  }
 });
 
-test('alterna gestos con pausas y todavía tira de una esfera: los gestos no reinician la espera',()=>{
- const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.Math=Object.create(Math);f.ctx.Math.random=()=>0;f.ctx.__mascotaNavidadSync();
+test('el reposo solo se interrumpe para actuar sobre la esfera real del árbol',()=>{
+ const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();
  const scenes=new Set(),stories=new Set();
  for(let i=0;i<3000;i++){f.advance(.1);scenes.add(f.actors.at(-1).scene);stories.add(f.ctx.__mascotaNavidadEstado().historia);}
- for(const name of ['idle','hat','scoff','shoo','doze','grump','plot','tug','caught'])assert.ok(scenes.has(name),name);
- assert.ok(stories.has('travesura'));assert.ok(stories.has('descubierto'));
+ assert.ok(scenes.has('idle'));assert.ok(scenes.has('tug'));assert.ok(stories.has('travesura'));assert.ok(stories.has('descubierto'));
+ for(const name of ['hat','scoff','shoo','doze','grump','plot','tap1','tap2','tap3'])assert.equal(scenes.has(name),false,name);
 });
 test('enfocar el PIN interrumpe el gesto y el cambio de tema limpia su estado',()=>{
  const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.ctx.__mascotaNavidadPlay('grump');
@@ -197,9 +197,9 @@ test('un berrinche manual termina y vuelve al reposo en el login',()=>{
 
 
 test('Enter y espacio repiten los toques y el teclado se desconecta al cambiar de tema',()=>{
- const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();let prevented=0;
- f.svg.emit('keydown',{key:'Enter',preventDefault(){prevented++}});assert.equal(f.actors.at(-1).scene,'tap1');
- f.svg.emit('keydown',{key:' ',preventDefault(){prevented++}});assert.equal(f.actors.at(-1).scene,'tap2');assert.equal(prevented,2);
+ const f=fixture({date:'2026-12-22',mode:'ver'});f.ctx.__mascotaNavidadSync();f.advance(6.3);let prevented=0;
+ f.svg.emit('keydown',{key:'Enter',preventDefault(){prevented++}});assert.equal(f.actors.at(-1).scene,'sneak');
+ f.svg.emit('keydown',{key:' ',preventDefault(){prevented++}});assert.equal(f.actors.at(-1).scene,'caught');assert.equal(prevented,2);
  f.ctx.__temas.activo=null;f.ctx.__mascotaNavidadSync();assert.equal(f.svg.events.keydown.size,0);
 });
 
@@ -390,4 +390,10 @@ test('la somnolencia se distingue de la risa y del gesto de protesta',()=>{
  actor.render(4.2);assert.ok(actor._pose.surprise>.9);
  actor.play('scoff');actor.render(1.4);assert.ok(actor._pose.sly>.9);assert.ok(actor._pose.rightArm>60);
  actor.play('shoo');actor.render(1.4);assert.ok(actor._pose.rightArm< -30);assert.ok(actor._pose.grump>.9);
+});
+
+test('el reposo contextual conserva respiración sin paseos de ojos ni brazos',()=>{
+ const {actor}=realActor({contextOnly:true,personality:true});actor.play('idle');actor.render(2);const body=actor._pose.body;
+ for(const t of [4,12,20]){actor.render(t);assert.equal(actor._pose.dx,0);assert.equal(actor._pose.dy,0);assert.equal(actor._pose.head,0);assert.equal(actor._pose.pupilX,0);assert.equal(actor._pose.leftArm,0);}
+ assert.notEqual(actor._pose.body,body);
 });

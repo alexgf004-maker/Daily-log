@@ -1,4 +1,4 @@
-/* GreenActor 2 — articulated SVG limbs, 14 original scenes and 13 integrated poses.
+/* GreenActor 2 — articulated SVG limbs, 14 original scenes and 14 integrated poses.
    API: const actor = new GreenActor(document.querySelector('#green-character'));
    actor.play('steal'); actor.tap(); actor.pause(); actor.resume(); actor.destroy();
    Custom DOM events: greenactor:scenechange and greenactor:complete. */
@@ -33,6 +33,7 @@ const SCENES = Object.freeze({
  plot:     {duration:5.2,loop:false,title:'Tramar otra travesura',detail:'Comprueba ambos lados, junta las manos y esboza una sonrisa torcida.',group:'Login integrado'},
  trapped:  {duration:3.6,loop:false,title:'Déjame salir',detail:'Apoya las manos contra el hielo, empuja y resopla sin salir del bloque.',group:'Interacciones'},
  mischief: {duration:4.4,loop:false,title:'Tirar de la botita',detail:'Se acerca a la botita real, la agarra y da dos tirones antes de soltarla.',group:'Interacciones'},
+ blow:     {duration:3.2,loop:false,title:'Apagar una luz',detail:'Toma aire y sopla hacia un foco real de la guirnalda.',group:'Interacciones'},
  hat:      {duration:4.2,loop:false,title:'Acomodarse el gorro',detail:'Se le baja el gorro sobre los ojos, toma el borde y lo vuelve a acomodar.',group:'Interacciones'},
  scoff:    {duration:3.6,loop:false,title:'Risa traviesa',detail:'Se tapa la boca, sacude los hombros y mira de reojo.',group:'Interacciones'},
  shoo:     {duration:3.8,loop:false,title:'No toques mis luces',detail:'Niega con la cabeza y hace un gesto de protesta con la mano.',group:'Interacciones'},
@@ -352,6 +353,10 @@ class GreenActor {
       props('stolen-bulb');visible['stolen-bulb']=bump(t,.6,1.1,3.3,3.9);
       bulbTransform=`translate(${lerp(490,485,give)} ${lerp(657,246,give)}) rotate(${180*give}) scale(.68)`;
       break;}
+    case 'blow':{
+      const inhale=bump(t,.05,.4,.6,.85),exhale=bump(t,.72,.95,1.85,2.25);
+      v.body=1+.022*inhale-.012*exhale;v.head=-7*exhale;v.headY=-4*inhale;v.surprise=exhale;
+      v.grump=.8;v.lidL=.7;v.lidR=.7;v.leftArm=0;v.rightArm=0;v.scarf=-5*exhale;v.tail=0;break;}
     case 'hat':{
       const bow=bump(t,.05,.65,2.6,3.65),fix=bump(t,.65,1.1,2.05,2.65);
       v.headY=15*bow;v.head=0;v.hatSlip=155*bow;v.hatTouch=fix;
@@ -442,6 +447,7 @@ class GreenActor {
       this.rot('fw-right',-t*65,615,284);
       break;}
   }
+  if(this.options.contextOnly&&mode==='idle'){v.dx=v.dy=v.head=v.pupilX=v.pupilY=0;v.leftArm=v.rightArm=0;v.tail=0;v.scarf=1.5*wave(clock,.25);}
   let handGoal=null;
   if(this._reachTarget&&this.options.embedded&&['tug','offer'].includes(mode)){
     const a=this._reachTarget,dy=a.y-580,span=Math.sqrt(Math.max(0,170*170-dy*dy));
@@ -510,7 +516,7 @@ class GreenActor {
   if(this.n('leg-left-curve')){
     // Compensar la respiración en el apoyo, pero conservar los saltos y carreras.
     const stride=['sneak','run','climb'].includes(mode)||mode==='mischief'&&t<.85;
-    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3','ack','mischief','trapped','hat','scoff','shoo','doze'].includes(mode);
+    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3','ack','mischief','trapped','blow','hat','scoff','shoo','doze'].includes(mode);
     const ground=side=>planted?v.dy+Math.sin(v.angle*PI/180)*((side==='left'?365:445)-400):0;
     this.poseLeg('left',v.leftLeg,ground('left'),stride);this.poseLeg('right',v.rightLeg,ground('right'),stride);
   }else{
