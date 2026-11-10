@@ -114,5 +114,42 @@ function create(login,mount,options){
   var intro=setTimeout(ambient,1800),interval=setInterval(ambient,12000);
   return {startBlow:startBlow,blowFrame:blowFrame,cancelBlow:cancelBlow,react:react,resetGaze:resetGaze,suspend:visibility,destroy:function(){cancelBlow();stopped=true;clearTimeout(intro);clearSource();resetGaze();clearTimeout(lightTimer);clearInterval(interval);delete mount.dataset.reflejo;mount.style.removeProperty('--nv-reflejo');login.removeEventListener('navidad:entorno',event);login.removeEventListener('pointerdown',light,true);login.removeEventListener('keydown',light);login.removeEventListener('click',clickLight);switched.forEach(function(el){el.classList.remove('nv-luz-apagada');el.setAttribute('aria-pressed','true');el.setAttribute('aria-label','Apagar luz navideña');});switched.clear();document.removeEventListener('visibilitychange',visibility);}};
 }
-window.NavidadEntorno={create:create,point:point};
+/* Diálogo local y no modal: solo responde a un toque explícito. */
+function createDialogue(anchor,options){
+  var node=null,timer=0,last=-Infinity,counts={},stopped=false;
+  var lines={
+    pre:['¡No me toques! Ya tengo bastante con este hielo.','Pinche Navidad… ni congelado me dejan en paz.','¿Vienes a ayudar o a molestar?'],
+    casa:['¡No me toques!','Pinche Navidad… tantas luces para nada.','Yo estaba tranquilo hasta que llegaste.'],
+    caught:['¡No estaba robando nada!','Esa botita se movió sola. Yo la vi.'],
+    blow:['Shhh… esa luz está de más.','Una menos. Así se ve mucho mejor.'],
+    hat:['El gorro no. EL GORRO NO.','Me costó acomodarlo, ¿sabes?'],
+    ano:['¿Y ahora quién está reventando cohetes?','Año nuevo… las mismas molestias.']
+  };
+  function hide(){clearTimeout(timer);timer=0;if(node){node.hidden=true;node.textContent='';}}
+  function say(reason){
+    if(stopped||document.hidden||!anchor.isConnected||Date.now()-last<450)return false;
+    var container=options.container();if(!container?.isConnected)return false;
+    if(!node){node=document.createElement('div');node.className='nv-dialogo'+(options.inside?' nv-dialogo-interior':'');node.hidden=true;node.setAttribute('role','status');node.setAttribute('aria-live','polite');node.setAttribute('aria-atomic','true');container.appendChild(node);}
+    if(node.parentElement!==container)container.appendChild(node);
+    var group=lines[reason]||lines[options.stage()]||lines.casa,n=counts[reason]||0;
+    hide();node.hidden=false;node.textContent=group[n%group.length];counts[reason]=n+1;last=Date.now();
+    if(!options.inside){
+      var svg=anchor.querySelector('svg'),m=svg?.querySelector('#head')?.getScreenCTM?.(),r=container.getBoundingClientRect();
+      var a=m?{x:m.a*410+m.c*430+m.e,y:m.b*410+m.d*430+m.f}:anchor.getBoundingClientRect();
+      var b=node.getBoundingClientRect(),left=Math.max(12,Math.min(r.width-b.width-12,a.x-r.left-b.width-20));
+      var scroll=container.scrollTop||0,top=a.y-r.top-b.height/2+scroll,form=container.querySelector('.login-form')?.getBoundingClientRect(),footer=container.querySelector('.login-footer')?.getBoundingClientRect();
+      if(footer)top=Math.min(top,footer.top-r.top-b.height-6+scroll);
+      if(form)top=Math.max(top,form.bottom-r.top+6+scroll);
+      node.style.left=left+'px';node.style.top=Math.max(8,top)+'px';
+      node.style.setProperty('--nv-cola-y',Math.max(10,Math.min(b.height-18,a.y-r.top+scroll-top-5))+'px');
+    }
+    timer=setTimeout(hide,Math.max(3600,Math.min(5800,node.textContent.length*75)));return true;
+  }
+  function key(e){if(e.key==='Escape')hide();}
+  function visibility(){if(document.hidden)hide();}
+  document.addEventListener('keydown',key);document.addEventListener('visibilitychange',visibility);
+  window.addEventListener('resize',hide);
+  return {say:say,hide:hide,destroy:function(){stopped=true;hide();node?.remove();node=null;document.removeEventListener('keydown',key);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('resize',hide);}};
+}
+window.NavidadEntorno={create:create,point:point,createDialogue:createDialogue};
 })();

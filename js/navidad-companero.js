@@ -4,7 +4,7 @@
 'use strict';
 var HERO='.page-header,.dash-hero,.rg-hero,.pg-hero,.ps-hero,.pf-gafete,.perfil-hero';
 var MODAL='.mo.open,.fx-ok.on,.nv-pan,.rm-card,#tcCapa,#avAnuncio,#novReg,[aria-modal="true"]';
-var prefix='nvi-',mount=null,hero=null,screen=null,actor=null,ice=null,world=null;
+var prefix='nvi-',mount=null,hero=null,screen=null,actor=null,ice=null,world=null,dialogue=null;
 var stage='',pending=0,touchTimer=0,remaining=0,nap=1.4,inView=true,blocked=false;
 var intersection=null,observer=null,ornament=null,turn=0,released=false,palmHit=false;
 var media=window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -81,7 +81,8 @@ function regulate(){
   var stop=media?.matches||off||privateField()||modal||!!ice&&mount.dataset.accion!=='trapped';
   mount.dataset.estado=off?'fuera':modal?'modal':media?.matches?'reducido':privateField()?'privado':typing()?'editando':ice?'hielo':'activo';
   mount.classList.toggle('nv-mascota-ojos-pausa',off||media?.matches||modal);
-  blocked=stop;if(stop)actor.pause();else actor.resume();if(off||modal||media?.matches){world?.cancelBlow?.();world?.suspend();}
+  blocked=stop;if(stop)actor.pause();else actor.resume();if(off||modal)dialogue?.hide();
+  if(off||modal||media?.matches){world?.cancelBlow?.();world?.suspend();}
 }
 function idle(){if(!actor)return;actor.reachFor(null);actor.lookAt(null);actor.play('idle');remaining=0;delete mount.dataset.accion;}
 function blow(){
@@ -119,6 +120,8 @@ function frame(info,dt){
   nap-=dt;if(nap<=0){nap=12;contextAction();}
 }
 function touch(event){
+  if(!actor||typing()||covered()||document.hidden||!inView)return;
+  dialogue?.say(ice?'pre':mount.dataset.accion==='mischief'?'caught':mount.dataset.accion==='blow'?'blow':event?.target?.closest?.('[data-nv-part="santa-hat"]')?'hat':stage);
   if(!allowed())return;
   if(ice){pressIce();return;}
   if(mount.dataset.accion==='mischief'){ornament.release();released=true;play('caught');return;}
@@ -128,7 +131,7 @@ function touch(event){
   contextAction();
 }
 function destroy(){
-  clearTimeout(touchTimer);intersection?.disconnect();intersection=null;world?.destroy();world=null;ornament?.destroy();ornament=null;
+  dialogue?.destroy();dialogue=null;clearTimeout(touchTimer);intersection?.disconnect();intersection=null;world?.destroy();world=null;ornament?.destroy();ornament=null;
   actor?.destroy();actor=null;ice?.destroy();ice=null;mount?.remove();mount=null;
   hero?.classList.remove('nv-con-companero');hero=screen=null;stage='';
   remaining=0;nap=1.4;turn=0;inView=true;blocked=false;released=palmHit=false;
@@ -153,6 +156,7 @@ function build(s,h,next){
   if(typeof IntersectionObserver==='function'){
     intersection=new IntersectionObserver(function(entries){inView=entries[0].isIntersecting;sync();},{threshold:.08});intersection.observe(mount);
   }
+  dialogue=NavidadEntorno.createDialogue?.(mount,{inside:true,container:function(){return hero;},stage:function(){return stage;}});
   mount.addEventListener('click',touch);
   mount.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();touch();}});
   return true;
@@ -162,7 +166,7 @@ function sync(){
   if(!next||!s||!h){if(mount)destroy();return;}
   if(!mount?.isConnected||s!==screen||next!==stage){destroy();if(!build(s,h,next))return;}
   else if(h!==hero){
-    world?.cancelBlow?.();ornament?.destroy();idle();hero.classList.remove('nv-con-companero');hero=h;h.classList.add('nv-con-companero');h.appendChild(mount);
+    dialogue?.hide();world?.cancelBlow?.();ornament?.destroy();idle();hero.classList.remove('nv-con-companero');hero=h;h.classList.add('nv-con-companero');h.appendChild(mount);
     ornament=createOrnament(h,actor.svg);nap=1.4;
     intersection?.unobserve(mount);intersection?.observe(mount);
   }
@@ -173,7 +177,7 @@ function schedule(){if(!pending)pending=setTimeout(sync,40);}
 function focus(){
   if(!actor)return;
   if(typing()){
-    world.cancelBlow?.();ornament?.restore();world.resetGaze();idle();
+    dialogue?.hide();world.cancelBlow?.();ornament?.restore();world.resetGaze();idle();
     if(ice){actor.render(0);if(privateField())mount.dataset.mirada='apartada';}
     else if(privateField()){actor.play('privacy');actor.render(GreenActor.SCENES.privacy.duration);}
   }else{if(ice)delete mount.dataset.mirada;else if(actor.scene==='privacy')idle();}

@@ -127,3 +127,37 @@ test('interrumpir el soplo limpia el aire sin apagar una luz antes de tiempo',()
  const f=blowFixture();f.w.startBlow();f.w.blowFrame(1.2);f.w.cancelBlow();f.w.blowFrame(2);assert.equal(f.nodes.length,0);assert.equal(f.button.classList.contains('nv-luz-apagada'),false);
  f.w.startBlow();f.w.blowFrame(1.9);f.w.destroy();assert.equal(f.button.classList.contains('nv-luz-apagada'),false);assert.equal(f.nodes.length,0);
 });
+
+function dialogueFixture(){
+ const f=worldFixture(),parent={isConnected:true,children:[],appendChild(n){if(n.parentElement)n.parentElement.children.splice(n.parentElement.children.indexOf(n),1);this.children.push(n);n.parentElement=this;}},other={isConnected:true,children:[],appendChild:parent.appendChild};let host=parent,now=1000,stage='casa';
+ f.mount.isConnected=true;f.ctx.Date.now=()=>now;f.ctx.addEventListener=()=>{};f.ctx.removeEventListener=()=>{};
+ f.document.createElement=()=>{const n=new Node();n.remove=()=>{n.parentElement.children.splice(n.parentElement.children.indexOf(n),1);};return n;};
+ const dialogue=f.ctx.NavidadEntorno.createDialogue(f.mount,{inside:true,container:()=>host,stage:()=>stage});
+ return {...f,dialogue,parent,other,setHost:v=>host=v,setStage:v=>stage=v,next:()=>now+=500};
+}
+test('el diálogo responde al toque con frases locales, sin modal ni acceso a campos',()=>{
+ const f=dialogueFixture();Object.defineProperty(f.document,'activeElement',{get(){throw Error('No leer formularios');}});
+ assert.equal(f.parent.children.length,0);assert.equal(f.dialogue.say('casa'),true);const bubble=f.parent.children[0];
+ assert.equal(bubble.textContent,'¡No me toques!');assert.equal(bubble.attrs.role,'status');assert.equal(bubble.attrs['aria-live'],'polite');
+ assert.equal(f.dialogue.say('casa'),false);assert.equal(bubble.textContent,'¡No me toques!');
+ f.next();f.dialogue.say('casa');assert.match(bubble.textContent,/Pinche Navidad/);assert.equal(f.parent.children.length,1);
+ f.next();f.dialogue.say('caught');assert.match(bubble.textContent,/robando/);assert.equal(f.parent.children.length,1);
+});
+test('el texto se retira por tiempo, Escape, navegación, ocultación y destrucción',()=>{
+ const f=dialogueFixture();f.dialogue.say('pre');const b=f.parent.children[0];assert.match(b.textContent,/hielo/);
+ f.document.emit('keydown',{key:'Escape'});assert.equal(b.hidden,true);
+ f.next();f.dialogue.say('casa');const end=[...f.timers.values()].at(-1);end();assert.equal(b.hidden,true);
+ f.setHost(f.other);f.next();f.dialogue.say('hat');assert.equal(f.parent.children.length,0);assert.equal(f.other.children[0],b);assert.match(b.textContent,/GORRO/);
+ f.document.hidden=true;f.document.emit('visibilitychange',{});assert.equal(b.hidden,true);assert.equal(f.dialogue.say('casa'),false);
+ f.dialogue.destroy();assert.equal(f.other.children.length,0);f.w.destroy();assert.equal(f.timers.size,0);assert.equal(f.document.listeners.keydown.size,0);
+});
+
+test('en el login pequeño el globo ocupa el espacio libre entre formulario y ayuda',()=>{
+ const f=dialogueFixture();f.dialogue.destroy();
+ f.parent.getBoundingClientRect=()=>({left:0,top:0,width:320,height:568});
+ f.parent.querySelector=s=>({getBoundingClientRect:()=>s==='.login-form'?{bottom:384}:{top:451.5}});
+ f.mount.querySelector=()=>({querySelector:()=>({getScreenCTM:()=>({a:1,b:0,c:0,d:1,e:0,f:0})})});
+ f.document.createElement=()=>{const n=new Node();n.getBoundingClientRect=()=>({width:220,height:53.1});n.remove=()=>{};return n;};
+ const d=f.ctx.NavidadEntorno.createDialogue(f.mount,{container:()=>f.parent,stage:()=> 'pre'});d.say('pre');const node=f.parent.children[0];
+ assert.ok(parseFloat(node.style.top)>=390);assert.ok(parseFloat(node.style.top)+53.1<=445.5);assert.ok(parseFloat(node.style.left)+220<=308);d.destroy();f.w.destroy();
+});
