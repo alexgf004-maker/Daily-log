@@ -33,42 +33,66 @@ const DEFS=`<defs>
  <radialGradient id="kCarbon" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#5a5f6a"/><stop offset=".6" stop-color="#2a2d34"/><stop offset="1" stop-color="#121418"/></radialGradient>
  <radialGradient id="kGall" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#e3a165"/><stop offset=".6" stop-color="#b4692f"/><stop offset="1" stop-color="#7c4119"/></radialGradient>
  <pattern id="kRaya" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="rgba(255,255,255,0)"/><rect width="4" height="10" fill="rgba(255,255,255,.12)"/></pattern>
+ <radialGradient id="kOreja" cx=".4" cy=".4" r=".7"><stop offset="0" stop-color="#f7c8a6"/><stop offset="1" stop-color="#d98d6a"/></radialGradient>
+ <linearGradient id="kBarbaS" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="rgba(140,160,185,.35)"/><stop offset=".3" stop-color="rgba(140,160,185,0)"/><stop offset=".7" stop-color="rgba(140,160,185,0)"/><stop offset="1" stop-color="rgba(140,160,185,.4)"/></linearGradient>
  <filter id="kSom" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#2a0a00" flood-opacity=".35"/></filter>
  <filter id="kSomS" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#2a0a00" flood-opacity=".35"/></filter>
 </defs>`;
 // ── piezas ilustradas ──
 const nube=(pts,f)=>pts.map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}"/>`).join('');
+// Santa (cabeza, centro de la cara en 0,0). Mismo dibujo que el de la lista de «¡Listo, guardado!»: la banda de piel
+// abraza la frente siguiendo la curva de la cabeza, la punta del gorro cae a un lado con su pompón, mechones de pelo
+// sobre las orejas, barba con rizos y bigote de dos lóbulos. Las piezas con id (ojos, cejas, boca, enojo) las anima la escena.
 function santaSVG(){ return `
  <g id="sCab">
-  <path d="M-34 -14 C-36 -52 -4 -74 28 -66 C46 -61 56 -44 52 -28 C46 -38 36 -42 27 -38 C31 -31 33 -24 34 -16 Z" fill="url(#kRojo)"/>
-  <path d="M-8 -64 C-18 -52 -22 -34 -20 -18" stroke="rgba(70,0,10,.22)" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <path d="M-22 -48 C-12 -60 4 -66 18 -64" stroke="rgba(255,255,255,.25)" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <g id="sVena" opacity="0"><g transform="translate(-30 -40)"><path d="M-6 -2 Q-2 -2 -2 -6 M2 -6 Q2 -2 6 -2 M6 2 Q2 2 2 6 M-2 6 Q-2 2 -6 2" stroke="#e3101e" stroke-width="2.6" fill="none" stroke-linecap="round"/></g></g>
-  <g id="sPom">${nube([[53,-25,10],[47,-31,5],[59,-19,5],[48,-19,4.5]],'url(#kPel)')}</g>
-  <!-- barba -->
-  <g filter="url(#kSomS)">${nube([[-27,8,10],[-30,20,11],[-26,33,12],[-17,43,13],[-5,50,13],[7,50,13],[18,43,13],[27,33,12],[31,20,11],[28,8,10],[0,34,22],[-12,28,16],[12,28,16]],'url(#kBarba)')}</g>
-  <ellipse cx="-27" cy="2" rx="5" ry="7" fill="url(#kPiel)"/><ellipse cx="27" cy="2" rx="5" ry="7" fill="url(#kPiel)"/>
-  <ellipse cx="0" cy="0" rx="25" ry="22" fill="url(#kPiel)"/>
-  <circle cx="-15" cy="9" r="8" fill="url(#kMej)"/><circle cx="15" cy="9" r="8" fill="url(#kMej)"/>
-  <!-- ojos: abiertos, felices o guiño -->
-  <g id="sOjoA"><ellipse cx="-10" cy="-1" rx="2.9" ry="3.6" fill="#3a2418"/><ellipse cx="10" cy="-1" rx="2.9" ry="3.6" fill="#3a2418"/><circle cx="-9" cy="-2.4" r="1.1" fill="#fff"/><circle cx="11" cy="-2.4" r="1.1" fill="#fff"/></g>
-  <g id="sOjoF" opacity="0"><path d="M-14 0 Q-10 -5 -6 0" stroke="#3a2418" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M6 0 Q10 -5 14 0" stroke="#3a2418" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>
-  <g id="sGuino" opacity="0"><ellipse cx="-10" cy="-1" rx="2.9" ry="3.6" fill="#3a2418"/><circle cx="-9" cy="-2.4" r="1.1" fill="#fff"/><path d="M6 0 Q10 -4 14 0" stroke="#3a2418" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>
-  <g id="sOjoM" opacity="0"><path d="M-15.5 -6 L-4.5 -2.2 L-4.5 -8 L-15.5 -8 Z" fill="url(#kPiel)"/><path d="M15.5 -6 L4.5 -2.2 L4.5 -8 L15.5 -8 Z" fill="url(#kPiel)"/><path d="M-15.5 -6 L-4.5 -2.2 M15.5 -6 L4.5 -2.2" stroke="#3a2418" stroke-width="1.4" stroke-linecap="round"/></g>
-  <ellipse id="sRubor" cx="0" cy="2" rx="24" ry="17" fill="#ff3a3a" opacity="0"/>
-  <!-- lentes dorados -->
-  <g fill="rgba(255,255,255,.14)" stroke="#c9952a" stroke-width="1.4"><circle cx="-10" cy="-1" r="6.6"/><circle cx="10" cy="-1" r="6.6"/></g><path d="M-3.6 -2 Q0 -4.5 3.6 -2" stroke="#c9952a" stroke-width="1.4" fill="none"/>
-  <path d="M-15 -5 L-12 -7" stroke="rgba(255,255,255,.8)" stroke-width="1.2" stroke-linecap="round"/><path d="M5 -5 L8 -7" stroke="rgba(255,255,255,.8)" stroke-width="1.2" stroke-linecap="round"/>
-  <!-- cejas -->
-  <g id="sCejas"><g id="sCejaI">${nube([[-15,-11,3.2],[-11,-12.5,3.6],[-7,-11.5,3]],'url(#kPel)')}</g><g id="sCejaD">${nube([[15,-11,3.2],[11,-12.5,3.6],[7,-11.5,3]],'url(#kPel)')}</g></g>
-  <!-- boca -->
-  <g id="sBoca"><ellipse cx="0" cy="19" rx="5.5" ry="4" fill="#7a1420"/><ellipse cx="0" cy="21" rx="3.4" ry="1.8" fill="#e8607a"/></g>
-  <g id="sBocaM" opacity="0"><path d="M-7 27 Q0 21 7 27" stroke="#7a1420" stroke-width="2.6" fill="none" stroke-linecap="round"/></g>
-  <!-- bigote -->
-  <g filter="url(#kSomS)"><path d="M0 13 C-6 8 -18 7 -24 14 C-27 18 -24 22 -20 19 C-15 15 -8 18 0 16 Z" fill="url(#kBarba)"/><path d="M0 13 C6 8 18 7 24 14 C27 18 24 22 20 19 C15 15 8 18 0 16 Z" fill="url(#kBarba)"/></g>
-  <ellipse cx="0" cy="8" rx="5.4" ry="4.6" fill="url(#kNar)"/><ellipse cx="-1.8" cy="6.4" rx="1.6" ry="1.1" fill="rgba(255,255,255,.8)"/>
-  <!-- banda de piel del gorro -->
-  <g filter="url(#kSomS)"><rect x="-37" y="-27" width="74" height="15" rx="7.5" fill="url(#kPel)"/>${nube([[-33,-27,3.6],[-22,-28,4],[-10,-28.5,4],[2,-28.5,4],[14,-28.5,4],[26,-28,4],[34,-26,3.4]],'url(#kPel)')}</g>
+  <!-- punta del gorro que cae por detrás a la derecha -->
+  <path d="M-30 -20 C-30 -50 -8 -68 16 -66 C38 -64 54 -50 58 -30 C61 -18 60 -6 56 4 C52 -6 46 -14 38 -18 C34 -20 30 -22 28 -22 Z" fill="url(#kRojo)"/>
+  <path d="M30 -60 C44 -52 54 -38 56 -18" stroke="rgba(70,0,10,.28)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M-18 -52 C-8 -60 6 -64 18 -62" stroke="rgba(255,255,255,.28)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <g id="sPom" filter="url(#kSomS)">${nube([[56,8,10],[50,3,5],[62,3,5],[63,12,5],[49,13,5],[56,16,5]],'url(#kPel)')}</g>
+  <!-- pelo blanco a los lados y orejas -->
+  ${nube([[-29,-4,7],[-32,5,7],[-30,14,6],[29,-4,7],[32,5,7],[30,14,6]],'url(#kPel)')}
+  <ellipse cx="-26" cy="6" rx="5.5" ry="8" fill="url(#kOreja)"/><ellipse cx="26" cy="6" rx="5.5" ry="8" fill="url(#kOreja)"/>
+  <!-- cara -->
+  <ellipse cx="0" cy="3" rx="24" ry="26" fill="url(#kPiel)"/>
+  <!-- barba frondosa con rizos -->
+  <g filter="url(#kSomS)">
+   <path d="M-27 4 C-36 22 -34 46 -22 62 C-14 72 -6 78 0 80 C6 78 14 72 22 62 C34 46 36 22 27 4 C25 14 19 21 11 23 C5 24 -5 24 -11 23 C-19 21 -25 14 -27 4 Z" fill="url(#kBarba)"/>
+   <path d="M-27 4 C-36 22 -34 46 -22 62 C-14 72 -6 78 0 80 C6 78 14 72 22 62 C34 46 36 22 27 4 C25 14 19 21 11 23 C5 24 -5 24 -11 23 C-19 21 -25 14 -27 4 Z" fill="url(#kBarbaS)"/>
+   ${nube([[-28,46,7],[-22,58,8],[-12,68,8],[0,73,8],[12,68,8],[22,58,8],[28,46,7]],'url(#kBarba)')}
+  </g>
+  <g stroke="rgba(150,170,195,.55)" stroke-width="1.3" fill="none" stroke-linecap="round"><path d="M-22 30 q4 6 0 12 M-12 34 q4 7 0 14 M0 36 q4 8 0 16 M12 34 q-4 7 0 14 M22 30 q-4 6 0 12 M-16 52 q3 5 0 10 M6 54 q3 5 0 10 M-4 60 q3 5 0 9"/></g>
+  <circle cx="-14" cy="10" r="8" fill="url(#kMej)"/><circle cx="14" cy="10" r="8" fill="url(#kMej)"/>
+  <ellipse id="sRubor" cx="0" cy="4" rx="23" ry="19" fill="#ff3a3a" opacity="0"/>
+  <!-- ojos: abiertos, felices, guiño y entrecerrados de enojo -->
+  <g id="sOjoA"><ellipse cx="-9.5" cy="1" rx="2.7" ry="3.4" fill="#2e1c12"/><ellipse cx="9.5" cy="1" rx="2.7" ry="3.4" fill="#2e1c12"/><circle cx="-8.6" cy="-.3" r="1.05" fill="#fff"/><circle cx="10.4" cy="-.3" r="1.05" fill="#fff"/></g>
+  <g id="sOjoF" opacity="0"><path d="M-13.5 2 Q-9.5 -3 -5.5 2" stroke="#2e1c12" stroke-width="2.1" fill="none" stroke-linecap="round"/><path d="M5.5 2 Q9.5 -3 13.5 2" stroke="#2e1c12" stroke-width="2.1" fill="none" stroke-linecap="round"/></g>
+  <g id="sGuino" opacity="0"><ellipse cx="-9.5" cy="1" rx="2.7" ry="3.4" fill="#2e1c12"/><circle cx="-8.6" cy="-.3" r="1.05" fill="#fff"/><path d="M5.5 2 Q9.5 -2 13.5 2" stroke="#2e1c12" stroke-width="2.1" fill="none" stroke-linecap="round"/></g>
+  <g id="sOjoM" opacity="0"><path d="M-14.5 -3.4 L-4.6 .4 L-4.6 -4.2 L-14.5 -4.2 Z" fill="url(#kPiel)"/><path d="M14.5 -3.4 L4.6 .4 L4.6 -4.2 L14.5 -4.2 Z" fill="url(#kPiel)"/><path d="M-14.5 -3.4 L-4.6 .4 M14.5 -3.4 L4.6 .4" stroke="#2e1c12" stroke-width="1.3" stroke-linecap="round"/></g>
+  <!-- lentes sobre la nariz -->
+  <g fill="rgba(255,255,255,.12)" stroke="#c9952a" stroke-width="1.3"><ellipse cx="-9.5" cy="2" rx="6.4" ry="5.6"/><ellipse cx="9.5" cy="2" rx="6.4" ry="5.6"/></g>
+  <path d="M-3.1 1.5 Q0 -.6 3.1 1.5" stroke="#c9952a" stroke-width="1.3" fill="none"/><path d="M-15.9 1 L-23 -1 M15.9 1 L23 -1" stroke="#c9952a" stroke-width="1.1"/>
+  <path d="M-14 -1 L-11.5 -2.6" stroke="rgba(255,255,255,.85)" stroke-width="1.1" stroke-linecap="round"/><path d="M5 -1 L7.5 -2.6" stroke="rgba(255,255,255,.85)" stroke-width="1.1" stroke-linecap="round"/>
+  <!-- cejas pobladas -->
+  <g id="sCejas"><g id="sCejaI">${nube([[-15,-7,3],[-11.5,-8.6,3.4],[-7.5,-8,3],[-4.8,-6.8,2.2]],'url(#kPel)')}</g><g id="sCejaD">${nube([[15,-7,3],[11.5,-8.6,3.4],[7.5,-8,3],[4.8,-6.8,2.2]],'url(#kPel)')}</g></g>
+  <!-- boca (bajo el bigote): abierta al hablar, hacia abajo cuando se molesta -->
+  <g id="sBoca"><ellipse cx="0" cy="23" rx="5" ry="3.8" fill="#6e1420"/><ellipse cx="0" cy="25" rx="3.2" ry="1.6" fill="#e8607a"/></g>
+  <g id="sBocaM" opacity="0"><path d="M-6 29 Q0 24 6 29" stroke="#6e1420" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>
+  <!-- bigote de dos lóbulos -->
+  <g filter="url(#kSomS)">
+   <path d="M0 15 C-5 11 -15 10 -23 15 C-28 18 -30 24 -26 27 C-24 22 -18 20 -12 21 C-6 22 -2 21 0 19 Z" fill="url(#kBarba)"/>
+   <path d="M0 15 C5 11 15 10 23 15 C28 18 30 24 26 27 C24 22 18 20 12 21 C6 22 2 21 0 19 Z" fill="url(#kBarba)"/>
+   <path d="M-4 16 C-10 14 -17 15 -22 19 M4 16 C10 14 17 15 22 19" stroke="rgba(150,170,195,.5)" stroke-width="1" fill="none"/>
+  </g>
+  <ellipse cx="0" cy="11" rx="5.2" ry="4.6" fill="url(#kNar)"/><ellipse cx="-1.7" cy="9.4" rx="1.6" ry="1.05" fill="rgba(255,255,255,.85)"/>
+  <!-- banda de piel que abraza la frente -->
+  <g filter="url(#kSomS)">
+   <path d="M-34 -10 C-30 -27 30 -27 34 -10 C35 -3 31 0 27 -3 C17 -11 -17 -11 -27 -3 C-31 0 -35 -3 -34 -10 Z" fill="url(#kPel)"/>
+   ${nube([[-31,-12,4.6],[-24,-19,5],[-15,-22.5,5],[-5,-24,5],[5,-24,5],[15,-22.5,5],[24,-19,5],[31,-12,4.6],[-29,-4,4],[29,-4,4]],'url(#kPel)')}
+   <path d="M-26 -6 C-14 -13 14 -13 26 -6" stroke="rgba(150,170,195,.45)" stroke-width="1.2" fill="none"/>
+  </g>
+  <!-- marquita de enojo junto al gorro -->
+  <g id="sVena" opacity="0"><g transform="translate(-34 -30)"><path d="M-6 -2 Q-2 -2 -2 -6 M2 -6 Q2 -2 6 -2 M6 2 Q2 2 2 6 M-2 6 Q-2 2 -6 2" stroke="#e3101e" stroke-width="2.6" fill="none" stroke-linecap="round"/></g></g>
  </g>`; }
 function manopla(){ return `<path d="M-9 -2 C-12 -12 -6 -18 0 -16 C4 -20 11 -16 10 -8 C14 -6 14 2 9 5 L-6 6 C-11 5 -12 2 -9 -2 Z" fill="url(#kRojo)"/><path d="M-8 -6 C-12 -8 -14 -3 -10 1" stroke="#9a0f22" stroke-width="2" fill="none"/><rect x="-11" y="4" width="22" height="9" rx="4.5" fill="url(#kPel)"/>`; }
 function regalito(){ return `<g filter="url(#kSomS)"><rect x="-12" y="-14" width="24" height="18" rx="2.5" fill="url(#kRojoV)"/><rect x="-12" y="-14" width="24" height="18" rx="2.5" fill="url(#kRaya)"/><rect x="-14" y="-18" width="28" height="6" rx="2" fill="#ff5466"/><rect x="-2.2" y="-18" width="4.4" height="22" fill="url(#kOroH)"/><path d="M0 -18 C-6 -27 -14 -26 -12 -20 C-11 -17 -5 -17 0 -18 Z M0 -18 C6 -27 14 -26 12 -20 C11 -17 5 -17 0 -18 Z" fill="url(#kOro)" stroke="rgba(120,80,10,.4)" stroke-width=".6"/><circle cx="0" cy="-18" r="2.4" fill="#e0b048"/></g>`; }
@@ -125,12 +149,12 @@ export function escenaSantaNV(card,pt,{tarde=false,hora='',cual='entrada'}={}){
     const parp=(t>.75&&t<.85)||(t>2.95&&t<3.05), feliz=!mal&&t>1.9&&t<2.9, guino=!mal&&t>3.0&&t<3.25;
     op($('sOjoA'),parp||feliz||guino?0:1); op($('sOjoF'),feliz||parp?1:0); op($('sGuino'),guino?1:0);
     const b=$('sBoca');
-    if(!mal){ const habla=(t>1.9&&t<2.85)?.4+.6*Math.abs(Math.sin((t-1.9)*Math.PI*3.2)):.12; b.setAttribute('transform',`translate(0 ${19*(1-habla)}) scale(1 ${habla.toFixed(3)})`); }
+    if(!mal){ const habla=(t>1.9&&t<2.85)?.4+.6*Math.abs(Math.sin((t-1.9)*Math.PI*3.2)):.12; b.setAttribute('transform',`translate(0 ${23*(1-habla)}) scale(1 ${habla.toFixed(3)})`); }
     else { const en=seg(t,1.45,1.7)*(1-seg(t,3.3,3.6));   // se molesta al ver la hora
       op($('sOjoM'),en); op($('sBocaM'),en*(t>2.0&&t<2.9?0:1)); op($('sRubor'),en*.16);
-      $('sCejaI').setAttribute('transform',`translate(0 ${(en*3.5).toFixed(2)}) rotate(${(en*20).toFixed(1)} -11 -12)`); $('sCejaD').setAttribute('transform',`translate(0 ${(en*3.5).toFixed(2)}) rotate(${(-en*20).toFixed(1)} 11 -12)`);
+      $('sCejaI').setAttribute('transform',`translate(0 ${(en*3.5).toFixed(2)}) rotate(${(en*20).toFixed(1)} -10 -8)`); $('sCejaD').setAttribute('transform',`translate(0 ${(en*3.5).toFixed(2)}) rotate(${(-en*20).toFixed(1)} 10 -8)`);
       const vena=seg(t,1.7,1.85); op($('sVena'),vena*(1-seg(t,3.3,3.5))); $('sVena').setAttribute('transform',`scale(${(1+.18*Math.abs(Math.sin(t*9))*vena).toFixed(3)})`);
-      const habla=(t>2.0&&t<2.9)?.35+.4*Math.abs(Math.sin((t-2.0)*Math.PI*3.4)):0; op(b,habla>0?1:0); b.setAttribute('transform',`translate(0 ${19*(1-habla)}) scale(1 ${Math.max(.01,habla).toFixed(3)})`); }
+      const habla=(t>2.0&&t<2.9)?.35+.4*Math.abs(Math.sin((t-2.0)*Math.PI*3.4)):0; op(b,habla>0?1:0); b.setAttribute('transform',`translate(0 ${23*(1-habla)}) scale(1 ${Math.max(.01,habla).toFixed(3)})`); }
     tf($('sPom'),Math.sin(t*5)*1.2,Math.abs(Math.sin(t*5))*-1.2);
     // la manopla junto a la cara con el regalo (o el reloj) y el lanzamiento al punto
     const mx=sx-44, my=sy+34, sale=back(seg(t,.7,1.0)), adios=1-seg(t,mal?3.0:2.6,mal?3.25:2.85);
@@ -175,8 +199,8 @@ function errorLoginNV(form){
     tfq($q(sv,'sant'),sx,y,.92,no*.6);
     const en=seg(t,.35,.55), habla=t>.7&&t<1.6;
     opq($q(sv,'sOjoM'),en*.85); opq($q(sv,'sBocaM'),habla?0:en); const b=$q(sv,'sBoca'); opq(b,habla?1:0);
-    const h=habla?.3+.4*Math.abs(Math.sin((t-.7)*11)):.01; b.setAttribute('transform',`translate(0 ${(19*(1-h)).toFixed(2)}) scale(1 ${h.toFixed(3)})`);
-    $q(sv,'sCejaI').setAttribute('transform',`translate(0 ${(en*2.5).toFixed(2)}) rotate(${(en*14).toFixed(1)} -11 -12)`); $q(sv,'sCejaD').setAttribute('transform',`translate(0 ${(en*2.5).toFixed(2)}) rotate(${(-en*14).toFixed(1)} 11 -12)`);
+    const h=habla?.3+.4*Math.abs(Math.sin((t-.7)*11)):.01; b.setAttribute('transform',`translate(0 ${(23*(1-h)).toFixed(2)}) scale(1 ${h.toFixed(3)})`);
+    $q(sv,'sCejaI').setAttribute('transform',`translate(0 ${(en*2.5).toFixed(2)}) rotate(${(en*14).toFixed(1)} -10 -8)`); $q(sv,'sCejaD').setAttribute('transform',`translate(0 ${(en*2.5).toFixed(2)}) rotate(${(-en*14).toFixed(1)} 10 -8)`);
     const ms=back(seg(t,.4,.65)); tfq($q(sv,'mano'),sx-48,y+28+(1-ms)*40,1,t<1.9?Math.sin(t*14)*22:0); opq($q(sv,'mano'),seg(t,.4,.5)*(1-seg(t,1.95,2.15)));
     const bb=back(seg(t,.65,.9))*(1-seg(t,1.95,2.15)); opq($q(sv,'burb'),bb>0?1:0); tfq($q(sv,'burb'),Math.max(90,sx-84),y-66,Math.max(.001,bb));
   },()=>{ sv.remove(); errorActivo=null; });
@@ -190,7 +214,7 @@ function bienvenidaNV(nombre){
     const sube=back(seg(t,0,.45),1.4), baja=eIn(seg(t,1.85,2.25)), y=lerp(H+70,H-58,sube)+baja*140;
     tfq($q(sv,'sant'),sx,y,1.1,-12+Math.sin(t*2)*3);
     const feliz=t>.5&&t<1.6, guino=t>1.6&&t<1.85; opq($q(sv,'sOjoA'),feliz||guino?0:1); opq($q(sv,'sOjoF'),feliz?1:0); opq($q(sv,'sGuino'),guino?1:0);
-    const h=feliz?.4+.5*Math.abs(Math.sin((t-.5)*10)):.12; $q(sv,'sBoca').setAttribute('transform',`translate(0 ${(19*(1-h)).toFixed(2)}) scale(1 ${h.toFixed(3)})`);
+    const h=feliz?.4+.5*Math.abs(Math.sin((t-.5)*10)):.12; $q(sv,'sBoca').setAttribute('transform',`translate(0 ${(23*(1-h)).toFixed(2)}) scale(1 ${h.toFixed(3)})`);
     tfq($q(sv,'mano'),sx-58,y-6+(1-back(seg(t,.3,.55)))*40,1.15,-20+Math.sin(t*13)*24); opq($q(sv,'mano'),seg(t,.3,.4)*(1-seg(t,1.8,1.95)));
     const bb=back(seg(t,.45,.7))*(1-seg(t,1.75,1.95)); opq($q(sv,'burb'),bb>0?1:0); tfq($q(sv,'burb'),Math.min(sx-70,W-12-bw/2),y-82,Math.max(.001,bb));
   },()=>sv.remove());
