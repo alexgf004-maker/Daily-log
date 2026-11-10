@@ -157,7 +157,7 @@ function sync(){
       else if(current==='casa'&&giftDay())nap=4;
       else if(current==='ano')idle();
     }
-    dialogue=window.NavidadEntorno?.createDialogue?.(mount,{container:function(){return login;},stage:function(){return stageNow;}});
+    dialogue=window.NavidadEntorno?.createDialogue?.(mount,{container:function(){return login;},stage:function(){return stageNow;},reduced:function(){return reduced;},express:function(e){actor?.speak?.(e);}});
     svg.addEventListener('pointerdown',onTap);svg.addEventListener('keydown',onKey);
     form?.addEventListener('focusin',onFocus);form?.addEventListener('focusout',onBlur);
     observer=new MutationObserver(regulate);observer.observe(login,{attributes:true,attributeFilter:['class']});

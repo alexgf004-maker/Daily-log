@@ -147,17 +147,23 @@ test('el texto se retira por tiempo, Escape, navegación, ocultación y destrucc
  const f=dialogueFixture();f.dialogue.say('pre');const b=f.parent.children[0];assert.match(b.textContent,/hielo/);
  f.document.emit('keydown',{key:'Escape'});assert.equal(b.hidden,true);
  f.next();f.dialogue.say('casa');const end=[...f.timers.values()].at(-1);end();assert.equal(b.hidden,true);
- f.setHost(f.other);f.next();f.dialogue.say('hat');assert.equal(f.parent.children.length,0);assert.equal(f.other.children[0],b);assert.match(b.textContent,/GORRO/);
+ f.setHost(f.other);f.next();f.dialogue.say('hat');assert.equal(f.parent.children.length,0);assert.equal(f.other.children[0],b);assert.match(b.textContent,/gorro/i);
  f.document.hidden=true;f.document.emit('visibilitychange',{});assert.equal(b.hidden,true);assert.equal(f.dialogue.say('casa'),false);
  f.dialogue.destroy();assert.equal(f.other.children.length,0);f.w.destroy();assert.equal(f.timers.size,0);assert.equal(f.document.listeners.keydown.size,0);
 });
 
-test('en el login pequeño el globo ocupa el espacio libre entre formulario y ayuda',()=>{
+test('el globo se ancla por encima de la cabeza y la punta apunta a ella',()=>{
  const f=dialogueFixture();f.dialogue.destroy();
  f.parent.getBoundingClientRect=()=>({left:0,top:0,width:320,height:568});
- f.parent.querySelector=s=>({getBoundingClientRect:()=>s==='.login-form'?{bottom:384}:{top:451.5}});
- f.mount.querySelector=()=>({querySelector:()=>({getScreenCTM:()=>({a:1,b:0,c:0,d:1,e:0,f:0})})});
- f.document.createElement=()=>{const n=new Node();n.getBoundingClientRect=()=>({width:220,height:53.1});n.remove=()=>{};return n;};
- const d=f.ctx.NavidadEntorno.createDialogue(f.mount,{container:()=>f.parent,stage:()=> 'pre'});d.say('pre');const node=f.parent.children[0];
- assert.ok(parseFloat(node.style.top)>=390);assert.ok(parseFloat(node.style.top)+53.1<=445.5);assert.ok(parseFloat(node.style.left)+220<=308);d.destroy();f.w.destroy();
+ f.mount.querySelector=()=>({querySelector:()=>({getBoundingClientRect:()=>({left:240,top:440,width:50,height:58})})});
+ f.document.createElement=()=>{const n=new Node();n.getBoundingClientRect=()=>({width:200,height:35});n.remove=()=>{};return n;};
+ let expression=null;const d=f.ctx.NavidadEntorno.createDialogue(f.mount,{container:()=>f.parent,stage:()=> 'pre',express:e=>expression=e});d.say('pre');const node=f.parent.children[0];
+ assert.ok(parseFloat(node.style.top)+35<440);assert.ok(parseFloat(node.style.left)+200<=310);
+ assert.ok(Math.abs(parseFloat(node.style.left)+parseFloat(node.values['--nv-cola-x'])+6-265)<1);
+ assert.equal(expression.tone,'angry');assert.equal(expression.level,.65);f.next();d.say('pre');assert.equal(expression.level,.95);
+ // La pantalla puede ser estática y tener otro ancestro de posicionamiento.
+ node.offsetParent={getBoundingClientRect:()=>({left:16,top:54,width:800}),scrollTop:0};
+ f.next();d.say('pre');assert.equal(parseFloat(node.style.top)+54+35,428);
+ assert.ok(Math.abs(parseFloat(node.style.left)+16+parseFloat(node.values['--nv-cola-x'])+6-265)<1);
+ d.hide();assert.equal(expression,null);d.destroy();f.w.destroy();
 });

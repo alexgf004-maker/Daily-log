@@ -156,7 +156,7 @@ function build(s,h,next){
   if(typeof IntersectionObserver==='function'){
     intersection=new IntersectionObserver(function(entries){inView=entries[0].isIntersecting;sync();},{threshold:.08});intersection.observe(mount);
   }
-  dialogue=NavidadEntorno.createDialogue?.(mount,{inside:true,container:function(){return hero;},stage:function(){return stage;}});
+  dialogue=NavidadEntorno.createDialogue?.(mount,{inside:true,idPrefix:prefix,container:function(){return screen;},stage:function(){return stage;},reduced:function(){return !!media?.matches;},express:function(e){actor?.speak?.(e);}});
   mount.addEventListener('click',touch);
   mount.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();touch();}});
   return true;

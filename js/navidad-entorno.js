@@ -114,18 +114,30 @@ function create(login,mount,options){
   var intro=setTimeout(ambient,1800),interval=setInterval(ambient,12000);
   return {startBlow:startBlow,blowFrame:blowFrame,cancelBlow:cancelBlow,react:react,resetGaze:resetGaze,suspend:visibility,destroy:function(){cancelBlow();stopped=true;clearTimeout(intro);clearSource();resetGaze();clearTimeout(lightTimer);clearInterval(interval);delete mount.dataset.reflejo;mount.style.removeProperty('--nv-reflejo');login.removeEventListener('navidad:entorno',event);login.removeEventListener('pointerdown',light,true);login.removeEventListener('keydown',light);login.removeEventListener('click',clickLight);switched.forEach(function(el){el.classList.remove('nv-luz-apagada');el.setAttribute('aria-pressed','true');el.setAttribute('aria-label','Apagar luz navideña');});switched.clear();document.removeEventListener('visibilitychange',visibility);}};
 }
-/* Diálogo local y no modal: solo responde a un toque explícito. */
+/* El globo sigue la cabeza y comparte el tono de la interpretación facial. */
 function createDialogue(anchor,options){
-  var node=null,timer=0,last=-Infinity,counts={},stopped=false;
+  var node=null,timer=0,raf=0,last=-Infinity,counts={},stopped=false,following=0;
   var lines={
-    pre:['¡No me toques! Ya tengo bastante con este hielo.','Pinche Navidad… ni congelado me dejan en paz.','¿Vienes a ayudar o a molestar?'],
-    casa:['¡No me toques!','Pinche Navidad… tantas luces para nada.','Yo estaba tranquilo hasta que llegaste.'],
-    caught:['¡No estaba robando nada!','Esa botita se movió sola. Yo la vi.'],
-    blow:['Shhh… esa luz está de más.','Una menos. Así se ve mucho mejor.'],
-    hat:['El gorro no. EL GORRO NO.','Me costó acomodarlo, ¿sabes?'],
-    ano:['¿Y ahora quién está reventando cohetes?','Año nuevo… las mismas molestias.']
+    pre:['¡No me toques! Este hielo…','Pinche Navidad… y este hielo.','¿Vas a ayudar o a molestar?'],
+    casa:['¡No me toques!','Pinche Navidad…','¡Ya basta, déjame en paz!'],
+    caught:['¡No estaba robando nada!','Esa botita se movió sola.'],
+    blow:['Shhh… una luz menos.','Esa luz me estaba mirando.'],
+    hat:['¡El gorro no!','¡Acabo de acomodarlo!'],
+    ano:['¡Ya basta de cohetes!','Otro año… las mismas molestias.']
   };
-  function hide(){clearTimeout(timer);timer=0;if(node){node.hidden=true;node.textContent='';}}
+  function hide(){clearTimeout(timer);timer=0;if(raf&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(raf);raf=0;if(node){node.hidden=true;node.textContent='';}options.express?.(null);}
+  function position(){
+    if(!node||node.hidden)return;
+    var container=options.container(),svg=anchor.querySelector('svg'),head=svg?.querySelector?.('#'+(options.idPrefix||'')+'head');
+    var h=head?.getBoundingClientRect?.()||anchor.getBoundingClientRect?.(),r=container?.getBoundingClientRect?.();
+    if(!h||!r||!r.width)return;
+    var origin=node.offsetParent||container,o=origin.getBoundingClientRect(),b=node.getBoundingClientRect(),scroll=origin.scrollTop||0,cx=h.left+h.width/2;
+    var left=Math.max(10,Math.min(r.width-b.width-10,cx-r.left-b.width*.65));
+    var top=Math.max(8-o.top+scroll,h.top-o.top-b.height-12+scroll);
+    node.style.left=(left+r.left-o.left+(origin.scrollLeft||0))+'px';node.style.top=top+'px';
+    node.style.setProperty('--nv-cola-x',Math.max(14,Math.min(b.width-18,cx-r.left-left-6))+'px');
+  }
+  function follow(t){raf=0;if(!node||node.hidden)return;if(t-following>=33){following=t;position();}raf=requestAnimationFrame(follow);}
   function say(reason){
     if(stopped||document.hidden||!anchor.isConnected||Date.now()-last<450)return false;
     var container=options.container();if(!container?.isConnected)return false;
@@ -133,22 +145,14 @@ function createDialogue(anchor,options){
     if(node.parentElement!==container)container.appendChild(node);
     var group=lines[reason]||lines[options.stage()]||lines.casa,n=counts[reason]||0;
     hide();node.hidden=false;node.textContent=group[n%group.length];counts[reason]=n+1;last=Date.now();
-    if(!options.inside){
-      var svg=anchor.querySelector('svg'),m=svg?.querySelector('#head')?.getScreenCTM?.(),r=container.getBoundingClientRect();
-      var a=m?{x:m.a*410+m.c*430+m.e,y:m.b*410+m.d*430+m.f}:anchor.getBoundingClientRect();
-      var b=node.getBoundingClientRect(),left=Math.max(12,Math.min(r.width-b.width-12,a.x-r.left-b.width-20));
-      var scroll=container.scrollTop||0,top=a.y-r.top-b.height/2+scroll,form=container.querySelector('.login-form')?.getBoundingClientRect(),footer=container.querySelector('.login-footer')?.getBoundingClientRect();
-      if(footer)top=Math.min(top,footer.top-r.top-b.height-6+scroll);
-      if(form)top=Math.max(top,form.bottom-r.top+6+scroll);
-      node.style.left=left+'px';node.style.top=Math.max(8,top)+'px';
-      node.style.setProperty('--nv-cola-y',Math.max(10,Math.min(b.height-18,a.y-r.top+scroll-top-5))+'px');
-    }
-    timer=setTimeout(hide,Math.max(3600,Math.min(5800,node.textContent.length*75)));return true;
+    var tone=reason==='caught'?'startled':reason==='blow'?'quiet':'angry',level=tone==='angry'?(n%group.length===1?.95:.65):.4;
+    node.dataset.tono=tone;position();options.express?.({tone:tone,level:level,animated:!options.reduced?.()});
+    if(typeof requestAnimationFrame==='function'&&!options.reduced?.())raf=requestAnimationFrame(follow);
+    timer=setTimeout(hide,Math.max(3200,Math.min(4800,node.textContent.length*85)));return true;
   }
   function key(e){if(e.key==='Escape')hide();}
   function visibility(){if(document.hidden)hide();}
-  document.addEventListener('keydown',key);document.addEventListener('visibilitychange',visibility);
-  window.addEventListener('resize',hide);
+  document.addEventListener('keydown',key);document.addEventListener('visibilitychange',visibility);window.addEventListener('resize',hide);
   return {say:say,hide:hide,destroy:function(){stopped=true;hide();node?.remove();node=null;document.removeEventListener('keydown',key);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('resize',hide);}};
 }
 window.NavidadEntorno={create:create,point:point,createDialogue:createDialogue};

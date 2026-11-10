@@ -46,14 +46,41 @@ class GreenActor {
   if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error('GreenActor requires the actual inline <svg> element.');
   this.svg=svg; this.options=options; this.nodes={};
   const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','lid-left','lid-right','mouth','expression-mouth','expression-line','smirk-crease','smile','blush','sweat','hands-ears','hands-eyes','cover-arm-left','cover-arm-right','cover-arm-shine','cover-hand-left','cover-hand-right','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
-  ids.push('santa-hat','hat-tip','hand-left','hand-right','arm-left-outline','arm-right-outline','arm-left-curve','arm-right-curve','arm-left-light','arm-right-light',
+  ids.push('speech-heat','speech-mouth','santa-hat','hat-tip','hand-left','hand-right','arm-left-outline','arm-right-outline','arm-left-curve','arm-right-curve','arm-left-light','arm-right-light',
     'foot-left','foot-right','leg-left-outline','leg-right-outline','leg-left-curve','leg-right-curve','leg-left-light','leg-right-light');
   for (const id of ids) this.nodes[id]=svg.querySelector('#'+(options.idPrefix||'')+id);
   this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
   this.motionTime=0;this._pose=null;this._velocity={};this._visible={};
-  this._reachTarget=null;this._lookTarget=null;
+  this._reachTarget=null;this._lookTarget=null;this._speech=null;this._speechTime=0;this._speechTail=0;this.initSpeech();
   this._raf=requestAnimationFrame(t=>this.frame(t));
   this.play(options.initialScene||'idle');
+ }
+ // Capas de actuación, dentro de la cabeza articulada y debajo de los ojos.
+ initSpeech(){
+  const doc=this.svg.ownerDocument,head=this.n('head'),prefix=this.options.idPrefix||'';
+  if(!doc?.createElementNS||!head)return;
+  const make=(name,attrs)=>{const el=doc.createElementNS('http://www.w3.org/2000/svg',name);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));return el;};
+  if(!this.n('speech-heat')){
+    const gradient=make('radialGradient',{id:prefix+'speech-warmth'});
+    gradient.appendChild(make('stop',{offset:'0','stop-color':'#eb4d37','stop-opacity':'.9'}));
+    gradient.appendChild(make('stop',{offset:'1','stop-color':'#dc5139','stop-opacity':'0'}));
+    this.svg.querySelector('defs').appendChild(gradient);
+    const heat=make('g',{id:prefix+'speech-heat','clip-path':'url(#'+prefix+'headClip)',opacity:0,'pointer-events':'none'});
+    heat.appendChild(make('path',{d:this.svg.querySelector('#'+prefix+'headClip path').getAttribute('d'),fill:'#db523b',opacity:'.38'}));
+    for(const x of [297,505])heat.appendChild(make('ellipse',{cx:x,cy:387,rx:67,ry:46,fill:'url(#'+prefix+'speech-warmth)'}));
+    (this.svg.querySelector('#'+prefix+'face')||head).appendChild(heat);this.nodes['speech-heat']=heat;
+  }
+  if(!this.n('speech-mouth')){
+    const mouth=make('path',{id:prefix+'speech-mouth',fill:'#51291f',stroke:'#374c31','stroke-width':'2.5','stroke-linejoin':'round',opacity:0,'pointer-events':'none'});
+    head.appendChild(mouth);this.nodes['speech-mouth']=mouth;
+  }
+ }
+ speak(expression){
+  if(!expression&&!this._speech)return this;
+  const staticFace=expression?.animated===false||!expression&&this._speech?.animated===false;
+  this._speech=expression?{...expression,level:clamp(expression.level)}:null;this._speechTime=0;this._speechTail=staticFace?0:.5;
+  if(staticFace)this.render(this.elapsed);
+  return this;
  }
  n(id){return this.nodes[id]}
  attr(id,property,value){const node=this.n(id); if(node) node.setAttribute(property,String(value))}
@@ -124,11 +151,12 @@ class GreenActor {
  togglePause(){return this.paused?this.resume():this.pause()}
  resetTouches(){this.tapCount=0;return this}
  getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...SCENES[this.scene]}}
- destroy(){this.stopped=true;cancelAnimationFrame(this._raf)}
+ destroy(){this.stopped=true;cancelAnimationFrame(this._raf);this.n('speech-heat')?.remove?.();this.n('speech-mouth')?.remove?.();this.svg.querySelector('#'+(this.options.idPrefix||'')+'speech-warmth')?.remove?.();}
  frame(now){
   if(this.stopped)return;
   if(!this.last) this.last=now;
   const dt=clamp((now-this.last)/1000,0,.07);this.last=now;
+  if(this._speech)this._speechTime+=dt;
   if(!this.paused){
     const meta=SCENES[this.scene];this.elapsed+=dt;
     if(this.elapsed>=meta.duration){
@@ -142,6 +170,7 @@ class GreenActor {
     this.render(this.elapsed,dt);
     if(this.options.onFrame)this.options.onFrame(this.getSceneInfo(),dt);
   }
+  else if(this._speech&&this._speech.animated!==false||this._speechTail>0){this._speechTail=Math.max(0,this._speechTail-dt);this.render(this.elapsed,dt);}
   this._raf=requestAnimationFrame(t=>this.frame(t));
  }
  // Respuesta amortiguada exacta: conserva posición y velocidad al cambiar de gesto.
@@ -170,7 +199,7 @@ class GreenActor {
   const mode=this.scene;const D=SCENES[mode].duration;const p=clamp(t/D);
   let v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
     scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,headY:0,alpha:1,
-    hatTilt:0,hatSlip:0,hatTouch:0,laughCover:0,trapPress:0,leftWorldReach:0,leftWorldHandX:this._pose?.leftWorldHandX??306,leftWorldHandY:this._pose?.leftWorldHandY??750,
+    talk:0,heat:0,hatTilt:0,hatSlip:0,hatTouch:0,laughCover:0,trapPress:0,leftWorldReach:0,leftWorldHandX:this._pose?.leftWorldHandX??306,leftWorldHandY:this._pose?.leftWorldHandY??750,
     worldReach:0,worldHandX:this._pose?.worldHandX||494,worldHandY:this._pose?.worldHandY||750};
   const personality=this.options.embedded&&this.options.personality!==false;
   const frozen=!!this.options.frozen;
@@ -487,6 +516,14 @@ class GreenActor {
       v.lidL=.94;v.lidR=.88;v.earL=4+3*strain;v.earR=-3-2*strain;
     }
   }
+  if(this._speech){
+    const speech=this._speech,anger=speech.tone==='angry'?speech.level:0;
+    const cadence=speech.animated===false?.35:(.2+.8*Math.abs(Math.sin(this._speechTime*PI*3.2)))*(1-between(this._speechTime,2.35,3.1));
+    v.talk=.5+.5*cadence;v.heat=anger;v.surprise=0;
+    if(anger){v.grump=1;v.sly=0;v.browL=9*anger;v.browR=-8*anger;v.lidL=Math.max(v.lidL,.7+.22*anger);v.lidR=Math.max(v.lidR,.65+.22*anger);v.pupilX=0;v.pupilY=-2;}
+    else if(speech.tone==='startled'){v.grump=.3;v.sly=0;v.lidL=.2;v.lidR=.2;v.pupilY=0;}
+    else{v.sly=.45;v.lidL=.5;v.lidR=.5;}
+  }
   v.forearmL=v.leftArm;v.forearmR=v.rightArm;
   this.settlePose(v,dt);v={...this._pose};
   handGoal=v.worldReach>.0001?{x:v.worldHandX,y:v.worldHandY,amount:clamp(v.worldReach)}:null;
@@ -577,10 +614,13 @@ class GreenActor {
   if(this.options.embedded)for(const id of ['roof-card','roof-front','wire-bulb','lights-string','night-overlay','celebration-fireworks'])this.show(id,0);
   // Restore the default face when leaving the Nochebuena scene.
   if(mode!=='xmas'&&mode!=='offer')this.show('mouth',1);
+  const speaking=clamp(v.talk);
+  this.show('speech-heat',v.heat);this.show('speech-mouth',speaking);
+  this.attr('speech-mouth','d',`M379 428Q398 ${414-4*v.heat} 422 425Q419 ${432+16*speaking} 398 ${434+13*speaking}Q385 ${432+8*speaking} 379 428Z`);
   const closedFace=(frozen||personality||['grump','plot'].includes(mode))*(1-v.surprise);
   const happy=visible.smile||0;
-  this.show('expression-mouth',closedFace*(1-happy));
-  if(closedFace)this.show('mouth',(1-closedFace)*(1-happy));
+  this.show('expression-mouth',closedFace*(1-happy)*(1-speaking));
+  if(closedFace)this.show('mouth',(1-closedFace)*(1-happy)*(1-speaking));else if(speaking)this.show('mouth',0);
   // La actitud se entiende por la actuación; el login no necesita globos de texto.
   this.show('bubble',this.options.embedded?0:bubble);if(text)this.n('bubble-text').textContent=text;
  }

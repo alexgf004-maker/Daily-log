@@ -397,3 +397,30 @@ test('el reposo contextual conserva respiración sin paseos de ojos ni brazos',(
  for(const t of [4,12,20]){actor.render(t);assert.equal(actor._pose.dx,0);assert.equal(actor._pose.dy,0);assert.equal(actor._pose.head,0);assert.equal(actor._pose.pupilX,0);assert.equal(actor._pose.leftArm,0);}
  assert.notEqual(actor._pose.body,body);
 });
+
+test('la actuación del diálogo cambia cara y rubor sin alterar los brazos ni soltar el hielo',()=>{
+ const {actor}=realActor({embedded:true,frozen:true,contextOnly:true});actor.play('trapped');actor.render(1.3);const {dx,dy,leftArm,rightArm,trapPress}=actor._pose;
+ actor.speak({tone:'angry',level:.95,animated:false});actor.render(1.3);
+ assert.equal(actor._pose.grump,1);assert.equal(actor._pose.heat,.95);assert.ok(actor._pose.talk>.5);
+ assert.deepEqual([actor._pose.dx,actor._pose.dy,actor._pose.leftArm,actor._pose.rightArm,actor._pose.trapPress],[dx,dy,leftArm,rightArm,trapPress]);
+ actor.speak(null);assert.equal(actor._pose.heat,0);assert.equal(actor._pose.talk,0);
+});
+test('puede hablar con el motor congelado sin avanzar el deshielo ni la escena',()=>{
+ const {actor}=realActor({embedded:true,frozen:true});actor.pause();actor.speak({tone:'angry',level:.8,animated:true});const elapsed=actor.elapsed;
+ for(let i=0;i<20;i++)actor.frame(1000+i*50);
+ assert.equal(actor.elapsed,elapsed);assert.equal(actor.paused,true);assert.ok(actor._pose.heat>.7);assert.equal(actor._pose.dx,0);assert.equal(actor._pose.dy,0);
+ actor.speak(null);for(let i=0;i<20;i++)actor.frame(2000+i*50);assert.ok(actor._pose.heat<.02);
+});
+
+test('el rubor se monta dentro de la cara, debajo de los ojos, y se limpia con el actor',()=>{
+ const {actor}=realActor(),svg=actor.svg,owned=[];
+ const make=()=>({attrs:{},children:[],setAttribute(k,v){this.attrs[k]=v;if(k==='id')svg.children['#'+v]=this;},appendChild(node){node.parent=this;this.children.push(node);},remove(){this.removed=true;}});
+ svg.ownerDocument={createElementNS(){const node=make();owned.push(node);return node;}};
+ const face=actor.n('head')&&svg.children['#face'],head=actor.n('head'),defs=make();
+ face.appendChild=make().appendChild;face.children=[];head.appendChild=make().appendChild;head.children=[];
+ svg.children.defs=defs;svg.children['#headClip path']={getAttribute:()=> 'M0 0Z'};
+ actor.initSpeech();
+ assert.equal(actor.n('speech-heat').parent,face);assert.equal(actor.n('speech-mouth').parent,head);
+ assert.equal(svg.children['#speech-warmth'].parent,defs);assert.equal(actor.n('speech-heat').attrs['clip-path'],'url(#headClip)');
+ actor.destroy();assert.equal(actor.n('speech-heat').removed,true);assert.equal(actor.n('speech-mouth').removed,true);assert.equal(svg.children['#speech-warmth'].removed,true);assert.equal(face.removed,undefined);
+});
