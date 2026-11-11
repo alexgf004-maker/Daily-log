@@ -105,6 +105,22 @@ const claveAbiertas = (uid, anio) => `innova_adviento_${uid}_${anio}`;
 export function puertasAbiertas(uid, anio) { try { return JSON.parse(localStorage.getItem(claveAbiertas(uid, anio)) || '[]'); } catch (_) { return []; } }
 function marcarAbierta(uid, anio, dia) { try { const a = new Set(puertasAbiertas(uid, anio)); a.add(dia); localStorage.setItem(claveAbiertas(uid, anio), JSON.stringify([...a])); } catch (_) {} }
 
+// Dos cordones de 12 foquitos numerados: se enciende uno por cada día que ya llegó y el de hoy parpadea.
+const COLS_ADV = ['#ff3b4e', '#ffc93a', '#2fd17a', '#3fb6ff', '#ff7ad9'];
+function cordonesAdviento(diaHoy) {
+  const yCable = u => { const t = u < .5 ? u * 2 : (u - .5) * 2, a = u < .5 ? 4 : 6, c = u < .5 ? 6 : 4; return (1 - t) * (1 - t) * a + 2 * (1 - t) * t * 28 + t * t * c; };
+  let html = '';
+  for (let fila = 0; fila < 2; fila++) {
+    let g = '';
+    for (let k = 0; k < 12; k++) {
+      const d = fila * 12 + k + 1, u = (k + .5) / 12, x = u * 360, y = yCable(u) - 1, on = d <= diaHoy, hoy = d === diaHoy, col = COLS_ADV[d % 5];
+      g += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"${hoy ? ' class="adv-hoy"' : ''}>${on ? `<circle cy="11" r="13" fill="${col}" opacity=".3"/>` : ''}<rect x="-3" y="-2" width="6" height="5" rx="1" fill="#4d5966"/><path d="M0 3C-6 5-6 15 0 19C6 15 6 5 0 3Z" fill="${on ? col : '#cfd6de'}" fill-opacity="${on ? 1 : .45}"${hoy ? ' stroke="#fff" stroke-width="1.5"' : ''}/><ellipse cx="-1.8" cy="9" rx="1.1" ry="2.6" fill="#fff" opacity=".6"/><text y="33" text-anchor="middle" opacity="${hoy ? 1 : on ? .75 : .45}">${d}</text></g>`;
+    }
+    html += `<svg class="adv-cordon" viewBox="0 0 360 48" aria-hidden="true"><path d="M-4 4Q86 28 180 6Q274 28 364 4" fill="none"/>${g}</svg>`;
+  }
+  return `<div class="adv-cordones" aria-label="${Math.min(diaHoy, 24)} de 24 foquitos encendidos">${html}</div>`;
+}
+
 export function adventoHTML({ uid, anio, diaHoy, real }) {
   const abiertas = new Set(puertasAbiertas(uid, anio));
   const hoyAbierta = abiertas.has(diaHoy) && real;
@@ -123,8 +139,9 @@ export function adventoHTML({ uid, anio, diaHoy, real }) {
             <path d="M32 19C24 8 15 12 20 18C23 21 29 20 32 19ZM32 19C40 8 49 12 44 18C41 21 35 20 32 19Z" fill="#f2c45a"/></g>
           <text x="32" y="50" text-anchor="middle" font-size="13" font-weight="800" fill="#fff" font-family="Plus Jakarta Sans,Inter,sans-serif">${diaHoy}</text></svg>
       </span>
-      <span class="nvp-adv-tx"><b>Calendario de Adviento</b><span>${hoyAbierta ? 'Ya abriste la de hoy · toca para verla' : 'Toca para abrir la puertita de hoy'}</span><em>${faltan ? `Faltan ${faltan} ${faltan === 1 ? 'día' : 'días'} para Nochebuena` : '¡Hoy es Nochebuena!'}</em></span>
+      <span class="nvp-adv-tx"><b>Calendario de Adviento</b><span>${hoyAbierta ? 'Ya abriste la de hoy · toca para verla' : 'Toca para abrir la puertita de hoy'}</span><em>${faltan > 1 ? `Faltan ${faltan} días para Nochebuena` : faltan === 1 ? '¡Mañana es Nochebuena!' : '¡Hoy es Nochebuena!'}</em></span>
     </button>
+    ${cordonesAdviento(diaHoy)}
     <details class="nvp-adv-mas"><summary>Ver las 24 puertitas</summary><div class="nvp-puertas">${puertas}</div></details>
   </div>`;
 }

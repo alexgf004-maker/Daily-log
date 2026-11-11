@@ -688,6 +688,15 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   **Correrlo después de cambiar styles.css** (`python3 herramientas/tema-colores.py`) y subir `TEMAS_V` en el `<head>` de `index.html`.
   Lo decorativo hecho a mano (login, sangre en encabezados, barra, cementerio) va arriba en `css/temas/halloween.css`.
 
+### Navidad: «Mi programación» y Calendario de Adviento
+- **Mi programación** (`.pe` del técnico) en Pre-Navidad y Navidad en casa va «envuelta en listón»: azul noche con listón
+  plateado (Pre) o rojo terciopelo con listón dorado (casa), copitos de fondo y un moño arriba; la placa se corre a la
+  izquierda del listón. Estilos en `css/temas/navidad.css` («Mi programación envuelta en listón…»).
+- **Calendario de Adviento** con el mismo fondo y, bajo el texto, dos cordones de 12 foquitos numerados
+  (`cordonesAdviento` en `js/navidad-app.js`): encendidos los días que ya llegaron y el de hoy parpadea. El texto dice
+  «Faltan N días para Nochebuena», «¡Mañana es Nochebuena!» el 23 y «¡Hoy es Nochebuena!» el 24 (igual el saludo de
+  casa en `js/navidad.js`).
+
 ### Navidad en casa · «Todo se enciende» (`js/navidad-casa-luces.js`)
 Lo que se usa a diario se ilumina con foquitos de colores según lo que hace la persona (solo con `html.nav-casa`; al salir
 del tema se quita todo; no toca la mascota). Estilos en `css/temas/navidad.css` («Navidad en casa · Todo se enciende»).

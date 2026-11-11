@@ -432,7 +432,7 @@
   function cuenta(et,f){
     var sub=$('#loginScreen .login-brand-sub'); if(!sub) return;
     var t;
-    if(et.id==='casa') t=f.dia<24?'Faltan <b>'+(24-f.dia)+'</b> '+(24-f.dia===1?'día':'días')+' para Nochebuena':f.dia===24?'Esta noche es <b>Nochebuena</b>':f.dia===25?'¡Hoy es <b>Navidad</b>!':'Felices <b>fiestas</b>';
+    if(et.id==='casa') t=f.dia<23?'Faltan <b>'+(24-f.dia)+'</b> días para Nochebuena':f.dia===23?'¡Mañana es <b>Nochebuena</b>!':f.dia===24?'Esta noche es <b>Nochebuena</b>':f.dia===25?'¡Hoy es <b>Navidad</b>!':'Felices <b>fiestas</b>';
     else { var anio=new Date().getFullYear()+(f.mes===12?1:0); if(!f.real) anio=new Date().getFullYear()+1;
       t=f.mes===12?(32-f.dia===1?'Mañana empieza el <b>'+anio+'</b>':'Faltan <b>'+(32-f.dia)+'</b> días para el <b>'+anio+'</b>'):'¡Feliz <b>'+anio+'</b>!'; }
     sub.insertAdjacentHTML('afterend','<div class="nv-extra nv-cuenta">'+(et.id==='casa'?'🎁 ':'🎆 ')+t+'</div>');
