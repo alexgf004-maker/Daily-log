@@ -102,3 +102,68 @@ test('tocar el vidrio del foco cambia el estado del grupo completo una sola vez'
  f.login.emit('click',{type:'click',target:{closest:s=>s==='.nv-foco-interactivo'?f.button:glass}});
  assert.equal(f.calls.length,1);assert.equal(f.calls[0].off,true);assert.equal(f.button.attrs['aria-pressed'],'false');
 });
+
+function blowFixture(){
+ const f=switchFixture(),nodes=[];f.button.isConnected=true;
+ f.mount.querySelector=s=>s.endsWith('head')?{getScreenCTM:()=>({a:.2,b:0,c:0,d:.2,e:218,f:114})}:null;
+ f.login.querySelectorAll=()=>[f.button];f.login.getBoundingClientRect=()=>({left:0,top:0,width:390,height:844});
+ f.login.appendChild=n=>nodes.push(n);
+ f.document.createElementNS=()=>{const n=new Node();n.appendChild=()=>{};n.remove=()=>nodes.splice(nodes.indexOf(n),1);return n;};
+ return {...f,nodes};
+}
+test('el soplo sale de la boca hacia un foco existente y solo lo apaga al llegar',()=>{
+ const f=blowFixture();assert.ok(f.w.startBlow());f.w.blowFrame(.5);assert.equal(f.nodes.length,0);assert.equal(f.button.classList.contains('nv-luz-apagada'),false);
+ f.w.blowFrame(1.5);assert.equal(f.nodes.length,1);assert.equal(f.button.classList.contains('nv-luz-apagada'),false);
+ f.w.blowFrame(1.86);assert.equal(f.button.classList.contains('nv-luz-apagada'),true);assert.equal(f.button.attrs['aria-label'],'Encender luz navideña');
+ f.w.blowFrame(2.3);assert.equal(f.nodes.length,0);f.touch();assert.equal(f.button.classList.contains('nv-luz-apagada'),false);
+ f.w.destroy();assert.equal(f.timers.size,0);
+});
+test('no sopla sin luces, a través de toda la pantalla, congelado ni al escribir',()=>{
+ const f=blowFixture();f.setFrozen(true);assert.equal(f.w.startBlow(),null);f.setFrozen(false);f.setBusy(true);assert.equal(f.w.startBlow(),null);
+ f.setBusy(false);f.button.getBoundingClientRect=()=>({left:280,top:-500,width:10,height:18});assert.equal(f.w.startBlow(),null);
+ f.login.querySelectorAll=()=>[];assert.equal(f.w.startBlow(),null);assert.equal(f.nodes.length,0);
+});
+test('interrumpir el soplo limpia el aire sin apagar una luz antes de tiempo',()=>{
+ const f=blowFixture();f.w.startBlow();f.w.blowFrame(1.2);f.w.cancelBlow();f.w.blowFrame(2);assert.equal(f.nodes.length,0);assert.equal(f.button.classList.contains('nv-luz-apagada'),false);
+ f.w.startBlow();f.w.blowFrame(1.9);f.w.destroy();assert.equal(f.button.classList.contains('nv-luz-apagada'),false);assert.equal(f.nodes.length,0);
+});
+
+function dialogueFixture(){
+ const f=worldFixture(),parent={isConnected:true,children:[],appendChild(n){if(n.parentElement)n.parentElement.children.splice(n.parentElement.children.indexOf(n),1);this.children.push(n);n.parentElement=this;}},other={isConnected:true,children:[],appendChild:parent.appendChild};let host=parent,now=1000,stage='casa';
+ f.mount.isConnected=true;f.ctx.Date.now=()=>now;f.ctx.addEventListener=()=>{};f.ctx.removeEventListener=()=>{};
+ f.document.createElement=()=>{const n=new Node();n.remove=()=>{n.parentElement.children.splice(n.parentElement.children.indexOf(n),1);};return n;};
+ const dialogue=f.ctx.NavidadEntorno.createDialogue(f.mount,{inside:true,container:()=>host,stage:()=>stage});
+ return {...f,dialogue,parent,other,setHost:v=>host=v,setStage:v=>stage=v,next:()=>now+=500};
+}
+test('el diálogo responde al toque con frases locales, sin modal ni acceso a campos',()=>{
+ const f=dialogueFixture();Object.defineProperty(f.document,'activeElement',{get(){throw Error('No leer formularios');}});
+ assert.equal(f.parent.children.length,0);assert.equal(f.dialogue.say('casa'),true);const bubble=f.parent.children[0];
+ assert.equal(bubble.textContent,'¡No me toques!');assert.equal(bubble.attrs.role,'status');assert.equal(bubble.attrs['aria-live'],'polite');
+ assert.equal(f.dialogue.say('casa'),false);assert.equal(bubble.textContent,'¡No me toques!');
+ f.next();f.dialogue.say('casa');assert.match(bubble.textContent,/Pinche Navidad/);assert.equal(f.parent.children.length,1);
+ f.next();f.dialogue.say('caught');assert.match(bubble.textContent,/robando/);assert.equal(f.parent.children.length,1);
+});
+test('el texto se retira por tiempo, Escape, navegación, ocultación y destrucción',()=>{
+ const f=dialogueFixture();f.dialogue.say('pre');const b=f.parent.children[0];assert.match(b.textContent,/hielo/);
+ f.document.emit('keydown',{key:'Escape'});assert.equal(b.hidden,true);
+ f.next();f.dialogue.say('casa');const end=[...f.timers.values()].at(-1);end();assert.equal(b.hidden,true);
+ f.setHost(f.other);f.next();f.dialogue.say('hat');assert.equal(f.parent.children.length,0);assert.equal(f.other.children[0],b);assert.match(b.textContent,/gorro/i);
+ f.document.hidden=true;f.document.emit('visibilitychange',{});assert.equal(b.hidden,true);assert.equal(f.dialogue.say('casa'),false);
+ f.dialogue.destroy();assert.equal(f.other.children.length,0);f.w.destroy();assert.equal(f.timers.size,0);assert.equal(f.document.listeners.keydown.size,0);
+});
+
+test('el globo se ancla por encima de la cabeza y la punta apunta a ella',()=>{
+ const f=dialogueFixture();f.dialogue.destroy();
+ f.parent.getBoundingClientRect=()=>({left:0,top:0,width:320,height:568});
+ f.mount.querySelector=()=>({querySelector:()=>({getBoundingClientRect:()=>({left:240,top:440,width:50,height:58})})});
+ f.document.createElement=()=>{const n=new Node();n.getBoundingClientRect=()=>({width:200,height:35});n.remove=()=>{};return n;};
+ let expression=null;const d=f.ctx.NavidadEntorno.createDialogue(f.mount,{container:()=>f.parent,stage:()=> 'pre',express:e=>expression=e});d.say('pre');const node=f.parent.children[0];
+ assert.ok(parseFloat(node.style.top)+35<440);assert.ok(parseFloat(node.style.left)+200<=310);
+ assert.ok(Math.abs(parseFloat(node.style.left)+parseFloat(node.values['--nv-cola-x'])+6-265)<1);
+ assert.equal(expression.tone,'angry');assert.equal(expression.level,.65);f.next();d.say('pre');assert.equal(expression.level,.95);
+ // La pantalla puede ser estática y tener otro ancestro de posicionamiento.
+ node.offsetParent={getBoundingClientRect:()=>({left:16,top:54,width:800}),scrollTop:0};
+ f.next();d.say('pre');assert.equal(parseFloat(node.style.top)+54+35,428);
+ assert.ok(Math.abs(parseFloat(node.style.left)+16+parseFloat(node.values['--nv-cola-x'])+6-265)<1);
+ d.hide();assert.equal(expression,null);d.destroy();f.w.destroy();
+});

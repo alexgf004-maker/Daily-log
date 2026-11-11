@@ -401,12 +401,15 @@
     var ls=document.getElementById('loginScreen');
     var hint=document.createElement('div'); hint.className='nv-extra nv-toca'; hint.textContent='✦ Toca el cielo para lanzar un cohete ✦'; ls.appendChild(hint);
     // pólvora
-    var coh=[], chis=[], flash=0, prox=0;
+    var coh=[], chis=[], flash=0, prox=0, ultimoAviso=0;
     var PAL=[['#ff3d6e','#ffd1dc'],['#ffb02e','#fff0c9'],['#3ee08f','#d9ffe9'],['#3fb6ff','#e0f3ff'],['#b05cff','#efdcff'],['#ffe14a','#ffffff']];
     function lanzar(tx,ty){ var t=bucle&&bucle.tam(); if(!t||!t[0]) return; var W=t[0],H=t[1];
       var x0=tx!=null?tx+R(-30,30):(Math.random()<.5?R(W*.06,W*.3):R(W*.7,W*.94)), dest=ty!=null?ty:R(H*.1,H*.42), vy=-Math.sqrt(2*.06*Math.max(60,H-150-dest));
       coh.push({x:x0,y:H-150,vx:tx!=null?(tx-x0)/(Math.abs(vy)/.06):R(-.4,.4),vy:vy,col:PAL[(Math.random()*PAL.length)|0],cola:[],tipo:(Math.random()*4)|0}); }
-    function estalla(k){ for(var i=0;i<80;i++){ var a=i/80*6.283, s=k.tipo===0?R(.6,3.4):k.tipo===1?3:k.tipo===2?R(1,2.4):2.6;
+    function estalla(k){
+      var ahora=performance.now();
+      if(ahora-ultimoAviso>6000&&ls.classList.contains('active')){ultimoAviso=ahora;var b=capa.getBoundingClientRect();ls.dispatchEvent(new CustomEvent('navidad:entorno',{detail:{kind:'destello',x:b.left+k.x,y:b.top+k.y}}));}
+      for(var i=0;i<80;i++){ var a=i/80*6.283, s=k.tipo===0?R(.6,3.4):k.tipo===1?3:k.tipo===2?R(1,2.4):2.6;
         var p={x:k.x,y:k.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,v:1,col:Math.random()<.6?k.col[0]:k.col[1],sauce:k.tipo===2,crep:k.tipo===3}; if(k.tipo===1&&i%2){ p.vx*=.55; p.vy*=.55; } chis.push(p); } flash=1; }
     ls.addEventListener('pointerdown',function(e){ if(!capa.isConnected||e.target.closest('.login-form,.login-footer,button,input,label')) return; if(e.clientY<window.innerHeight*.45) lanzar(e.clientX,e.clientY); });
     bucle=lienzo(capa,[function(cx,W,H,t){

@@ -9,6 +9,49 @@ function point(svg,p){
 function create(login,mount,options){
   var timer=0,lightTimer=0,last=0,turn=0,stopped=false,source=null,sourceTimer=0,switched=new Set();
   var reduced=()=>!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  var puff=null;
+  function mouth(){
+    var m=mount.querySelector('#'+(options.idPrefix||'')+'head')?.getScreenCTM?.();
+    return m?{x:m.a*410+m.c*430+m.e,y:m.b*410+m.d*430+m.f}:null;
+  }
+  function cancelBlow(){if(puff){puff.svg?.remove();puff.bulb.classList.remove('nv-luz-soplando');puff=null;}}
+  function startBlow(){
+    cancelBlow();if(!active()||options.frozen()||options.busy?.())return null;
+    var from=mouth();if(!from)return null;
+    var targets=Array.from(login.querySelectorAll('.nv-foco-interactivo')).filter(function(el){
+      var r=el.getBoundingClientRect();return r.width>0&&r.height>0&&!el.classList.contains('nv-luz-apagada');
+    }).map(function(el){var r=el.getBoundingClientRect();return {el:el,x:r.left+r.width/2,y:r.top+r.height/2};})
+      .filter(function(p){return p.y<from.y&&Math.hypot(p.x-from.x,p.y-from.y)<220;})
+      .sort(function(a,b){return Math.hypot(a.x-from.x,a.y-from.y)-Math.hypot(b.x-from.x,b.y-from.y);});
+    var target=targets[0];if(!target)return null;
+    puff={bulb:target.el,target:target,svg:null,paths:[],off:false};return {x:target.x,y:target.y};
+  }
+  function blowFrame(t){
+    if(!puff)return;
+    if(!active()||options.busy?.()||!puff.bulb.isConnected){cancelBlow();return;}
+    if(t<.8)return;
+    var from=mouth(),box=login.getBoundingClientRect(),r=puff.bulb.getBoundingClientRect(),to={x:r.left+r.width/2,y:r.top+r.height/2};
+    if(!from||!box.width||!box.height){cancelBlow();return;}
+    if(!r.width||!r.height||Math.hypot(to.x-from.x,to.y-from.y)>250){cancelBlow();return;}
+    if(!puff.svg){
+      var ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+      svg.setAttribute('class','nv-soplo-entorno');svg.setAttribute('aria-hidden','true');
+      for(var i=0;i<2;i++){var path=document.createElementNS(ns,'path');path.setAttribute('pathLength','1');svg.appendChild(path);puff.paths.push(path);}
+      login.appendChild(svg);puff.svg=svg;
+    }
+    puff.svg.setAttribute('viewBox','0 0 '+box.width+' '+box.height);
+    var k=Math.max(0,Math.min(1,(t-.8)/1.05)),x=from.x-box.left,y=from.y-box.top,tx=to.x-box.left,ty=to.y-box.top;
+    puff.paths.forEach(function(path,i){var bend=(i?1:-1)*9;
+      path.setAttribute('d','M'+x+' '+y+' Q'+((x+tx)/2+bend)+' '+((y+ty)/2)+' '+tx+' '+ty);
+      path.setAttribute('stroke-dashoffset',String(-k));
+    });
+    puff.svg.style.opacity=String(Math.sin(Math.PI*k)*.65);
+    if(t>=1.85&&!puff.off){
+      puff.off=true;puff.bulb.classList.add('nv-luz-apagada');puff.bulb.setAttribute('aria-pressed','false');
+      puff.bulb.setAttribute('aria-label','Encender luz navideña');switched.add(puff.bulb);
+    }
+    if(t>=2.2)cancelBlow();
+  }
   function active(){return !stopped&&!reduced()&&!document.hidden&&login.classList.contains('active');}
   function clearSource(){clearTimeout(sourceTimer);sourceTimer=0;source?.classList?.remove('nv-foco-llamada');source=null;}
   function resetGaze(){
@@ -65,11 +108,52 @@ function create(login,mount,options){
     clearSource();source=el;source.classList?.add('nv-foco-llamada');sourceTimer=setTimeout(clearSource,3200);
     react({kind:'ambiente',x:b.left+b.width/2,y:b.top+b.height/2,color:el.querySelector?.('.vid')?.getAttribute('fill')||'#ffe0a6'});
   }
-  function visibility(){if(document.hidden||!login.classList.contains('active')){clearTimeout(intro);resetGaze();clearSource();clearTimeout(lightTimer);lightTimer=0;delete mount.dataset.reflejo;mount.style.removeProperty('--nv-reflejo');}else if(options.frozen()){clearTimeout(intro);intro=setTimeout(ambient,1800);}}
+  function visibility(){if(document.hidden||!login.classList.contains('active')){cancelBlow();clearTimeout(intro);resetGaze();clearSource();clearTimeout(lightTimer);lightTimer=0;delete mount.dataset.reflejo;mount.style.removeProperty('--nv-reflejo');}else if(options.frozen()){clearTimeout(intro);intro=setTimeout(ambient,1800);}}
   login.addEventListener('navidad:entorno',event);login.addEventListener('pointerdown',light,true);login.addEventListener('keydown',light);login.addEventListener('click',clickLight);
   document.addEventListener('visibilitychange',visibility);
   var intro=setTimeout(ambient,1800),interval=setInterval(ambient,12000);
-  return {react:react,resetGaze:resetGaze,suspend:visibility,destroy:function(){stopped=true;clearTimeout(intro);clearSource();resetGaze();clearTimeout(lightTimer);clearInterval(interval);delete mount.dataset.reflejo;mount.style.removeProperty('--nv-reflejo');login.removeEventListener('navidad:entorno',event);login.removeEventListener('pointerdown',light,true);login.removeEventListener('keydown',light);login.removeEventListener('click',clickLight);switched.forEach(function(el){el.classList.remove('nv-luz-apagada');el.setAttribute('aria-pressed','true');el.setAttribute('aria-label','Apagar luz navideña');});switched.clear();document.removeEventListener('visibilitychange',visibility);}};
+  return {startBlow:startBlow,blowFrame:blowFrame,cancelBlow:cancelBlow,react:react,resetGaze:resetGaze,suspend:visibility,destroy:function(){cancelBlow();stopped=true;clearTimeout(intro);clearSource();resetGaze();clearTimeout(lightTimer);clearInterval(interval);delete mount.dataset.reflejo;mount.style.removeProperty('--nv-reflejo');login.removeEventListener('navidad:entorno',event);login.removeEventListener('pointerdown',light,true);login.removeEventListener('keydown',light);login.removeEventListener('click',clickLight);switched.forEach(function(el){el.classList.remove('nv-luz-apagada');el.setAttribute('aria-pressed','true');el.setAttribute('aria-label','Apagar luz navideña');});switched.clear();document.removeEventListener('visibilitychange',visibility);}};
 }
-window.NavidadEntorno={create:create,point:point};
+/* El globo sigue la cabeza y comparte el tono de la interpretación facial. */
+function createDialogue(anchor,options){
+  var node=null,timer=0,raf=0,last=-Infinity,counts={},stopped=false,following=0;
+  var lines={
+    pre:['¡No me toques! Este hielo…','Pinche Navidad… y este hielo.','¿Vas a ayudar o a molestar?'],
+    casa:['¡No me toques!','Pinche Navidad…','¡Ya basta, déjame en paz!'],
+    caught:['¡No estaba robando nada!','Esa botita se movió sola.'],
+    blow:['Shhh… una luz menos.','Esa luz me estaba mirando.'],
+    hat:['¡El gorro no!','¡Acabo de acomodarlo!'],
+    ano:['¡Ya basta de cohetes!','Otro año… las mismas molestias.']
+  };
+  function hide(){clearTimeout(timer);timer=0;if(raf&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(raf);raf=0;if(node){node.hidden=true;node.textContent='';}options.express?.(null);}
+  function position(){
+    if(!node||node.hidden)return;
+    var container=options.container(),svg=anchor.querySelector('svg'),head=svg?.querySelector?.('#'+(options.idPrefix||'')+'head');
+    var h=head?.getBoundingClientRect?.()||anchor.getBoundingClientRect?.(),r=container?.getBoundingClientRect?.();
+    if(!h||!r||!r.width)return;
+    var origin=node.offsetParent||container,o=origin.getBoundingClientRect(),b=node.getBoundingClientRect(),scroll=origin.scrollTop||0,cx=h.left+h.width/2;
+    var left=Math.max(10,Math.min(r.width-b.width-10,cx-r.left-b.width*.65));
+    var top=Math.max(8-o.top+scroll,h.top-o.top-b.height-12+scroll);
+    node.style.left=(left+r.left-o.left+(origin.scrollLeft||0))+'px';node.style.top=top+'px';
+    node.style.setProperty('--nv-cola-x',Math.max(14,Math.min(b.width-18,cx-r.left-left-6))+'px');
+  }
+  function follow(t){raf=0;if(!node||node.hidden)return;if(t-following>=33){following=t;position();}raf=requestAnimationFrame(follow);}
+  function say(reason){
+    if(stopped||document.hidden||!anchor.isConnected||Date.now()-last<450)return false;
+    var container=options.container();if(!container?.isConnected)return false;
+    if(!node){node=document.createElement('div');node.className='nv-dialogo'+(options.inside?' nv-dialogo-interior':'');node.hidden=true;node.setAttribute('role','status');node.setAttribute('aria-live','polite');node.setAttribute('aria-atomic','true');container.appendChild(node);}
+    if(node.parentElement!==container)container.appendChild(node);
+    var group=lines[reason]||lines[options.stage()]||lines.casa,n=counts[reason]||0;
+    hide();node.hidden=false;node.textContent=group[n%group.length];counts[reason]=n+1;last=Date.now();
+    var tone=reason==='caught'?'startled':reason==='blow'?'quiet':'angry',level=tone==='angry'?(n%group.length===1?.95:.65):.4;
+    node.dataset.tono=tone;position();options.express?.({tone:tone,level:level,animated:!options.reduced?.()});
+    if(typeof requestAnimationFrame==='function'&&!options.reduced?.())raf=requestAnimationFrame(follow);
+    timer=setTimeout(hide,Math.max(3200,Math.min(4800,node.textContent.length*85)));return true;
+  }
+  function key(e){if(e.key==='Escape')hide();}
+  function visibility(){if(document.hidden)hide();}
+  document.addEventListener('keydown',key);document.addEventListener('visibilitychange',visibility);window.addEventListener('resize',hide);
+  return {say:say,hide:hide,destroy:function(){stopped=true;hide();node?.remove();node=null;document.removeEventListener('keydown',key);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('resize',hide);}};
+}
+window.NavidadEntorno={create:create,point:point,createDialogue:createDialogue};
 })();
