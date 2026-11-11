@@ -335,6 +335,9 @@ html.nav-casa #nvpAdv .nvp-adv-mas summary{color:#f2c45a}
 html.nav-casa #nvpAdv .adv-cordon path:first-of-type{stroke:#3a1408;stroke-width:1.6} html.nav-casa #nvpAdv .adv-cordon text{fill:#fff3d0;font:800 10px var(--sans)}
 .adv-cordones{display:none;padding:0 10px 2px} :is(html.nav-pre,html.nav-casa) .adv-cordones{display:block}
 .adv-cordon{display:block;width:100%;height:auto;margin:0 0 2px;overflow:visible}
+/* En el celular, dos cordones de 12; si la tarjeta es ancha (PC), uno solo de 24 para que los foquitos no se vean enormes */
+.nvp-adv{container-type:inline-size} .adv-cordon.adv-uno{display:none}
+@container (min-width:620px){ .adv-cordon.adv-dos{display:none} .adv-cordon.adv-uno{display:block;margin:4px 0 6px} }
 .adv-cordon .adv-hoy{animation:advLatido 1.6s ease-in-out infinite} @keyframes advLatido{50%{opacity:.5}}
 html.nv-reposo .adv-cordon .adv-hoy{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.adv-cordon .adv-hoy{animation:none}}
@@ -708,7 +711,8 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 .nvp-adv-tx span{font-size:13px;color:#4f6b85}
 .nvp-adv-tx em{font-style:normal;font-size:11.5px;font-weight:700;color:#c4152c;margin-top:2px}
 .nvp-adv-mas{padding:0 16px 12px}
-.nvp-adv-mas summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#1b84c9;list-style:none}
+.nvp-adv-mas summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#1b84c9;list-style:none;display:inline-block;border-radius:6px;outline:none}
+.nvp-adv-mas summary:focus-visible{outline:2px solid currentColor;outline-offset:3px}
 .nvp-adv-mas summary::-webkit-details-marker{display:none}
 .nvp-adv-mas summary::after{content:' ›';display:inline-block;transition:transform .2s}
 .nvp-adv-mas[open] summary::after{transform:rotate(90deg)}

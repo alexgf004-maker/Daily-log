@@ -703,6 +703,9 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   (`cordonesAdviento` en `js/navidad-app.js`): encendidos los días que ya llegaron y el de hoy parpadea. El texto dice
   «Faltan N días para Nochebuena», «¡Mañana es Nochebuena!» el 23 y «¡Hoy es Nochebuena!» el 24 (igual el saludo de
   casa en `js/navidad.js`).
+  En pantallas anchas (PC) se ven enormes si se estiran los dos cordones de 12: la tarjeta es contenedor
+  (`container-type:inline-size`) y desde 620 px de ancho se muestra un solo cordón de 24 (`.adv-uno`) en vez de los
+  dos (`.adv-dos`).
 
 ### Navidad en casa · «Todo se enciende» (`js/navidad-casa-luces.js`)
 Lo que se usa a diario se ilumina con foquitos de colores según lo que hace la persona (solo con `html.nav-casa`; al salir
