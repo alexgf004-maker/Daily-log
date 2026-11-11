@@ -573,11 +573,22 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   rombo (`papelPicadoProg`, cada banderita en su propia capa para que los recortes dejen ver el fondo), con su
   propio espacio arriba (`TOPB`, el texto baja), y abajo una ofrenda con arco de cempasúchil (`cempasuchilProg`),
   velas, pan de muerto, floreros, calaverita de azúcar al centro (`calaveritaProg`), mantel con picos y pétalos.
-  La de Pre-Navidad es «Pueblito de noche» (`puebloNocheProg` y sus dibujos `pn*`): cordón de foquitos grandes con
-  brillo en su propio espacio arriba (`TOPB` 58), aurora y estrellas, y en la franja (`BANDA` 170) montañas nevadas,
-  pueblito con ventanas encendidas y humo, pinos con esferas, muñeco de nieve y trineo con regalos; el borde es un
-  banco de nieve con carámbanos que cuelgan sobre el cuerpo. Posiciones relativas al ancho (vale para 1080 y 1620).
-  Elegida entre 3 (pueblito de noche, envuelta para regalo, ventana escarchada).
+  **Pre-Navidad y Navidad en casa** llevan una ilustración vectorial de encabezado completo (`js/navidad-prog-ilu.js`,
+  importado solo al generar la imagen en esas etapas; `encabezadoIluProg` la dibuja, oscurece la izquierda para el
+  texto y pone el listón dorado; `BANDA` 236, `TOPB` 0 y las cifras siempre debajo de la fecha):
+  Pre-Navidad = paisaje de Nochebuena (casita roja con foquitos, árbol grande, muñeco de nieve, trineo, bastones,
+  cerca con luces, faroles, pueblito con iglesia, luna; Santa la cruza con `__nvMotor.trineo`); Navidad en casa = la
+  sala por dentro (ventana nevada, árbol con regalos y tren, chimenea con las botitas, leche y galletas, sillón, flor
+  de pascua, gatito). Son SVG que se arman al ancho justo: con programación larga la escena se extiende hacia la
+  izquierda en vez de estirarse. Si el módulo no carga queda el dibujo anterior (`puebloNocheProg` / la repisa);
+  si la ilustración no se puede dibujar, un fondo liso. Cuidado: el SVG va como imagen, así que tiene que ser XML
+  válido (un atributo repetido hace que no cargue). Elegidas tras varias rondas (3D descartado: «siempre 2D»).
+  La sala lleva además guirnalda con foquitos en el techo, corona sobre la chimenea, cascanueces, banquito con chocolate
+  y libros, osito, galleta de jengibre, esfera de nieve y un **gatito naranja con gorrito de Santa** jugando con una esfera.
+  Con el texto largo en la imagen de 1080 la sala sale «compacta» (sin la ventana; con un cuadro nevado en la pared).
+  Navidad en casa también cambia el cuerpo («acebo y costura»): costura punteada y ramita de acebo en cada tarjeta y en
+  las barras de área, y el número de cada grupo es una esfera con tapita dorada (`decoTarjetaCasaProg`,
+  `decoRielCasaProg`, `numeroCasaProg`). Mismo acomodo y datos.
 - **Imagen de la programación compacta:** con pocos grupos va a 1080 de ancho (campañas de un grupo en 2
   columnas, las demás a todo lo ancho). Si así saldría más de ~1.5 veces más alta que ancha, pasa a 1620 de ancho
   y TODAS las tarjetas van en 3 columnas (`armarTodo(3)`), en orden de lectura columna por columna y repartidas

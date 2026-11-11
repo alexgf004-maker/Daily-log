@@ -7554,6 +7554,33 @@ function nieveBordeProg(ctx,W,y){ ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.
   ctx.lineTo(W,y+2); ctx.closePath(); ctx.fill(); }
 function estrellaProg(ctx,x,y,r,color){ const P=Math.PI; ctx.save(); ctx.translate(x,y); ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=18; ctx.beginPath();
   for(let i=0;i<10;i++){ const rr=i%2?r*.42:r, a=-P/2+i*P/5; ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr); } ctx.closePath(); ctx.fill(); ctx.restore(); }
+// Encabezado con ilustración (Pre-Navidad: paisaje con Santa cruzando la luna; Navidad en casa: la sala). La imagen viene
+// al ancho justo (ver js/navidad-prog-ilu.js); se oscurece un poco la izquierda para que el texto se lea; listón dorado abajo.
+function encabezadoIluProg(ctx,ti,img,W,H){
+  const k=H/520, x0=W-1620*k;
+  if(img) ctx.drawImage(img,W-img.width/img.height*H,0,img.width/img.height*H,H);   // anclada a la derecha (lo que sobra a la izquierda es cielo o pared)
+  else { const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,ti==='casa'?'#3a0a10':'#050c24'); g.addColorStop(1,ti==='casa'?'#6e1a1e':'#2a4a86'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+  const os=ti==='casa'?'30,4,8':'5,10,30', g=ctx.createLinearGradient(0,0,W*.55,0); g.addColorStop(0,`rgba(${os},.45)`); g.addColorStop(1,`rgba(${os},0)`); ctx.fillStyle=g; ctx.fillRect(0,0,W*.55,H);
+  const N=window.__nvMotor;
+  if(img&&ti==='pre'&&N&&N.trineo){ ctx.save(); ctx.shadowColor='rgba(255,240,200,.6)'; ctx.shadowBlur=5; N.trineo(ctx,x0+1262*k,88*k,.42*k,1.3,'rgba(12,20,48,.96)'); ctx.restore(); }
+  const lb=ctx.createLinearGradient(0,H-7,0,H+1); lb.addColorStop(0,'#fff1b8'); lb.addColorStop(.5,'#e3ad38'); lb.addColorStop(1,'#8a5a0a'); ctx.fillStyle=lb; ctx.fillRect(0,H-6,W,7);
+}
+// ── Navidad en casa: toque navideño en el cuerpo de la imagen (mismo acomodo y datos): «acebo y costura» ──
+function acebo2D(ctx,x,y,k){ const P=Math.PI*2; ctx.save(); ctx.translate(x,y); ctx.scale(k,k);
+  [[-1,'#1f6b45'],[1,'#2a8a5c']].forEach(([s,c])=>{ ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(0,0); ctx.bezierCurveTo(s*8,-11,s*20,-13,s*30,-5); ctx.bezierCurveTo(s*24,-2,s*25,4,s*29,8); ctx.bezierCurveTo(s*21,6,s*17,10,s*15,15); ctx.bezierCurveTo(s*10,8,s*4,6,0,0); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(s*25,2); ctx.stroke(); });
+  [[-5,4,'#c4152c'],[5,4,'#e3263c'],[0,-3,'#d3172f']].forEach(([a,b,c])=>{ ctx.fillStyle=c; ctx.beginPath(); ctx.arc(a,b,5.2,0,P); ctx.fill(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(a-1.6,b-1.6,1.5,0,P); ctx.fill(); }); ctx.restore(); }
+// el número del grupo como esfera navideña (del color del área, con tapita dorada y brillo)
+function numeroCasaProg(ctx,n,cx,cy,r,color,fuente,texto){ const P=Math.PI*2;
+  { const g=ctx.createRadialGradient(cx-r*.35,cy-r*.35,r*.1,cx,cy,r); g.addColorStop(0,'rgba(255,255,255,.55)'); g.addColorStop(.35,'rgba(255,255,255,0)'); g.addColorStop(1,'rgba(0,0,0,.22)');
+    ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy+1,r,0,P); ctx.fill(); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy+1,r,0,P); ctx.fill();
+    const cg=ctx.createLinearGradient(cx-6,0,cx+6,0); cg.addColorStop(0,'#8a5a0a'); cg.addColorStop(.5,'#fff1b8'); cg.addColorStop(1,'#9a6a10'); ctx.fillStyle=cg; ctx.fillRect(cx-5.5,cy-r-3,11,6); ctx.strokeStyle='#c99a3a'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(cx,cy-r-5,3,Math.PI,0); ctx.stroke(); }
+  fuente(800,17); texto(String(n),cx,cy+2,'#ffffff','center'); }
+// costura punteada por dentro y ramita de acebo en la esquina (tarjetas); costura blanca y acebo arriba (barras de área)
+function decoTarjetaCasaProg(ctx,x,y,w,h,area,rrect){
+  ctx.save(); ctx.setLineDash([6,5]); ctx.strokeStyle=area.barra; ctx.globalAlpha=.45; ctx.lineWidth=1.8; rrect(x+7,y+7,w-14,h-14,14); ctx.stroke(); ctx.restore();
+  acebo2D(ctx,x+22,y+2,.75); }
+function decoRielCasaProg(ctx,x,y,w,h,a,rrect){
+  ctx.save(); ctx.setLineDash([5,5]); ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1.6; rrect(x+5,y+5,w-10,h-10,11); ctx.stroke(); ctx.restore(); acebo2D(ctx,x+w/2,y+4,.85); }
 function pieTemaProg(ctx,ti,x,y){
   if(ti==='mu') cempasuchilProg(ctx,x,y,13);
   else if(ti==='pre') copoProg(ctx,x,y,13,'#1b84c9');
@@ -7690,7 +7717,7 @@ window.progGenerarImagen=async()=>{
     ctx.fillStyle=C.zona[0]; rrect(x,cy-15,w,30,8); ctx.fill();
     texto(t,x+11,cy+1,C.zona[1]);
   };
-  const numDib=(n,cx,cy,color)=>{ ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,NUM/2,0,Math.PI*2); ctx.fill(); fuente(800,17); texto(String(n),cx,cy+1,'#ffffff','center'); };
+  const numDib=(n,cx,cy,color)=>{ if(TI==='casa'){ numeroCasaProg(ctx,n,cx,cy,NUM/2,color,fuente,texto); return; } ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,NUM/2,0,Math.PI*2); ctx.fill(); fuente(800,17); texto(String(n),cx,cy+1,'#ffffff','center'); };
   // Nombres partidos entre nombres completos (nunca a la mitad de un nombre)
   const lineasNombres=(g,max)=>{
     fuente(700,23);
@@ -7776,6 +7803,7 @@ window.progGenerarImagen=async()=>{
         }
         ry+=f.h;
       });
+      if(TI==='casa') decoTarjetaCasaProg(ctx,x,y,w,h,area,rrect);
     }};
   };
 
@@ -7850,9 +7878,12 @@ window.progGenerarImagen=async()=>{
   const pills=[`${progGrupos.length} ${progGrupos.length===1?'grupo':'grupos'}`,`${nTec} ${nTec===1?'técnico':'técnicos'}`,nVeh?`${nVeh} ${nVeh===1?'vehículo':'vehículos'}`:null].filter(Boolean);
   fuente(700,20); const pillW=pills.map(t=>ancho(t)+36); const pillsTot=pillW.reduce((a,b)=>a+b,0)+10*(pills.length-1);
   fuente(800,48); const fechaW=ancho(tituloFecha);
-  const pillsAlLado=pad+fechaW+28+pillsTot<=W-pad;
-  const BANDA=TI&&!HW?(TI==='mu'?112:TI==='pre'?170:62):0;   // Muertos y Navidad: franja de abajo del encabezado solo para los adornos (Pre-Navidad: el pueblito)
-  const TOPB=TI==='mu'?54:TI==='pre'?58:0;    // Muertos: espacio arriba para el papel picado; Pre-Navidad: para el cordón de foquitos (el texto baja)
+  // Pre-Navidad y Navidad en casa: el encabezado es una ilustración (js/navidad-prog-ilu.js) con el texto encima a la
+  // izquierda; las cifras van siempre debajo de la fecha para no tapar la escena. Si el módulo no carga, queda el dibujo de antes.
+  let iluMod=null; if(TI==='pre'||TI==='casa'){ try{ iluMod=await import('./js/navidad-prog-ilu.js?v=1'); }catch(e){} }
+  const pillsAlLado=!iluMod&&pad+fechaW+28+pillsTot<=W-pad;
+  const BANDA=iluMod?236:TI&&!HW?(TI==='mu'?112:TI==='pre'?170:62):0;   // Muertos y Navidad: franja de abajo del encabezado solo para los adornos (Pre-Navidad: el pueblito)
+  const TOPB=iluMod?0:TI==='mu'?54:TI==='pre'?58:0;    // Muertos: espacio arriba para el papel picado; Pre-Navidad: para el cordón de foquitos (el texto baja)
   const headH=(pillsAlLado?164:224)+BANDA+TOPB;
 
   const cuerpoH=areas.reduce((a,ar)=>a+Math.max(ar.h,ar.railH),0)+26*(areas.length-1);
@@ -7874,6 +7905,10 @@ window.progGenerarImagen=async()=>{
     ctx.fillStyle='rgba(180,140,90,.22)'; [[-9,-6,6],[7,5,7],[-3,12,4],[10,-10,3.5]].forEach(([dx,dy,r])=>{ ctx.beginPath(); ctx.arc(lx+dx,ly+dy,r,0,Math.PI*2); ctx.fill(); });
     murcielagoHW(ctx,lx-96,ly+10,.55,'#0a0204'); murcielagoHW(ctx,lx+82,ly-4,.42,'#0a0204'); murcielagoHW(ctx,lx+150,ly+20,.3,'#14060a');
     goteoHW(ctx,W,headH,'#7f1d1d');
+  } else if(iluMod){
+    fuente(800,48); const libre=pad+Math.max(ancho(tituloFecha),pillsTot)+40;   // lo que ocupa el texto (la sala se arma compacta si no cabe)
+    let img=null; try{ img=await iluMod.ilustracion(TI,W,headH,libre); }catch(e){ console.warn('ilustración',e); }
+    encabezadoIluProg(ctx,TI,img,W,headH);
   } else if(TI){
     encabezadoTemaProg(ctx,TI,W,headH,headH-BANDA,TOPB);   // Muertos y Navidad: fondo y adornos de la temporada (abajo, junto a los de Halloween)
   } else {
@@ -7907,6 +7942,7 @@ window.progGenerarImagen=async()=>{
     ctx.save(); ctx.translate(railX+railW/2,y+rh/2); ctx.rotate(-Math.PI/2);
     fuente(800,21); esp('6px'); texto(a.nombre,3,1,'#ffffff','center'); esp('0px');
     ctx.restore();
+    if(TI==='casa') decoRielCasaProg(ctx,railX,y,railW,rh,a,rrect);
     if(a.aus){
       const base=y+Math.max(0,(rh-a.h)/2)+12;
       chipsAus.forEach(ch=>{
