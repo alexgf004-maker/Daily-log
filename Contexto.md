@@ -677,6 +677,27 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   **Correrlo después de cambiar styles.css** (`python3 herramientas/tema-colores.py`) y subir `TEMAS_V` en el `<head>` de `index.html`.
   Lo decorativo hecho a mano (login, sangre en encabezados, barra, cementerio) va arriba en `css/temas/halloween.css`.
 
+### Navidad en casa · «Todo se enciende» (`js/navidad-casa-luces.js`)
+Lo que se usa a diario se ilumina con foquitos de colores según lo que hace la persona (solo con `html.nav-casa`; al salir
+del tema se quita todo; no toca la mascota). Estilos en `css/temas/navidad.css` («Navidad en casa · Todo se enciende»).
+- Pestañas del técnico: un foquito colgando sobre cada una; se enciende el de la pestaña abierta.
+- «Mi marcaje» (técnico y admin): la barra entre entrada y salida es un cordón que se enciende conforme avanza la jornada,
+  de la hora de entrada a la salida oficial (`horarioOficial`). index.html deja los datos en la tarjeta: `data-ent` (ts de
+  la entrada), `data-fin` (fecha y hora oficial de salida) y `data-sal` (ya marcó salida → todo encendido). Antes de marcar,
+  el primer foquito parpadea. Se refresca cada minuto.
+- Hoy / Ayer / Antier / Otra: foquito arriba de cada uno; se enciende el elegido.
+- Títulos: estrella (Mi marcaje), campana (Día), vela (Horario), esfera (Actividades), apagadas hasta que esa parte está
+  lista; se encienden con un saltito.
+- Actividades: rodeado de foquitos que se encienden mientras se escribe (todos a los 90 caracteres; entonces titilan más rápido).
+- Viático: la perilla del interruptor es un foquito. Guardar registro: cordón encima que se llena con lo escrito; al
+  presionarlo las luces corren.
+- El contenido también va vestido: Guardar en rojo terciopelo con acebo, «Marcar entrada» verde pino, «Hoy» en rojo,
+  campos crema con costura, cajas del Dashboard en verde, rojo, azul noche y dorado con su ícono; el «HOY» del Dashboard se lee.
+- Cuidado: el módulo escucha cambios con MutationObserver y **nunca** redibuja en el mismo instante (siempre con
+  `setTimeout`): redibujar de inmediato al cambiar una clase de `<html>` hacía un ciclo con otros módulos y congelaba la app.
+  No escucha cambios de `style` (la mascota los cambia sin parar). Las luces son SVG con brillo por opacidad (CSS); se
+  pausan en reposo y con movimiento reducido quedan fijas. Cada capa SVG tiene sus propios degradados (ids únicos).
+
 ### Sorpresas escondidas de Navidad (`js/navidad-sorpresas.js`)
 Detallitos que nadie anuncia, para que la gente los descubra y se los cuente. Solo con el tema de Navidad activo y
 adentro de la app (técnico o admin); con «reducir movimiento» no salen. Estilos `.nvs-*` en `css/temas/navidad.css`.
