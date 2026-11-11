@@ -424,3 +424,41 @@ test('el rubor se monta dentro de la cara, debajo de los ojos, y se limpia con e
  assert.equal(svg.children['#speech-warmth'].parent,defs);assert.equal(actor.n('speech-heat').attrs['clip-path'],'url(#headClip)');
  actor.destroy();assert.equal(actor.n('speech-heat').removed,true);assert.equal(actor.n('speech-mouth').removed,true);assert.equal(svg.children['#speech-warmth'].removed,true);assert.equal(face.removed,undefined);
 });
+
+test('las cejas del rostro nuevo abarcan los ojos y fruncen hacia dentro sin girar sobre la frente',()=>{
+ const {actor}=realActor({embedded:true,frozen:true,contextOnly:true});
+ for(const level of [.65,.95]){
+  actor.play('trapped');actor.speak({tone:'angry',level,animated:false});
+  for(const t of [0,.4,1.3,2.6,3.6]){
+   actor.render(t);
+   const left=actor.n('brow-left').attrs.d.match(/-?\d+(?:\.\d+)?/g).map(Number);
+   const right=actor.n('brow-right').attrs.d.match(/-?\d+(?:\.\d+)?/g).map(Number);
+   assert.ok(left[4]-left[0]>=70);assert.ok(right[4]-right[0]>=70);
+   assert.ok(left[5]>left[1]+15);assert.ok(right[1]>right[5]+15);
+   for(const points of [left,right])for(const y of [points[1],points[3],points[5]])assert.ok(y>=265&&y<=312);
+   assert.equal(actor.n('brow-left').attrs.transform,'translate(0 0)');
+   assert.equal(actor.n('brow-right').attrs.transform,'translate(0 0)');
+  }
+  actor.speak(null);
+ }
+});
+
+test('el CSS del hielo no añade giros ni desplazamientos a las cejas del motor',()=>{
+ const css=read('css/navidad-mascota.css');
+ assert.doesNotMatch(css,/@keyframes\s+nvCeno/);
+ assert.doesNotMatch(css,/(?:#brow-(?:left|right)|#eyebrows|data-nv-part="eyebrows")[^{]*\{[^}]*(?:transform:|translate:|rotate:|animation:)/);
+});
+
+test('entrar y salir del diálogo frunce las cejas gradualmente y recupera la pose del hielo',()=>{
+ const {actor,tick}=realActor({embedded:true,frozen:true,contextOnly:true});actor.pause();
+ const points=()=>['brow-left','brow-right'].flatMap(id=>actor.n(id).attrs.d.match(/-?\d+(?:\.\d+)?/g).map(Number));
+ const initial=points();let previous=initial;
+ actor.speak({tone:'angry',level:.95,animated:true});assert.deepEqual(points(),initial);
+ for(let i=0;i<150;i++){
+  if(i===90)actor.speak(null);
+  tick(1/60);const current=points();
+  assert.ok(current.every((n,j)=>Math.abs(n-previous[j])<2));previous=current;
+ }
+ assert.ok(points().every((n,j)=>Math.abs(n-initial[j])<.05));
+ assert.equal(actor._pose.dx,0);assert.equal(actor._pose.dy,0);assert.equal(actor.paused,true);
+});

@@ -607,7 +607,6 @@ class GreenActor {
   this.faceScale('eye-left',351,317,1,v.eyeL);this.faceScale('eye-right',449,325,1,v.eyeR);
   this.transform('pupil-left',`translate(${v.pupilX.toFixed(1)} ${v.pupilY.toFixed(1)})`);
   this.transform('pupil-right',`translate(${v.pupilX.toFixed(1)} ${v.pupilY.toFixed(1)})`);
-  this.rot('brow-left',v.browL,340,272);this.rot('brow-right',v.browR,450,272);
   // Párpados reales sobre los ojos: la pupila mantiene su forma al entrecerrarlos.
   for(const [id,cx,cy,rx,amount] of [['lid-left',351,317,38,v.lidL],['lid-right',449,325,39,v.lidR]]){
     const a=PI*(.025+.44*clamp(amount)),dx=rx*Math.sin(a),y=cy-46*Math.cos(a);
@@ -623,8 +622,18 @@ class GreenActor {
     this.show(id,amount>0?1:0);
   }
   const g=clamp(v.grump),sly=clamp(v.sly);
-  this.attr('brow-left','d',`M316 ${273+11*g} Q342 ${256+25*g} 364 ${275+27*g-7*sly}`);
-  this.attr('brow-right','d',`M425 ${282+21*g-12*sly} Q448 ${253+27*g-8*sly} 477 ${278+6*g}`);
+  if(this.n('arm-left-curve')){
+    // Un solo gesto sobre el dibujo actual: el extremo interior baja hacia el
+    // entrecejo sin girar una ceja corta alrededor del pivote del rostro anterior.
+    const left=clamp(v.browL,-18,18)/18,right=-clamp(v.browR,-18,18)/18;
+    this.transform('brow-left','translate(0 0)');this.transform('brow-right','translate(0 0)');
+    this.attr('brow-left','d',`M310 ${284+2*g-3*left} Q343 ${269+20*g-3*sly} 382 ${286+19*g+5*left-6*sly}`);
+    this.attr('brow-right','d',`M415 ${286+19*g+5*right-7*sly} Q449 ${270+17*g-5*sly} 488 ${284+3*g-3*right-2*sly}`);
+  }else{
+    this.rot('brow-left',v.browL,340,272);this.rot('brow-right',v.browR,450,272);
+    this.attr('brow-left','d',`M316 ${273+11*g} Q342 ${256+25*g} 364 ${275+27*g-7*sly}`);
+    this.attr('brow-right','d',`M425 ${282+21*g-12*sly} Q448 ${253+27*g-8*sly} 477 ${278+6*g}`);
+  }
   const expression=clamp((1-g+sly)/2),frown=[363,432,384,413,416,414,440,430],smirk=[369,419,391,440,420,437,442,408];
   const m=frown.map((value,i)=>lerp(value,smirk[i],expression));
   this.attr('expression-line','d',`M${m[0]} ${m[1]} C${m[2]} ${m[3]} ${m[4]} ${m[5]} ${m[6]} ${m[7]}`);
