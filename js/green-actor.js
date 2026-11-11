@@ -39,6 +39,10 @@ const SCENES = Object.freeze({
  shoo:     {duration:3.8,loop:false,title:'No toques mis luces',detail:'Niega con la cabeza y hace un gesto de protesta con la mano.',group:'Interacciones'},
  doze:     {duration:6.0,loop:false,title:'Le vence el sueño',detail:'Cabecea, se le cierran los ojos y despierta disimulando.',group:'Interacciones'},
  ack:      {duration:2.8,loop:false,title:'Registro recibido',detail:'Comprueba el registro, asiente una vez y vuelve a su expresión gruñona.',group:'Dentro de la app'},
+ lookaround:{duration:4.2,loop:false,title:'Observar alrededor',detail:'Busca a los lados, escucha y levanta una ceja antes de volver al reposo.',group:'Vida propia'},
+ icewatch: {duration:3.8,loop:false,title:'Mirar desde el hielo',detail:'Sigue algo con los ojos y gira un poco la cabeza dentro del bloque.',group:'Vida propia'},
+ icehuff:  {duration:3.6,loop:false,title:'Resoplar de frío',detail:'Toma aire y empaña el hielo, sin mover el cuerpo de su sitio.',group:'Vida propia'},
+ icedoze:  {duration:5.0,loop:false,title:'Cabecear en el hielo',detail:'Se adormece y despierta disimulando, todavía atrapado.',group:'Vida propia'},
  nye:      {duration:5.6,loop:true,title:'31 de diciembre', detail:'Los destellos lo asustan: tiembla y se tapa los oídos.', group:'Fechas especiales'},
 });
 class GreenActor {
@@ -269,6 +273,12 @@ class GreenActor {
         v.grump=.48+.2*glance;v.lidL=.43+.19*glance;v.lidR=.5+.12*glance;
       }
       break;
+    case 'lookaround':{
+      const left=bump(t,.1,.45,1.2,1.65),right=bump(t,1.8,2.15,3.1,3.65);
+      v.pupilX=-12*left+11*right;v.pupilY=-4*left-5*right;
+      v.head=5*left-5*right;v.earL=-4*left;v.earR=4*right;
+      v.grump=.28;v.sly=.25*right;v.lidL=.35;v.lidR=.42;v.browR=-7*right;
+      v.leftArm=-5*left;v.rightArm=4*right;break;}
     case 'sneak':{
       const step=wave(t,1.05),drift=wave(t,.165);
       v.dx=85*drift;v.dy=-9*Math.abs(step);v.angle=-3+3*wave(t,.17);
@@ -548,6 +558,22 @@ class GreenActor {
       const press=bump(t,.08,.65,2.55,3.6),strain=bump(t,.85,1.1,1.35,1.65)+.7*bump(t,1.8,2.05,2.25,2.55);
       v.trapPress=press;v.head=2*press;v.pupilX=-3+7*strain;v.pupilY=-2*press;
       v.lidL=.94;v.lidR=.88;v.earL=4+3*strain;v.earR=-3-2*strain;
+    }
+    if(mode==='icewatch'){
+      const left=bump(t,.12,.5,1.2,1.7),right=bump(t,1.8,2.15,2.9,3.8);
+      const act=bump(t,.05,.35,3.1,3.6);
+      v.head=3*left-3*right;v.pupilX=lerp(-5,-12*left+11*right,act);v.pupilY=(-7*left-2*right)*act;
+      v.grump=lerp(1,.5,act);v.sly=lerp(.12,.15*right,act);v.lidL=lerp(.9,.48,act);v.lidR=lerp(.82,.55,act);v.browR=-6*right;
+      v.earL=4-3*left;v.earR=-3+3*right;
+    }else if(mode==='icehuff'){
+      const inhale=bump(t,.1,.7,.9,1.3),huff=bump(t,.8,1.2,2.1,3.3),act=bump(t,.05,.35,2.9,3.4);
+      v.head=-3*inhale+3*huff;v.headY=2*huff;v.pupilY=-7*inhale;
+      v.talk=.7*huff;v.grump=lerp(1,.85,act);v.lidL=.9+(-.25+.2*huff)*act;v.lidR=.82+(-.2+.2*huff)*act;
+    }else if(mode==='icedoze'){
+      const sleep=bump(t,.2,1.4,3.25,3.8),wake=bump(t,3.35,3.55,3.8,4.25),act=bump(t,.05,.35,4.25,4.75);
+      v.head=6*sleep-3*wake;v.headY=5*sleep;v.eyeL=1-.94*sleep;v.eyeR=v.eyeL;
+      v.lidL=.9+(-.4+.4*sleep)*act;v.lidR=.82+(-.32+.4*sleep)*act;v.grump=lerp(1,.4,act);v.surprise=.6*wake;
+      v.pupilX=lerp(-5,-7*bump(t,3.85,4.1,4.4,4.7),act);
     }
   }
   if(this._speech){

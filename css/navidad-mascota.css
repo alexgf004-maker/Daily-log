@@ -37,6 +37,8 @@
 .nv-mascota-congelada #eye-right{transform-origin:449px 325px}
 .nv-mascota-congelada #pupil-left,
 .nv-mascota-congelada #pupil-right{animation:nvOjosMirada 19.6s cubic-bezier(.18,.72,.25,1) infinite}
+/* Durante un gesto, el motor controla los ojos; el CSS vuelve al reposar. */
+.nv-mascota-congelada:is([data-gesto],[data-accion]) :is(#eye-left,#eye-right,#pupil-left,#pupil-right,[data-nv-part="eye-left"],[data-nv-part="eye-right"],[data-nv-part="pupil-left"],[data-nv-part="pupil-right"]){animation:none}
 .nv-vaho{opacity:0;transform-origin:402px 438px;animation:nvResoplido 19.6s ease-out infinite}
 .nv-eye-gaze{translate:0 0;transition:translate .3s cubic-bezier(.18,.72,.25,1)}
 .nv-mascota-congelada[data-mirada] .nv-eye-gaze{translate:-6px -5px}

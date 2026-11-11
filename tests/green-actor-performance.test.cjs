@@ -54,7 +54,7 @@ test('el diálogo estático de movimiento reducido no necesita fotogramas',()=>{
  f.actor.speak(null);assert.equal(f.frames.size,0);assert.equal(f.actor._pose.heat,0);
 });
 
-test('las 28 escenas conservan todos los atributos finales en 6.720 fotogramas',()=>{
+test('las 32 escenas conservan todos los atributos finales en 7.680 fotogramas',()=>{
  for(const embedded of [false,true]){
   const options={embedded,contextOnly:embedded,personality:embedded},cached=fixture(options),direct=fixture(options,true);
   for(const [name,meta] of Object.entries(cached.actor.constructor.SCENES)){
