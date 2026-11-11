@@ -11,6 +11,13 @@
 //     caracteres; entonces titilan más rápido);
 //   · Viático: la perilla del interruptor es un foquito;
 //   · Guardar registro: cordón encima que se llena con lo escrito; al presionarlo las luces corren.
+// En la admin:
+//   · menú: en compu, un cordón vertical a la orilla de la barra lateral con un foquito por sección (en celular, foquitos
+//     sobre las pestañas); se enciende el de la sección abierta y parpadea el de Pendientes/Observaciones si hay avisos;
+//   · Dashboard: «cordón del equipo», un foquito por persona que debía marcar ese día; se enciende cuando marca;
+//   · Pendientes: un foquito por cada pendiente del día; se encienden conforme se revisan (el total se guarda en la
+//     sesión); sin nada por revisar, «¡Todo al día!» con todo encendido;
+//   · Programación: un foquito por persona disponible; se enciende cuando queda en un grupo.
 // Solo con html.nav-casa; al salir del tema se quita todo. No toca la mascota. Las luces son SVG con su brillo animado
 // por CSS (opacidad): se pausan en reposo (html.nv-reposo) y con movimiento reducido quedan fijas.
 // Estilos en css/temas/navidad.css («Navidad en casa · Todo se enciende»).
@@ -27,11 +34,13 @@
   var META=90, nCapa=0, listo=false, pend=0;
   function activo(){ return document.documentElement.classList.contains('nav-casa'); }
   function pantalla(){ var a=document.querySelector('.screen.active'); return a&&(a.id==='employeeScreen'||a.id==='adminScreen')?a:null; }
+  // la capa se posiciona contra su contenedor: solo se le pone position:relative si no tiene posición propia
+  function fijar(h){ if(!h.classList.contains('lz-host')&&getComputedStyle(h).position==='static') h.classList.add('lz-host'); }
   function el(n,a,p){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); if(p) p.appendChild(e); return e; }
 
   // capa SVG encima de un elemento (cada capa con sus propios degradados: uno definido en una pantalla oculta no se pinta)
   function capa(host,cual,w,h){
-    host.classList.add('lz-host'); var s=host.querySelector(':scope>svg.lz-capa'); if(s) s.remove();
+    fijar(host); var s=host.querySelector(':scope>svg.lz-capa'); if(s) s.remove();
     s=el('svg',{'class':'lz-capa lz-'+cual,'aria-hidden':'true',viewBox:'0 0 '+w+' '+h}); host.appendChild(s);
     var d=el('defs',{},s), id='lz'+(++nCapa)+'_';
     COLS.forEach(function(c,i){ var r=el('radialGradient',{id:id+i},d); el('stop',{offset:0,'stop-color':c,'stop-opacity':.85},r); el('stop',{offset:1,'stop-color':c,'stop-opacity':0},r); });
@@ -97,7 +106,7 @@
     });
     // actividades
     var ta=reg.querySelector('#empActs');
-    if(ta&&ta.offsetParent){ var host=ta.parentNode; host.classList.add('lz-host');
+    if(ta&&ta.offsetParent){ var host=ta.parentNode; fijar(host);
       var r={x:ta.offsetLeft,y:ta.offsetTop,w:ta.offsetWidth,h:ta.offsetHeight}, clave=[r.x,r.y,r.w,r.h].join(','), s=host.querySelector(':scope>svg.lz-capa');
       if(!s||s.dataset.k!==clave){ s=capa(host,'ta',host.clientWidth,host.clientHeight); s.dataset.k=clave; var ls=[], paso=26;
         el('rect',{x:r.x,y:r.y,width:r.w,height:r.h,rx:12,fill:'none',stroke:'#2a3442','stroke-width':1.4,opacity:.55},s);
@@ -116,7 +125,7 @@
       sp._l.classList.toggle('on',vi.getAttribute('aria-pressed')==='true'); }
     // guardar
     var gb=reg.querySelector('.fx-save');
-    if(gb&&gb.offsetParent){ var gh=gb.parentNode; gh.classList.add('lz-host');
+    if(gb&&gb.offsetParent){ var gh=gb.parentNode; fijar(gh);
       var gk=[gb.offsetLeft,gb.offsetTop,gb.offsetWidth].join(','), gs=gh.querySelector(':scope>svg.lz-capa');
       if(!gs||gs.dataset.k!==gk){ var gl=cordon(gh,'save',gb.offsetLeft+10,gb.offsetLeft+gb.offsetWidth-10,gb.offsetTop-1,3,Math.round(gb.offsetWidth/26),.68); gs=gh.querySelector(':scope>svg.lz-capa'); gs.dataset.k=gk; gs._ls=gl; }
       if(!gb._lz){ gb._lz=true; gb.addEventListener('pointerdown',function(){ if(!listo) return; var c=gb.parentNode.querySelector(':scope>svg.lz-capa'); if(!c) return; c._ls.forEach(function(l){ l.classList.add('on'); }); saltito(gb.parentNode,'lz-corre',1800); }); }
@@ -125,9 +134,67 @@
   }
 
   var nDec=0; window.__lucesN=function(){ return nDec; };
-  function decorar(){ var scr=pantalla(); if(!scr) return; nDec++; document.documentElement.classList.add('nvc-luces'); pestanas(scr); marcaje(scr); tarjetas(scr); }
+  /* ── la admin ── */
+  function visible(e){ return !!(e&&e.offsetParent); }
+  function num(e){ return e?(parseInt(e.textContent,10)||0):0; }
+  // menú: en compu es una barra lateral (cordón vertical a la orilla, un foquito por sección); en celular, pestañas arriba
+  function menuAdmin(scr){
+    var nav=scr.id==='adminScreen'&&scr.querySelector('.ad-nav'); if(!nav) return;
+    var bs=[].slice.call(nav.querySelectorAll(':scope>.tab')).filter(visible); if(bs.length<2) return;
+    // los avisos (Pendientes, Observaciones) cambian por estilo y texto: se escuchan aparte
+    nav.querySelectorAll('.tab-bd').forEach(function(bd){ if(bd._lz) return; bd._lz=true; new MutationObserver(function(){ if(listo) pronto(); }).observe(bd,{attributes:true,childList:true,characterData:true,subtree:true}); });
+    var vertical=bs[1].offsetTop>bs[0].offsetTop+4, s=nav.querySelector(':scope>svg.lz-capa'), clave=(vertical?'v':'h')+nav.clientWidth+'x'+nav.scrollHeight;
+    if(!s||s.dataset.k!==clave){
+      if(vertical){ var w=nav.clientWidth, h=nav.scrollHeight, x=w-9; s=capa(nav,'menu',w,h); s.style.height=h+'px';
+        var y0=bs[0].offsetTop+4, y1=bs[bs.length-1].offsetTop+bs[bs.length-1].offsetHeight-4, d='M'+x+' '+y0;
+        bs.forEach(function(b){ var c=b.offsetTop+b.offsetHeight/2; d+=' Q'+(x+5)+' '+(c-b.offsetHeight/4)+' '+x+' '+c; }); d+=' L'+x+' '+y1;
+        el('path',{d:d,fill:'none',stroke:'rgba(255,255,255,.35)','stroke-width':1.4},s);
+        s._ls=bs.map(function(b,i){ return luz(s,x,b.offsetTop+b.offsetHeight/2,90,.78,i); });
+      } else { var tw=nav.scrollWidth; s=capa(nav,'menu',tw,22); s.style.width=tw+'px'; s.style.height='22px';
+        el('path',{d:bs.map(function(b,i){ var x0=b.offsetLeft, x1=x0+b.offsetWidth; return (i?'L':'M')+x0+' 1 Q'+((x0+x1)/2)+' 9 '+x1+' 1'; }).join(' '),fill:'none',stroke:'#2a3442','stroke-width':1.4},s);
+        s._ls=bs.map(function(b,i){ return luz(s,b.offsetLeft+b.offsetWidth/2,4.5,0,.9,i); }); }
+      s.dataset.k=clave; s._bs=bs; nav.classList.toggle('lz-menu-h',!vertical);
+    }
+    s._bs.forEach(function(b,i){ var l=s._ls[i]; if(!l) return; var on=b.classList.contains('active'), bd=b.querySelector('.tab-bd'), aviso=!on&&bd&&bd.style.display!=='none'&&num(bd)>0;
+      if(on&&!l.classList.contains('on')) saltito(l,'pop',400); l.classList.toggle('on',on); l.classList.toggle('espera',!!aviso); });
+  }
+  // tira con texto y un cordón: total foquitos, «encendidos» prendidos; todos → titilan rápido
+  function tira(despuesDe,antesDe,id,total,encendidos,texto){
+    var t=document.getElementById(id);
+    if(!t){ t=document.createElement('div'); t.id=id; t.className='lz-tira'; t.innerHTML='<span class="lz-tira-t"></span><span class="lz-tira-c"></span>'; }
+    if(antesDe){ if(t.nextElementSibling!==antesDe) antesDe.parentNode.insertBefore(t,antesDe); } else if(despuesDe&&despuesDe.nextElementSibling!==t) despuesDe.parentNode.insertBefore(t,despuesDe.nextSibling);
+    var tx=t.querySelector('.lz-tira-t'); if(tx.textContent!==texto) tx.textContent=texto;
+    var c=t.querySelector('.lz-tira-c'), w=c.clientWidth||200, n=Math.max(1,total), clave=n+'@'+w, s=c.querySelector(':scope>svg.lz-capa');
+    if(!s||s.dataset.k!==clave){ var paso=w/n, k=Math.max(.42,Math.min(.85,paso/26)); cordon(c,'tcord',2,w-2,5,Math.min(8,4+n),n,k); s=c.querySelector(':scope>svg.lz-capa'); s.dataset.k=clave; s._ls=[].slice.call(s.querySelectorAll('.lz')); }
+    encender(s._ls,Math.min(n,encendidos)); t.classList.toggle('lz-lleno',encendidos>=n&&total>0);
+  }
+  function quitarTira(id){ var t=document.getElementById(id); if(t) t.remove(); }
+  function dashboard(scr){
+    var dt=scr.id==='adminScreen'&&scr.querySelector('.dtiles'); if(!visible(dt)){ quitarTira('lzEquipo'); return; }
+    var ok=num(dt.querySelector('[data-k="ok"] .v')), tarde=num(dt.querySelector('[data-k="tarde"] .v')), sin=num(dt.querySelector('[data-k="sin"] .v')), n=ok+tarde+sin;
+    if(!n){ quitarTira('lzEquipo'); return; }
+    var m=ok+tarde, hoy=/hoy/i.test((scr.querySelector('#dashAsistFecha')||{}).textContent||'');
+    tira(null,dt,'lzEquipo',n,m,m>=n?(hoy?'¡Todo el equipo ya marcó!':'Todo el equipo marcó'):m+' de '+n+(hoy?' ya marcaron entrada':' marcaron entrada'));
+  }
+  function pendientes(scr){
+    var hero=scr.id==='adminScreen'&&scr.querySelector('#adPend .page-header'); if(!visible(hero)){ quitarTira('lzPend'); return; }
+    var bd=document.getElementById('pendBadge'), quedan=bd&&bd.style.display!=='none'?num(bd):0, clave='lz_pend_'+new Date().toDateString(), total=quedan;
+    try{ total=Math.max(quedan,+sessionStorage.getItem(clave)||0); sessionStorage.setItem(clave,total); }catch(e){}
+    var hechos=total-quedan;
+    tira(hero,null,'lzPend',total||5,total?hechos:5,!total||!quedan?'¡Todo al día! Nada por revisar':hechos?'Revisaste '+hechos+' de '+total:quedan+(quedan===1?' por revisar':' por revisar · cada uno que revises enciende un foquito'));
+  }
+  function programacion(scr){
+    var hero=scr.id==='adminScreen'&&scr.querySelector('#adProg .pg-hero'); if(!visible(hero)){ quitarTira('lzProg'); return; }
+    var b=hero.querySelectorAll('.us-cnt b'); if(b.length<3){ quitarTira('lzProg'); return; }
+    var asig=num(b[1]), libres=num(b[2]), n=asig+libres;
+    if(!n){ quitarTira('lzProg'); return; }
+    tira(hero,null,'lzProg',n,asig,!libres?'¡Todos tienen grupo!':asig+' de '+n+' con grupo · '+libres+(libres===1?' libre':' libres'));
+  }
+
+  function decorar(){ var scr=pantalla(); if(!scr) return; nDec++; document.documentElement.classList.add('nvc-luces'); pestanas(scr); marcaje(scr); tarjetas(scr); menuAdmin(scr); dashboard(scr); pendientes(scr); programacion(scr); }
   function quitar(){
-    document.querySelectorAll('svg.lz-capa,.lz-ic').forEach(function(e){ clearInterval(e._iv); e.remove(); });
+    document.querySelectorAll('svg.lz-capa,.lz-ic,.lz-tira').forEach(function(e){ clearInterval(e._iv); e.remove(); });
+    document.querySelectorAll('.lz-menu-h').forEach(function(e){ e.classList.remove('lz-menu-h'); });
     document.querySelectorAll('.lz-host').forEach(function(e){ e.classList.remove('lz-host','lz-lleno','lz-corre'); });
     document.documentElement.classList.remove('nvc-luces');
   }
@@ -135,9 +202,9 @@
   // nunca de inmediato: si otro módulo cambia una clase de <html> al ver nuestros cambios, no se arma un ciclo
   function revisar(){ if(activo()){ if(!listo){ listo=true; pronto(); } } else if(listo){ listo=false; clearTimeout(pend); quitar(); } }
   // solo cambios de la app cuentan (no los de las propias luces)
-  function ajeno(m){ var t=m.target; if(t.nodeType!==1) return true; if(t.closest&&t.closest('svg.lz-capa,.lz-ic')) return false;
-    if(m.type==='childList'){ var ns=[].slice.call(m.addedNodes).concat([].slice.call(m.removedNodes)); return !ns.length||ns.some(function(n){ return n.nodeType===1&&!(n.classList&&(n.classList.contains('lz-capa')||n.classList.contains('lz-ic'))); }); }
-    return !(t.classList&&(t.classList.contains('lz')||t.classList.contains('lz-ic')||t.classList.contains('lz-host'))); }
+  function ajeno(m){ var t=m.target; if(t.nodeType!==1) return true; if(t.closest&&t.closest('svg.lz-capa,.lz-ic,.lz-tira')) return false;
+    if(m.type==='childList'){ var ns=[].slice.call(m.addedNodes).concat([].slice.call(m.removedNodes)); return !ns.length||ns.some(function(n){ return n.nodeType===1&&!(n.classList&&(n.classList.contains('lz-capa')||n.classList.contains('lz-ic')||n.classList.contains('lz-tira'))); }); }
+    return !(t.classList&&(t.classList.contains('lz')||t.classList.contains('lz-ic')||t.classList.contains('lz-host')||t.classList.contains('lz-tira')||t.classList.contains('lz-menu-h'))); }
   function iniciar(){
     new MutationObserver(revisar).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
     new MutationObserver(function(ms){ if(listo&&ms.some(ajeno)) pronto(); }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed']});

@@ -347,6 +347,15 @@ html.nvc-luces.nav-casa .fx-sw i{display:grid;place-items:center;overflow:visibl
 .lz-ic svg{width:100%;height:100%;fill:#eef0f3;stroke:#aab4bf;stroke-width:1.2;overflow:visible;transition:fill .4s,stroke .4s,filter .4s}
 .lz-ic.on svg{fill:#e3263c;stroke:#9a0f22;filter:drop-shadow(0 0 4px rgba(255,80,90,.8))}
 .lz-ic.pop{animation:lzIc .6s cubic-bezier(.3,1.8,.5,1)} @keyframes lzIc{0%{transform:scale(1) rotate(0)}40%{transform:scale(1.5) rotate(-12deg)}100%{transform:scale(1) rotate(0)}}
+/* la admin: tiras con su cordón (equipo que ya marcó, pendientes revisados, personas con grupo) y el menú */
+.lz-tira{display:flex;align-items:center;gap:14px;margin:0 0 14px;padding:10px 16px 12px;border-radius:16px;background:rgba(255,250,242,.96);box-shadow:inset 0 0 0 1px rgba(227,173,56,.35),0 12px 24px -14px rgba(0,0,0,.55)}
+.lz-tira-t{flex:0 0 auto;font:800 13px var(--sans);color:#9a1a22;white-space:nowrap}
+.lz-tira-c{display:block;position:relative;flex:1 1 auto;min-width:120px;height:30px;background:none;border:0;padding:0}
+.lz-tira.lz-lleno .lz-tira-t{color:#17553a}
+@media(max-width:599px){.lz-tira{flex-direction:column;align-items:stretch;gap:4px}.lz-tira-t{white-space:normal}.lz-tira-c{min-width:0}}
+html.nvc-luces.nav-casa #adminScreen .ad-nav>.lz-capa{z-index:2}
+html.nvc-luces.nav-casa #adminScreen .ad-nav.lz-menu-h>.lz-capa{height:22px;top:-1px}
+html.nvc-luces.nav-casa #adminScreen .ad-nav.lz-menu-h>.tab{padding-top:16px}
 html.nv-reposo .lz .halo{animation-play-state:paused!important}
 @media (prefers-reduced-motion:reduce){.lz .halo,.lz.on .halo,.lz.espera .halo{animation:none!important} .lz.pop,.lz-ic.pop{animation:none}}
 

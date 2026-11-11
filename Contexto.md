@@ -691,6 +691,12 @@ del tema se quita todo; no toca la mascota). Estilos en `css/temas/navidad.css` 
 - Actividades: rodeado de foquitos que se encienden mientras se escribe (todos a los 90 caracteres; entonces titilan más rápido).
 - Viático: la perilla del interruptor es un foquito. Guardar registro: cordón encima que se llena con lo escrito; al
   presionarlo las luces corren.
+- Admin: menú con un foquito por sección (en compu, cordón vertical a la orilla de la barra lateral; en celular, sobre las
+  pestañas); se enciende la sección abierta y parpadea Pendientes/Observaciones si tienen aviso. Tiras con cordón
+  (`.lz-tira`): Dashboard «X de N ya marcaron entrada» (un foquito por persona, de las cajas A tiempo + Tarde + Sin marcar),
+  Pendientes «Revisaste X de N» (el total del día se guarda en sessionStorage; sin pendientes «¡Todo al día!») y
+  Programación «X de N con grupo» (de Asignados y Libres del encabezado). La barra lateral es `position:fixed`: la capa
+  de luces solo le pone `position:relative` a contenedores sin posición propia (`fijar()`).
 - El contenido también va vestido: Guardar en rojo terciopelo con acebo, «Marcar entrada» verde pino, «Hoy» en rojo,
   campos crema con costura, cajas del Dashboard en verde, rojo, azul noche y dorado con su ícono; el «HOY» del Dashboard se lee.
 - Cuidado: el módulo escucha cambios con MutationObserver y **nunca** redibuja en el mismo instante (siempre con
