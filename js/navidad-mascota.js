@@ -4,10 +4,11 @@
 var mount=null,actor=null,ice=null,environment=null,observer=null,login=null,form=null;
 var stageNow='',previewDay=null,flow=null,nap=14,manualRemaining=0,focusTarget=null;
 var frostTimer=0,frozenRemaining=0;
-var world=null,dialogue=null;
+var world=null,dialogue=null,life=null,editing=false,editingTimer=0;
 var previewPaused=false;
 var media=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)'),reduced=!!media?.matches;
 function theme(){var t=window.__temas;return t?.activo?.id==='navidad'?t:null;}
+function engaged(){return !!focusTarget&&(focusTarget.id==='loginPin'||editing);}
 function stage(){var t=theme();return t&&t.etapaDe(t.activo)?.id||'';}
 function preview(){return theme()?.modo==='ver';}
 function seasonKey(){return 'innova_nv_liberado_'+new Date().getFullYear();}
@@ -17,10 +18,11 @@ function shouldIntroduce(){if(preview())return true;try{return localStorage.getI
 function stopStory(){world?.cancelBlow?.();if(environment)environment.restore();actor?.reachFor?.(null);if(mount){delete mount.dataset.historia;delete mount.dataset.gesto;}flow=null;manualRemaining=0;nap=14;}
 function idle(){if(!actor)return;if(mount)delete mount.dataset.gesto;actor.lookAt?.(null);actor.play('idle');}
 function clearAll(){
+  life?.destroy();life=null;clearTimeout(editingTimer);editingTimer=0;editing=false;
   dialogue?.destroy();dialogue=null;clearTimeout(frostTimer);frostTimer=0;frozenRemaining=0;
   if(world){world.destroy();world=null;}
   stopStory();if(observer){observer.disconnect();observer=null;}
-  if(form){form.removeEventListener('focusin',onFocus);form.removeEventListener('focusout',onBlur);}
+  if(form){form.removeEventListener('focusin',onFocus);form.removeEventListener('focusout',onBlur);form.removeEventListener('input',onFocus);}
   if(actor){actor.svg.removeEventListener('pointerdown',onTap);actor.svg.removeEventListener('keydown',onKey);actor.destroy();actor=null;}
   if(ice){ice.destroy();ice=null;}if(environment){environment.destroy();environment=null;}
   if(mount){mount.classList.remove('nv-mascota-ojos-pausa','nv-mascota-congelada','nv-mascota-libre','nv-mascota-bloque');delete mount.dataset.historia;delete mount.dataset.reaccion;delete mount.dataset.mirada;}
@@ -35,9 +37,10 @@ function regulate(){
   // Dejar el foco de la escena tal como estaba al abandonar el login.
   if(!login?.classList.contains('active')&&flow&&flow.kind!=='liberacion'){stopStory();idle();}
   if((ice&&!frozenRemaining)||hidden||previewPaused)actor.pause();else actor.resume();
+  life?.sync();
 }
 function startStory(kind){
-  if(!actor||ice||reduced||focusTarget||stageNow!=='casa')return false;
+  if(!actor||ice||reduced||engaged()||stageNow!=='casa')return false;
   stopStory();
   if(kind!=='liberacion'&&(!environment||!environment.start())){idle();return false;}
   flow={kind:kind,time:0,phase:0};mount.dataset.historia=kind;
@@ -54,8 +57,8 @@ function pressIce(){
   frozenRemaining=GreenActor.SCENES.trapped.duration;actor.play('trapped');mount.dataset.gesto='trapped';actor.resume();
 }
 function reactToWorld(detail){
-  if(ice){if(detail.kind==='ambiente'&&!form?.contains(document.activeElement))pressIce();if(['nieve','ambiente','foco','casa'].includes(detail.kind)){mount.dataset.reaccion='frio';clearTimeout(frostTimer);frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3200);}return;}
-  if(!actor||focusTarget)return;
+  if(ice){if(detail.kind==='ambiente'&&!life&&!engaged())pressIce();if(['nieve','ambiente','foco','casa'].includes(detail.kind)){mount.dataset.reaccion='frio';clearTimeout(frostTimer);frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3200);}return;}
+  if(!actor||engaged())return;
   if(!['foco','santa','adorno','estrella','destello','nieve','casa'].includes(detail.kind))return;
   if(flow?.kind==='travesura'){if(detail.kind!=='santa')caught();return;}
   if(flow)return;
@@ -75,8 +78,22 @@ function caught(){
   if(environment)environment.release();actor?.reachFor?.(null);flow={kind:'descubierto',time:0,phase:0};mount.dataset.historia='descubierto';actor.play('caught');
 }
 function finishStory(){var first=flow?.kind==='liberacion';stopStory();delete mount.dataset.historia;idle();nap=first?2.4:14;}
+function autonomous(name){
+  if(!actor||engaged()||flow||manualRemaining>0||frozenRemaining>0)return 0;
+  world?.resetGaze();
+  if(ice){
+    frozenRemaining=GreenActor.SCENES[name]?.duration||0;if(!frozenRemaining)return 0;
+    actor.play(name);mount.dataset.gesto=name;
+    if(name==='icehuff'){mount.dataset.reaccion='frio';clearTimeout(frostTimer);frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3600);}
+    actor.resume();return frozenRemaining;
+  }
+  if(name==='environment')return contextAction()?flow?9:manualRemaining:0;
+  var duration=GreenActor.SCENES[name]?.duration;if(!duration)return 0;
+  actor.lookAt?.(null);actor.reachFor?.(null);actor.play(name);mount.dataset.gesto=name;manualRemaining=duration+.15;
+  return manualRemaining;
+}
 function frame(info,dt){
-  if(!actor||reduced||document.hidden||!login?.classList.contains('active')||focusTarget)return;
+  if(!actor||reduced||document.hidden||!login?.classList.contains('active')||engaged())return;
   if(ice){if(frozenRemaining>0){frozenRemaining-=dt;if(frozenRemaining<=0){frozenRemaining=0;actor.play('idle');actor.render(0);actor.pause();delete mount.dataset.gesto;}}return;}
   if(flow){
     flow.time+=dt;var t=flow.time;
@@ -96,17 +113,17 @@ function frame(info,dt){
   }
   if(manualRemaining>0){if(actor.scene==='blow')world?.blowFrame?.(info.elapsed);manualRemaining-=dt;if(manualRemaining<=0)idle();return;}
   if(actor.scene!=='idle'||stageNow!=='casa')return;
-  nap-=dt;
-  if(nap<=0){if(!contextAction())nap=14;}
+  if(!life){nap-=dt;if(nap<=0){if(!contextAction())nap=14;}}
 }
 function play(name){
-  if(!preview()||!actor||ice||reduced||focusTarget||!GreenActor.SCENES[name])return false;
+  if(!preview()||!actor||ice||reduced||engaged()||!GreenActor.SCENES[name])return false;
   stopStory();delete mount.dataset.historia;actor.play(name);mount.dataset.gesto=name;
   if(!['idle','nye'].includes(name))manualRemaining=GreenActor.SCENES[name].duration+.25;
   return true;
 }
 function onTap(event){
   event.stopPropagation();if(!actor||document.hidden||!login?.classList.contains('active'))return;
+  life?.defer();
   dialogue?.say(ice?'pre':flow?.kind==='travesura'?'caught':actor.scene==='blow'?'blow':event.target?.closest?.('#santa-hat')?'hat':stageNow);
   if(ice){
     if(reduced||document.hidden||!login?.classList.contains('active'))return;
@@ -125,16 +142,19 @@ function onTap(event){
 function onKey(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();onTap(event);}}
 function onFocus(event){
   if(!actor)return;dialogue?.hide();
+  focusTarget=event.target;editing=true;clearTimeout(editingTimer);
+  editingTimer=setTimeout(function(){editing=false;editingTimer=0;if(ice&&focusTarget?.id!=='loginPin')delete mount.dataset.mirada;regulate();},2500);
   world?.resetGaze();
-  if(ice){frozenRemaining=0;actor.play('idle');actor.render(0);actor.pause();delete mount.dataset.gesto;mount.dataset.mirada=event.target.id==='loginPin'?'apartada':'formulario';return;}
-  focusTarget=event.target;stopStory();delete mount.dataset.historia;
+  if(ice){frozenRemaining=0;actor.play('idle');actor.render(0);actor.pause();delete mount.dataset.gesto;mount.dataset.mirada=event.target.id==='loginPin'?'apartada':'formulario';regulate();return;}
+  stopStory();delete mount.dataset.historia;
   actor.play(event.target.id==='loginPin'?'privacy':'idle');regulate();
   // Con movimiento reducido mostrar directamente la pose final, sin transición.
   if(reduced&&event.target.id==='loginPin')actor.render(GreenActor.SCENES.privacy.duration);
 }
 function onBlur(event){
-  if(ice){if(!event.relatedTarget||!form.contains(event.relatedTarget))delete mount.dataset.mirada;return;}
   focusTarget=event.relatedTarget&&form.contains(event.relatedTarget)?event.relatedTarget:null;
+  if(!focusTarget){clearTimeout(editingTimer);editingTimer=0;editing=false;}
+  if(ice){if(!focusTarget)delete mount.dataset.mirada;regulate();return;}
   if(actor&&!ice&&!focusTarget){idle();nap=14;regulate();}
 }
 function sync(){
@@ -145,9 +165,9 @@ function sync(){
   if(!mount)return;
   try{
     var svg=mount.querySelector('svg');if(!svg||typeof GreenActor!=='function')throw Error('Motor o SVG no disponible');
-    actor=new GreenActor(svg,{initialScene:'idle',embedded:true,contextOnly:true,personality:current==='casa',frozen:current==='pre',onFrame:frame});
+    actor=new GreenActor(svg,{initialScene:'idle',embedded:true,personality:current==='casa',frozen:current==='pre',onFrame:frame});
     form=login.querySelector('.login-form');
-    world=window.NavidadEntorno?.create(login,mount,{frozen:function(){return !!ice;},react:reactToWorld,busy:function(){return !!focusTarget||!!form?.contains(document.activeElement);},restoreFocus:function(){if(form?.contains(document.activeElement))onFocus({target:document.activeElement});}})||null;
+    world=window.NavidadEntorno?.create(login,mount,{frozen:function(){return !!ice;},react:reactToWorld,busy:function(){return engaged()||!!flow||manualRemaining>0||frozenRemaining>0;},restoreFocus:function(){if(ice&&focusTarget?.id==='loginPin')mount.dataset.mirada='apartada';}})||null;
     if(current==='pre'){
       ice=window.NavidadHielo.create(dayPre(),mount);actor.pause();mount.classList.add('nv-mascota-congelada','nv-mascota-bloque');
     }else{
@@ -158,8 +178,9 @@ function sync(){
       else if(current==='ano')idle();
     }
     dialogue=window.NavidadEntorno?.createDialogue?.(mount,{container:function(){return login;},stage:function(){return stageNow;},reduced:function(){return reduced;},express:function(e){actor?.speak?.(e);}});
+    life=window.NavidadVida?.create({active:function(){return !!actor&&!reduced&&!document.hidden&&login?.classList.contains('active')&&!previewPaused&&!engaged();},busy:function(){return !!flow||manualRemaining>0||frozenRemaining>0;},stage:function(){return stageNow;},run:autonomous})||null;
     svg.addEventListener('pointerdown',onTap);svg.addEventListener('keydown',onKey);
-    form?.addEventListener('focusin',onFocus);form?.addEventListener('focusout',onBlur);
+    form?.addEventListener('focusin',onFocus);form?.addEventListener('focusout',onBlur);form?.addEventListener('input',onFocus);
     observer=new MutationObserver(regulate);observer.observe(login,{attributes:true,attributeFilter:['class']});
     if(form?.contains(document.activeElement))onFocus({target:document.activeElement});
     regulate();

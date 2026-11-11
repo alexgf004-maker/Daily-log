@@ -37,8 +37,8 @@
 .nv-mascota-congelada #eye-right{transform-origin:449px 325px}
 .nv-mascota-congelada #pupil-left,
 .nv-mascota-congelada #pupil-right{animation:nvOjosMirada 19.6s cubic-bezier(.18,.72,.25,1) infinite}
-.nv-mascota-congelada #brow-left{transform-origin:340px 290px;animation:nvCeno 19.6s ease-in-out infinite}
-.nv-mascota-congelada #brow-right{transform-origin:450px 290px;animation:nvCeno 19.6s ease-in-out -.2s infinite reverse}
+/* Durante un gesto, el motor controla los ojos; el CSS vuelve al reposar. */
+.nv-mascota-congelada:is([data-gesto],[data-accion]) :is(#eye-left,#eye-right,#pupil-left,#pupil-right,[data-nv-part="eye-left"],[data-nv-part="eye-right"],[data-nv-part="pupil-left"],[data-nv-part="pupil-right"]){animation:none}
 .nv-vaho{opacity:0;transform-origin:402px 438px;animation:nvResoplido 19.6s ease-out infinite}
 .nv-eye-gaze{translate:0 0;transition:translate .3s cubic-bezier(.18,.72,.25,1)}
 .nv-mascota-congelada[data-mirada] .nv-eye-gaze{translate:-6px -5px}
@@ -47,7 +47,6 @@
 .nv-mascota-congelada[data-reaccion="molesto"] .nv-eye-gaze{translate:0 -3px}
 .nv-mascota-congelada:is([data-mirada],[data-reaccion]) #pupil-left,
 .nv-mascota-congelada:is([data-mirada],[data-reaccion]) #pupil-right{animation-play-state:paused}
-.nv-mascota-congelada[data-reaccion="molesto"] #eyebrows{translate:0 5px;transition:translate .16s ease-out}
 .nv-mascota-congelada[data-reaccion="molesto"] .nv-vaho{animation:nvResoplidoToque 2.4s ease-out both}
 .nv-mascota-congelada[data-reaccion="frio"] .nv-vaho{animation:nvResoplidoToque 2.6s .4s ease-out both}
 .nv-mascota[data-reflejo] #nvice-reflection{fill:var(--nv-reflejo);fill-opacity:.28}
@@ -72,7 +71,6 @@
   65%,77%{translate:10px 0}
   78%,87%{translate:7px -2px}
 }
-@keyframes nvCeno{0%,12%,39%,64%,90%,100%{rotate:0deg}15%,34%{rotate:4deg}68%,85%{rotate:-2deg}}
 /* Una exhalación breve se condensa contra la cara interior del hielo y se disipa. */
 @keyframes nvResoplido{0%,43%,59%,100%{opacity:0;transform:translateY(0) scale(.35)}46%{opacity:.34;transform:translateY(-2px) scale(.75)}57%{opacity:0;transform:translateY(-19px) scale(1.6)}}
 @keyframes nvResoplidoToque{0%,14%{opacity:0;transform:scale(.3)}24%{opacity:.5;transform:translateY(-2px) scale(.8)}85%,100%{opacity:0;transform:translateY(-22px) scale(1.8)}}
@@ -222,7 +220,6 @@
 /* La botita sigue siendo la de Claude; solo se articula mientras la mano la sujeta. */
 .nv-con-companero>.nvc-bota.nv-bota-tirada{animation:none!important;transform:translate(var(--nv-bota-x,0px),var(--nv-bota-y,0px)) rotate(var(--nv-bota-giro,5deg))!important}
 .nv-mascota[data-accion="trapped"] [data-nv-part="nvice-palms"],.nv-mascota[data-gesto="trapped"] #nvice-palms{animation:nvPalmasHielo 3.6s ease-out both}
-.nv-mascota[data-accion="trapped"] [data-nv-part="eyebrows"]{translate:0 4px}
 @keyframes nvPalmasHielo{0%,10%,100%{opacity:0}25%,40%,58%{opacity:.8}48%,72%{opacity:.3}}
 
 /* El soplo une la boca y un foco existente; nunca captura pulsaciones. */

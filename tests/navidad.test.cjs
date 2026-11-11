@@ -13,22 +13,22 @@ class Element {
  contains(target){return !!target&&Object.values(this.children).includes(target)}
  emit(k,event={}){for(const fn of this.events[k]||[])fn({stopPropagation(){},...event})}
 }
-function fixture({date='2026-12-01',mode='auto',reduced=false}={}){
+function fixture({date='2026-12-01',mode='auto',reduced=false,autonomous=false}={}){
  let now=new Date(date+'T12:00:00');
  const mount=new Element(),svg=new Element(),iceNode=new Element(),login=new Element(),form=new Element(),pin=new Element(),user=new Element();pin.id='loginPin';user.id='loginUser';form.children={pin,user};login.children['.login-form']=form;
  mount.children.svg=svg;mount.children['.nv-hielo-fijo']=iceNode;login.children['.nv-mascota']=mount;login.classList.add('active');
  for(const id of ['melt-mask','body','left','top','right','reflection','rim','cracks','puddle','frost-body','contour','runoff-a','runoff-b','wet-edge','ripple-a','ripple-b'])iceNode.children['#nvice-'+id]=new Element();
  iceNode.drops=[new Element(),new Element()];
- const callbacks={},intervals=[],timers=new Map(),actors=[];let timerID=0;
- class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene='idle';this.elapsed=0;actors.push(this)}pause(){this.paused=true}resume(){this.paused=false}destroy(){this.destroyed=true}play(name){this.scene=name;this.elapsed=0}render(t){this.elapsed=t}getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...Actor.SCENES[this.scene]}}}
+ const callbacks={},intervals=[],timers=new Map(),due=new Map(),actors=[];let timerID=0,clock=0;
+ class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene='idle';this.elapsed=0;this.plays=[];actors.push(this)}pause(){this.paused=true}resume(){this.paused=false}destroy(){this.destroyed=true}play(name){this.scene=name;this.elapsed=0;this.plays.push(name)}render(t){this.elapsed=t}getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...Actor.SCENES[this.scene]}}}
  Actor.SCENES=vm.runInNewContext('('+read('js/green-actor.js').match(/const SCENES = Object.freeze\((\{[\s\S]*?\n\})\);/)[1]+')');
  const storage=new Map(),envs=[];
- const ctx={console,Date:class extends Date{constructor(...args){super(...(args.length?args:[now]))}},MutationObserver:class{observe(){}disconnect(){}},GreenActor:Actor,document:{hidden:false,getElementById:id=>({loginScreen:login,loginPin:pin,loginUser:user}[id]||null),addEventListener:(e,fn)=>callbacks[e]=fn},setTimeout:(fn)=>{timers.set(++timerID,fn);return timerID},clearTimeout:id=>timers.delete(id),setInterval:(fn,ms)=>intervals.push({fn,ms}),matchMedia:()=>({matches:reduced,addEventListener:(name,fn)=>callbacks.mediachange=fn})};
+ const ctx={console,Date:class extends Date{constructor(...args){super(...(args.length?args:[now]))}},MutationObserver:class{observe(){}disconnect(){}},GreenActor:Actor,document:{hidden:false,getElementById:id=>({loginScreen:login,loginPin:pin,loginUser:user}[id]||null),addEventListener:(e,fn)=>callbacks[e]=fn},setTimeout:(fn,ms=0)=>{timers.set(++timerID,fn);due.set(timerID,clock+ms);return timerID},clearTimeout:id=>{timers.delete(id);due.delete(id);},setInterval:(fn,ms)=>intervals.push({fn,ms}),matchMedia:()=>({matches:reduced,addEventListener:(name,fn)=>callbacks.mediachange=fn})};
  ctx.localStorage={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)};
  ctx.NavidadHistoria={create(){const e={taken:false,start(){return true},pull(t){this.taken=t>=3.2},give(t){this.taken=t<3.8},release(){},drop(t){if(t>=2.4)this.taken=false},restore(){this.taken=false},destroy(){this.taken=false}};envs.push(e);return e}};
  ctx.window=ctx;ctx.__temas={modo:mode,activo:{id:'navidad'},etapaDe:()=>({id:now.getDate()<=21?'pre':'casa'})};
- vm.createContext(ctx);vm.runInContext(read('js/navidad-hielo.js'),ctx);vm.runInContext(read('js/navidad-mascota.js'),ctx);
- function advance(seconds){let left=seconds;while(left>0){const dt=Math.min(.05,left);left-=dt;const a=actors.at(-1);if(!a||a.paused||a.destroyed)continue;const meta=Actor.SCENES[a.scene];a.elapsed=meta.loop?(a.elapsed+dt)%meta.duration:Math.min(meta.duration,a.elapsed+dt);a.options.onFrame(a.getSceneInfo(),dt);}}
+ vm.createContext(ctx);vm.runInContext(read('js/navidad-hielo.js'),ctx);if(autonomous)vm.runInContext(read('js/navidad-vida.js'),ctx);vm.runInContext(read('js/navidad-mascota.js'),ctx);
+ function advance(seconds){let left=seconds;while(left>0){const dt=Math.min(.05,left);left-=dt;clock+=dt*1000;if(autonomous)for(const [id,at] of [...due])if(at<=clock){const fn=timers.get(id);timers.delete(id);due.delete(id);fn?.();}const a=actors.at(-1);if(!a||a.paused||a.destroyed)continue;const meta=Actor.SCENES[a.scene];a.elapsed=meta.loop?(a.elapsed+dt)%meta.duration:Math.min(meta.duration,a.elapsed+dt);a.options.onFrame(a.getSceneInfo(),dt);}}
  return {ctx,mount,iceNode,svg,login,form,pin,user,actors,callbacks,intervals,timers,advance,envs,storage,setDate:d=>{now=new Date(d+'T12:00:00')}};
 }
 test('el hielo pierde altura cada día, con base el 21 y sin hielo el 22',()=>{
@@ -79,8 +79,8 @@ test('no crea una mascota con otro tema ni con tema apagado',()=>{
 test('movimiento reducido: no inicia travesuras automáticas',()=>{
  const f=fixture({date:'2026-12-22',reduced:true});f.ctx.__mascotaNavidadSync();f.advance(120);assert.equal(f.actors[0].scene,'idle');assert.equal(f.actors[0].paused,true);
 });
-test('se conservan las 14 animaciones originales y se agregan 14 poses integradas',()=>{
- const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,28);
+test('se conservan las 14 animaciones originales y se agregan 18 poses integradas',()=>{
+ const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,32);
  for(const name of ['idle','sneak','run','climb','steal','caught','drop','tantrum','hide','tap1','tap2','tap3','xmas','nye','thaw','privacy','tug','offer','grump','plot'])assert.match(scenes,new RegExp('\\b'+name+':'));
  for(const id of ['actor','head','body','tail','arm-left','arm-right','leg-left','leg-right','eye-left','eye-right'])assert.ok(read('index.html').includes('id="'+id+'"'));
 });
@@ -423,4 +423,94 @@ test('el rubor se monta dentro de la cara, debajo de los ojos, y se limpia con e
  assert.equal(actor.n('speech-heat').parent,face);assert.equal(actor.n('speech-mouth').parent,head);
  assert.equal(svg.children['#speech-warmth'].parent,defs);assert.equal(actor.n('speech-heat').attrs['clip-path'],'url(#headClip)');
  actor.destroy();assert.equal(actor.n('speech-heat').removed,true);assert.equal(actor.n('speech-mouth').removed,true);assert.equal(svg.children['#speech-warmth'].removed,true);assert.equal(face.removed,undefined);
+});
+
+test('las cejas del rostro nuevo abarcan los ojos y fruncen hacia dentro sin girar sobre la frente',()=>{
+ const {actor}=realActor({embedded:true,frozen:true,contextOnly:true});
+ for(const level of [.65,.95]){
+  actor.play('trapped');actor.speak({tone:'angry',level,animated:false});
+  for(const t of [0,.4,1.3,2.6,3.6]){
+   actor.render(t);
+   const left=actor.n('brow-left').attrs.d.match(/-?\d+(?:\.\d+)?/g).map(Number);
+   const right=actor.n('brow-right').attrs.d.match(/-?\d+(?:\.\d+)?/g).map(Number);
+   assert.ok(left[4]-left[0]>=70);assert.ok(right[4]-right[0]>=70);
+   assert.ok(left[5]>left[1]+15);assert.ok(right[1]>right[5]+15);
+   for(const points of [left,right])for(const y of [points[1],points[3],points[5]])assert.ok(y>=265&&y<=312);
+   assert.equal(actor.n('brow-left').attrs.transform,'translate(0 0)');
+   assert.equal(actor.n('brow-right').attrs.transform,'translate(0 0)');
+  }
+  actor.speak(null);
+ }
+});
+
+test('el CSS del hielo no añade giros ni desplazamientos a las cejas del motor',()=>{
+ const css=read('css/navidad-mascota.css');
+ assert.doesNotMatch(css,/@keyframes\s+nvCeno/);
+ assert.doesNotMatch(css,/(?:#brow-(?:left|right)|#eyebrows|data-nv-part="eyebrows")[^{]*\{[^}]*(?:transform:|translate:|rotate:|animation:)/);
+});
+
+test('entrar y salir del diálogo frunce las cejas gradualmente y recupera la pose del hielo',()=>{
+ const {actor,tick}=realActor({embedded:true,frozen:true,contextOnly:true});actor.pause();
+ const points=()=>['brow-left','brow-right'].flatMap(id=>actor.n(id).attrs.d.match(/-?\d+(?:\.\d+)?/g).map(Number));
+ const initial=points();let previous=initial;
+ actor.speak({tone:'angry',level:.95,animated:true});assert.deepEqual(points(),initial);
+ for(let i=0;i<150;i++){
+  if(i===90)actor.speak(null);
+  tick(1/60);const current=points();
+  assert.ok(current.every((n,j)=>Math.abs(n-previous[j])<2));previous=current;
+ }
+ assert.ok(points().every((n,j)=>Math.abs(n-initial[j])<.05));
+ assert.equal(actor._pose.dx,0);assert.equal(actor._pose.dy,0);assert.equal(actor.paused,true);
+});
+
+test('sin tocarlo el login congelado mira, presiona, resopla y cabecea',()=>{
+ const f=fixture({autonomous:true});f.ctx.__mascotaNavidadSync();
+ f.advance(2.6);assert.equal(f.actors[0].scene,'icewatch');assert.equal(f.actors[0].paused,false);
+ f.advance(4);assert.equal(f.actors[0].scene,'idle');assert.equal(f.actors[0].paused,true);assert.equal(f.timers.size,1);
+ f.advance(45);for(const name of ['icewatch','trapped','icehuff','icedoze'])assert.ok(f.actors[0].plays.includes(name),name);
+ assert.equal(f.ctx.__mascotaNavidadEstado().dia,1);
+});
+test('el login libre tiene variedad automática incluso sin luces ni árbol',()=>{
+ const f=fixture({autonomous:true,date:'2026-12-22'});f.ctx.__mascotaNavidadSync();f.envs[0].start=()=>false;
+ f.advance(150);for(const name of ['lookaround','hat','plot','doze','scoff','thaw'])assert.ok(f.actors[0].plays.includes(name),name);
+ assert.equal(f.actors[0].options.contextOnly,undefined);
+});
+test('dejar el usuario enfocado permite vida propia al parar de escribir; el PIN permanece protegido',()=>{
+ const f=fixture({autonomous:true});f.ctx.__mascotaNavidadSync();
+ for(const input of [f.user,f.pin])Object.defineProperty(input,'value',{get(){throw Error('No leer campos');}});
+ f.ctx.document.activeElement=f.user;f.form.emit('focusin',{target:f.user});f.advance(2);
+ assert.equal(f.actors[0].scene,'idle');f.form.emit('input',{target:f.user});f.advance(2);assert.equal(f.actors[0].scene,'idle');
+ f.advance(5);assert.ok(f.actors[0].plays.includes('icewatch'));
+ f.ctx.document.activeElement=f.pin;f.form.emit('focusin',{target:f.pin});const count=f.actors[0].plays.length;
+ f.advance(40);assert.equal(f.actors[0].plays.length,count);assert.equal(f.actors[0].paused,true);assert.equal(f.mount.dataset.mirada,'apartada');
+});
+test('los gestos autónomos se cancelan en segundo plano, con movimiento reducido y al cambiar de tema',()=>{
+ const f=fixture({autonomous:true});f.ctx.__mascotaNavidadSync();f.advance(6.5);
+ f.ctx.document.hidden=true;f.callbacks.visibilitychange();const count=f.actors[0].plays.length;
+ f.advance(120);assert.equal(f.actors[0].plays.length,count);assert.equal(f.timers.size,0);
+ f.ctx.document.hidden=false;f.callbacks.visibilitychange();f.advance(4);assert.ok(f.actors[0].plays.length>count);
+ f.ctx.__temas.activo=null;f.ctx.__mascotaNavidadSync();assert.equal(f.timers.size,0);assert.equal(f.form.events.input.size,0);
+ const reduced=fixture({autonomous:true,reduced:true});reduced.ctx.__mascotaNavidadSync();reduced.advance(120);assert.equal(reduced.actors[0].plays.length,0);
+});
+test('los nuevos gestos del hielo animan la cara pero mantienen el cuerpo dentro del bloque',()=>{
+ const {actor}=realActor({embedded:true,frozen:true});
+ for(const name of ['icewatch','icehuff','icedoze']){
+  actor.play(name);const heads=new Set();for(const t of [0,.6,1.3,2.2,3.5]){
+   actor.render(t);heads.add(actor.n('head').attrs.transform);
+   for(const key of ['dx','dy','angle','leftLeg','rightLeg'])assert.equal(actor._pose[key],0);
+   assert.equal(actor._pose.body,1);assert.equal(actor._pose.leftArm,-18);assert.equal(actor._pose.rightArm,16);
+  }
+  assert.ok(heads.size>1,name);
+ }
+ actor.play('icedoze');actor.render(2);assert.ok(actor._pose.eyeL<.1);assert.ok(actor._pose.grump<.5);
+});
+
+test('los gestos autónomos del hielo recuperan su expresión de reposo antes de pausar',()=>{
+ const {actor}=realActor({embedded:true,frozen:true});actor.play('idle');actor.render(0);
+ const keys=['head','headY','pupilX','pupilY','eyeL','eyeR','grump','sly','lidL','lidR','talk','earL','earR'];
+ const initial=Object.fromEntries(keys.map(k=>[k,actor._pose[k]]));
+ for(const name of ['icewatch','icehuff','icedoze']){
+  actor.play(name);actor.render(actor.constructor.SCENES[name].duration);
+  for(const key of keys)assert.ok(Math.abs(actor._pose[key]-initial[key])<.00001,name+' '+key);
+ }
 });
