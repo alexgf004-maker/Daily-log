@@ -706,6 +706,10 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   En pantallas anchas (PC) se ven enormes si se estiran los dos cordones de 12: la tarjeta es contenedor
   (`container-type:inline-size`) y desde 620 px de ancho se muestra un solo cordón de 24 (`.adv-uno`) en vez de los
   dos (`.adv-dos`).
+- **«Revisión de ayer» en Navidad** (`.rban` del Dashboard admin, CSS al final de `css/temas/navidad.css`): elegida
+  entre 3 (etiqueta de regalo / lista de Santa / campanita). Campanita con cinta de bastón de dulce arriba: roja y
+  dorada en casa y Año Nuevo, azul y plateada en Pre-Navidad, verde si no hubo incidencias; la campana (icono SVG en
+  `background`, el «!» se oculta) se mece cada ~3 s, pausada con `nv-reposo` y sin movimiento con movimiento reducido.
 
 ### Navidad en casa · «Todo se enciende» (`js/navidad-casa-luces.js`)
 Lo que se usa a diario se ilumina con foquitos de colores según lo que hace la persona (solo con `html.nav-casa`; al salir

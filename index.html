@@ -185,7 +185,7 @@
   // activo. Al abrir se escribe aquí mismo, en el <head>, para que cargue antes de pintar (sin parpadeo);
   // si el tema cambia con la app abierta (fecha, "Ver ahora", "Tema para todos"), aplicarTema llama a
   // cargarCss. Subir TEMAS_V al cambiar cualquiera de esos archivos.
-  var TEMAS_V='75';
+  var TEMAS_V='76';
   T.cssDe=function(tema){ return tema&&tema.css?tema.css+'?v='+TEMAS_V:null; };
   if(t&&t.css) document.write('<link rel="stylesheet" data-tema-css="'+t.id+'" href="'+T.cssDe(t)+'">');
   T.cargarCss=function(tema){
