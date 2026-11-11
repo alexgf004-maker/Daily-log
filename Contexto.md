@@ -583,6 +583,12 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   izquierda en vez de estirarse. Si el módulo no carga queda el dibujo anterior (`puebloNocheProg` / la repisa);
   si la ilustración no se puede dibujar, un fondo liso. Cuidado: el SVG va como imagen, así que tiene que ser XML
   válido (un atributo repetido hace que no cargue). Elegidas tras varias rondas (3D descartado: «siempre 2D»).
+  La sala lleva además guirnalda con foquitos en el techo, corona sobre la chimenea, cascanueces, banquito con chocolate
+  y libros, osito, galleta de jengibre, esfera de nieve y un **gatito naranja con gorrito de Santa** jugando con una esfera.
+  Con el texto largo en la imagen de 1080 la sala sale «compacta» (sin la ventana; con un cuadro nevado en la pared).
+  Navidad en casa también cambia el cuerpo («acebo y costura»): costura punteada y ramita de acebo en cada tarjeta y en
+  las barras de área, y el número de cada grupo es una esfera con tapita dorada (`decoTarjetaCasaProg`,
+  `decoRielCasaProg`, `numeroCasaProg`). Mismo acomodo y datos.
 - **Imagen de la programación compacta:** con pocos grupos va a 1080 de ancho (campañas de un grupo en 2
   columnas, las demás a todo lo ancho). Si así saldría más de ~1.5 veces más alta que ancha, pasa a 1620 de ancho
   y TODAS las tarjetas van en 3 columnas (`armarTodo(3)`), en orden de lectura columna por columna y repartidas
