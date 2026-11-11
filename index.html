@@ -7553,6 +7553,16 @@ function nieveBordeProg(ctx,W,y){ ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.
   ctx.lineTo(W,y+2); ctx.closePath(); ctx.fill(); }
 function estrellaProg(ctx,x,y,r,color){ const P=Math.PI; ctx.save(); ctx.translate(x,y); ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=18; ctx.beginPath();
   for(let i=0;i<10;i++){ const rr=i%2?r*.42:r, a=-P/2+i*P/5; ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr); } ctx.closePath(); ctx.fill(); ctx.restore(); }
+// Encabezado con ilustración (Pre-Navidad: paisaje con Santa cruzando la luna; Navidad en casa: la sala). La imagen viene
+// al ancho justo (ver js/navidad-prog-ilu.js); se oscurece un poco la izquierda para que el texto se lea; listón dorado abajo.
+function encabezadoIluProg(ctx,ti,img,W,H){
+  if(img) ctx.drawImage(img,0,0,W,H);
+  else { const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,ti==='casa'?'#3a0a10':'#050c24'); g.addColorStop(1,ti==='casa'?'#6e1a1e':'#2a4a86'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+  const os=ti==='casa'?'30,4,8':'5,10,30', g=ctx.createLinearGradient(0,0,W*.55,0); g.addColorStop(0,`rgba(${os},.45)`); g.addColorStop(1,`rgba(${os},0)`); ctx.fillStyle=g; ctx.fillRect(0,0,W*.55,H);
+  const k=H/520, x0=W-1620*k, N=window.__nvMotor;
+  if(img&&ti==='pre'&&N&&N.trineo){ ctx.save(); ctx.shadowColor='rgba(255,240,200,.6)'; ctx.shadowBlur=5; N.trineo(ctx,x0+1262*k,88*k,.42*k,1.3,'rgba(12,20,48,.96)'); ctx.restore(); }
+  const lb=ctx.createLinearGradient(0,H-7,0,H+1); lb.addColorStop(0,'#fff1b8'); lb.addColorStop(.5,'#e3ad38'); lb.addColorStop(1,'#8a5a0a'); ctx.fillStyle=lb; ctx.fillRect(0,H-6,W,7);
+}
 function pieTemaProg(ctx,ti,x,y){
   if(ti==='mu') cempasuchilProg(ctx,x,y,13);
   else if(ti==='pre') copoProg(ctx,x,y,13,'#1b84c9');
@@ -7849,9 +7859,12 @@ window.progGenerarImagen=async()=>{
   const pills=[`${progGrupos.length} ${progGrupos.length===1?'grupo':'grupos'}`,`${nTec} ${nTec===1?'técnico':'técnicos'}`,nVeh?`${nVeh} ${nVeh===1?'vehículo':'vehículos'}`:null].filter(Boolean);
   fuente(700,20); const pillW=pills.map(t=>ancho(t)+36); const pillsTot=pillW.reduce((a,b)=>a+b,0)+10*(pills.length-1);
   fuente(800,48); const fechaW=ancho(tituloFecha);
-  const pillsAlLado=pad+fechaW+28+pillsTot<=W-pad;
-  const BANDA=TI&&!HW?(TI==='mu'?112:TI==='pre'?170:62):0;   // Muertos y Navidad: franja de abajo del encabezado solo para los adornos (Pre-Navidad: el pueblito)
-  const TOPB=TI==='mu'?54:TI==='pre'?58:0;    // Muertos: espacio arriba para el papel picado; Pre-Navidad: para el cordón de foquitos (el texto baja)
+  // Pre-Navidad y Navidad en casa: el encabezado es una ilustración (js/navidad-prog-ilu.js) con el texto encima a la
+  // izquierda; las cifras van siempre debajo de la fecha para no tapar la escena. Si el módulo no carga, queda el dibujo de antes.
+  let iluMod=null; if(TI==='pre'||TI==='casa'){ try{ iluMod=await import('./js/navidad-prog-ilu.js?v=1'); }catch(e){} }
+  const pillsAlLado=!iluMod&&pad+fechaW+28+pillsTot<=W-pad;
+  const BANDA=iluMod?236:TI&&!HW?(TI==='mu'?112:TI==='pre'?170:62):0;   // Muertos y Navidad: franja de abajo del encabezado solo para los adornos (Pre-Navidad: el pueblito)
+  const TOPB=iluMod?0:TI==='mu'?54:TI==='pre'?58:0;    // Muertos: espacio arriba para el papel picado; Pre-Navidad: para el cordón de foquitos (el texto baja)
   const headH=(pillsAlLado?164:224)+BANDA+TOPB;
 
   const cuerpoH=areas.reduce((a,ar)=>a+Math.max(ar.h,ar.railH),0)+26*(areas.length-1);
@@ -7873,6 +7886,8 @@ window.progGenerarImagen=async()=>{
     ctx.fillStyle='rgba(180,140,90,.22)'; [[-9,-6,6],[7,5,7],[-3,12,4],[10,-10,3.5]].forEach(([dx,dy,r])=>{ ctx.beginPath(); ctx.arc(lx+dx,ly+dy,r,0,Math.PI*2); ctx.fill(); });
     murcielagoHW(ctx,lx-96,ly+10,.55,'#0a0204'); murcielagoHW(ctx,lx+82,ly-4,.42,'#0a0204'); murcielagoHW(ctx,lx+150,ly+20,.3,'#14060a');
     goteoHW(ctx,W,headH,'#7f1d1d');
+  } else if(iluMod){
+    encabezadoIluProg(ctx,TI,await iluMod.ilustracion(TI,W,headH),W,headH);
   } else if(TI){
     encabezadoTemaProg(ctx,TI,W,headH,headH-BANDA,TOPB);   // Muertos y Navidad: fondo y adornos de la temporada (abajo, junto a los de Halloween)
   } else {
