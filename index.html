@@ -185,7 +185,7 @@
   // activo. Al abrir se escribe aquí mismo, en el <head>, para que cargue antes de pintar (sin parpadeo);
   // si el tema cambia con la app abierta (fecha, "Ver ahora", "Tema para todos"), aplicarTema llama a
   // cargarCss. Subir TEMAS_V al cambiar cualquiera de esos archivos.
-  var TEMAS_V='73';
+  var TEMAS_V='74';
   T.cssDe=function(tema){ return tema&&tema.css?tema.css+'?v='+TEMAS_V:null; };
   if(t&&t.css) document.write('<link rel="stylesheet" data-tema-css="'+t.id+'" href="'+T.cssDe(t)+'">');
   T.cargarCss=function(tema){
@@ -884,7 +884,7 @@ import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, ob
 import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js?v=2";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { diaNavidad, diasDelCordon, cordonHTML, adventoHTML, abrirPuerta, lineaPersonalAdviento } from "./js/navidad-app.js?v=3";
-import { adornoNV, escarchaMarcaje, pintarGuirnaldaNV, etiquetaRegaloNV } from "./js/navidad-marcaje.js?v=3";
+import { adornoNV, escenaMarcajeNV, pintarGuirnaldaNV, etiquetaRegaloNV } from "./js/navidad-marcaje.js?v=4";
 import { escenaVentanaNV } from "./js/navidad-guardado.js?v=1";
 import { adornoSantaNV, escenaSantaNV } from "./js/navidad-casa-marcaje.js?v=3";
 import { escenaListaNV } from "./js/navidad-casa-guardado.js?v=1";
@@ -2794,10 +2794,10 @@ function etiquetaChip(chip,extra){
 // A tiempo la hora se agacha y la hoja pasa por encima; tarde (o salida antes) la hora queda partida.
 const hwTema=()=>document.documentElement.classList.contains('tema-halloween');
 const muTema=()=>document.documentElement.classList.contains('tema-muertos');
-// Pre-Navidad (1–21 dic): marcaje "Escarcha viva" (dibujo y escena en js/navidad-marcaje.js)
+// Pre-Navidad (1–21 dic): marcaje «Bola de nieve» (dibujo en js/navidad-marcaje.js, escena en js/navidad-muneco.js)
 const nvPreTema=()=>{ const c=document.documentElement.classList; return c.contains('tema-navidad')&&c.contains('nav-pre'); };
 const nvCasaTema=()=>{ const c=document.documentElement.classList; return c.contains('tema-navidad')&&c.contains('nav-casa'); };
-// Tramos de la línea: entrada (0–50 %) y salida (50–100 %); el recién marcado se pinta cuando se derrite la escarcha
+// Tramos de la línea: entrada (0–50 %) y salida (50–100 %); el recién marcado se pinta cuando la bola de nieve llega al marcaje
 function tramosNV(entrada,salida,recien){
   const tramo=(dato,desde,nuevo)=>dato?`<b class="nvp-tr${chipEstado(dato).color==='br'?' mal':''}${nuevo?' nuevo':''}" style="left:${desde}%"></b>`:'';
   return tramo(entrada,0,recien==='entrada')+tramo(salida,50,recien==='salida');
@@ -2995,7 +2995,7 @@ async function renderMarcajeCard(msgHtml, recien){
   if(recien&&hwTema()) tajoHalloween(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
   if(recien&&muTema()) armarFlorMU(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien'));
   if(recien&&nvCasaTema()){ const pt=cont.querySelector('.mk3-pt.recien'); if(pt) escenaSantaNV(cont.querySelector('.mk3'),pt,{tarde:!!pt.querySelector('.mk3-dot.mal'),hora:pt.querySelector('.mk3-t')?.textContent||'',cual:recien}); }
-  if(nv){ if(recien) escarchaMarcaje(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien')); else pintarGuirnaldaNV(cont.querySelector('canvas.nvp-guir')); }
+  if(nv){ if(recien) escenaMarcajeNV(cont.querySelector('.mk3'),cont.querySelector('.mk3-pt.recien')); else pintarGuirnaldaNV(cont.querySelector('canvas.nvp-guir')); }
   if(avanceIni!==avance){
     // La línea avanza hasta el punto recién marcado
     const barra=cont.querySelector('.mk3-line i');
@@ -4605,7 +4605,7 @@ window.probarMarcajeTema=function(){
       <div class="mk3-line">${linea}</div>
       <div class="mk3-pt"><div class="mk3-dot off"></div><div class="mk3-t off">--:--</div><div class="mk3-l">Salida</div></div></div></div>`;
     const card=$('hwPruebaCard').querySelector('.mk3'), pt=$('hwPruebaCard').querySelector('.mk3-pt.recien');
-    if(nc) escenaSantaNV(card,pt,{tarde:mal,hora,cual:'entrada'}); else if(nv) escarchaMarcaje(card,pt); else if(mu) armarFlorMU(card,pt); else requestAnimationFrame(()=>tajoHalloween(card,pt));
+    if(nc) escenaSantaNV(card,pt,{tarde:mal,hora,cual:'entrada'}); else if(nv) escenaMarcajeNV(card,pt); else if(mu) armarFlorMU(card,pt); else requestAnimationFrame(()=>tajoHalloween(card,pt));
   };
   // "¡Listo, guardado!" de ejemplo; la vista previa se oculta mientras tanto y vuelve al cerrarse
   const guardado=()=>{

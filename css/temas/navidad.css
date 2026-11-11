@@ -519,18 +519,15 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 :where(.nav-pre) .btn-personal-flot{box-shadow:0 6px 20px -4px rgba(196,21,44,.55)}
 :where(.nav-pre) .dash-hero{background:linear-gradient(120deg,#031428 0%,#0b3a6a 100%);box-shadow:0 10px 24px -10px rgba(196,21,44,.5)}
 :where(.nav-pre) .mk3-btn{background:linear-gradient(135deg,#031428,#0b3a6a);box-shadow:0 8px 16px -8px rgba(196,21,44,.7)}
-/* Marcaje "Escarcha viva" (js/navidad-marcaje.js) */
+/* Marcaje «Bola de nieve» (js/navidad-marcaje.js y js/navidad-muneco.js). La guirnalda mide 38 px; el lienzo
+   es más alto para que el brillo de los foquitos se apague solo y no se vea cortado. */
 .nav-pre .mk3.nvp-con-guir{position:relative;overflow:hidden;padding-top:40px}
-.nav-pre .mk3 canvas.nvp-guir{position:absolute;left:0;top:0;width:100%;height:38px;pointer-events:none;transition:opacity .4s}
+.nav-pre .mk3 canvas.nvp-guir{position:absolute;left:0;top:0;width:100%;height:56px;pointer-events:none;transition:opacity .4s}
 .nav-pre .mk3 canvas.nvp-guir.esperando{opacity:0}
-.nav-pre .mk3 canvas.nvp-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4}
 .nav-pre .mk3-dot.nvp{background:none!important;width:44px;height:44px;color:inherit}
 .nav-pre .mk3-dot.nvp svg{display:block;overflow:visible}
 .nav-pre .mk3-pt.recien .mk3-dot.nvp{animation:none}
 .nav-pre .mk3-pt.recien .mk3-dot.nvp::after{display:none}
-.nav-pre .mk3-t{transition:color .6s,text-shadow .6s}
-.nav-pre .mk3-t.nvp-hielo{color:#7fb3d6;text-shadow:0 0 6px #fff,0 0 1px #bfe3f7}
-.nav-pre .mk3-t.nvp-oro{color:#b45309;text-shadow:0 0 14px rgba(251,191,36,.75)}
 .nav-pre .mk3-line{position:relative;overflow:visible}
 .nav-pre .mk3-line>i:first-child{opacity:0}
 .nav-pre .mk3-line .nvp-tr{position:absolute;top:0;width:50%;height:100%;border-radius:3px;background:linear-gradient(90deg,#fbbf24,#e3263c);transform-origin:0 50%}

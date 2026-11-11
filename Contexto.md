@@ -407,19 +407,26 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     Cada una trae una sorpresa propia (`ADVIENTO` en `js/navidad-app.js`), una línea personal (foquitos) y el mensaje
     que el admin escriba en Mi Perfil → "Mensajes del Adviento" (`config/navidad/adviento/<día>` = {texto, por, en};
     lo permite la regla `config/$otro`). Las puertas abiertas se recuerdan en el teléfono (`innova_adviento_<uid>_<año>`).
-  - **Marcaje "Escarcha viva"** (Pre-Navidad, `js/navidad-marcaje.js`; elegida entre varias muestras, la del nivel
-    "escalones arriba"): al marcar, la escarcha crece desde las orillas y cubre la tarjeta (hora helada `.nvp-hielo`) y
-    arriba aparece una guirnalda de foquitos de vidrio congelados; desde el punto marcado sale una ola de calor que la
-    derrite (gotas, vapor), cada foquito se enciende al llegarle el calor y la hora pasa a dorado (`.nvp-oro`). Tarde: el
-    calor no alcanza, la escarcha regresa y los foquitos titilan y se apagan. Todo en un `<canvas class="nvp-fx">` que se
-    quita al terminar; después queda fija la guirnalda (`canvas.nvp-guir`, `pintarGuirnaldaNV`): prendida si la
-    entrada fue a tiempo y la salida no fue antes, congelada si no. Punto: esfera roja con ✓ o gris con ✕ (`adornoNV`).
-    Línea por tramos (`tramosNV`, `.nvp-tr`). Con movimiento reducido sale directo el estado final. Dura ~4.4 s
-    (tarde ~5 s): la duración está aprobada, no acortarla. Rendimiento: los cristales se dibujan una sola vez en su
-    capa conforme crecen, sin sombras durante la escena y lienzo a 1.5x (antes se redibujaba todo en cada cuadro:
-    ~11 cuadros/s y cuadros de 266 ms con CPU de celular; ahora >60 y el más pesado ~25 ms). También en
-    "Probar animaciones". Nota para pruebas: el reloj falso de Playwright (`clock.install`) avanza ~3 veces más lento con
-    escenas pesadas de canvas; probar con "Ver ahora" (`innova_tema=ver`, `innova_tema_ver=navidad`, `innova_tema_etapa=pre`).
+  - **Marcaje «Bola de nieve»** (Pre-Navidad; reemplazó a "Escarcha viva", que se sentía "meh"; elegida entre 3
+    escenas con el mismo muñeco: se derrite / bola de nieve / en trineo). Escena en `js/navidad-muneco.js`
+    (`bolaDeNieveNV`), la llama `escenaMarcajeNV` de `js/navidad-marcaje.js` (en `renderMarcajeCard` y en "Probar
+    animaciones"). Un muñeco de nieve original, estilo ilustración (no caricatura, no copia de la escena de Santa:
+    la usuaria pidió algo original): bolas con textura de nieve, ojos/boca/botones de carbón, cejas de ramita (para
+    los gestos), zanahoria, brazos de rama, bufanda escocesa y sombrero de copa con acebo. Sale de un montículo de
+    nieve encima de la tarjeta (un `<svg class="nvm-esc">` que sobresale 250 px hacia arriba; durante la escena la
+    tarjeta queda con `overflow:visible` y se restaura al final). A tiempo: te ve, arma una bola, cierra un ojo para
+    apuntar y la lanza al punto (estallido de nieve y destellos, aparece la esfera roja) y brinca el sombrero.
+    Tarde (que se note que está mal): saca un reloj de bolsillo que suena, frunce las cejas, dice que no, le sale
+    vapor del sombrero y lanza fuerte una bola de aguanieve sucia que se embarra en el punto y escurre hasta dejar
+    ver la ✕. Dura 4.8 s (tarde 6.2 s). Cuando la bola llega se pinta el tramo nuevo (`.nvp-tr.nuevo` → `.va`); al
+    final queda la guirnalda fija. Rendimiento: las bolas de nieve (lo único con filtro `feTurbulence`) se pasan una
+    sola vez a imágenes (blob SVG → `<image>`) para no recalcular el filtro en cada cuadro. Con movimiento reducido
+    sale directo el estado final. Punto: esfera roja con ✓ o gris con ✕ (`adornoNV`). Línea por tramos (`tramosNV`).
+  - **Guirnalda del marcaje** (`canvas.nvp-guir`, `pintarGuirnaldaNV`): prendida si la entrada fue a tiempo y la
+    salida no fue antes, congelada si no. Cuelga de dos clavitos dorados con acebo metidos 16 px de las orillas y los
+    foquitos van entre ellos (antes el cable y los foquitos de las orillas quedaban mordidos por las esquinas
+    redondeadas). El lienzo mide 56 px aunque la guirnalda ocupa ~38 px, para que el brillo de los foquitos se
+    apague solo (antes terminaba en una línea recta: "se ven como cortadas").
   - **Etiqueta de estado "de regalo"** (Pre-Navidad, `etiquetaRegaloNV` en `js/navidad-marcaje.js`, `.nvp-et`): en la
     tarjeta del marcaje del técnico, en vez de la píldora: etiquetita de regalo con agujero, colgando de un cordón de
     bastón de dulce (`.nvp-cordel`) y ladeada. A tiempo papel crema y letras rojas (foquito en la entrada; en la salida
