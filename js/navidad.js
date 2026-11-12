@@ -105,23 +105,31 @@
   }
 
   /* ════════════════ PRE-NAVIDAD ════════════════ */
+  function auroraHTML(){
+    var cintas=[['80,255,170',.2,1,26,0],['70,220,255',.26,.75,33,-9],['200,110,255',.14,.6,39,-17],['120,255,200',.33,.45,29,-5]], h='<div class="nv-aurora" aria-hidden="true">';
+    cintas.forEach(function(b,i){ var c=b[0], y=b[1]*1000, d='', f=1.2+i*.45;
+      for(var x=0;x<=1600;x+=40){ var yy=y+Math.sin(x/1600*Math.PI*2*f+i)*60+Math.sin(x/170+i*2)*18; d+=(x?' L':'M')+x+' '+yy.toFixed(1); }
+      h+='<div class="nv-au-c" style="animation-duration:'+b[3]+'s,'+(b[3]*.47).toFixed(1)+'s;animation-delay:'+b[4]+'s,'+(b[4]*.6).toFixed(1)+'s">'+
+        '<svg viewBox="0 0 1600 1000" preserveAspectRatio="none" style="opacity:'+b[2]+'"><defs><filter id="nvAu'+i+'" x="-5%" y="-60%" width="110%" height="220%"><feGaussianBlur stdDeviation="12 18"/></filter>'+
+        '<filter id="nvAuS'+i+'" x="-5%" y="-80%" width="110%" height="260%"><feGaussianBlur stdDeviation="10 40"/></filter></defs>'+
+        '<path d="'+d+'" transform="translate(0 -70)" fill="none" stroke="rgba('+c+',.34)" stroke-width="170" filter="url(#nvAuS'+i+')"/>'+
+        '<path d="'+d+'" fill="none" stroke="rgba('+c+',.8)" stroke-width="54" filter="url(#nvAu'+i+')"/>'+
+        '<path d="'+d+'" transform="translate(0 14)" fill="none" stroke="rgba('+c+',.6)" stroke-width="10" filter="url(#nvAu'+i+')"/></svg></div>'; });
+    return h+'</div>';
+  }
   function armarPre(capa,f){
     var d=f.dia, avance=Math.min(1,(d-1)/16), prendenTodos=d>=17;
     // aurora, estrellas y nieve fina en el canvas
     var bandas=[{c:'80,255,170',y:.2,a:1.1,f:1.2,s:.00035},{c:'70,220,255',y:.26,a:.8,f:1.7,s:.00028},{c:'200,110,255',y:.14,a:.65,f:2.1,s:.0004},{c:'120,255,200',y:.33,a:.45,f:2.6,s:.0005}];
     var est=[]; for(var i=0;i<80;i++) est.push({x:Math.random(),y:Math.random()*.45,r:R(.5,1.6),f:R(0,6)});
     var cop=[]; for(i=0;i<60;i++) cop.push({x:Math.random(),y:Math.random(),r:R(.6,2.3),v:R(.0004,.0012)});
-    var techo=null,medido=-1000,ultimoCopo=-15000,posados=[], aurora=document.createElement('canvas'), auroraT=-1e9;
+    var techo=null,medido=-1000,ultimoCopo=-15000,posados=[];
+    // La aurora: listones de luz ya desenfocados (SVG con feGaussianBlur, se pinta una vez) que el navegador desliza y
+    // hace «respirar» con transform/opacity a 60 cuadros por segundo casi sin costo. Antes se pintaba en el lienzo
+    // ~11 veces por segundo para no gastar, y por eso se veía a saltos.
+    capa.insertAdjacentHTML('afterbegin',auroraHTML());
     bucle=lienzo(capa,[
       function(c,W,H,t){ est.forEach(function(e){ c.fillStyle='rgba(255,255,255,'+(.35+.65*Math.abs(Math.sin(t/900+e.f)))+')'; c.beginPath(); c.arc(e.x*W,e.y*H,e.r,0,6.283); c.fill(); }); },
-      function(c,W,H,t){
-        // la aurora se mueve muy despacio: se pinta a media resolución unas 11 veces por segundo y se copia en cada cuadro
-        var aw=Math.ceil(W/2), ah=Math.ceil(H/2);
-        if(aurora.width!==aw||aurora.height!==ah){ aurora.width=aw; aurora.height=ah; auroraT=-1e9; }
-        if(t-auroraT>90){ auroraT=t; var a=aurora.getContext('2d'); a.setTransform(.5,0,0,.5,0,0); a.clearRect(0,0,W,H); a.globalCompositeOperation='lighter';
-          bandas.forEach(function(b){ for(var x=0;x<=W;x+=6){ var yc=H*b.y+Math.sin(x/W*Math.PI*b.f+t*b.s*3)*34+Math.sin(x/90+t*b.s*5)*10, alto=110+Math.sin(x/60+t*b.s*4)*40, al=b.a*(.55+.45*Math.sin(x/70+t*b.s*6));
-            var g=a.createLinearGradient(0,yc-alto,0,yc+20); g.addColorStop(0,'rgba('+b.c+',0)'); g.addColorStop(.75,'rgba('+b.c+','+(al*.5)+')'); g.addColorStop(1,'rgba('+b.c+',0)'); a.fillStyle=g; a.fillRect(x,yc-alto,6,alto+20); } }); }
-        c.globalCompositeOperation='lighter'; c.drawImage(aurora,0,0,W,H); c.globalCompositeOperation='source-over'; },
       function(c,W,H,t){
         // La nieve comparte el espacio físico del bloque y se posa en su cara superior.
         if(t-medido>300){medido=t;var hielo=$('#loginScreen .nv-mascota-congelada #nvice-body');techo=null;

@@ -49,14 +49,18 @@ const NV=(()=>{
   // capa viva: luces que respiran (brillo precalculado por color: una imagen que solo se escala), nieve y destellos
   const SPR={}; function sprite(c){ if(SPR[c]) return SPR[c]; const s=document.createElement('canvas'); s.width=s.height=64; const q=s.getContext('2d'), g=q.createRadialGradient(32,32,0,32,32,32);
     g.addColorStop(0,`rgba(${c},.7)`); g.addColorStop(.2,`rgba(${c},.3)`); g.addColorStop(1,`rgba(${c},0)`); q.fillStyle=g; q.fillRect(0,0,64,64); return SPR[c]=s; }
+  // Rendimiento (se llama en cada cuadro): colores guardados y transparencia con globalAlpha (antes se armaba un texto
+  // «rgba(…)» por luz, chispa y copo en cada cuadro: basura que el teléfono tenía que limpiar), y los copos pequeños
+  // en 3 trazos por brillo en vez de uno por copo.
   function vivo(x,W,H,t,luces,copos,chispas){
     x.clearRect(0,0,W,H); x.save(); x.globalCompositeOperation='lighter';
     for(const l of luces){ const a=l.a*(.72+.28*Math.sin(t*l.v+l.f)), R2=l.r*(l.k||8); x.globalAlpha=a*(l.ga||1); x.drawImage(l.spr||(l.spr=sprite(l.c)),l.x-R2,l.y-R2,R2*2,R2*2); }
-    x.globalAlpha=1;
-    for(const l of luces){ const a=l.a*(.72+.28*Math.sin(t*l.v+l.f)); x.fillStyle=`rgba(${l.c},${.9*a})`; x.beginPath(); x.arc(l.x,l.y,l.r,0,P); x.fill(); }
-    for(const c of chispas){ const a=Math.max(0,Math.sin(t*c.v+c.f))**8; if(a<.03) continue; const L=c.r*(1+a); x.strokeStyle=`rgba(255,240,200,${a})`; x.lineWidth=1.2; x.beginPath(); x.moveTo(c.x-L,c.y); x.lineTo(c.x+L,c.y); x.moveTo(c.x,c.y-L); x.lineTo(c.x,c.y+L); x.stroke(); }
-    x.restore(); const nieve=sprite('255,255,255');
-    for(const k of copos){ const y=((k.y+t*k.v)%(H+40))-20, xx=k.x+Math.sin(t*k.o+k.f)*k.amp; if(k.r>3){ x.globalAlpha=k.a; x.drawImage(nieve,xx-k.r*1.4,y-k.r*1.4,k.r*2.8,k.r*2.8); x.globalAlpha=1; } else { x.fillStyle=`rgba(255,255,255,${k.a})`; x.fillRect(xx-k.r*.7,y-k.r*.7,k.r*1.4,k.r*1.4); } } }
+    for(const l of luces){ const a=l.a*(.72+.28*Math.sin(t*l.v+l.f)); x.globalAlpha=.9*a; x.fillStyle=l.rgb||(l.rgb=`rgb(${l.c})`); x.beginPath(); x.arc(l.x,l.y,l.r,0,P); x.fill(); }
+    x.strokeStyle='rgb(255,240,200)'; x.lineWidth=1.2;
+    for(const c of chispas){ const a=Math.max(0,Math.sin(t*c.v+c.f))**8; if(a<.03) continue; const L=c.r*(1+a); x.globalAlpha=a; x.beginPath(); x.moveTo(c.x-L,c.y); x.lineTo(c.x+L,c.y); x.moveTo(c.x,c.y-L); x.lineTo(c.x,c.y+L); x.stroke(); }
+    x.restore(); const nieve=sprite('255,255,255'), chicos=[new Path2D(),new Path2D(),new Path2D()];
+    for(const k of copos){ const y=((k.y+t*k.v)%(H+40))-20, xx=k.x+Math.sin(t*k.o+k.f)*k.amp; if(k.r>3){ x.globalAlpha=k.a; x.drawImage(nieve,xx-k.r*1.4,y-k.r*1.4,k.r*2.8,k.r*2.8); } else chicos[k.a<.63?0:k.a<.77?1:2].rect(xx-k.r*.7,y-k.r*.7,k.r*1.4,k.r*1.4); }
+    x.fillStyle='#fff'; for(let q=0;q<3;q++){ x.globalAlpha=[.57,.7,.83][q]; x.fill(chicos[q]); } x.globalAlpha=1; }
   function copos(W,H,n){ const a=[]; for(let i=0;i<n;i++){ const z=R(); a.push({x:R()*W,y:R()*H,r:z<.12?rr(4,8):rr(.8,2.4),a:z<.12?.35:rr(.5,.9),v:z<.12?rr(40,60):rr(14,34),o:rr(.3,.8),f:R()*6,amp:rr(6,20)}); } return a; }
   return {P,R,rr,sem,lerp,lienzo,esfera,ESF,regalo,vivo,copos};
 })();
@@ -191,15 +195,20 @@ const NV=(()=>{
     let g=x.createLinearGradient(cx-w*.04,0,cx+w*.04,0); g.addColorStop(0,'#2a180a'); g.addColorStop(.4,'#6a4422'); g.addColorStop(1,'#2a180a'); x.fillStyle=g; x.fillRect(cx-w*.035,yb-h*.05,w*.07,h*.08);
     for(let i=T-1;i>=0;i--){ const p=pisos[i];
       g=x.createLinearGradient(0,p.yT,0,p.yB+8*k); g.addColorStop(0,V[0]); g.addColorStop(.5,V[1]); g.addColorStop(1,V[2]); x.fillStyle=g; x.fill(p.ruta);
+      // Rendimiento: las agujas y las ramitas se juntan en un solo trazo por color y grosor (grosor redondeado a 0.1 px)
+      // en vez de miles de trazos sueltos; los números al azar se piden en el mismo orden, así el árbol queda igual.
+      const lotes=new Map(), lote=(c,lw)=>{ const q=c+'|'+(Math.round(lw*10)/10); let pa=lotes.get(q); if(!pa){ pa=new Path2D(); lotes.set(q,pa); } return pa; };
+      const trazar=()=>{ lotes.forEach((pa,q)=>{ const i2=q.indexOf('|'); x.strokeStyle=q.slice(0,i2); x.lineWidth=+q.slice(i2+1); x.stroke(pa); }); lotes.clear(); };
       x.save(); x.clip(p.ruta); const alto=p.yB-p.yT, cuantas=Math.round(p.hw*alto/(pc?42:56)/k/k);
       for(let s=0;s<cuantas;s++){ const v=Math.pow(R(),.65), py=p.yT+alto*v, an=p.tw+(p.hw-p.tw)*v, px=cx+(R()*2-1)*an*1.02, dx=(px-cx)/Math.max(1,p.hw);
         const base=Math.PI/2-dx*1.1, luz=v*.8+(dx<0?.22:-.12)+rr(-.25,.25), ci=Math.max(0,Math.min(5,Math.round(luz*5)));
-        x.strokeStyle=V[ci]; x.lineWidth=rr(.9,1.5)*Math.max(.8,k); const L=rr(7,15)*k; for(let a=-2;a<=2;a++){ const ang=base+a*.3+rr(-.1,.1); x.beginPath(); x.moveTo(px,py); x.lineTo(px+Math.cos(ang)*L*(1-Math.abs(a)*.12),py+Math.sin(ang)*L*(1-Math.abs(a)*.12)); x.stroke(); } }
-      x.restore();
-      const copete=(bx,by,dir,L0,claro)=>{ for(let a2=0;a2<9;a2++){ const an=dir+rr(-.55,.55), L=L0*rr(.6,1.1); x.strokeStyle=claro?V[4+(a2%2)]:V[2+(a2%2)]; x.lineWidth=rr(1,1.5)*Math.max(.8,k);
-        x.beginPath(); x.moveTo(bx-Math.cos(an)*L*.5,by-Math.sin(an)*L*.5); x.quadraticCurveTo(bx+Math.cos(an)*L*.2,by+Math.sin(an)*L*.2+L*.08,bx+Math.cos(an)*L*.55,by+Math.sin(an)*L*.55+L*.12); x.stroke(); } };
+        const pa=lote(V[ci],rr(.9,1.5)*Math.max(.8,k)); const L=rr(7,15)*k; for(let a=-2;a<=2;a++){ const ang=base+a*.3+rr(-.1,.1); pa.moveTo(px,py); pa.lineTo(px+Math.cos(ang)*L*(1-Math.abs(a)*.12),py+Math.sin(ang)*L*(1-Math.abs(a)*.12)); } }
+      trazar(); x.restore();
+      const copete=(bx,by,dir,L0,claro)=>{ for(let a2=0;a2<9;a2++){ const an=dir+rr(-.55,.55), L=L0*rr(.6,1.1); const pa=lote(claro?V[4+(a2%2)]:V[2+(a2%2)],rr(1,1.5)*Math.max(.8,k));
+        pa.moveTo(bx-Math.cos(an)*L*.5,by-Math.sin(an)*L*.5); pa.quadraticCurveTo(bx+Math.cos(an)*L*.2,by+Math.sin(an)*L*.2+L*.08,bx+Math.cos(an)*L*.55,by+Math.sin(an)*L*.55+L*.12); } };
       p.borde.forEach((b,j)=>{ const dir=Math.PI/2-((b[0]-cx)/p.hw)*.9; copete(b[0],b[1]-2*k,dir,(j%2?10:16)*k,b[0]<cx+p.hw*.25); });
       for(let s=0;s<12;s++){ const u=(s+.5)/12, yy=p.yT+(p.yB-p.yT)*u, xw=p.tw+(p.hw-p.tw)*Math.pow(u,1.1); copete(cx-xw*.98,yy,Math.PI*.78,12*k,true); copete(cx+xw*.98,yy,Math.PI*.22,12*k,false); }
+      trazar();
       if(i>0){ const q=pisos[i-1]; x.save(); x.clip(p.ruta); g=x.createLinearGradient(0,q.yB-6*k,0,q.yB+26*k); g.addColorStop(0,'rgba(0,10,4,.6)'); g.addColorStop(1,'rgba(0,10,4,0)'); x.fillStyle=g; x.fillRect(cx-p.hw-10,q.yB-6*k,p.hw*2+20,34*k); x.restore(); } }
     if(nieve){ pisos.forEach(p=>{ p.borde.forEach((b,j)=>{ if(j%2) return; const r=rr(5,10)*k, gg=x.createRadialGradient(b[0]-r*.3,b[1]-r*1.4,0,b[0],b[1]-r*1.1,r*1.5); gg.addColorStop(0,'#ffffff'); gg.addColorStop(.7,'#e4f0fa'); gg.addColorStop(1,'rgba(220,236,250,0)'); x.fillStyle=gg; x.beginPath(); x.ellipse(b[0],b[1]-r*1.1,r*1.5,r*.7,((b[0]-cx)/p.hw)*.5,0,P); x.fill(); }); }); }
     if(tono){ x.save(); x.clip(sil); x.fillStyle=`rgba(10,24,48,${tono})`; x.fillRect(cx-w/2-10,top-10,w+20,h+30); x.restore(); }

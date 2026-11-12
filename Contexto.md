@@ -743,6 +743,14 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
     regular), y `GreenActor.frame` dibuja a 30 cps siempre en el compañero (`embedded`) y en el login solo en «idle»
     (sus gestos van a 60). En reposo: Casa 64→0 %, Pre 64→6 %. Al tocar la pantalla despierta y sigue con sus gestos.
     Pruebas ajustadas a 30 cps (green-actor-performance y navidad.test) más una nueva que lo comprueba.
+  - Escenas en lienzo: los trazos repetidos se juntan en un `Path2D` por color/grosor (agujas y ramitas del árbol de
+    `N.arbol`: −40 % de tiempo, se ve igual porque el azar se pide en el mismo orden; copos del valle de Pre-Navidad y
+    copos chicos de `vivo` en 3 trazos por brillo) y en lo que corre en cada cuadro no se arman textos «rgba(…)» (colores
+    guardados + `globalAlpha`). Al abrir (×4): Navidad en casa login 941→715 ms bloqueado, adentro 709→483 ms; Pre
+    login 633→471 ms.
+  - **Aurora del login de Pre-Navidad** (`auroraHTML` en js/navidad.js, CSS «Aurora del login»): antes se pintaba en el
+    lienzo ~11 veces por segundo (se veía a saltos). Ahora son listones SVG con el desenfoque dentro, que se deslizan y
+    respiran con transform/opacity: fluida a 60 cps y el login de Pre-Navidad gasta 75→53 % (×4).
   - Al abrir aún hay ~1 s de trabajo pesado en Navidad en casa (dibujar el árbol aguja por aguja ~0.3 s ×4 en el login
     y la noche de adentro); idea para después: guardar la escena ya dibujada (Cache Storage) para no rehacerla.
 - **Convivencia con el compañero en los encabezados** (`css/temas/navidad.css`, al final; el compañero es de

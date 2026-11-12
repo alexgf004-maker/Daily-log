@@ -227,7 +227,8 @@
   // humo van en otro lienzo encima, a 30 cuadros por segundo. En reposo se detiene todo (se queda quieto como está).
   function cuadroValle(n){
     if(!valle) return; valle.raf=0;
-    if(!valle.lz.isConnected||!document.documentElement.classList.contains('nav-pre')||document.hidden||!pantallaAdentro()) return;   // se reanuda con verValle()
+    // ¿sigue la app a la vista? (se revisa cada medio segundo, no en cada cuadro: buscar la pantalla activa cuesta)
+    if(!valle.lz.isConnected||document.hidden||n-(valle.revisado||0)>500&&(valle.revisado=n,!document.documentElement.classList.contains('nav-pre')||!pantallaAdentro())){ valle.revisado=0; return; }   // se reanuda con verValle()
     var v=valle.d, t=n/1000, y=(document.scrollingElement||document.documentElement).scrollTop||0;
     if(valle.sucio||y!==valle.yUlt){ var x=valle.x; valle.sucio=false; valle.yUlt=y; x.setTransform(v.D,0,0,v.D,0,0);
       for(var i=0;i<3;i++){ var dy=-Math.min(v.tope[i],y*v.f[i]); x.drawImage(v.capas[i].c,0,dy,v.W,v.H+v.tope[i]); } }
@@ -237,7 +238,10 @@
     var xv=valle.xv; xv.setTransform(1,0,0,1,0,0); xv.clearRect(0,0,v.W,v.H);
     var dm=-Math.min(v.tope[1],y*v.f[1]);
     v.casas.forEach(function(q,j){ for(var k=0;k<3;k++){ var u=(t*.25+j*.3+k*.33)%1; xv.fillStyle='rgba(255,255,255,'+(.5*(1-u)).toFixed(3)+')'; xv.beginPath(); xv.arc(q.x+13*q.s+u*6,q.y+dm-22*q.s-u*18,2+u*4,0,6.283); xv.fill(); } });
-    xv.fillStyle='#fff'; v.copos.forEach(function(k){ var yy=((k.y+t*k.v)%1)*v.H, xx=k.x*v.W+Math.sin(t*.8+k.y*9)*10; xv.globalAlpha=.55+k.r/5; xv.beginPath(); xv.arc(xx,yy,k.r,0,6.283); xv.fill(); }); xv.globalAlpha=1;
+    // los copos van en 3 trazos (por brillo) en vez de uno por copo
+    xv.fillStyle='#fff'; var lotes=[new Path2D(),new Path2D(),new Path2D()];
+    v.copos.forEach(function(k){ var yy=((k.y+t*k.v)%1)*v.H, xx=k.x*v.W+Math.sin(t*.8+k.y*9)*10, pa=lotes[k.r<1.2?0:k.r<1.8?1:2]; pa.moveTo(xx+k.r,yy); pa.arc(xx,yy,k.r,0,6.283); });
+    for(var q=0;q<3;q++){ xv.globalAlpha=[.75,.85,.95][q]; xv.fill(lotes[q]); } xv.globalAlpha=1;
   }
   function verValle(){
     if(!document.documentElement.classList.contains('nav-pre')) return;

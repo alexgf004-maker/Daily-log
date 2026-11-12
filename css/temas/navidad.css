@@ -892,3 +892,12 @@ html.tema-navidad :is(#employeeScreen,#adminScreen) .pf-gafete.nv-con-companero{
 html.nv-entrando :is(#employeeScreen,#adminScreen)>:not(.topbar){opacity:0}
 html.tema-navidad :is(#employeeScreen,#adminScreen)>:not(.topbar){transition:opacity .3s ease}
 @media (prefers-reduced-motion:reduce){ html.tema-navidad :is(#employeeScreen,#adminScreen)>:not(.topbar){transition:none} }
+
+/* ═ Aurora del login de Pre-Navidad (auroraHTML en js/navidad.js): listones desenfocados que se deslizan y respiran.
+   Solo transform y opacity sobre elementos HTML/SVG raíz: el navegador los mueve sin repintar (fluido a 60 cps). ═ */
+.nv-aurora{position:absolute;left:0;right:0;top:0;height:100%;overflow:hidden;pointer-events:none}
+.nv-au-c{position:absolute;left:0;top:0;width:200%;height:100%;will-change:transform;animation:nvAuDesliza 30s ease-in-out infinite alternate,nvAuRespira 14s ease-in-out infinite alternate}
+.nv-au-c svg{display:block;width:100%;height:100%}
+@keyframes nvAuDesliza{from{transform:translate3d(0,0,0)}to{transform:translate3d(-38%,1.5%,0)}}
+@keyframes nvAuRespira{from{opacity:1}50%{opacity:.55}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.nv-au-c{animation:none}}
