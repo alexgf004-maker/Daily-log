@@ -71,6 +71,10 @@
         ".read": true,
         ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && root.child('users/'+auth.uid+'/role').val() === 'admin'"
       },
+      "mantenimientoTransicion": {
+        ".read": true,
+        ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && root.child('users/'+auth.uid+'/role').val() === 'admin'"
+      },
       "cierreSesion": {
         ".read": true,
         ".write": "auth != null && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true') && root.child('users/'+auth.uid+'/role').val() === 'admin'"

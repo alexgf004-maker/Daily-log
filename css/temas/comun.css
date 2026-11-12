@@ -125,3 +125,53 @@ html:not(.tema-muertos):not(.tema-navidad):not(.tema-halloween) #bootScreen .boo
 /* "Probar animaciones" (perfil y panel del admin): solo con un tema que tenga escena de marcaje */
 .tema-probar{display:none!important}
 :is(.tema-halloween,.tema-muertos,.nav-pre,.nav-casa) .tema-probar{display:flex!important}
+
+/* ═ Mantenimiento de transición «Una nueva época está llegando» (js/navidad-transicion.js) ═
+   Del azul de siempre a la noche de Pre-Navidad: escarcha desde las orillas y una ventana redonda que se derrite.
+   Etapas: .n1 noche y aurora · .n2 nieve · .n3 se abre la ventana · .n4 título y lo demás. */
+#maintenanceScreen.mtx{background:#0b1f3f!important;overflow:hidden}
+.mtx :is(.mtx-azul,.mtx-noche,.mtx-cielo,.mtx-hielo,.mtx-nieve){position:fixed;inset:0;pointer-events:none}
+.mtx .mtx-hielo{width:100%;height:100%;transition:opacity 2.5s 1s} .mtx.n4 .mtx-hielo{opacity:.55}
+.mtx .mtx-azul{background:linear-gradient(160deg,#081428 0%,#12284a 45%,#1d4ed8 100%)}
+.mtx .mtx-noche{background:radial-gradient(90% 55% at 50% 0%,rgba(40,90,160,.35),transparent 60%),linear-gradient(180deg,#020a1a 0%,#05162e 40%,#0a2a4c 70%,#123c64 100%);opacity:0;transition:opacity 2.6s ease}
+.mtx.n1 .mtx-noche{opacity:1}
+.mtx .mtx-cielo svg{width:100%;height:100%}
+.mtx .mtx-aur{opacity:0;transition:opacity 3s 1s;filter:blur(20px)} .mtx.n1 .mtx-aur{opacity:1}
+.mtx .mtx-aur path{animation:mtxAur 10s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 50%}
+@keyframes mtxAur{0%{transform:translateX(-4%) skewX(-8deg) scaleY(.85)}100%{transform:translateX(4%) skewX(8deg) scaleY(1.15)}}
+.mtx .mtx-estr{opacity:0;transition:opacity 2s .6s} .mtx.n1 .mtx-estr{opacity:1}
+.mtx .mtx-estr circle{animation:mtxTw 3s ease-in-out infinite} @keyframes mtxTw{50%{opacity:.2}}
+.mtx .mtx-nieve i{position:absolute;top:-10px;border-radius:50%;background:#fff;opacity:0;animation:mtxCae linear infinite}
+.mtx.n2 .mtx-nieve i{opacity:.85}
+@keyframes mtxCae{to{transform:translate(var(--dx),105vh)}}
+.mtx .mt-ill,.mtx .mt-bar,.mtx .mt-firma,.mtx .mt-pie{display:none}
+.mtx .mt-wrap{z-index:2;min-height:100vh;max-width:440px;padding:72px 22px 22px;justify-content:flex-start}
+.mtx .mtx-hueco{flex:1;min-height:24px}
+/* la ventana redonda con el mundo de Pre-Navidad */
+.mtx .mtx-ventana{position:relative;width:210px;height:210px;border-radius:50%;overflow:hidden;clip-path:circle(0% at 50% 50%);transition:clip-path 2.2s cubic-bezier(.3,.7,.2,1);box-shadow:0 0 0 6px rgba(255,255,255,.18),0 0 60px rgba(255,200,120,.35)}
+.mtx.n3 .mtx-ventana{clip-path:circle(50% at 50% 50%)}
+.mtx .mtx-ventana svg{position:absolute;inset:0;width:100%;height:100%}
+.mtx .mtx-aro{position:absolute;inset:0;border-radius:50%;border:3px solid rgba(235,248,255,.9);box-shadow:inset 0 0 22px rgba(255,255,255,.7);opacity:0;transition:opacity 1s 1.6s}
+.mtx.n3 .mtx-aro{opacity:1}
+.mtx .mtx-humo circle{animation:mtxHumo 4s ease-out infinite;opacity:0}
+@keyframes mtxHumo{0%{transform:translate(0,0) scale(.6);opacity:0}20%{opacity:.6}100%{transform:translate(10px,-38px) scale(1.8);opacity:0}}
+/* textos */
+.mtx .mtx-ceja{margin-top:18px;font:700 10.5px var(--sans);letter-spacing:.34em;color:rgba(200,225,255,.7);text-transform:uppercase}
+.mtx .mt-t{margin-top:8px;font:800 29px/1.12 var(--sans);letter-spacing:-.02em;color:#fff;max-width:340px}
+.mtx .mt-t .w{display:inline-block;opacity:0;transform:translateY(14px);filter:blur(8px);transition:opacity .9s,transform .9s cubic-bezier(.2,.8,.2,1),filter .9s}
+.mtx.n4 .mt-t .w{opacity:1;transform:none;filter:none}
+.mtx .mt-t .oro{background:linear-gradient(100deg,#f2c45a 0%,#fff3c8 45%,#f2c45a 60%,#e8a530 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mtxBrillo 4.5s linear infinite}
+@keyframes mtxBrillo{to{background-position:-220% 0}}
+.mtx .mt-s{max-width:320px;color:rgba(220,235,255,.72);opacity:0}
+.mtx.n4 .mt-s{opacity:1;transition:opacity 1s .9s}
+.mtx .mtx-estado{display:flex;align-items:center;gap:8px;margin-top:16px;font:600 12.5px var(--sans);color:#ffd98a;opacity:0}
+.mtx.n4 .mtx-estado{opacity:1;transition:opacity .8s 1.4s}
+.mtx .mtx-estado svg{width:14px;height:14px;animation:mtxGira 3s linear infinite} @keyframes mtxGira{to{transform:rotate(360deg)}}
+.mtx .mtx-estado span{transition:opacity .4s} .mtx .mtx-estado span.va{opacity:0}
+.mtx .mtx-estado i{display:inline-block;width:14px;text-align:left}
+.mtx :is(.mt-safe,.mt-retry,.mt-adm){opacity:0}
+.mtx.n4 :is(.mt-safe,.mt-retry,.mt-adm){opacity:1;transition:opacity 1s 2s}
+.mtx .mt-safe,.mtx .mt-retry{background:rgba(4,16,34,.55);backdrop-filter:blur(6px)}
+.mtx .mt-retry{margin-top:14px}
+@media (min-width:701px){ .mtx .mt-wrap{padding-top:10vh} .mtx .mtx-ventana{width:260px;height:260px} .mtx .mt-t{font-size:34px} .mtx .mtx-aur{filter:blur(30px)} }
+@media (prefers-reduced-motion:reduce){ .mtx *,.mtx *::before{animation:none!important;transition:none!important} }
