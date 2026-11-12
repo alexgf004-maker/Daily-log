@@ -306,7 +306,7 @@ test('interrumpir un gesto conserva también los codos y las muñecas del dibujo
  const {actor,tick}=realActor();actor.play('grump');for(let i=0;i<100;i++)tick(1/60);
  const curve=actor.n('arm-left-curve').attrs.d,hand=actor.n('hand-left').attrs.transform;
  actor.play('caught');assert.equal(actor.n('arm-left-curve').attrs.d,curve);assert.equal(actor.n('hand-left').attrs.transform,hand);
- tick(1/60);assert.ok(actor.n('arm-left-curve').attrs.d!==curve);
+ tick(1/30);assert.ok(actor.n('arm-left-curve').attrs.d!==curve);   // el compañero de adentro dibuja a 30 cuadros por segundo
 });
 test('los pies mantienen su apoyo durante la respiración del reposo',()=>{
  const {actor}=realActor();

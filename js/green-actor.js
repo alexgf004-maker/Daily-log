@@ -191,6 +191,10 @@ class GreenActor {
  destroy(){this.stopped=true;cancelAnimationFrame(this._raf);this._raf=0;this.n('speech-heat')?.remove?.();this.n('speech-mouth')?.remove?.();this.svg.querySelector('#'+(this.options.idPrefix||'')+'speech-warmth')?.remove?.();}
  frame(now){
   if(this.stopped)return;
+  // 30 cuadros por segundo (como una caricatura) en vez de 60: el teléfono repinta el dibujo la mitad de veces.
+  // Siempre en el compañero pequeño de adentro (embedded); en el del login solo en reposo («idle»): sus gestos
+  // (toques, sustos, saludos) van a la frecuencia completa porque es grande y está a la vista.
+  if(this.last&&(this.options.embedded||this.scene==='idle'&&!this._speech)&&now-this.last<31){this._raf=0;this.scheduleFrame();return;}
   if(!this.last) this.last=now;
   const dt=clamp((now-this.last)/1000,0,.07);this.last=now;
   if(this._speech)this._speechTime+=dt;

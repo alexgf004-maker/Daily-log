@@ -25,8 +25,10 @@ test('pausa sin diálogo no deja solicitudes de fotogramas; reanudar no duplica 
  const f=fixture();assert.equal(f.frames.size,1);f.step(1000);
  f.actor.pause();assert.equal(f.frames.size,0);const before=f.actor.motionTime;
  f.actor.resume();f.actor.resume();assert.equal(f.frames.size,1);
- f.step(61000);assert.equal(f.actor.motionTime,before);f.step(61000+1000/60);
- assert.ok(f.actor.motionTime>before&&f.actor.motionTime-before<.02);
+ // en reposo («idle») el motor va a 30 cuadros por segundo: un paso de 1/60 s no dibuja, uno de 1/30 s sí
+ f.step(61000);assert.equal(f.actor.motionTime,before);f.step(61000+1000/60);assert.equal(f.actor.motionTime,before);
+ f.step(61000+1000/30);
+ assert.ok(f.actor.motionTime>before&&f.actor.motionTime-before<.04);
  f.actor.destroy();assert.equal(f.frames.size,0);f.actor.resume();assert.equal(f.frames.size,0);
 });
 
@@ -81,4 +83,14 @@ test('reposo contextual reduce escrituras y repetir una pose no invalida el SVG'
  assert.equal(cached.snapshot(),direct.snapshot());
  cached.actor.render(2);const writes=cached.writes;
  cached.actor.render(2);assert.equal(cached.writes,writes);
+});
+
+test('en reposo dibuja a 30 cuadros por segundo; los gestos van a la frecuencia completa',()=>{
+ const f=fixture();f.step(1000);let t=1000,antes=f.actor.motionTime;
+ for(let i=1;i<=60;i++)f.step(t+i*1000/60);
+ const idle=f.actor.motionTime-antes;assert.ok(idle>.9&&idle<1.05,'idle '+idle);
+ f.actor.tap();t=2000;f.step(t);antes=f.actor.motionTime;let n=0;const r=f.actor.render.bind(f.actor);f.actor.render=(...a)=>{n++;return r(...a);};
+ for(let i=1;i<=30;i++)f.step(t+i*1000/60);
+ assert.ok(n>=29,'gesto '+n);
+ f.actor.destroy();
 });

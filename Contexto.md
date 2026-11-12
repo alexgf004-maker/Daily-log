@@ -737,9 +737,12 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
     la app normal, luego la Navidad encima y luego las luces («se abre un tema sobre otro»).
   - Resultado (×4, app quieta, ocupado %): Pre login 86→76, Pre adentro 76→~68, Casa login 80→65, Año login 99→97
     (34→44 cps; a ×2: 77→58 %). Con la app en reposo (25 s sin tocar) todo lo nuestro queda en 0 %.
-  - **Pendiente fuera de nuestro alcance: la mascota** (green-actor/navidad-companero/navidad-mascota, de Codex). Anima
-    a 60 cps siempre, también en reposo: sola consume 62–64 % (×4) con la app quieta, y es la pieza más cara en todas
-    las pantallas (25–38 puntos). Recomendado: que respete `__nvReposo`, baje a 30 cps y se detenga fuera de pantalla.
+  - **La mascota** (green-actor/navidad-companero, de Codex; cambios mínimos autorizados por la usuaria): animaba a 60 cps
+    siempre, también en reposo, y sola consumía 62–64 % (×4) con la app quieta. Ahora: el compañero de adentro se pausa
+    en el reposo de la app (`__nvReposo`; su «vida propia» no lanza gestos en reposo y al terminar uno se vuelve a
+    regular), y `GreenActor.frame` dibuja a 30 cps siempre en el compañero (`embedded`) y en el login solo en «idle»
+    (sus gestos van a 60). En reposo: Casa 64→0 %, Pre 64→6 %. Al tocar la pantalla despierta y sigue con sus gestos.
+    Pruebas ajustadas a 30 cps (green-actor-performance y navidad.test) más una nueva que lo comprueba.
   - Al abrir aún hay ~1 s de trabajo pesado en Navidad en casa (dibujar el árbol aguja por aguja ~0.3 s ×4 en el login
     y la noche de adentro); idea para después: guardar la escena ya dibujada (Cache Storage) para no rehacerla.
 - **Convivencia con el compañero en los encabezados** (`css/temas/navidad.css`, al final; el compañero es de
