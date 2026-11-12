@@ -27,6 +27,15 @@
 .nv-escarcha-bitmap{visibility:hidden}
 .nv-escarcha-cache .nv-escarcha-bitmap{visibility:visible}
 .nv-escarcha-cache [id$="nvice-frost-body"]{visibility:hidden}
+/* Dos superficies pequeñas, fuera del SVG: charco detrás y gotas/vaho delante.
+   El SVG conserva el volumen estático y vuelve a servir de respaldo si falla. */
+.nv-hielo-agua{display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.nv-hielo-canvas>.nv-hielo-agua{display:block}
+.nv-hielo-canvas>.nv-hielo-agua-fondo{z-index:0}
+.nv-hielo-canvas>svg{position:relative;z-index:1}
+.nv-hielo-canvas>.nv-hielo-agua-frente{z-index:2}
+.nv-hielo-canvas>svg :is(.nv-hielo-gota,.nv-hielo-reguero,.nv-hielo-onda,[id$="nvice-puddle"],[id$="nvice-breath"],[id$="nvice-palms"],[id$="nvice-wet-edge"]){visibility:hidden!important;animation:none!important}
+.nv-hielo-canvas>svg .nv-condensacion{animation:none!important}
 .nav-pre #loginScreen .nv-mascota:not(.nv-mascota-libre) .nv-hielo-fijo{display:block}
 .nv-mascota-congelada>svg{filter:url(#nvice-refraction) saturate(calc(1 - var(--nv-frio,1) * .14)) brightness(.98)}
 /* Solo los ojos se animan sobre la pose detenida de GreenActor. Las coordenadas
