@@ -897,7 +897,8 @@ html.tema-navidad :is(#employeeScreen,#adminScreen)>:not(.topbar){transition:opa
    Solo transform y opacity sobre elementos HTML/SVG raíz: el navegador los mueve sin repintar (fluido a 60 cps). ═ */
 .nv-aurora{position:absolute;left:0;right:0;top:0;height:100%;overflow:hidden;pointer-events:none}
 .nv-au-c{position:absolute;left:0;top:0;width:200%;height:100%;will-change:transform;animation:nvAuDesliza 30s ease-in-out infinite alternate,nvAuRespira 14s ease-in-out infinite alternate}
-.nv-au-c svg{display:block;width:100%;height:100%}
-@keyframes nvAuDesliza{from{transform:translate3d(0,0,0)}to{transform:translate3d(-38%,1.5%,0)}}
-@keyframes nvAuRespira{from{opacity:1}50%{opacity:.55}to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.nv-au-c{animation:none}}
+.nv-au-c svg{display:block;width:100%;height:100%;opacity:var(--o,1);transform-origin:50% 30%;will-change:transform;animation:nvAuOndula 5s ease-in-out infinite alternate}
+@keyframes nvAuDesliza{from{transform:translate3d(0,0,0)}to{transform:translate3d(-45%,3%,0)}}
+@keyframes nvAuOndula{0%{transform:scale(1,.82) skewX(-6deg)}50%{transform:scale(1.02,1.12) skewX(3deg)}100%{transform:scale(1,.9) skewX(7deg)}}
+@keyframes nvAuRespira{0%{opacity:1}35%{opacity:.4}60%{opacity:.95}100%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.nv-au-c,.nv-au-c svg{animation:none}}

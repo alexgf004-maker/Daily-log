@@ -106,11 +106,12 @@
 
   /* ════════════════ PRE-NAVIDAD ════════════════ */
   function auroraHTML(){
-    var cintas=[['80,255,170',.2,1,26,0],['70,220,255',.26,.75,33,-9],['200,110,255',.14,.6,39,-17],['120,255,200',.33,.45,29,-5]], h='<div class="nv-aurora" aria-hidden="true">';
+    var cintas=[['80,255,170',.2,1,11,0],['70,220,255',.26,.75,14,-5],['200,110,255',.14,.6,16,-9],['120,255,200',.33,.45,12,-3]], h='<div class="nv-aurora" aria-hidden="true">';
     cintas.forEach(function(b,i){ var c=b[0], y=b[1]*1000, d='', f=1.2+i*.45;
       for(var x=0;x<=1600;x+=40){ var yy=y+Math.sin(x/1600*Math.PI*2*f+i)*60+Math.sin(x/170+i*2)*18; d+=(x?' L':'M')+x+' '+yy.toFixed(1); }
-      h+='<div class="nv-au-c" style="animation-duration:'+b[3]+'s,'+(b[3]*.47).toFixed(1)+'s;animation-delay:'+b[4]+'s,'+(b[4]*.6).toFixed(1)+'s">'+
-        '<svg viewBox="0 0 1600 1000" preserveAspectRatio="none" style="opacity:'+b[2]+'"><defs><filter id="nvAu'+i+'" x="-5%" y="-60%" width="110%" height="220%"><feGaussianBlur stdDeviation="12 18"/></filter>'+
+      // cada listón: el contenedor se desliza y respira; el dibujo ondula (se estira e inclina) a otro ritmo
+      h+='<div class="nv-au-c" style="animation-duration:'+b[3]+'s,'+(b[3]*.45).toFixed(1)+'s;animation-delay:'+b[4]+'s,'+(b[4]*.6).toFixed(1)+'s">'+
+        '<svg viewBox="0 0 1600 1000" preserveAspectRatio="none" style="--o:'+b[2]+';animation-duration:'+(b[3]*.38).toFixed(1)+'s;animation-delay:'+(b[4]*.4).toFixed(1)+'s"><defs><filter id="nvAu'+i+'" x="-5%" y="-60%" width="110%" height="220%"><feGaussianBlur stdDeviation="12 18"/></filter>'+
         '<filter id="nvAuS'+i+'" x="-5%" y="-80%" width="110%" height="260%"><feGaussianBlur stdDeviation="10 40"/></filter></defs>'+
         '<path d="'+d+'" transform="translate(0 -70)" fill="none" stroke="rgba('+c+',.34)" stroke-width="170" filter="url(#nvAuS'+i+')"/>'+
         '<path d="'+d+'" fill="none" stroke="rgba('+c+',.8)" stroke-width="54" filter="url(#nvAu'+i+')"/>'+

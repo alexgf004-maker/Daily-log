@@ -750,7 +750,8 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
     login 633→471 ms.
   - **Aurora del login de Pre-Navidad** (`auroraHTML` en js/navidad.js, CSS «Aurora del login»): antes se pintaba en el
     lienzo ~11 veces por segundo (se veía a saltos). Ahora son listones SVG con el desenfoque dentro, que se deslizan y
-    respiran con transform/opacity: fluida a 60 cps y el login de Pre-Navidad gasta 75→53 % (×4).
+    respiran (y ondulan: se estiran e inclinan) con transform/opacity, en 11–16 s: fluida a 60 cps y el login de
+    Pre-Navidad gasta 75→53 % (×4). La primera versión se movía tan lento (26–39 s) que casi no se notaba.
   - Al abrir aún hay ~1 s de trabajo pesado en Navidad en casa (dibujar el árbol aguja por aguja ~0.3 s ×4 en el login
     y la noche de adentro); idea para después: guardar la escena ya dibujada (Cache Storage) para no rehacerla.
 - **Convivencia con el compañero en los encabezados** (`css/temas/navidad.css`, al final; el compañero es de
