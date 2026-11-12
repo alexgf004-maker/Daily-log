@@ -50,15 +50,22 @@ class GreenActor {
   if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error('GreenActor requires the actual inline <svg> element.');
   this.svg=svg; this.options=options; this.nodes={};
   this._attributes=new WeakMap();this._pendingAttributes=null;
+  this._limbGeometry=Object.create(null);
   const ids=['actor','head','body','leg-left','leg-right','arm-left','arm-right','tail','scarf-tail','scarf-knot','hair','ear-left','ear-right','eye-left','eye-right','pupil-left','pupil-right','brow-left','brow-right','lid-left','lid-right','mouth','expression-mouth','expression-line','smirk-crease','smile','blush','sweat','hands-ears','hands-eyes','cover-arm-left','cover-arm-right','cover-arm-shine','cover-hand-left','cover-hand-right','roof-card','roof-front','peek-eyes','peek-pupils','wire-bulb','hanging-bulb','stolen-bulb','bag','rolling-bulbs','roll-a','roll-b','roll-c','bubble','bubble-text','dust','christmas-star','lights-string','night-overlay','celebration-fireworks','fw-left','fw-right','reach-arm','sitting-legs','speed-lines'];
   ids.push('speech-heat','speech-mouth','santa-hat','hat-tip','hand-left','hand-right','arm-left-outline','arm-right-outline','arm-left-curve','arm-right-curve','arm-left-light','arm-right-light',
     'foot-left','foot-right','leg-left-outline','leg-right-outline','leg-left-curve','leg-right-curve','leg-left-light','leg-right-light');
   for (const id of ids) this.nodes[id]=svg.querySelector('#'+(options.idPrefix||'')+id);
-  this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
+  this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.suspended=false;this.completed=false;this.tapCount=0;
   this.motionTime=0;this._pose=null;this._velocity={};this._visible={};
   this._reachTarget=null;this._lookTarget=null;this._speech=null;this._speechTime=0;this._speechTail=0;this.initSpeech();
   this._raf=0;this._tick=t=>{this._raf=0;this.frame(t);};
   this.play(options.initialScene||'idle');
+  this._painter=null;
+  if(options.embedded&&window.GreenPainter){
+    const report=message=>svg.dispatchEvent(new CustomEvent('greenactor:paintererror',{bubbles:true,detail:{message}}));
+    try{this._painter=window.GreenPainter.create(svg,{nodes:this.nodes,frozen:!!options.frozen,idPrefix:options.idPrefix||'',report});}
+    catch(error){report(String(error.message||error));}
+  }
   this.scheduleFrame();
  }
  // Capas de actuación, dentro de la cabeza articulada y debajo de los ojos.
@@ -112,15 +119,31 @@ class GreenActor {
  flushAttributes(){
   const pending=this._pendingAttributes;this._pendingAttributes=null;
   for(const [node,changes] of pending)for(const [property,text] of changes)this.writeAttribute(node,property,text);
+  this._painter?.invalidate();
  }
  show(id,opacity){this.attr(id,'opacity',clamp(opacity))}
  transform(id,content){this.attr(id,'transform',content)}
  rot(id,angle,x,y){this.transform(id,`rotate(${angle.toFixed(2)} ${x} ${y})`)}
  bodyScale(scale){this.transform('body',`translate(400 525) scale(1 ${scale.toFixed(4)}) translate(-400 -525)`)}
  faceScale(id,x,y,sx=1,sy=sx){this.transform(id,`translate(${x} ${y}) scale(${sx.toFixed(3)} ${sy.toFixed(3)}) translate(${-x} ${-y})`)}
+ restoreLimb(key,values){
+  const cached=this._limbGeometry[key];
+  if(!cached||!cached.values.every((value,i)=>value===values[i]))return false;
+  this.paintLimb(key,cached);
+  return true;
+ }
+ paintLimb(key,geometry){
+  for(const part of ['outline','curve','light'])this.attr(key+'-'+part,'d',geometry.path);
+  this.transform(key,'translate(0 0)');this.transform(geometry.target,geometry.transform);
+ }
+ rememberLimb(key,values,path,target,transform){
+  const geometry={values,path,target,transform};this._limbGeometry[key]=geometry;this.paintLimb(key,geometry);
+ }
  // Una curva continua une hombro, codo y muñeca. La mano conserva su volumen;
  // el antebrazo llega después del hombro, sin girar todo el miembro como una tabla.
  poseArm(side,upper,forearm,goal=null){
+  const key='arm-'+side,values=[upper,forearm,goal?.x,goal?.y,goal?.amount];
+  if(this.restoreLimb(key,values))return;
   const sign=side==='left'?-1:1,shoulder={x:side==='left'?352:444,y:580};
   const inward=angle=>side==='left'?-angle:angle;
   const wristTarget=angle=>{
@@ -145,11 +168,12 @@ class GreenActor {
   const e={x:shoulder.x+dx*along-dy*height*bend,y:shoulder.y+dy*along+dx*height*bend};
   const tx=(h.x-shoulder.x)*.15,ty=(h.y-shoulder.y)*.15;
   const d=`M${shoulder.x} ${shoulder.y} C${lerp(shoulder.x,e.x,.4).toFixed(2)} ${lerp(shoulder.y,e.y,.4).toFixed(2)} ${(e.x-tx).toFixed(2)} ${(e.y-ty).toFixed(2)} ${e.x.toFixed(2)} ${e.y.toFixed(2)} C${(e.x+tx).toFixed(2)} ${(e.y+ty).toFixed(2)} ${lerp(h.x,e.x,.3).toFixed(2)} ${lerp(h.y,e.y,.3).toFixed(2)} ${h.x.toFixed(2)} ${h.y.toFixed(2)}`;
-  for(const part of ['outline','curve','light'])this.attr('arm-'+side+'-'+part,'d',d);
-  this.transform('arm-'+side,'translate(0 0)');
-  this.transform('hand-'+side,`translate(${h.x.toFixed(2)} ${h.y.toFixed(2)}) rotate(${(sign*clamp(inward(forearm)/34)*-42).toFixed(2)})`);
+  this.rememberLimb(key,values,d,'hand-'+side,
+    `translate(${h.x.toFixed(2)} ${h.y.toFixed(2)}) rotate(${(sign*clamp(inward(forearm)/34)*-42).toFixed(2)})`);
  }
  poseLeg(side,angle,ground,stride=false){
+  const key='leg-'+side,values=[angle,ground,stride];
+  if(this.restoreLimb(key,values))return;
   const sign=side==='left'?-1:1,hip={x:side==='left'?370:432,y:823};
   const lift=stride?Math.max(0,angle):Math.abs(angle);
   const baseX=side==='left'?365:445,ankle={x:baseX+angle*.6,y:939-Math.min(52,lift*1.8)-ground};
@@ -160,9 +184,8 @@ class GreenActor {
   const knee={x:hip.x+dx*along+dy*height*sign,y:hip.y+dy*along-dx*height*sign};
   const tx=(ankle.x-hip.x)*.1,ty=(ankle.y-hip.y)*.1;
   const d=`M${hip.x} ${hip.y} C${hip.x} ${(hip.y+24).toFixed(2)} ${(knee.x-tx).toFixed(2)} ${(knee.y-ty).toFixed(2)} ${knee.x.toFixed(2)} ${knee.y.toFixed(2)} C${(knee.x+tx).toFixed(2)} ${(knee.y+ty).toFixed(2)} ${ankle.x.toFixed(2)} ${(ankle.y-20).toFixed(2)} ${ankle.x.toFixed(2)} ${ankle.y.toFixed(2)}`;
-  for(const part of ['outline','curve','light'])this.attr('leg-'+side+'-'+part,'d',d);
-  this.transform('leg-'+side,'translate(0 0)');
-  this.transform('foot-'+side,`translate(${(ankle.x-baseX).toFixed(2)} ${(ankle.y-939).toFixed(2)}) rotate(${(angle*.28).toFixed(2)} ${baseX} 939)`);
+  this.rememberLimb(key,values,d,'foot-'+side,
+    `translate(${(ankle.x-baseX).toFixed(2)} ${(ankle.y-939).toFixed(2)}) rotate(${(angle*.28).toFixed(2)} ${baseX} 939)`);
  }
  play(name){
   if(!SCENES[name])throw new Error('Unknown scene: '+name);
@@ -175,7 +198,7 @@ class GreenActor {
  reachFor(point){this._reachTarget=point&&Number.isFinite(point.x)&&Number.isFinite(point.y)?point:null;return this;}
  lookAt(point,seconds=2.8){this._lookTarget=point&&Number.isFinite(point.x)&&Number.isFinite(point.y)?{...point,until:this.motionTime+seconds}:null;return this;}
  tap(){this.tapCount=this.tapCount%3+1;this.play('tap'+this.tapCount);return this.tapCount}
- needsFrame(){return !this.paused||!!this._speech&&this._speech.animated!==false||this._speechTail>0;}
+ needsFrame(){return !this.suspended&&(!this.paused||!!this._speech&&this._speech.animated!==false||this._speechTail>0);}
  scheduleFrame(){
   if(this.stopped||!this.needsFrame()){
     if(this._raf)cancelAnimationFrame(this._raf);
@@ -184,13 +207,16 @@ class GreenActor {
   if(!this._raf)this._raf=requestAnimationFrame(this._tick);
  }
  pause(){this.paused=true;this.scheduleFrame();return this}
+ // Pausa estricta de visibilidad: incluye el diálogo que normalmente puede
+ // seguir hablando con el cuerpo congelado. No modifica la pose al suspender.
+ setVisible(visible){this._painter?.setVisible(visible);const off=!visible;if(off===this.suspended)return this;this.suspended=off;this.last=0;this.scheduleFrame();return this}
  resume(){if(this.paused){this.paused=false;this.last=0;}this.scheduleFrame();return this}
  togglePause(){return this.paused?this.resume():this.pause()}
  resetTouches(){this.tapCount=0;return this}
  getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...SCENES[this.scene]}}
- destroy(){this.stopped=true;cancelAnimationFrame(this._raf);this._raf=0;this.n('speech-heat')?.remove?.();this.n('speech-mouth')?.remove?.();this.svg.querySelector('#'+(this.options.idPrefix||'')+'speech-warmth')?.remove?.();}
+ destroy(){this.stopped=true;cancelAnimationFrame(this._raf);this._raf=0;this._painter?.destroy();this._painter=null;this.n('speech-heat')?.remove?.();this.n('speech-mouth')?.remove?.();this.svg.querySelector('#'+(this.options.idPrefix||'')+'speech-warmth')?.remove?.();}
  frame(now){
-  if(this.stopped)return;
+  if(this.stopped||this.suspended)return;
   // 30 cuadros por segundo (como una caricatura) en vez de 60: el teléfono repinta el dibujo la mitad de veces.
   // Siempre en el compañero pequeño de adentro (embedded); en el del login solo en reposo («idle»): sus gestos
   // (toques, sustos, saludos) van a la frecuencia completa porque es grande y está a la vista.

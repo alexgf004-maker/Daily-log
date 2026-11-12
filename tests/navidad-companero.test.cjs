@@ -8,15 +8,15 @@ class Element{
  querySelector(){return null;}querySelectorAll(){return [];}contains(e){return this.children.includes(e);}matches(){return false;}closest(){return null;}
  addEventListener(k,fn){this.events[k]=fn;}click(){this.events.click?.({});}
 }
-function fixture({stage='casa',theme='navidad',autonomous=false}={}){
+function fixture({stage='casa',theme='navidad',autonomous=false,reposo=null,intersection=false}={}){
  let current=stage,enabled=theme,selected=true,modalOn=false,point=null;const events={},actors=[],ices=[],worlds=[],talks=[],timers=new Map(),due=new Map();let id=0,clock=0;
  const hero=new Element(),other=new Element(),screen=new Element(),template={innerHTML:'<svg id="drawing"><g id="actor"/></svg><div class="nv-hielo-fijo"/>'},modal=new Element(),app=new Element();let chosen=hero;
  screen.classList.add('active');screen.querySelectorAll=()=>[chosen];screen.querySelector=()=>point;screen.contains=e=>e?.inside===true;
  const doc={hidden:false,readyState:'loading',activeElement:null,addEventListener:(k,f)=>events[k]=f,querySelector:s=>s.startsWith('#employeeScreen')?(selected?screen:null):s.startsWith('#loginScreen .nv-mascota')?template:s==='#fxOk.on'&&modalOn?modal:null,querySelectorAll:()=>modalOn?[modal]:[],getElementById:()=>app,createElement(){const e=new Element(),svg=new Element();svg.style={};e.querySelector=s=>s==='svg'?svg:null;e.querySelectorAll=()=>[];return e;}};
- class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene=options.initialScene;this.elapsed=0;this.plays=[];actors.push(this);}play(n){this.scene=n;this.elapsed=0;this.plays.push(n);return this;}pause(){this.paused=true;}resume(){this.paused=false;}render(t){this.rendered=t;}reachFor(p){this.target=p;return this;}destroy(){this.destroyed=true;}lookAt(p){this.look=p;}}
+ class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene=options.initialScene;this.elapsed=0;this.plays=[];actors.push(this);}setVisible(v){this.suspended=!v;}play(n){this.scene=n;this.elapsed=0;this.plays.push(n);return this;}pause(){this.paused=true;}resume(){this.paused=false;}render(t){this.rendered=t;}reachFor(p){this.target=p;return this;}destroy(){this.destroyed=true;}lookAt(p){this.look=p;}}
  Actor.SCENES=vm.runInNewContext('('+read('js/green-actor.js').match(/const SCENES = Object.freeze\((\{[\s\S]*?\n\})\);/)[1]+')');
  let reduced=false;
- const ctx={window:null,document:doc,Date,Number,Array,GreenActor:Actor,NavidadHielo:{create(d,e,o){const ice={options:o,days:[d],update(d){this.days.push(d);},touch(){this.touched=true;},destroy(){this.destroyed=true;}};ices.push(ice);return ice;}},NavidadEntorno:{createDialogue(){const t={lines:[],say(s){this.lines.push(s);},hide(){this.hidden=true;},destroy(){this.destroyed=true;}};talks.push(t);return t;},point:(svg,p)=>p,create(s,m,options){const world={options,resetGaze(){this.reset=true;},suspend(){},destroy(){this.destroyed=true;},react(d){options.react(d);}};worlds.push(world);return world;}},MutationObserver:class{observe(){}},setTimeout:(f,ms=0)=>{timers.set(++id,f);due.set(id,clock+ms);return id;},clearTimeout:id=>{timers.delete(id);due.delete(id);},setInterval(){},matchMedia:()=>({get matches(){return reduced;},addEventListener:(k,f)=>events.media=f})};ctx.window=ctx;ctx.addEventListener=(k,f)=>events[k]=f;ctx.__temas={modo:'auto',get activo(){return {id:enabled};},etapaDe:()=>({id:current})};vm.createContext(ctx);if(autonomous)vm.runInContext(read('js/navidad-vida.js'),ctx);vm.runInContext(read('js/navidad-companero.js'),ctx);events.DOMContentLoaded();
+ const ctx={window:null,document:doc,Date,Number,Array,GreenActor:Actor,NavidadHielo:{create(d,e,o){const ice={options:o,days:[d],update(d){this.days.push(d);},touch(){this.touched=true;},destroy(){this.destroyed=true;}};ices.push(ice);return ice;}},NavidadEntorno:{createDialogue(){const t={lines:[],say(s){this.lines.push(s);},hide(){this.hidden=true;},destroy(){this.destroyed=true;}};talks.push(t);return t;},point:(svg,p)=>p,create(s,m,options){const world={options,resetGaze(){this.reset=true;},suspend(){},destroy(){this.destroyed=true;},react(d){options.react(d);}};worlds.push(world);return world;}},MutationObserver:class{observe(){}},setTimeout:(f,ms=0)=>{timers.set(++id,f);due.set(id,clock+ms);return id;},clearTimeout:id=>{timers.delete(id);due.delete(id);},setInterval(){},matchMedia:()=>({get matches(){return reduced;},addEventListener:(k,f)=>events.media=f})};ctx.window=ctx;ctx.__nvReposo=reposo;if(intersection)ctx.IntersectionObserver=class{constructor(fn){this.notify=fn}observe(target){events.intersection=on=>this.notify([{target,isIntersecting:on}])}disconnect(){}};ctx.addEventListener=(k,f)=>events[k]=f;ctx.__temas={modo:'auto',get activo(){return {id:enabled};},etapaDe:()=>({id:current})};vm.createContext(ctx);if(autonomous)vm.runInContext(read('js/navidad-vida.js'),ctx);vm.runInContext(read('js/navidad-companero.js'),ctx);events.DOMContentLoaded();
  function advance(seconds){let left=seconds;while(left>0){const dt=Math.min(left,.05);left-=dt;clock+=dt*1000;for(const [id,at] of [...due])if(at<=clock){const fn=timers.get(id);timers.delete(id);due.delete(id);fn?.();}const a=actors.at(-1);if(a&&!a.paused&&!a.destroyed){a.elapsed+=dt;a.options.onFrame({elapsed:a.elapsed},dt);}}}
  return {ctx,doc,hero,other,screen,actors,ices,worlds,talks,events,timers,advance,setStage:s=>current=s,setTheme:s=>enabled=s,setSelected:s=>selected=s,setHero:h=>chosen=h,setModal:v=>modalOn=v,setPoint:p=>point=p,setReduced:v=>reduced=v,sync:ctx.NavidadCompanero.sync};
 }
@@ -120,4 +120,28 @@ test('un modal, la pestaña oculta y salir del tema detienen la iniciativa del e
  f.setModal(false);f.sync();f.advance(3);assert.ok(f.actors[0].plays.length>0);
  f.doc.hidden=true;f.sync();const count=f.actors[0].plays.length;f.advance(90);assert.equal(f.actors[0].plays.length,count);assert.equal(f.timers.size,0);
  f.setTheme('muertos');f.sync();assert.equal(f.timers.size,0);assert.equal(f.actors[0].destroyed,true);
+});
+test('la intersección suspende todo el compañero y descarta entradas pendientes de un montaje antiguo',()=>{
+ const f=fixture({autonomous:true,intersection:true}),actor=f.actors[0];
+ assert.equal(actor.suspended,true);f.events.intersection(true);assert.equal(actor.suspended,false);
+ f.advance(3);f.events.intersection(false);const count=actor.plays.length;
+ f.hero.children[0].click();f.advance(90);assert.equal(actor.plays.length,count);assert.equal(actor.suspended,true);
+ assert.ok(f.hero.children[0].classList.contains('nv-mascota-ojos-pausa'));assert.equal(f.timers.size,0);
+ const oldNotify=f.events.intersection;f.setStage('pre');f.sync();f.events.intersection(true);
+ oldNotify(false);assert.equal(f.actors.at(-1).suspended,false);
+ f.screen.classList.remove('active');f.sync();assert.equal(f.actors.at(-1).suspended,true);
+});
+test('se conserva la suscripción al reposo y los ojos y la iniciativa esperan al despertar',()=>{
+ let quiet=false,notify;const reposo={quieto:()=>quiet,escuchar:fn=>notify=fn};
+ const f=fixture({autonomous:true,reposo});assert.equal(typeof notify,'function');
+ quiet=true;notify();f.advance(90);assert.equal(f.actors[0].paused,true);assert.equal(f.timers.size,0);
+ assert.ok(f.hero.children[0].classList.contains('nv-mascota-ojos-pausa'));
+ quiet=false;notify();f.advance(8);assert.ok(f.actors[0].plays.length>0);
+});
+test('con los dos pintores listos, repetir el gesto y el vaho no fuerza layout',()=>{
+ const f=fixture({stage:'pre'}),mount=f.hero.children[0];mount.classList.add('nv-actor-pintado');
+ f.ices[0].node={classList:{contains:c=>c==='nv-hielo-canvas'}};
+ Object.defineProperty(mount,'offsetWidth',{get(){throw Error('Layout forzado con canvas listo')}});
+ mount.click();f.actors[0].options.onFrame({elapsed:.8},.8);
+ assert.equal(f.actors[0].scene,'trapped');assert.equal(f.ices[0].touched,true);assert.equal(mount.dataset.reaccion,'frio');
 });

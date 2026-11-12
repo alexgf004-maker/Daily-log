@@ -8,6 +8,10 @@
   touch-action:manipulation;filter:drop-shadow(0 8px 8px rgba(2,30,55,.22));
 }
 .nv-mascota>svg{display:block;width:100%;height:100%;overflow:visible;cursor:pointer}
+.nv-actor-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.nv-actor-pintado>svg{opacity:0;filter:none!important}
+.nv-actor-pintado>svg,.nv-actor-pintado>svg *{animation:none!important;transition:none!important}
+.nv-actor-pintado:has(>svg #actor:focus-visible){outline:2px solid #c9edff;outline-offset:3px}
 .nv-mascota #cold-patina{display:none}
 .nav-pre .nv-mascota-congelada #cold-patina{display:block;opacity:calc(.2 + var(--nv-frio,1) * .65)}
 .nav-pre .nv-mascota{isolation:isolate}
@@ -24,6 +28,18 @@
   filter:drop-shadow(0 4px 5px rgba(6,68,116,.22));
 }
 .nv-hielo-fijo>svg{display:block;width:100%;height:100%;overflow:visible}
+.nv-escarcha-bitmap{visibility:hidden}
+.nv-escarcha-cache .nv-escarcha-bitmap{visibility:visible}
+.nv-escarcha-cache [id$="nvice-frost-body"]{visibility:hidden}
+/* Dos superficies pequeñas, fuera del SVG: charco detrás y gotas/vaho delante.
+   El SVG conserva el volumen estático y vuelve a servir de respaldo si falla. */
+.nv-hielo-agua{display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.nv-hielo-canvas>.nv-hielo-agua{display:block}
+.nv-hielo-canvas>.nv-hielo-agua-fondo{z-index:0}
+.nv-hielo-canvas>svg{position:relative;z-index:1}
+.nv-hielo-canvas>.nv-hielo-agua-frente{z-index:2}
+.nv-hielo-canvas>svg :is(.nv-hielo-gota,.nv-hielo-reguero,.nv-hielo-onda,[id$="nvice-puddle"],[id$="nvice-breath"],[id$="nvice-palms"],[id$="nvice-wet-edge"]){visibility:hidden!important;animation:none!important}
+.nv-hielo-canvas>svg .nv-condensacion{animation:none!important}
 .nav-pre #loginScreen .nv-mascota:not(.nv-mascota-libre) .nv-hielo-fijo{display:block}
 .nv-mascota-congelada>svg{filter:url(#nvice-refraction) saturate(calc(1 - var(--nv-frio,1) * .14)) brightness(.98)}
 /* Solo los ojos se animan sobre la pose detenida de GreenActor. Las coordenadas
@@ -52,14 +68,10 @@
 .nv-mascota[data-reflejo] #nvice-reflection{fill:var(--nv-reflejo);fill-opacity:.28}
 .nv-mascota[data-reflejo] #nvice-contour{stroke:var(--nv-reflejo)}
 .nav-pre .nv-casita{pointer-events:auto;cursor:pointer}
-.nv-mascota-ojos-pausa #eye-left,
-.nv-mascota-ojos-pausa #eye-right,
-.nv-mascota-ojos-pausa #pupil-left,
-.nv-mascota-ojos-pausa #pupil-right,
-.nv-mascota-ojos-pausa #brow-left,
-.nv-mascota-ojos-pausa #brow-right,
-.nv-mascota-ojos-pausa .nv-vaho,
-.nv-mascota-ojos-pausa .nv-hielo-fijo *{animation-play-state:paused}
+/* La pausa incluye el contenedor, las gotas, las ondas y futuras animaciones.
+   Una lista de ojos concretos dejaba el resto del SVG funcionando oculto. */
+.nv-mascota-ojos-pausa,.nv-mascota-ojos-pausa *{animation-play-state:paused!important}
+.nv-mascota-no-visible,.nv-mascota-no-visible *{transition:none!important}
 @keyframes nvOjosParpadeo{
   0%,22%,23.4%,59%,60.3%,61%,62.2%,100%{transform:scaleY(1)}
   22.5%,59.45%,61.45%{transform:scaleY(.07)}
@@ -83,6 +95,7 @@
 .nv-hielo-onda{transform-box:fill-box;transform-origin:center;animation:nvHieloOnda 5.6s linear infinite;opacity:0}
 .nv-hielo-onda-b{animation-delay:-2.35s;animation-duration:6.7s}
 .nv-hielo-fijo.nv-hielo-golpe{animation:nvHieloGolpe .55s ease-out}
+.nv-hielo-fijo.nv-hielo-waapi{animation:none}
 .nv-hielo-golpe #nvice-cracks{stroke-opacity:.9;stroke-width:4}
 @keyframes nvHieloReguero{
   0%,8%,65%,100%{opacity:0}
