@@ -706,6 +706,14 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   En pantallas anchas (PC) se ven enormes si se estiran los dos cordones de 12: la tarjeta es contenedor
   (`container-type:inline-size`) y desde 620 px de ancho se muestra un solo cordón de 24 (`.adv-uno`) en vez de los
   dos (`.adv-dos`).
+- **Mantenimiento de transición «Una nueva época está llegando»** (`js/navidad-transicion.js`, CSS al final de
+  `css/temas/comun.css`): para el cambio de temporada (tema normal → Pre-Navidad). Se prende en el perfil del admin con
+  «Pantalla de transición a Navidad» (`config/mantenimientoTransicion = 'navidad'`, lectura pública como
+  `config/mantenimiento`); con el modo mantenimiento activo, la pantalla de mantenimiento arranca con el azul de siempre,
+  se congela desde las orillas (escarcha en canvas, centro libre), se hace de noche con aurora y nieve, y una luz cálida
+  derrite una ventana redonda por la que se ve el mundo de Pre-Navidad (montañas, pinos con moño, casita con humo).
+  Título palabra por palabra con «nueva época» en dorado y una línea de estado que cambia («Encendiendo la chimenea…»).
+  Elegida entre 3 (cae la noche / escarcha / rumbo a la nueva época). Con movimiento reducido sale el final directo.
 - **«Revisión de ayer» en Navidad** (`.rban` del Dashboard admin, CSS al final de `css/temas/navidad.css`): elegida
   entre 3 (etiqueta de regalo / lista de Santa / campanita). Campanita con cinta de bastón de dulce arriba: roja y
   dorada en casa y Año Nuevo, azul y plateada en Pre-Navidad, verde si no hubo incidencias; la campana (icono SVG en
@@ -779,7 +787,7 @@ Navidad en casa adentro 33 → 23 % (17 % en reposo). Simulando un celular econ�
 
 1. *(Resuelto)* Reglas de la base por rol en `database.rules.json` (se publican solas con
    GitHub Actions, con respaldo de las anteriores y prueba después). Resumen:
-   - Sin sesión solo se lee `config/mantenimiento`, `cierreSesion`, `tema`, `musica`, `musicaDatos`.
+   - Sin sesión solo se lee `config/mantenimiento`, `mantenimientoTransicion`, `cierreSesion`, `tema`, `musica`, `musicaDatos`.
    - Empleado: lee `users`, `programaciones`, `asuetos`, `config` y solo SUS `registros`,
      `marcajes` y `suspensiones`. Crea sus registros (no los edita ni borra; no puede crearlos
      con HE aprobadas ni con vacaciones/permiso/incapacidad aprobados). Marca entrada/salida
@@ -788,7 +796,7 @@ Navidad en casa adentro 33 → 23 % (17 % en reposo). Simulando un celular econ�
      (este solo si no tenía).
    - Oficina (admin y asistente): lee todo y escribe `registros`, `marcajes`, `observaciones`,
      `suspensiones`, `asuetos`, `programaciones` y el resto de `config`.
-   - Solo admin: `users` y `config/mantenimiento|cierreSesion|tema|musica|musicaDatos`.
+   - Solo admin: `users` y `config/mantenimiento|mantenimientoTransicion|cierreSesion|tema|musica|musicaDatos`.
    - `pins`, `pins_viejos`, `seguridad_intentos`: nadie desde la app (solo el servidor).
    - Usuario inactivo = sin acceso aunque tenga sesión.
    Si una función nueva lee o escribe otra ruta, **hay que agregarla a las reglas** o fallará.

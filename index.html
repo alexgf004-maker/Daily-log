@@ -94,10 +94,11 @@
   window.addEventListener('load',function(){ setTimeout(reintentar,0); });
 })();
 </script>
-<link rel="stylesheet" href="css/temas/comun.css?v=49">
+<link rel="stylesheet" href="css/temas/comun.css?v=50">
 <link rel="stylesheet" href="css/navidad-mascota.css?v=24">
 <script src="js/navidad-casa.js?v=9" defer></script>
 <script src="js/navidad-casa-dentro.js?v=3" defer></script>
+<script src="js/navidad-transicion.js?v=1" defer></script>
 <script src="js/navidad.js?v=17" defer></script>
 <script src="js/navidad-dentro.js?v=5" defer></script>
 <script src="js/navidad-sorpresas.js?v=1" defer></script>
@@ -1436,6 +1437,11 @@ function renderAdmin(){
             <span class="pf-tx"><b>Modo mantenimiento</b><span id="mantStatus">…</span></span>
             <span class="fx-sw ap-sw" id="togMant" aria-hidden="true"><i></i></span>
           </button>
+          <button class="pf-row ap-mant" onclick="toggleTransicion()">
+            <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17l17.4-10M9 4l3 2 3-2M9 20l3-2 3 2"/></svg></span>
+            <span class="pf-tx"><b>Pantalla de transición a Navidad</b><span id="transStatus">…</span></span>
+            <span class="fx-sw ap-sw" id="togTrans" aria-hidden="true"><i></i></span>
+          </button>
           <button class="pf-row ap-aud" onclick="cicloTema()">
             <span class="pf-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></span>
             <span class="pf-tx"><b>Tema de temporada</b><span id="temaStatus">…</span></span><span class="ap-tema" id="temaModo"></span>
@@ -1850,6 +1856,10 @@ function modalsHTML(){
 // ── LOGIN ──────────────────────────────
 // ── CIERRE DE MES ──────────────────────────────────────
 // mesCerrado -> importado de utils.js
+// Pantalla de mantenimiento «de transición» al cambiar de temporada (config/mantenimientoTransicion = 'navidad')
+async function transicionMantenimiento(){
+  try{ const snap=await get(ref(db,'config/mantenimientoTransicion')); return snap.exists()?snap.val():null; }catch(e){ return null; }
+}
 async function checkMaintenance(){
   try{
     const snap=await get(ref(db,'config/mantenimiento'));
@@ -2087,6 +2097,8 @@ if(navigator.storage && navigator.storage.persist){
       }
       screen('maintenanceScreen');
       document.body.style.overflow='hidden';
+      // Cambio de temporada: «Una nueva época está llegando» (js/navidad-transicion.js)
+      if(await transicionMantenimiento()==='navidad') window.__mantTransicion&&window.__mantTransicion();
       return;
     }
 
@@ -4624,7 +4636,17 @@ window.probarMarcajeTema=function(){
 function pintarMantenimiento(on){
   const tog=$('togMant'); if(tog) tog.classList.toggle('on',!!on);
   const st=$('mantStatus'); if(st){ st.textContent=on?'Activo: solo tú puedes entrar':'Apagado: todos pueden entrar'; st.className=on?'mal':''; }
+  transicionMantenimiento().then(pintarTransicion);
 }
+function pintarTransicion(v){
+  const on=v==='navidad', tog=$('togTrans'); if(tog) tog.classList.toggle('on',on);
+  const st=$('transStatus'); if(st) st.textContent=on?'En mantenimiento se verá «Una nueva época está llegando»':'En mantenimiento se verá la pantalla de siempre';
+}
+window.toggleTransicion=async()=>{
+  const on=(await transicionMantenimiento())==='navidad';
+  try{ await set(ref(db,'config/mantenimientoTransicion'), on?null:'navidad'); }catch(e){ alert('No se pudo cambiar: '+e.message); }
+  pintarTransicion(on?null:'navidad');
+};
 // Música de la app (solo admin): subir MP3, encender/apagar para todos, quitar
 async function pintarMusicaAdmin(){
   let m=null; try{ m=(await getFirebase(refFirebase(db,'config/musica'))).val(); }catch(_){}
