@@ -9,7 +9,8 @@ const sprite=fs.readFileSync(path.join(root,'assets/navidad/personaje-animable.s
 
 function fixture(options={},direct=false){
  const frames=new Map(),nodes={};let sequence=0,writes=0;
- const context={Math,requestAnimationFrame:fn=>{frames.set(++sequence,fn);return sequence;},cancelAnimationFrame:id=>frames.delete(id),CustomEvent:class{}};
+ let calculations=0;const localMath=Object.create(Math);for(const name of ['sqrt','hypot','sin','cos'])localMath[name]=(...args)=>{calculations++;return Math[name](...args)};
+ const context={Math:localMath,requestAnimationFrame:fn=>{frames.set(++sequence,fn);return sequence;},cancelAnimationFrame:id=>frames.delete(id),CustomEvent:class{}};
  context.window=context;vm.createContext(context);vm.runInContext(source,context);
  for(const id of [...sprite.matchAll(/id="([^"]+)"/g)].map(m=>m[1]).concat(['speech-heat','speech-mouth'])){
   nodes['#'+id]={attrs:{},textContent:'',setAttribute(k,v){this.attrs[k]=String(v);writes++;}};
@@ -18,7 +19,7 @@ function fixture(options={},direct=false){
  // Referencia sin caché ni agrupación: todas las asignaciones llegan al SVG.
  if(direct)context.GreenActor.prototype.attr=function(id,k,v){this.n(id)?.setAttribute(k,String(v));};
  const actor=new context.GreenActor(svg,options);
- return {actor,frames,nodes,get writes(){return writes;},snapshot(){return JSON.stringify(nodes);},step(t){const current=[...frames.values()];frames.clear();for(const fn of current)fn(t);}};
+ return {actor,frames,nodes,get writes(){return writes;},get calculations(){return calculations;},snapshot(){return JSON.stringify(nodes);},step(t){const current=[...frames.values()];frames.clear();for(const fn of current)fn(t);}};
 }
 
 test('pausa sin diálogo no deja solicitudes de fotogramas; reanudar no duplica el bucle',()=>{
@@ -79,11 +80,23 @@ test('las 32 escenas conservan todos los atributos finales en 7.680 fotogramas',
     if(i===30)for(const f of [cached,direct])f.actor.speak({tone:'angry',level:.95,animated:true});
     if(i===90)for(const f of [cached,direct])f.actor.speak(null);
     cached.actor._speechTime=direct.actor._speechTime=i/60;
+    direct.actor._limbGeometry=Object.create(null);
     cached.actor.render(time,1/60);direct.actor.render(time,1/60);
     assert.equal(cached.snapshot(),direct.snapshot(),name+' '+embedded+' '+i);
    }
   }
  }
+});
+
+test('repetir geometría evita trigonometría y conserva atributos incluso si otra capa los sobrescribe',()=>{
+ const f=fixture();f.actor.poseArm('left',-18,-18);f.actor.poseLeg('right',0,0);
+ const before=f.calculations,expected=f.nodes['#arm-left-curve'].attrs.d;
+ for(let i=0;i<100;i++){f.actor.poseArm('left',-18,-18);f.actor.poseLeg('right',0,0)}
+ assert.equal(f.calculations,before);assert.equal(Object.keys(f.actor._limbGeometry).length,4);
+ f.actor.attr('arm-left-curve','d','otra capa');f.actor.poseArm('left',-18,-18);
+ assert.equal(f.nodes['#arm-left-curve'].attrs.d,expected);
+ f.actor.poseArm('left',-18,-18,{x:215,y:530,amount:.8});assert.ok(f.calculations>before);
+ assert.notEqual(f.nodes['#arm-left-curve'].attrs.d,expected);f.actor.destroy();
 });
 
 test('reposo contextual reduce escrituras y repetir una pose no invalida el SVG',t=>{

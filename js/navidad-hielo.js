@@ -3,6 +3,50 @@
 (function(){
 'use strict';
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+// El ruido de la escarcha es estático: resolverlo una vez al tamaño mostrado,
+// no cada vez que una gota invalida el SVG. El original sirve de fallback.
+function cacheFrost(node,path){
+  var doc=node.ownerDocument,svg=path.ownerSVGElement;
+  if(!doc?.createElementNS||!svg||typeof Image!=='function'||typeof XMLSerializer!=='function')return null;
+  var canvas=doc.createElement('canvas'),context=canvas.getContext?.('2d');if(!context)return null;
+  node.classList.remove('nv-escarcha-cache');node.querySelectorAll('.nv-escarcha-bitmap').forEach(function(el){el.remove();});
+  var bitmap=doc.createElementNS('http://www.w3.org/2000/svg','image');
+  bitmap.setAttribute('class','nv-escarcha-bitmap');bitmap.setAttribute('x','0');bitmap.setAttribute('y','0');
+  bitmap.setAttribute('width','800');bitmap.setAttribute('height','1067');bitmap.setAttribute('pointer-events','none');
+  path.parentNode.insertBefore(bitmap,path.nextSibling);
+  var visible=true,dead=false,revision=0,key='',pending='',observer=null;
+  function invalidate(){revision++;pending='';key='';node.classList.remove('nv-escarcha-cache');}
+  function refresh(){
+    if(dead||!visible||document.hidden)return;
+    var rect=node.getBoundingClientRect(),dpr=Math.min(1.5,window.devicePixelRatio||1);
+    if(!rect.width||!rect.height)return;
+    var width=Math.max(1,Math.ceil(rect.width*dpr)),height=Math.max(1,Math.ceil(rect.height*dpr));
+    var stamp=[width,height,path.getAttribute('d'),path.getAttribute('opacity')].join('|');
+    if(stamp===key||stamp===pending)return;
+    var token=++revision;pending=stamp;
+    var source=doc.createElementNS('http://www.w3.org/2000/svg','svg');
+    source.setAttribute('xmlns','http://www.w3.org/2000/svg');source.setAttribute('viewBox','0 0 800 1067');
+    source.setAttribute('width',String(width));source.setAttribute('height',String(height));
+    source.appendChild(svg.querySelector('defs').cloneNode(true));source.appendChild(path.cloneNode(true));
+    var image=new Image();
+    image.onload=function(){
+      if(dead||token!==revision||!visible||document.hidden)return;
+      try{
+        canvas.width=width;canvas.height=height;context.clearRect(0,0,width,height);context.drawImage(image,0,0,width,height);
+        bitmap.setAttribute('href',canvas.toDataURL('image/png'));
+        key=stamp;pending='';node.classList.add('nv-escarcha-cache');
+      }catch(error){pending='';node.classList.remove('nv-escarcha-cache');}
+      // La superficie temporal no permanece asignada entre cambios de fecha.
+      canvas.width=canvas.height=1;
+    };
+    image.onerror=function(){if(token===revision)pending='';};
+    image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(source));
+  }
+  if(typeof ResizeObserver==='function'){observer=new ResizeObserver(refresh);observer.observe(node);}
+  return {refresh:refresh,invalidate:invalidate,setVisible:function(value){
+    visible=!!value;if(!visible){revision++;pending='';}else refresh();
+  },destroy:function(){dead=true;revision++;observer?.disconnect();bitmap.remove();node.classList.remove('nv-escarcha-cache');canvas.width=canvas.height=1;}};
+}
 function create(day,element,options){
   var prefix=options?.idPrefix||'';
   var node=element&&element.querySelector('.nv-hielo-fijo');
@@ -16,7 +60,9 @@ function create(day,element,options){
   var drops=node.querySelectorAll('.nv-hielo-gota'),timer=0,frameId=0,shown=null,target=null;
   var visible=true,destroyed=false,hit=null;
   var media=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):null;
+  var frost=cacheFrost(node,paths['frost-body']);
   function paint(progress){
+    frost?.invalidate();
     shown=progress;
     var top=52+870*Math.pow(progress,1.12),bottom=1014;
     var left=126+112*progress,right=674-120*progress,w=right-left,h=bottom-top;
@@ -72,6 +118,7 @@ function create(day,element,options){
     // Los cambios de fecha ocultos se aplican una vez al regresar, sin reproducir
     // la transición que el usuario no vio ni avanzar relojes en segundo plano.
     else if(!wasActive&&target!==null&&shown!==target)paint(target);
+    frost?.setVisible(active());
   }
   function update(d){
     var n=clamp(Math.round(Number(d)||1),1,22),progress=(Math.min(n,21)-1)/20;
@@ -81,15 +128,15 @@ function create(day,element,options){
     if(target===progress)return progress;
     cancel();target=progress;
     if(!active())return progress;
-    if(shown===null||media?.matches||typeof requestAnimationFrame!=='function'){paint(progress);return progress;}
+    if(shown===null||media?.matches||typeof requestAnimationFrame!=='function'){paint(progress);frost?.refresh();return progress;}
     var from=shown,started=null;
     function step(time){
       frameId=0;if(!active())return;
-      if(media?.matches){paint(progress);return;}
+      if(media?.matches){paint(progress);frost?.refresh();return;}
       if(started===null)started=time;
       var t=clamp((time-started)/950,0,1),eased=t*t*(3-2*t);
       paint(from+(progress-from)*eased);
-      if(t<1)frameId=requestAnimationFrame(step);else frameId=0;
+      if(t<1)frameId=requestAnimationFrame(step);else{frameId=0;frost?.refresh();}
     }
     frameId=requestAnimationFrame(step);return progress;
   }
@@ -106,9 +153,9 @@ function create(day,element,options){
   }
   update(day);
   return {node:node,update:update,touch:touch,setVisible:setVisible,destroy:function(){
-    destroyed=true;cancel();stopHit();
+    destroyed=true;cancel();stopHit();frost?.destroy();
     node.style.removeProperty('display');node.style.removeProperty('--nv-eau');element.style.removeProperty('--nv-frio');
   }};
 }
-window.NavidadHielo={create:create};
+window.NavidadHielo={create:create,cacheFrost:cacheFrost};
 })();
