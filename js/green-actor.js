@@ -60,6 +60,12 @@ class GreenActor {
   this._reachTarget=null;this._lookTarget=null;this._speech=null;this._speechTime=0;this._speechTail=0;this.initSpeech();
   this._raf=0;this._tick=t=>{this._raf=0;this.frame(t);};
   this.play(options.initialScene||'idle');
+  this._painter=null;
+  if(options.embedded&&window.GreenPainter){
+    const report=message=>svg.dispatchEvent(new CustomEvent('greenactor:paintererror',{bubbles:true,detail:{message}}));
+    try{this._painter=window.GreenPainter.create(svg,{nodes:this.nodes,frozen:!!options.frozen,idPrefix:options.idPrefix||'',report});}
+    catch(error){report(String(error.message||error));}
+  }
   this.scheduleFrame();
  }
  // Capas de actuación, dentro de la cabeza articulada y debajo de los ojos.
@@ -113,6 +119,7 @@ class GreenActor {
  flushAttributes(){
   const pending=this._pendingAttributes;this._pendingAttributes=null;
   for(const [node,changes] of pending)for(const [property,text] of changes)this.writeAttribute(node,property,text);
+  this._painter?.invalidate();
  }
  show(id,opacity){this.attr(id,'opacity',clamp(opacity))}
  transform(id,content){this.attr(id,'transform',content)}
@@ -202,12 +209,12 @@ class GreenActor {
  pause(){this.paused=true;this.scheduleFrame();return this}
  // Pausa estricta de visibilidad: incluye el diálogo que normalmente puede
  // seguir hablando con el cuerpo congelado. No modifica la pose al suspender.
- setVisible(visible){const off=!visible;if(off===this.suspended)return this;this.suspended=off;this.last=0;this.scheduleFrame();return this}
+ setVisible(visible){this._painter?.setVisible(visible);const off=!visible;if(off===this.suspended)return this;this.suspended=off;this.last=0;this.scheduleFrame();return this}
  resume(){if(this.paused){this.paused=false;this.last=0;}this.scheduleFrame();return this}
  togglePause(){return this.paused?this.resume():this.pause()}
  resetTouches(){this.tapCount=0;return this}
  getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...SCENES[this.scene]}}
- destroy(){this.stopped=true;cancelAnimationFrame(this._raf);this._raf=0;this.n('speech-heat')?.remove?.();this.n('speech-mouth')?.remove?.();this.svg.querySelector('#'+(this.options.idPrefix||'')+'speech-warmth')?.remove?.();}
+ destroy(){this.stopped=true;cancelAnimationFrame(this._raf);this._raf=0;this._painter?.destroy();this._painter=null;this.n('speech-heat')?.remove?.();this.n('speech-mouth')?.remove?.();this.svg.querySelector('#'+(this.options.idPrefix||'')+'speech-warmth')?.remove?.();}
  frame(now){
   if(this.stopped||this.suspended)return;
   // 30 cuadros por segundo (como una caricatura) en vez de 60: el teléfono repinta el dibujo la mitad de veces.

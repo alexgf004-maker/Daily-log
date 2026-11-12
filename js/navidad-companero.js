@@ -58,8 +58,13 @@ function createOrnament(h,svg){
   }
   return {start:start,target:function(){return anchor;},pull:pull,release:release,settle:settle,restore:restore,destroy:restore};
 }
+function restartSVG(){
+  // Los pintores reinician por la mutación del atributo; solo el respaldo SVG
+  // necesita vaciar estilos para volver a ejecutar la misma animación CSS.
+  if(!mount.classList.contains('nv-actor-pintado')||!ice?.node?.classList.contains('nv-hielo-canvas'))void mount.offsetWidth;
+}
 function setCold(){
-  if(!mount)return;clearTimeout(touchTimer);delete mount.dataset.reaccion;void mount.offsetWidth;mount.dataset.reaccion='frio';
+  if(!mount)return;clearTimeout(touchTimer);delete mount.dataset.reaccion;restartSVG();mount.dataset.reaccion='frio';
   touchTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;},3600);
 }
 function allowed(){return !!actor&&!media?.matches&&!typing()&&!covered()&&!document.hidden&&inView&&screen?.classList.contains('active');}
@@ -76,7 +81,7 @@ function mischief(){
 function pressIce(){
   if(!ice||!allowed())return false;
   actor.lookAt(null);actor.play('trapped');remaining=GreenActor.SCENES.trapped.duration;palmHit=false;
-  delete mount.dataset.accion;void mount.offsetWidth;mount.dataset.accion='trapped';actor.resume();regulate();return true;
+  delete mount.dataset.accion;restartSVG();mount.dataset.accion='trapped';actor.resume();regulate();return true;
 }
 function regulate(){
   if(!actor)return;var modal=covered(),off=document.hidden||!inView||!screen?.classList.contains('active');

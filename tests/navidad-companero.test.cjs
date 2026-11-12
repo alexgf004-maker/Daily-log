@@ -138,3 +138,10 @@ test('se conserva la suscripción al reposo y los ojos y la iniciativa esperan a
  assert.ok(f.hero.children[0].classList.contains('nv-mascota-ojos-pausa'));
  quiet=false;notify();f.advance(8);assert.ok(f.actors[0].plays.length>0);
 });
+test('con los dos pintores listos, repetir el gesto y el vaho no fuerza layout',()=>{
+ const f=fixture({stage:'pre'}),mount=f.hero.children[0];mount.classList.add('nv-actor-pintado');
+ f.ices[0].node={classList:{contains:c=>c==='nv-hielo-canvas'}};
+ Object.defineProperty(mount,'offsetWidth',{get(){throw Error('Layout forzado con canvas listo')}});
+ mount.click();f.actors[0].options.onFrame({elapsed:.8},.8);
+ assert.equal(f.actors[0].scene,'trapped');assert.equal(f.ices[0].touched,true);assert.equal(mount.dataset.reaccion,'frio');
+});

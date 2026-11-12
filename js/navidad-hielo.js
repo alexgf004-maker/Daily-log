@@ -88,7 +88,7 @@ function waterLayer(node,mount,paths,drops,prefix){
   }
   function picture(partNode,removeRings,w,h){
     var source=doc.createElementNS('http://www.w3.org/2000/svg','svg');source.setAttribute('xmlns','http://www.w3.org/2000/svg');
-    source.setAttribute('viewBox','0 0 800 1067');source.setAttribute('width',String(w));source.setAttribute('height',String(h));
+    source.setAttribute('viewBox','0 0 800 1067');source.setAttribute('preserveAspectRatio','none');source.setAttribute('width',String(w));source.setAttribute('height',String(h));
     source.appendChild(svg.querySelector('defs').cloneNode(true));var copy=partNode.cloneNode(true);copy.setAttribute('opacity','1');
     if(removeRings)copy.querySelectorAll('.nv-hielo-onda').forEach(function(r){r.remove();});source.appendChild(copy);
     return new Promise(function(resolve,reject){var image=new Image();image.onload=function(){resolve(image)};image.onerror=reject;
@@ -149,6 +149,7 @@ function cacheFrost(node,path){
     var token=++revision;pending=stamp;
     var source=doc.createElementNS('http://www.w3.org/2000/svg','svg');
     source.setAttribute('xmlns','http://www.w3.org/2000/svg');source.setAttribute('viewBox','0 0 800 1067');
+    source.setAttribute('preserveAspectRatio','none');
     source.setAttribute('width',String(width));source.setAttribute('height',String(height));
     source.appendChild(svg.querySelector('defs').cloneNode(true));source.appendChild(path.cloneNode(true));
     var image=new Image();

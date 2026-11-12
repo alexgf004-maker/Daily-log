@@ -7,11 +7,11 @@ const root=path.resolve(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'js/green-actor.js'),'utf8');
 const sprite=fs.readFileSync(path.join(root,'assets/navidad/personaje-animable.svg'),'utf8');
 
-function fixture(options={},direct=false){
+function fixture(options={},direct=false,rendererFactory=null){
  const frames=new Map(),nodes={};let sequence=0,writes=0;
  let calculations=0;const localMath=Object.create(Math);for(const name of ['sqrt','hypot','sin','cos'])localMath[name]=(...args)=>{calculations++;return Math[name](...args)};
  const context={Math:localMath,requestAnimationFrame:fn=>{frames.set(++sequence,fn);return sequence;},cancelAnimationFrame:id=>frames.delete(id),CustomEvent:class{}};
- context.window=context;vm.createContext(context);vm.runInContext(source,context);
+ context.window=context;if(rendererFactory)context.GreenPainter={create:rendererFactory};vm.createContext(context);vm.runInContext(source,context);
  for(const id of [...sprite.matchAll(/id="([^"]+)"/g)].map(m=>m[1]).concat(['speech-heat','speech-mouth'])){
   nodes['#'+id]={attrs:{},textContent:'',setAttribute(k,v){this.attrs[k]=String(v);writes++;}};
  }
@@ -118,4 +118,15 @@ test('en reposo dibuja a 30 cuadros por segundo; los gestos van a la frecuencia 
  for(let i=1;i<=30;i++)f.step(t+i*1000/60);
  assert.ok(n>=29,'gesto '+n);
  f.actor.destroy();
+});
+test('el actor notifica pose, visibilidad y destrucción al pintor sin cambiar su bucle',()=>{
+ const calls=[];const painter={invalidate(){calls.push('pose')},setVisible(v){calls.push(v)},destroy(){calls.push('destroy')}};
+ const f=fixture({embedded:true},false,()=>painter);f.step(1000);assert.ok(calls.includes('pose'));
+ f.actor.setVisible(false);assert.equal(f.frames.size,0);assert.equal(calls.at(-1),false);
+ f.actor.setVisible(true);assert.equal(f.frames.size,1);assert.equal(calls.at(-1),true);
+ f.actor.destroy();f.actor.destroy();assert.equal(f.frames.size,0);assert.equal(calls.filter(c=>c==='destroy').length,1);
+});
+test('si falla el pintor conserva el SVG, y el visor no embebido mantiene su presentación original',()=>{
+ const f=fixture({embedded:true},false,()=>{throw Error('Canvas no disponible')});f.step(1000);assert.ok(f.writes>0);assert.equal(f.frames.size,1);assert.equal(f.actor._painter,null);f.actor.destroy();
+ let creates=0;const full=fixture({},false,()=>{creates++;return null});assert.equal(creates,0);full.actor.destroy();
 });
