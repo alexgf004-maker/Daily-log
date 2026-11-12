@@ -816,6 +816,17 @@ adentro de la app (técnico o admin); con «reducir movimiento» no salen. Estil
 Para probarlas en el navegador: `__nvSorpresa.probar('globo'|'chocolate'|'barra'|'mediodia')`. Lienzos efímeros (se
 borran al terminar); no hay nada corriendo mientras no se disparan, salvo el `setInterval` de 20 s del mediodía.
 
+### Navidad: «Mi Perfil» como postal (las tres etapas)
+Sin esto «Mi Perfil» se veía como el tema base. Ahora el gafete es una postal: marco por dentro (`box-shadow` inset),
+arriba una escena de 66 px (`.pf-gafete-top`, variable `--pf-escena`) y el círculo de las iniciales dentro de una corona
+con moño (`.pf-av::before`, variable `--pf-corona`); nombre en Georgia. Las tarjetas de abajo toman el fondo y los
+colores de la etapa. Pre-Navidad: marco plateado, aurora y luces congeladas, corona escarchada; Navidad en casa: marco
+dorado, techitos con cordón de colores, corona de pino; Año Nuevo: volcán y pólvora, corona dorada con estrellas.
+Todo es CSS estático (SVG en data-URI, nada animado) al final de `css/temas/navidad.css`. Las SVG se generan con un
+script de Python (`postal.py`, fuera del repo): para cambiarlas, editar los colores/dibujos en el CSS o regenerar.
+La escena se repite a lo ancho (`auto 100% repeat-x`) y está hecha para empatar sin costura (aurora con tres copias
+desplazadas 400 px), así que en PC no se agranda ni se recorta.
+
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.
 Sin tema la app quieta usa 0 %. Con procesador normal (×1), antes → después de `mejoras/rendimiento`:
