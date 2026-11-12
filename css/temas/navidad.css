@@ -76,9 +76,8 @@ html.tema-navidad #loginScreen{
 .nv-camino-t span{letter-spacing:.02em;text-transform:none;color:rgba(255,255,255,.85);font-weight:600}
 .nv-camino-t b{font-size:14px;color:#fff}
 .nv-camino svg{display:block;width:100%;height:26px}
-.nv-trineo{animation:nvTrineo 1.6s ease-in-out infinite}
-@keyframes nvTrineo{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
-.nav-pre .login-form{overflow:visible;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(236,248,255,.85));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 30px 60px -20px rgba(2,20,50,.6),0 0 0 1px rgba(255,255,255,.8),0 0 40px rgba(140,220,255,.25)}
+/* (el trineo ya no se mece: estaba dentro del SVG de las montañas y lo obligaba a repintarse entero en cada cuadro) */
+.nav-pre .login-form{overflow:visible;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(236,248,255,.92));box-shadow:0 30px 60px -20px rgba(2,20,50,.6),0 0 0 1px rgba(255,255,255,.8),0 0 40px rgba(140,220,255,.25)}
 .nav-pre .login-form::before{content:none}
 .nav-pre .login-form>:not(.nv-extra){position:relative;z-index:1}
 .nav-pre .login-hola{color:#0b2d55}.nav-pre .login-hola em{color:#1b84c9}
@@ -338,7 +337,7 @@ html.nav-casa #nvpAdv .adv-cordon path:first-of-type{stroke:#3a1408;stroke-width
 /* En el celular, dos cordones de 12; si la tarjeta es ancha (PC), uno solo de 24 para que los foquitos no se vean enormes */
 .nvp-adv{container-type:inline-size} .adv-cordon.adv-uno{display:none}
 @container (min-width:620px){ .adv-cordon.adv-dos{display:none} .adv-cordon.adv-uno{display:block;margin:4px 0 6px} }
-.adv-cordon .adv-hoy{animation:advLatido 1.6s ease-in-out infinite} @keyframes advLatido{50%{opacity:.5}}
+.adv-cordon .adv-hoy{animation:advLatido 1.6s steps(4,jump-none) infinite} @keyframes advLatido{50%{opacity:.5}}
 html.nv-reposo .adv-cordon .adv-hoy{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){.adv-cordon .adv-hoy{animation:none}}
 
@@ -363,13 +362,13 @@ html.nav-casa.nvc-con-noche .dt-hd .dt-lbl{color:#fff!important;background:rgba(
 .lz-capa{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:3}
 .lz{transform-box:fill-box;transform-origin:50% 0}
 .lz .halo{opacity:0;transition:opacity .35s}
-.lz.on .halo{opacity:1;animation:lzTit 2.4s ease-in-out infinite;animation-delay:var(--d)}
+.lz.on .halo{opacity:1;animation:lzTit 2.4s steps(4,jump-none) infinite;animation-delay:var(--d)}
 .lz .vid{fill:#cfd6de;fill-opacity:.55;stroke:rgba(80,95,110,.45);stroke-width:.8;transition:fill .3s,fill-opacity .3s}
 .lz.on .vid{fill:var(--c);fill-opacity:1;stroke:rgba(255,255,255,.35)}
 .lz.pop{animation:lzPop .4s cubic-bezier(.3,1.8,.5,1)}
-.lz.espera .halo{opacity:1;animation:lzEsp 1.6s ease-in-out infinite} .lz.espera .vid{fill:var(--c);fill-opacity:.5}
+.lz.espera .halo{opacity:1;animation:lzEsp 1.6s steps(4,jump-none) infinite} .lz.espera .vid{fill:var(--c);fill-opacity:.5}
 @keyframes lzTit{0%,100%{opacity:1}50%{opacity:.45}} @keyframes lzEsp{0%,100%{opacity:.1}50%{opacity:.8}} @keyframes lzPop{0%{scale:1}40%{scale:1.45}100%{scale:1}}
-.lz-lleno .lz.on .halo{animation-duration:.9s}
+.lz-lleno .lz.on .halo{animation-duration:1.2s}
 .lz-corre .lz.on .halo{animation:lzCorre .5s linear infinite;animation-delay:calc(var(--d) * .2)} @keyframes lzCorre{0%,100%{opacity:.15}50%{opacity:1}}
 html.nvc-luces.nav-casa .tabs>.lz-capa{height:22px;top:-1px}
 html.nvc-luces.nav-casa #employeeScreen .tab{padding-top:16px}
@@ -428,7 +427,7 @@ html.nvc-con-noche body:has(#loginScreen.active) .nvc-noche,html.nvc-con-noche b
 html.nvc-con-noche.nav-casa .content{background:transparent}
 .nav-casa .topbar{background:linear-gradient(180deg,#031428,#0a2d55);border-bottom:1px solid rgba(242,196,90,.35)}
 .nav-casa .tb-name .inn{color:#ffd27a}
-.nav-casa #employeeScreen .tabs,.nav-casa #adminScreen .tabs{background:rgba(3,20,40,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid rgba(242,196,90,.25);box-shadow:none}
+.nav-casa #employeeScreen .tabs,.nav-casa #adminScreen .tabs{background:rgba(3,20,40,.9);border-bottom:1px solid rgba(242,196,90,.25);box-shadow:none}
 .nav-casa #employeeScreen .tab{color:rgba(230,240,255,.78)}
 .nav-casa #employeeScreen .tab.active{color:#ffd27a;border-bottom-color:#f2c45a}
 @media(max-width:899px){
@@ -462,11 +461,11 @@ html.nav-casa .nvc-hero>.nvc-bota{position:absolute;right:28px;top:calc(100% - 1
 .nav-ano .nva-fondo,.nav-ano .nva-frente,.nav-ano .nva-polvora{position:absolute;inset:0;pointer-events:none}
 .nav-ano .nva-polvora{width:100%;height:100%} .nav-ano .nva-frente{z-index:1}
 .nva-cielo{position:absolute;inset:0;width:100%;height:100%}
-.nva-cielo .t{animation:nvaTw 3.4s ease-in-out infinite} @keyframes nvaTw{50%{opacity:.2}}
+.nva-cielo .t{animation:nvaTw 3.2s steps(4,jump-none) infinite} @keyframes nvaTw{50%{opacity:.2}}
 .nva-volcan{position:absolute;left:0;right:0;width:100%}
-.nva-volcan .lz{animation:nvaTw 2.6s ease-in-out infinite}
+.nva-volcan .lz{animation:nvaTw 2.4s steps(4,jump-none) infinite}
 .nva-terraza{position:absolute;left:0;right:0;bottom:0;width:100%}
-.nva-terraza .bb{animation:nvaBomb 2.4s ease-in-out infinite} @keyframes nvaBomb{50%{opacity:.72}}
+.nva-terraza .bb{animation:nvaBomb 2.4s steps(4,jump-none) infinite} @keyframes nvaBomb{50%{opacity:.72}}
 .nva-chispas i{position:absolute;width:2.6px;height:2.6px;border-radius:50%;background:#fff6d0;box-shadow:0 0 6px 2px #ffc94a;animation:nvaChis .7s linear infinite}
 @keyframes nvaChis{0%{transform:translate(0,0);opacity:1}100%{transform:translate(var(--x),var(--y));opacity:0}}
 /* marca */
@@ -496,7 +495,8 @@ html.nav-casa .nvc-hero>.nvc-bota{position:absolute;right:28px;top:calc(100% - 1
 .nav-ano .btn-login{position:relative;overflow:visible;background:linear-gradient(110deg,#e8433a,#ff7a2e 55%,#ffb02e);box-shadow:0 12px 26px -10px rgba(232,67,58,.75)}
 .nav-ano .btn-login::before{content:'';position:absolute;left:14px;right:14px;bottom:-1px;height:2px;border-radius:2px;background:repeating-linear-gradient(90deg,#7a2a12 0 5px,#c25a2a 5px 8px);opacity:.75}
 .nav-ano .btn-login::after{content:'';position:absolute;bottom:-5px;left:14px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#fff 0 20%,#ffd35a 40%,rgba(255,140,40,0) 70%);box-shadow:0 0 12px 4px rgba(255,190,80,.8);animation:nvaMecha 3.2s linear infinite}
-@keyframes nvaMecha{0%{left:14px;opacity:0}5%{opacity:1}90%{opacity:1}100%{left:calc(100% - 24px);opacity:0}}
+.nav-ano .btn-login{container-type:inline-size}
+@keyframes nvaMecha{0%{transform:translateX(0);opacity:0}5%{opacity:1}90%{opacity:1}100%{transform:translateX(calc(100cqw - 38px));opacity:0}}
 .nav-ano .login-footer{display:table;padding:6px 13px;border-radius:99px;max-width:none;background:rgba(20,8,36,.65);color:rgba(255,230,210,.85)}
 @media (prefers-reduced-motion:reduce){ .nav-ano .btn-login::after,.nav-ano .lg-rec input:checked+.lg-rec-sw i::after{animation:none} .nav-ano .btn-login::after{display:none} }
 
@@ -529,6 +529,8 @@ html.nav-pre{--nvp-cordon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.or
 .nv-amb i:nth-child(4n){width:5px;height:5px;border-radius:50%;background:#cfe6f6;opacity:.7}
 @keyframes nvAmbCae{0%{transform:translate(0,0) rotate(0)}50%{transform:translate(16px,52vh) rotate(180deg)}100%{transform:translate(-6px,108vh) rotate(360deg)}}
 body:has(#loginScreen.active) .nv-amb{display:none}
+/* adentro el «Valle nevado» de fondo ya trae su nieve: esta segunda capa de copos (encima de todo) sobraba */
+html.nvd-con-valle .nv-amb{display:none}
 @media (prefers-reduced-motion:reduce){.nv-amb{display:none}}
 
 /* AUTO-COLORES-NAVIDAD:INICIO (no editar a mano: herramientas/tema-colores.py) */
@@ -711,7 +713,7 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 .nvp-foq{margin-top:12px}
 .nvp-foq svg{display:block;width:100%;height:42px;overflow:visible}
 .nvp-f .vid{transition:fill .4s}
-.nvp-f.on .vid{filter:url(#nvpLuz);animation:nvpTitila 2.6s ease-in-out infinite;animation-delay:var(--d,0s)}
+.nvp-f.on .vid{filter:url(#nvpLuz);animation:nvpTitila 2.4s steps(4,jump-none) infinite;animation-delay:var(--d,0s)}
 @keyframes nvpTitila{0%,100%{opacity:1}50%{opacity:.72}}
 .nvp-f.frio .vid{opacity:.75}
 .nvp-f.hoy .vid{fill:rgba(255,255,255,.35)}
@@ -803,7 +805,7 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 .nav-pre .topbar{background:linear-gradient(180deg,#031428,#0b3a6a)}
 .nvd-car{position:absolute;left:0;right:0;top:100%;height:60px;overflow:hidden;pointer-events:none}
 .nvd-car svg{display:block}
-.nvd-gota{fill:#bfe3f7;opacity:0;animation:nvdGota 6s ease-in infinite}
+.nvd-gota{position:absolute;width:3.4px;height:3.4px;border-radius:50%;background:#bfe3f7;opacity:0;animation:nvdGota 6s ease-in infinite}
 @keyframes nvdGota{0%,70%{opacity:0;transform:translateY(0)}74%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(40px)}}
 .nav-pre .topbar+.tabs{padding-top:16px}
 .nav-pre #employeeScreen .tab.active{color:#0b3a6a;border-bottom-color:#4cc3ff}
@@ -814,7 +816,7 @@ body:has(#loginScreen.active) .nv-amb{display:none}
 .nvd-hero{position:relative;isolation:isolate;overflow:hidden}
 .nvd-au{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;border-radius:inherit}
 .nvd-hero:not(.nvp-con-foq)>.nvd-au::after{content:'';position:absolute;inset:0;background:var(--nvp-cordon) top left/120px 34px repeat-x}
-.nvd-au svg{position:absolute;left:0;top:-10%;width:200%;height:120%;filter:blur(6px);will-change:transform}
+.nvd-au svg{position:absolute;left:0;top:-10%;width:200%;height:120%;will-change:transform}
 .nvd-au .b1{animation:nvdAu 14s ease-in-out infinite alternate}
 .nvd-au .b2{animation:nvdAu 19s ease-in-out infinite alternate-reverse}
 @keyframes nvdAu{from{transform:translateX(0)}to{transform:translateX(-50%)}}
@@ -884,3 +886,9 @@ html.tema-navidad :is(#employeeScreen,#adminScreen) .pf-gafete.nv-con-companero{
   html.tema-navidad .pf-gafete.nv-con-companero .pf-gafete-top i{left:calc(50% - 52px)}
   html.tema-navidad .pf-gafete.nv-con-companero .pf-av{margin:-39px 0 0 calc(50% - 91px)}
 }
+
+/* ═ Entrada limpia (entradaConTema en index.html): mientras los módulos de Navidad decoran la pantalla recién abierta,
+   el contenido espera invisible y luego aparece de una vez; la barra de arriba se ve desde el principio. ═ */
+html.nv-entrando :is(#employeeScreen,#adminScreen)>:not(.topbar){opacity:0}
+html.tema-navidad :is(#employeeScreen,#adminScreen)>:not(.topbar){transition:opacity .3s ease}
+@media (prefers-reduced-motion:reduce){ html.tema-navidad :is(#employeeScreen,#adminScreen)>:not(.topbar){transition:none} }

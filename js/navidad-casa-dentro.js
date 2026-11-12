@@ -131,16 +131,18 @@
   }
   function corre(){ return noche&&noche.f.isConnected&&activo()&&!document.hidden&&!!pantallaAdentro()&&!Rp.quieto(); }
   function cuadro(ms){
-    noche.raf=0; if(!corre()){ if(noche.santa){ noche.santa=null; noche.sx.clearRect(0,0,noche.K.W,noche.K.H); } return; }   // se reanuda con verNoche()
+    noche.raf=0; if(!corre()){ if(noche.santa){ noche.santa=null; noche.sx.clearRect(0,0,noche.K.W,noche.K.H); noche.s.style.display='none'; } return; }   // se reanuda con verNoche()
     noche.raf=requestAnimationFrame(cuadro);
     if(ms-noche.ult<32) return; noche.ult=ms;   // ~30 cuadros por segundo alcanzan para luces y nieve
     var N=window.__nvMotor, t=ms/1000, K=noche.K, vx=noche.vx;
     N.vivo(vx,K.W,K.H,t,noche.C.luces,noche.copos,noche.C.chispas);
     // Santa y sus renos cruzan la pantalla de vez en cuando, con una estela dorada (en su propio lienzo, encima)
-    if(!noche.santa&&t>noche.sig){ noche.santa={t0:t,rastro:[],y0:K.H*N.rr(.3,.42)}; noche.sig=t+N.rr(40,70); }
+    // el lienzo de Santa cubre la pantalla encima de todo: solo existe mientras vuela (vacío y transparente, igual
+    // obligaba a recomponer la pantalla entera en cada cuadro)
+    if(!noche.santa&&t>noche.sig){ noche.santa={t0:t,rastro:[],y0:K.H*N.rr(.3,.42)}; noche.sig=t+N.rr(40,70); noche.s.style.display=''; }
     var S=noche.santa, sx=noche.sx; if(S){ var dur=K.ancho?10:7, u=(t-S.t0)/dur, s=K.ancho?.5:.38;
       sx.clearRect(0,0,K.W,K.H);
-      if(u>1){ noche.santa=null; return; }
+      if(u>1){ noche.santa=null; noche.s.style.display='none'; return; }
       var x=-170*s+(K.W+340*s)*u, y=S.y0-Math.sin(u*Math.PI)*(K.ancho?60:40);
       S.rastro.push([x-60*s,y+8*s,t]); while(S.rastro.length&&t-S.rastro[0][2]>1.2) S.rastro.shift();
       S.rastro.forEach(function(q){ var a=1-(t-q[2])/1.2; sx.fillStyle='rgba(255,205,90,'+(.75*a).toFixed(3)+')'; sx.beginPath(); sx.arc(q[0],q[1],1.6*a+.5,0,N.P); sx.fill(); });
@@ -151,7 +153,7 @@
     if(!activo()||!window.__nvMotor) return;
     if(!noche){
       var f=document.createElement('canvas'), v=document.createElement('canvas'), sc=document.createElement('canvas');
-      f.className='nvc-noche'; v.className='nvc-noche'; sc.className='nvc-santa'; [f,v,sc].forEach(function(c){ c.setAttribute('aria-hidden','true'); });
+      f.className='nvc-noche'; v.className='nvc-noche'; sc.className='nvc-santa'; sc.style.display='none'; [f,v,sc].forEach(function(c){ c.setAttribute('aria-hidden','true'); });
       document.body.appendChild(sc);
       document.body.insertBefore(v,document.body.firstChild); document.body.insertBefore(f,v);
       noche={f:f,v:v,s:sc,raf:0,ult:0,firma:''}; document.documentElement.classList.add('nvc-con-noche');

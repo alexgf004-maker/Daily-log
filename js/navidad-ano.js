@@ -28,7 +28,7 @@ function escena({capa,fondo,frente,W,H,ls}){
   const S=semilla(3), r=(a,b)=>a+S()*(b-a), M=medidas(capa), PC=W>700;
   fondo.innerHTML=''; frente.innerHTML='';
   // estrellas
-  let p=''; for(let i=0;i<Math.round(W*H/7000);i++) p+=`<circle class="${i%2?'t':''}" style="animation-delay:-${r(0,3).toFixed(1)}s" cx="${r(0,W).toFixed(0)}" cy="${r(0,H*.55).toFixed(0)}" r="${r(.4,1.2).toFixed(1)}" fill="#fff" opacity="${r(.3,.9).toFixed(2)}"/>`;
+  let p=''; for(let i=0;i<Math.round(W*H/7000);i++) p+=`<circle class="${i%2?'t':''}" style="animation-delay:-${(i%8*.4).toFixed(1)}s" cx="${r(0,W).toFixed(0)}" cy="${r(0,H*.55).toFixed(0)}" r="${r(.4,1.2).toFixed(1)}" fill="#fff" opacity="${r(.3,.9).toFixed(2)}"/>`;
   fondo.insertAdjacentHTML('beforeend',svg(W,H,p,'nva-cielo'));
   // la terraza: el piso llega a los pies de la mascota; la baranda queda detrás de ella
   const pieY=M.pies?Math.min(H-24,M.pies.y):H-40, borde=pieY-6, TH=H-borde+110, yd=TH-(H-borde);   // yd: orilla del piso en la svg
@@ -38,7 +38,7 @@ function escena({capa,fondo,frente,W,H,ls}){
   const vx=PC?W*.64:W*.5, vw=PC?Math.min(W*.9,980):W*1.15, top=VH*.16;
   const vol=`M${vx-vw/2-60} ${VH} C${vx-vw*.36} ${VH*.6} ${vx-vw*.22} ${top+16} ${vx-vw*.12} ${top+5} L${vx-vw*.06} ${top} L${vx+vw*.02} ${top+4} L${vx+vw*.07} ${top-VH*.07} C${vx+vw*.1} ${top-VH*.1} ${vx+vw*.13} ${top-VH*.05} ${vx+vw*.16} ${top+VH*.05} C${vx+vw*.28} ${top+VH*.2} ${vx+vw*.4} ${VH*.64} ${vx+vw/2+60} ${VH} Z`;
   const lejos=`M-20 ${VH} C${W*.15} ${VH*.74} ${W*.3} ${VH*.66} ${W*.42} ${VH*.74} C${W*.6} ${VH*.82} ${W*.85} ${VH*.64} ${W+20} ${VH*.72} V${VH} Z`;
-  let luces=''; for(let i=0;i<Math.round(W/1.8);i++){ const x=r(-10,W+10), y=VH-r(2,VH*.26)*Math.pow(S(),1.7); luces+=`<circle class="${i%4?'':'lz'}" style="animation-delay:-${r(0,3).toFixed(1)}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r(.5,1.3).toFixed(1)}" fill="${S()<.75?'#ffcf7a':S()<.5?'#ffffff':'#9fd0ff'}" opacity="${r(.5,1).toFixed(2)}"/>`; }
+  let luces=''; for(let i=0;i<Math.round(W/1.8);i++){ const x=r(-10,W+10), y=VH-r(2,VH*.26)*Math.pow(S(),1.7); luces+=`<circle class="${i%4?'':'lz'}" style="animation-delay:-${(i%8*.3).toFixed(1)}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r(.5,1.3).toFixed(1)}" fill="${S()<.75?'#ffcf7a':S()<.5?'#ffffff':'#9fd0ff'}" opacity="${r(.5,1).toFixed(2)}"/>`; }
   let humo=""; for(let i=0;i<5;i++) humo+=`<ellipse filter="url(#nvaBf)" cx="${r(0,W).toFixed(0)}" cy="${(VH*r(.1,.5)).toFixed(0)}" rx="${r(60,160).toFixed(0)}" ry="${r(8,18).toFixed(0)}" fill="#c9a6d8" opacity="${r(.05,.12).toFixed(2)}"/>`;
   fondo.insertAdjacentHTML('beforeend',svg(W,VH,`<defs><filter id="nvaBf" x="-50%" y="-50%" width="200%" height="200%"><feGaussinvaBlur stdDeviation="10"/></filter><linearGradient id="nvaBv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2a66"/><stop offset=".5" stop-color="#241a48"/><stop offset="1" stop-color="#150f30"/></linearGradient><linearGradient id="nvaBl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2c6a"/><stop offset="1" stop-color="#2a1a48"/></linearGradient><linearGradient id="nvaBh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a6a" stop-opacity="0"/><stop offset="1" stop-color="#ff9a6a" stop-opacity=".4"/></linearGradient></defs>
     ${humo}<path d="${lejos}" fill="url(#nvaBl)"/><path d="${vol}" fill="url(#nvaBv)"/><path d="${vol}" fill="none" stroke="#b58ad8" stroke-opacity=".35" stroke-width="1.4"/>
@@ -60,7 +60,7 @@ function escena({capa,fondo,frente,W,H,ls}){
   for(let k=0;k<tramos;k++){ const a=k*W/tramos, b=(k+1)*W/tramos, m=(a+b)/2, cy=gy+30;
     t+=`<path d="M${a} ${gy}Q${m} ${cy} ${b} ${gy}" stroke="#241410" stroke-width="1.4" fill="none"/>`;
     for(let j=1;j<8;j++){ const u=j/8, X=(1-u)*(1-u)*a+2*(1-u)*u*m+u*u*b, Y=(1-u)*(1-u)*gy+2*(1-u)*u*cy+u*u*gy;
-      t+=`<g class="bb" style="animation-delay:-${r(0,2.4).toFixed(1)}s"><circle cx="${X.toFixed(1)}" cy="${(Y+8).toFixed(1)}" r="11" fill="#ffcf7a" opacity=".22"/><rect x="${(X-1.8).toFixed(1)}" y="${(Y-1).toFixed(1)}" width="3.6" height="4" fill="#3a2a20"/><circle cx="${X.toFixed(1)}" cy="${(Y+7).toFixed(1)}" r="4.6" fill="#ffe6a8"/><circle cx="${(X-1.3).toFixed(1)}" cy="${(Y+5.6).toFixed(1)}" r="1.4" fill="#fff"/></g>`; } }
+      t+=`<g class="bb" style="animation-delay:-${(j%8*.3).toFixed(1)}s"><circle cx="${X.toFixed(1)}" cy="${(Y+8).toFixed(1)}" r="11" fill="#ffcf7a" opacity=".22"/><rect x="${(X-1.8).toFixed(1)}" y="${(Y-1).toFixed(1)}" width="3.6" height="4" fill="#3a2a20"/><circle cx="${X.toFixed(1)}" cy="${(Y+7).toFixed(1)}" r="4.6" fill="#ffe6a8"/><circle cx="${(X-1.3).toFixed(1)}" cy="${(Y+5.6).toFixed(1)}" r="1.4" fill="#fff"/></g>`; } }
   // mesa con mantel, las 12 uvas y un frasco de estrellitas (sobre el piso, a la izquierda)
   const K=PC?1.6:1.25, mx=PC?Math.max(170,M.tarjeta.x0-150):Math.min(W*.3,110), my=yd+(PC?26:16);
   t+=`<g transform="translate(${mx} ${my}) scale(${K})">
@@ -80,7 +80,7 @@ function escena({capa,fondo,frente,W,H,ls}){
   const ch=document.createElement('div'); ch.className='nva-chispas'; ch.style.cssText='position:absolute;inset:0'; frente.appendChild(ch);
   requestAnimationFrame(()=>{ const cr=frente.getBoundingClientRect(); te.querySelectorAll('.nva-pt').forEach(pt=>{ const q=pt.getBoundingClientRect(), cx=q.left+q.width/2-cr.left, cy=q.top+q.height/2-cr.top;
     const g=document.createElement('b'); g.style.cssText=`position:absolute;left:${cx-9}px;top:${cy-9}px;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,rgba(255,240,180,.95),rgba(255,190,80,0) 70%)`; ch.appendChild(g);
-    for(let k=0;k<12;k++){ const i=document.createElement('i'), a=k/12*6.283+S(); i.style.left=cx+'px'; i.style.top=cy+'px'; i.style.setProperty('--x',(Math.cos(a)*r(10,22)).toFixed(1)+'px'); i.style.setProperty('--y',(Math.sin(a)*r(10,22)+8).toFixed(1)+'px'); i.style.animationDelay=(-r(0,.7)).toFixed(2)+'s'; i.style.animationDuration=r(.45,.8).toFixed(2)+'s'; ch.appendChild(i); } }); });
+    for(let k=0;k<8;k++){ const i=document.createElement('i'), a=k/8*6.283+S(); i.style.left=cx+'px'; i.style.top=cy+'px'; i.style.setProperty('--x',(Math.cos(a)*r(10,22)).toFixed(1)+'px'); i.style.setProperty('--y',(Math.sin(a)*r(10,22)+8).toFixed(1)+'px'); i.style.animationDelay=(-r(0,.7)).toFixed(2)+'s'; i.style.animationDuration=r(.45,.8).toFixed(2)+'s'; ch.appendChild(i); } }); });
 }
 
 function tarjeta(){
@@ -97,7 +97,7 @@ window.__nvAno=function(capa){
   const frente=document.createElement('div'); frente.className='nva-frente';
   capa.append(fondo,cv,frente);
   const x=cv.getContext('2d'); let W=0,H=0,vivo=true,firma='';
-  const medir=()=>{ const d=Math.min(1.5,window.devicePixelRatio||1); W=capa.clientWidth; H=capa.clientHeight; cv.width=Math.round(W*d); cv.height=Math.round(H*d); x.setTransform(d,0,0,d,0,0); };
+  const medir=()=>{ const d=Math.min(1.25,window.devicePixelRatio||1); W=capa.clientWidth; H=capa.clientHeight; cv.width=Math.round(W*d); cv.height=Math.round(H*d); x.setTransform(d,0,0,d,0,0); };
   // la escena se arma de nuevo solo si cambian el tamaño o el lugar de la mascota/tarjeta
   const armar=()=>{ if(!vivo) return; medir(); const M=medidas(capa), f=[W,H,M.pies?Math.round(M.pies.y):0,Math.round(M.tarjeta.y1)].join(',');
     if(f===firma||!W||!H) return; firma=f; escena({capa,fondo,frente,W,H,ls}); };
@@ -119,7 +119,9 @@ window.__nvAno=function(capa){
   const toque=e=>{ if(!vivo||e.target.closest('.login-form,.login-footer,button,input,label,.nv-mascota')) return; const r=capa.getBoundingClientRect(), ty=e.clientY-r.top; if(ty<piso()-80){ lanzar(e.clientX-r.left,ty); seguir(); } };
   ls.addEventListener('pointerdown',toque);
   const aLaVista=()=>!document.hidden&&ls.classList.contains('active');
+  // 30 cuadros por segundo: todo avanza con el tiempo (k), así se ve igual de rápido con menos trabajo
   const cuadro=t=>{ raf=0; if(!vivo||!aLaVista()) return;
+    if(ult&&t-ult<31){ raf=requestAnimationFrame(cuadro); return; }
     const k=ult?Math.min(3,(t-ult)/16.67):1; ult=t;
     x.clearRect(0,0,W,H);
     if(!reducido&&t>prox){ lanzar(); if(Math.random()<.3) setTimeout(lanzar,240); prox=t+R(700,1300); }

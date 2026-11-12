@@ -83,7 +83,7 @@ export function cordonHTML(dias, nombre, real) {
   dias.forEach((x, i) => {
     const [px, py] = pos(i), col = colores[i % colores.length];
     const titulo = `${DIAS[x.dow]} ${x.dia}: ${x.estado === 'on' ? 'encendido' : x.estado === 'frio' ? 'congelado' : x.estado === 'hoy' ? 'hoy, por encender' : 'por venir'}`;
-    focos += `<g class="nvp-f ${x.estado}" transform="translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${((i * 37) % 24) - 12})" style="--d:${(-(i * 0.37) % 2.4).toFixed(2)}s"><title>${titulo}</title>
+    focos += `<g class="nvp-f ${x.estado}" transform="translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${((i * 37) % 24) - 12})" style="--d:${(-((i * 3) % 8) * 0.3).toFixed(1)}s"><title>${titulo}</title>
       <rect x="-2.4" y="-1" width="4.8" height="4" rx="1" fill="#8fa6bb"/>
       <path class="vid" d="M0 2.8C-5 4.6 -5 13.4 0 15.6C5 13.4 5 4.6 0 2.8Z" fill="${x.estado === 'on' ? col : x.estado === 'futuro' ? 'rgba(255,255,255,.18)' : '#cfe3f2'}"/>
       ${x.estado === 'frio' ? '<path d="M-3.9 6.6C-3.4 4.6 3.4 4.6 3.9 6.6C3.4 9.6 -3.4 9.6 -3.9 6.6Z" fill="#fff" opacity=".85"/><path d="M-2 15 l1 3 1-3" fill="#e8f8ff"/>' : ''}

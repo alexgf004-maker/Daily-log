@@ -715,6 +715,33 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   En pantallas anchas (PC) se ven enormes si se estiran los dos cordones de 12: la tarjeta es contenedor
   (`container-type:inline-size`) y desde 620 px de ancho se muestra un solo cordón de 24 (`.adv-uno`) en vez de los
   dos (`.adv-dos`).
+- **Rendimiento de los temas (análisis nov 2026)** — medido en un «celular económico» (Chromium con CPU ×4, pantalla
+  390×844 a 2.75×; scripts de medición en el scratchpad de la sesión: ocupado %, cuadros, tareas largas, perfiles).
+  Lección general: casi todo el gasto es **repintar/componer**, no JavaScript. Reglas que se aplicaron y que hay que
+  seguir en lo nuevo:
+  - Nada se anima DENTRO de un SVG grande (cualquier animación de un hijo obliga a repintar el SVG entero en cada
+    cuadro). Lo que se mueve va en su propio elemento HTML (ej. las gotas de los carámbanos `.nvd-gota` ahora son
+    `<i>` fuera del SVG de 1600 px) o se quita (el trineo del login ya no se mece dentro de las montañas).
+  - Los parpadeos que sí van dentro de SVG (halos de las luces `.lz .halo`, `.nvq-halo`, `.nvp-f .vid`, estrellas,
+    luces de la ciudad y bombillos de Año Nuevo, `.adv-hoy`) usan `steps(4,jump-none)` y fases en múltiplos del paso
+    (`(i*3)%8*.3 s` con ciclo de 2.4 s): todos cambian a la vez unas 3 veces por segundo en vez de 60.
+  - Sin `backdrop-filter` ni `filter` animado encima/sobre algo que se mueve: las pestañas de Navidad en casa y la
+    tarjeta del login de Pre-Navidad usan fondo más opaco; la aurora de los encabezados trae el desenfoque dentro del
+    SVG (`feGaussianBlur`) en vez de `filter:blur` del CSS.
+  - Ninguna capa transparente a pantalla completa encima del contenido si no está dibujando: el lienzo de Santa
+    (`.nvc-santa`) solo se muestra mientras Santa vuela; la nieve `.nv-amb` no sale cuando ya está el «Valle nevado».
+  - Lienzos a 30 cuadros por segundo y resolución tope ≤1.5× (la pólvora de Año Nuevo iba a 60 y 1.5×: ahora 30 y
+    1.25×). La mecha del botón de Año Nuevo se mueve con `transform` (usaba `left`).
+  - **Entrada limpia** (`entradaConTema` en index.html + `html.nv-entrando`): al abrir la app con Navidad, el contenido
+    espera a que los módulos terminen de decorar (220 ms sin cambios, tope 1.3 s) y aparece de una vez; antes se veía
+    la app normal, luego la Navidad encima y luego las luces («se abre un tema sobre otro»).
+  - Resultado (×4, app quieta, ocupado %): Pre login 86→76, Pre adentro 76→~68, Casa login 80→65, Año login 99→97
+    (34→44 cps; a ×2: 77→58 %). Con la app en reposo (25 s sin tocar) todo lo nuestro queda en 0 %.
+  - **Pendiente fuera de nuestro alcance: la mascota** (green-actor/navidad-companero/navidad-mascota, de Codex). Anima
+    a 60 cps siempre, también en reposo: sola consume 62–64 % (×4) con la app quieta, y es la pieza más cara en todas
+    las pantallas (25–38 puntos). Recomendado: que respete `__nvReposo`, baje a 30 cps y se detenga fuera de pantalla.
+  - Al abrir aún hay ~1 s de trabajo pesado en Navidad en casa (dibujar el árbol aguja por aguja ~0.3 s ×4 en el login
+    y la noche de adentro); idea para después: guardar la escena ya dibujada (Cache Storage) para no rehacerla.
 - **Convivencia con el compañero en los encabezados** (`css/temas/navidad.css`, al final; el compañero es de
   `js/navidad-companero.js` y no se toca): su encabezado (`.nv-con-companero`) le reserva 112 px a la derecha en toda la
   altura. En el teléfono eso partía la fecha de Programación en dos renglones y apretaba sus 4 botones, y dejaba corta

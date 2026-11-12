@@ -49,7 +49,7 @@
   // un foquito en (x,y) colgando hacia el ángulo a (grados; 0 = hacia abajo), escala k; i elige el color
   function luz(svg,x,y,a,k,i){
     var g=el('g',{'class':'lz',transform:'translate('+x.toFixed(1)+' '+y.toFixed(1)+') rotate('+a+') scale('+k+')'},svg), c=i%COLS.length;
-    g.style.setProperty('--c',COLS[c]); g.style.setProperty('--d',(-(i*0.37)%2.4).toFixed(2)+'s');
+    g.style.setProperty('--c',COLS[c]); g.style.setProperty('--d',(-((i*3)%8)*0.3).toFixed(1)+'s');   // fases en múltiplos de 0.3 s: con steps() todas cambian a la vez
     el('circle',{'class':'halo',cx:0,cy:9,r:12,fill:'url(#'+svg._id+c+')'},g);
     el('rect',{x:-3,y:-2,width:6,height:5,rx:1,fill:'#4d5966'},g);
     el('path',{'class':'vid',d:'M0 3 C-6 5 -6 15 0 19 C6 15 6 5 0 3Z'},g);

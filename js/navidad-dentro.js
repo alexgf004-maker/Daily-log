@@ -55,17 +55,22 @@
     while(x<w){ var ww=R(5,10), L=Math.random()<.2?R(16,22):R(6,13);
       s+='<path d="M'+x.toFixed(1)+' 0L'+(x+ww).toFixed(1)+' 0Q'+(x+ww*.62).toFixed(1)+' '+(L*.55).toFixed(1)+' '+(x+ww*.52).toFixed(1)+' '+L.toFixed(1)+'Q'+(x+ww*.45).toFixed(1)+' '+(L+1).toFixed(1)+' '+(x+ww*.4).toFixed(1)+' '+(L*.6).toFixed(1)+'Q'+(x+ww*.2).toFixed(1)+' '+(L*.3).toFixed(1)+' '+x.toFixed(1)+' 0Z" fill="url(#nvdG)" stroke="#9cc9e8" stroke-width=".6"/>'+
          '<path d="M'+(x+ww*.3).toFixed(1)+' 1Q'+(x+ww*.4).toFixed(1)+' '+(L*.4).toFixed(1)+' '+(x+ww*.48).toFixed(1)+' '+(L*.8).toFixed(1)+'" stroke="#fff" stroke-width=".9" fill="none" opacity=".9"/>';
-      if(L>16&&k<40){ g+='<circle class="nvd-gota" cx="'+(x+ww*.5).toFixed(1)+'" cy="'+(L+2).toFixed(1)+'" r="1.7" style="animation-delay:'+R(0,6).toFixed(1)+'s"/>'; k++; }
+      // las gotas van fuera del SVG (cada una es su propia capa y el navegador la mueve sin volver a pintar los 1600 px
+      // de carámbanos en cada cuadro); solo en los primeros 1000 px, que es lo que se ve en un teléfono o una PC normal
+      if(L>16&&k<16&&x<1000){ g+='<i class="nvd-gota" style="left:'+(x+ww*.5-1.7).toFixed(1)+'px;top:'+(L+.3).toFixed(1)+'px;animation-delay:'+R(0,6).toFixed(1)+'s"></i>'; k++; }
       x+=ww+R(-1,4); }
-    return '<svg width="'+w+'" height="60" viewBox="0 0 '+w+' 60" aria-hidden="true"><defs><linearGradient id="nvdG" x1="0" x2="1"><stop offset="0" stop-color="#cbe6f7"/><stop offset=".5" stop-color="#f4fbff"/><stop offset="1" stop-color="#a9d2ee"/></linearGradient></defs><path d="M0 0H'+w+'V3Q'+w/2+' 5 0 3Z" fill="#e8f5fd"/>'+s+g+'</svg>';
+    return '<svg width="'+w+'" height="60" viewBox="0 0 '+w+' 60" aria-hidden="true"><defs><linearGradient id="nvdG" x1="0" x2="1"><stop offset="0" stop-color="#cbe6f7"/><stop offset=".5" stop-color="#f4fbff"/><stop offset="1" stop-color="#a9d2ee"/></linearGradient></defs><path d="M0 0H'+w+'V3Q'+w/2+' 5 0 3Z" fill="#e8f5fd"/>'+s+'</svg>'+g;
   }
   function aurora(){
     var e='';
     for(var i=0;i<16;i++) e+='<i style="left:'+R(2,98).toFixed(1)+'%;top:'+R(4,60).toFixed(1)+'%;animation-delay:'+R(0,4).toFixed(1)+'s;transform:scale('+R(.5,1.2).toFixed(2)+')"></i>';
     var g='<defs><linearGradient id="nvdA1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2ee59d" stop-opacity="0"/><stop offset=".55" stop-color="#2ee59d" stop-opacity=".55"/><stop offset="1" stop-color="#2ee59d" stop-opacity="0"/></linearGradient>'+
           '<linearGradient id="nvdA2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4cc3ff" stop-opacity="0"/><stop offset=".5" stop-color="#7a8cff" stop-opacity=".45"/><stop offset="1" stop-color="#ff7ad9" stop-opacity="0"/></linearGradient></defs>';
-    return '<svg class="b1" viewBox="0 0 800 160" preserveAspectRatio="none">'+g+'<path d="M0 70C100 20 200 110 300 60S500 10 600 60S800 110 800 60V110C700 150 600 80 500 110S300 160 200 110S0 120 0 110Z" fill="url(#nvdA1)"/></svg>'+
-           '<svg class="b2" viewBox="0 0 800 160" preserveAspectRatio="none"><path d="M0 40C120 80 220 0 340 40S560 90 680 30S800 50 800 50V80C700 70 600 120 480 80S240 30 120 80S0 70 0 70Z" fill="url(#nvdA2)"/></svg>'+e;
+    // el desenfoque va DENTRO del dibujo (se pinta una vez); antes era filter:blur del CSS y, como las bandas se
+    // deslizan, el teléfono volvía a desenfocarlas en cada cuadro
+    var f='<filter id="nvdA3" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur stdDeviation="6 4.5"/></filter>';
+    return '<svg class="b1" viewBox="0 0 800 160" preserveAspectRatio="none">'+g.replace('</defs>',f+'</defs>')+'<path filter="url(#nvdA3)" d="M0 70C100 20 200 110 300 60S500 10 600 60S800 110 800 60V110C700 150 600 80 500 110S300 160 200 110S0 120 0 110Z" fill="url(#nvdA1)"/></svg>'+
+           '<svg class="b2" viewBox="0 0 800 160" preserveAspectRatio="none"><defs>'+f.replace('nvdA3','nvdA4')+'</defs><path filter="url(#nvdA4)" d="M0 40C120 80 220 0 340 40S560 90 680 30S800 50 800 50V80C700 70 600 120 480 80S240 30 120 80S0 70 0 70Z" fill="url(#nvdA2)"/></svg>'+e;
   }
 
   function armar(){
