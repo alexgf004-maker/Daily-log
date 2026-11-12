@@ -848,6 +848,34 @@ Navidad en casa adentro 33 → 23 % (17 % en reposo). Simulando un celular econ�
   caché (el service worker no cachea); los scripts de Navidad (~100 KB comprimidos) se descargan aunque no sea
   temporada. El login aparece igual de rápido con o sin tema.
 
+### Mascota: suspensión fuera de vista (12 nov 2026, borrador)
+
+Rama `perf/mascota-capas-visibilidad`, base `9f4c2eb21219cc32735b37f7b5cb961d1e01d92f`.
+Esta entrega es parcial: resuelve el ciclo de visibilidad; la conversión de capas y la medición de CPU siguen pendientes.
+
+- Se conserva literalmente el límite al inicio de `GreenActor.frame()` (30 cps en `embedded` o `idle` sin diálogo). Se conserva `__nvReposo.quieto()` y su suscripción `escuchar` del compañero.
+- `GreenActor.setVisible(false)` suspende incluso la cara que habla y su cola de expresión. Cancela el RAF y reinicia el reloj al volver, sin acumular el tiempo oculto.
+- El login ahora tiene `IntersectionObserver`; ambos personajes esperan la primera intersección, suspenden actor/hielo/vida propia fuera del viewport y rechazan reacciones en pantallas inactivas. Las entradas de observadores de montajes destruidos se ignoran.
+- CSS pausa todos los descendientes, incluyendo gotas, ondas y marcas de manos. Al ocultarse, también elimina transiciones pendientes. La pausa se limpia al desmontar.
+- El hielo cancela inmediatamente su RAF de deshielo al ocultarse; los cambios de fecha pendientes se pintan una vez al volver. El golpe usa Web Animations sobre el contenedor exterior, con los mismos desplazamientos, duración y easing, sin leer `offsetWidth`. Se cancela al ocultar/destruir. Conserva fallback CSS.
+- No se introduce canvas ni se alteran SVG, geometría, paleta ni filtros estáticos. Los archivos revisados no usan `backdrop-filter`. **Aún pendientes**: rasterizar sombras/refacción/escarcha, sacar ojos/agua del SVG grande y sustituir la animación `stroke-dashoffset` de los regueros. `nvFocoLlama` aún anima `filter` en el foco del entorno; tampoco se presenta como resuelto. Mantener estos efectos evita modificar su apariencia sin una validación de capas adecuada.
+- Caché de `index.html`: mascota CSS v25, GreenActor v18, hielo v6, mascota JS v20, compañero v9.
+
+Validación: 124 pruebas pasan (`node --test tests/*.test.cjs`), incluidas regresiones nuevas de diálogo oculto, intersección, pantalla inactiva, reposo, cancelación del deshielo y golpe sin layout forzado. La referencia tenía 118 pruebas, todas aprobadas antes de editar. Inspección visual en Chromium de dos escenas aisladas de 390×844: hielo y gesto conservan aspecto; esto no sustituye una validación de toda la app ni una comparación de píxeles.
+
+Medición solicitada en Performance de DevTools, Chromium 390×844 y CPU ×4:
+
+| Escenario | Antes: tiempo ocupado / fps | Después: tiempo ocupado / fps |
+| --- | --- | --- |
+| App quieta | No medido | No medido |
+| Durante un gesto | No medido | No medido |
+
+El Chromium disponible muestra **“DevTools not allowed on this page — Your organization has blocked the use of DevTools on this page”**. No fue posible aplicar CPU ×4 ni capturar trazas; no se publican cifras estimadas ni se confunde el número de RAF de una prueba con fps o porcentaje de CPU.
+
+Para completar la medición en un Chromium con DevTools permitido: usar dos checkouts (base indicada y esta rama), misma cuenta/vista/fecha/etapa, viewport 390×844 y el mismo DPR; esperar fuentes y recursos; fijar CPU ×4. Grabar 10 s quieta tras 30 s sin interacción y otros 10 s inmediatamente después del mismo toque, tanto en prenavidad como Navidad y dentro de la app. Repetir tres veces por caso; informar mediana y rango. En la selección de cada traza, tiempo ocupado del hilo principal = 100 × (duración menos Idle) / duración; reportar fps del rastro de cuadros, separado de cps del motor. Conservar las trazas antes/después. Verificar además pestaña oculta, scroll fuera de vista y navegación a otra pantalla: sin RAF del actor/hielo, sin temporizador de vida y animaciones CSS pausadas. La aceptación completa queda pendiente de esas trazas y del trabajo de capas indicado arriba.
+
+---
+
 ## 7. Carencias conocidas / deuda técnica (buenos objetivos de auditoría)
 
 1. *(Resuelto)* Reglas de la base por rol en `database.rules.json` (se publican solas con

@@ -14,6 +14,7 @@ function create(day,element,options){
     if(!paths[id])throw new Error('El SVG del bloque está incompleto: '+id);
   });
   var drops=node.querySelectorAll('.nv-hielo-gota'),timer=0,frameId=0,shown=null,target=null;
+  var visible=true,destroyed=false,hit=null;
   var media=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):null;
   function paint(progress){
     shown=progress;
@@ -62,17 +63,29 @@ function create(day,element,options){
     element.style.setProperty('--nv-frio',String(1-progress));
   }
   function cancel(){if(frameId&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(frameId);frameId=0;}
+  function active(){return !destroyed&&visible&&!document.hidden;}
+  function stopHit(){hit?.cancel();hit=null;clearTimeout(timer);timer=0;node.classList.remove('nv-hielo-golpe','nv-hielo-waapi');}
+  function setVisible(value){
+    var wasActive=active();
+    visible=!!value;
+    if(!active()){cancel();stopHit();}
+    // Los cambios de fecha ocultos se aplican una vez al regresar, sin reproducir
+    // la transición que el usuario no vio ni avanzar relojes en segundo plano.
+    else if(!wasActive&&target!==null&&shown!==target)paint(target);
+  }
   function update(d){
     var n=clamp(Math.round(Number(d)||1),1,22),progress=(Math.min(n,21)-1)/20;
     node.style.display=n>=22?'none':'';
     node.dataset.dia=String(n);node.dataset.derretido=String(Math.round(progress*100));
-    if(n>=22){cancel();target=progress;paint(progress);element.style.setProperty('--nv-frio','0');return progress;}
+    if(n>=22){cancel();target=progress;if(active())paint(progress);element.style.setProperty('--nv-frio','0');return progress;}
     if(target===progress)return progress;
     cancel();target=progress;
+    if(!active())return progress;
     if(shown===null||media?.matches||typeof requestAnimationFrame!=='function'){paint(progress);return progress;}
     var from=shown,started=null;
     function step(time){
-      if(media?.matches||document.hidden){paint(progress);frameId=0;return;}
+      frameId=0;if(!active())return;
+      if(media?.matches){paint(progress);return;}
       if(started===null)started=time;
       var t=clamp((time-started)/950,0,1),eased=t*t*(3-2*t);
       paint(from+(progress-from)*eased);
@@ -81,13 +94,19 @@ function create(day,element,options){
     frameId=requestAnimationFrame(step);return progress;
   }
   function touch(){
-    node.classList.remove('nv-hielo-golpe');void node.offsetWidth;
-    node.classList.add('nv-hielo-golpe');clearTimeout(timer);
-    timer=setTimeout(function(){node.classList.remove('nv-hielo-golpe');},650);
+    if(!active()||media?.matches)return;
+    stopHit();node.classList.add('nv-hielo-golpe');
+    // Reiniciar el golpe exterior sin forzar layout con offsetWidth.
+    if(typeof node.animate==='function'){node.classList.add('nv-hielo-waapi');hit=node.animate([
+      {transform:'translateX(0)',offset:0},{transform:'translateX(-1.8px)',offset:.23},
+      {transform:'translateX(1.2px)',offset:.52},{transform:'translateX(-.5px)',offset:.77},
+      {transform:'translateX(0)',offset:1}
+    ],{duration:550,easing:'ease-out'});}
+    timer=setTimeout(stopHit,650);
   }
   update(day);
-  return {node:node,update:update,touch:touch,destroy:function(){
-    cancel();clearTimeout(timer);node.classList.remove('nv-hielo-golpe');
+  return {node:node,update:update,touch:touch,setVisible:setVisible,destroy:function(){
+    destroyed=true;cancel();stopHit();
     node.style.removeProperty('display');node.style.removeProperty('--nv-eau');element.style.removeProperty('--nv-frio');
   }};
 }

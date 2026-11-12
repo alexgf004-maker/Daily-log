@@ -39,6 +39,18 @@ test('una pausa o destrucción desde onFrame tampoco vuelve a programar el motor
  }
 });
 
+test('fuera de vista no procesa ni el diálogo y vuelve sin salto ni bucles duplicados',()=>{
+ const f=fixture({embedded:true,frozen:true});f.actor.pause();
+ f.actor.speak({tone:'angry',animated:true});f.step(1000);f.step(1040);
+ f.actor.setVisible(false);const before=f.snapshot(),speechTime=f.actor._speechTime;
+ assert.equal(f.frames.size,0);f.actor.resume();
+ assert.equal(f.frames.size,0);f.actor.frame(50000);
+ assert.equal(f.snapshot(),before);assert.equal(f.actor._speechTime,speechTime);
+ f.actor.setVisible(true);f.actor.setVisible(true);assert.equal(f.frames.size,1);
+ f.step(51000);assert.equal(f.actor._speechTime,speechTime);
+ f.step(51040);assert.ok(f.actor._speechTime>speechTime);f.actor.destroy();
+});
+
 test('hablar despierta solo la cara congelada y termina su bucle al retirar la expresión',()=>{
  const f=fixture({embedded:true,frozen:true});f.actor.pause();
  const elapsed=f.actor.elapsed,motion=f.actor.motionTime;

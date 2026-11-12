@@ -20,7 +20,7 @@ function fixture({date='2026-12-01',mode='auto',reduced=false,autonomous=false}=
  for(const id of ['melt-mask','body','left','top','right','reflection','rim','cracks','puddle','frost-body','contour','runoff-a','runoff-b','wet-edge','ripple-a','ripple-b'])iceNode.children['#nvice-'+id]=new Element();
  iceNode.drops=[new Element(),new Element()];
  const callbacks={},intervals=[],timers=new Map(),due=new Map(),actors=[];let timerID=0,clock=0;
- class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene='idle';this.elapsed=0;this.plays=[];actors.push(this)}pause(){this.paused=true}resume(){this.paused=false}destroy(){this.destroyed=true}play(name){this.scene=name;this.elapsed=0;this.plays.push(name)}render(t){this.elapsed=t}getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...Actor.SCENES[this.scene]}}}
+ class Actor{constructor(svg,options){this.svg=svg;this.options=options;this.scene='idle';this.elapsed=0;this.plays=[];actors.push(this)}setVisible(v){this.suspended=!v}pause(){this.paused=true}resume(){this.paused=false}destroy(){this.destroyed=true}play(name){this.scene=name;this.elapsed=0;this.plays.push(name)}render(t){this.elapsed=t}getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...Actor.SCENES[this.scene]}}}
  Actor.SCENES=vm.runInNewContext('('+read('js/green-actor.js').match(/const SCENES = Object.freeze\((\{[\s\S]*?\n\})\);/)[1]+')');
  const storage=new Map(),envs=[];
  const ctx={console,Date:class extends Date{constructor(...args){super(...(args.length?args:[now]))}},MutationObserver:class{observe(){}disconnect(){}},GreenActor:Actor,document:{hidden:false,getElementById:id=>({loginScreen:login,loginPin:pin,loginUser:user}[id]||null),addEventListener:(e,fn)=>callbacks[e]=fn},setTimeout:(fn,ms=0)=>{timers.set(++timerID,fn);due.set(timerID,clock+ms);return timerID},clearTimeout:id=>{timers.delete(id);due.delete(id);},setInterval:(fn,ms)=>intervals.push({fn,ms}),matchMedia:()=>({matches:reduced,addEventListener:(name,fn)=>callbacks.mediachange=fn})};
@@ -165,6 +165,40 @@ test('el deshielo interpola sin saltos, permite invertirlo y cancela sus cuadros
  const middle=top();assert.ok(middle>start&&middle<922);
  ice.update(1);assert.equal(frames.size,1);frame(600);frame(1550);assert.equal(top(),start);assert.equal(frames.size,0);
  ice.update(21);assert.equal(frames.size,1);ice.destroy();assert.equal(frames.size,0);
+});
+test('ocultar el hielo cancela el cuadro pendiente y difiere fechas hasta volver',()=>{
+ const f=fixture(),frames=new Map();let seq=0;
+ f.ctx.requestAnimationFrame=fn=>{frames.set(++seq,fn);return seq};f.ctx.cancelAnimationFrame=id=>frames.delete(id);
+ const ice=f.ctx.NavidadHielo.create(1,f.mount),start=f.iceNode.children['#nvice-body'].attrs.d;
+ ice.update(21);const late=[...frames.values()][0];ice.setVisible(true);
+ assert.equal(f.iceNode.children['#nvice-body'].attrs.d,start,'regular la visibilidad no adelanta una transición visible');
+ ice.setVisible(false);assert.equal(frames.size,0);late(1000);
+ ice.update(12);ice.touch();assert.equal(frames.size,0);assert.equal(f.timers.size,0);
+ assert.equal(f.iceNode.children['#nvice-body'].attrs.d,start);
+ ice.setVisible(true);assert.notEqual(f.iceNode.children['#nvice-body'].attrs.d,start);assert.equal(frames.size,0);
+ ice.destroy();ice.setVisible(true);assert.equal(frames.size,0);
+});
+test('el golpe usa solo transform en el contenedor y se cancela al ocultarlo sin forzar layout',()=>{
+ const f=fixture(),calls=[];let cancellations=0;
+ Object.defineProperty(f.iceNode,'offsetWidth',{get(){throw Error('Layout forzado');}});
+ f.iceNode.animate=(keys,options)=>{calls.push({keys,options});return {cancel(){cancellations++}}};
+ const ice=f.ctx.NavidadHielo.create(1,f.mount);ice.touch();ice.touch();
+ assert.equal(calls.length,2);assert.equal(cancellations,1);
+ for(const key of calls[0].keys)assert.deepEqual(Object.keys(key).sort(),['offset','transform']);
+ assert.equal(calls[0].options.duration,550);ice.setVisible(false);
+ assert.equal(cancellations,2);assert.equal(f.timers.size,0);ice.destroy();
+});
+test('el login espera la intersección y suspende gesto, ojos y vida al salir de pantalla',()=>{
+ const f=fixture({autonomous:true});let notify,target,disconnected=false;
+ f.ctx.IntersectionObserver=class{constructor(fn){notify=fn}observe(el){target=el}disconnect(){disconnected=true}};
+ f.ctx.__mascotaNavidadSync();const actor=f.actors[0];assert.equal(actor.suspended,true);
+ notify([{target,isIntersecting:true}]);assert.equal(actor.suspended,false);f.advance(6.5);
+ notify([{target,isIntersecting:false}]);const count=actor.plays.length;
+ assert.equal(actor.suspended,true);assert.ok(f.mount.classList.contains('nv-mascota-ojos-pausa'));
+ f.ctx.__mascotaNavidadTap();f.advance(90);assert.equal(actor.plays.length,count);assert.equal(f.timers.size,0);
+ notify([{target,isIntersecting:true}]);assert.equal(actor.suspended,false);
+ f.login.classList.remove('active');f.ctx.__mascotaNavidadSync();assert.equal(actor.suspended,true);
+ f.ctx.__temas.activo=null;f.ctx.__mascotaNavidadSync();assert.equal(disconnected,true);
 });
 test('las gotas y las ondas mantienen el mismo punto de caída durante el deshielo',()=>{
  const f=fixture(),ice=f.ctx.NavidadHielo.create(1,f.mount);

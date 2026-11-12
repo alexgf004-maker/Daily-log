@@ -54,7 +54,7 @@ class GreenActor {
   ids.push('speech-heat','speech-mouth','santa-hat','hat-tip','hand-left','hand-right','arm-left-outline','arm-right-outline','arm-left-curve','arm-right-curve','arm-left-light','arm-right-light',
     'foot-left','foot-right','leg-left-outline','leg-right-outline','leg-left-curve','leg-right-curve','leg-left-light','leg-right-light');
   for (const id of ids) this.nodes[id]=svg.querySelector('#'+(options.idPrefix||'')+id);
-  this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.completed=false;this.tapCount=0;
+  this.scene='idle';this.elapsed=0;this.last=0;this.paused=false;this.stopped=false;this.suspended=false;this.completed=false;this.tapCount=0;
   this.motionTime=0;this._pose=null;this._velocity={};this._visible={};
   this._reachTarget=null;this._lookTarget=null;this._speech=null;this._speechTime=0;this._speechTail=0;this.initSpeech();
   this._raf=0;this._tick=t=>{this._raf=0;this.frame(t);};
@@ -175,7 +175,7 @@ class GreenActor {
  reachFor(point){this._reachTarget=point&&Number.isFinite(point.x)&&Number.isFinite(point.y)?point:null;return this;}
  lookAt(point,seconds=2.8){this._lookTarget=point&&Number.isFinite(point.x)&&Number.isFinite(point.y)?{...point,until:this.motionTime+seconds}:null;return this;}
  tap(){this.tapCount=this.tapCount%3+1;this.play('tap'+this.tapCount);return this.tapCount}
- needsFrame(){return !this.paused||!!this._speech&&this._speech.animated!==false||this._speechTail>0;}
+ needsFrame(){return !this.suspended&&(!this.paused||!!this._speech&&this._speech.animated!==false||this._speechTail>0);}
  scheduleFrame(){
   if(this.stopped||!this.needsFrame()){
     if(this._raf)cancelAnimationFrame(this._raf);
@@ -184,13 +184,16 @@ class GreenActor {
   if(!this._raf)this._raf=requestAnimationFrame(this._tick);
  }
  pause(){this.paused=true;this.scheduleFrame();return this}
+ // Pausa estricta de visibilidad: incluye el diálogo que normalmente puede
+ // seguir hablando con el cuerpo congelado. No modifica la pose al suspender.
+ setVisible(visible){const off=!visible;if(off===this.suspended)return this;this.suspended=off;this.last=0;this.scheduleFrame();return this}
  resume(){if(this.paused){this.paused=false;this.last=0;}this.scheduleFrame();return this}
  togglePause(){return this.paused?this.resume():this.pause()}
  resetTouches(){this.tapCount=0;return this}
  getSceneInfo(){return {name:this.scene,elapsed:this.elapsed,...SCENES[this.scene]}}
  destroy(){this.stopped=true;cancelAnimationFrame(this._raf);this._raf=0;this.n('speech-heat')?.remove?.();this.n('speech-mouth')?.remove?.();this.svg.querySelector('#'+(this.options.idPrefix||'')+'speech-warmth')?.remove?.();}
  frame(now){
-  if(this.stopped)return;
+  if(this.stopped||this.suspended)return;
   // 30 cuadros por segundo (como una caricatura) en vez de 60: el teléfono repinta el dibujo la mitad de veces.
   // Siempre en el compañero pequeño de adentro (embedded); en el del login solo en reposo («idle»): sus gestos
   // (toques, sustos, saludos) van a la frecuencia completa porque es grande y está a la vista.
