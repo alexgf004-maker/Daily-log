@@ -715,6 +715,12 @@ Los colores de estado (verde a tiempo, rojo tarde, etc.) no se tocan en los tema
   En pantallas anchas (PC) se ven enormes si se estiran los dos cordones de 12: la tarjeta es contenedor
   (`container-type:inline-size`) y desde 620 px de ancho se muestra un solo cordón de 24 (`.adv-uno`) en vez de los
   dos (`.adv-dos`).
+- **Convivencia con el compañero en los encabezados** (`css/temas/navidad.css`, al final; el compañero es de
+  `js/navidad-companero.js` y no se toca): su encabezado (`.nv-con-companero`) le reserva 112 px a la derecha en toda la
+  altura. En el teléfono eso partía la fecha de Programación en dos renglones y apretaba sus 4 botones, y dejaba corta
+  la franja azul del gafete del perfil. Ahora en Programación (≤700 px) la columna solo se reserva abajo: fecha y
+  «Guardado» a todo lo ancho, números y botones (2×2) a la izquierda del compañero. En el gafete la franja va completa
+  (también en PC) y en el teléfono el avatar, el nombre y la marca se centran en el espacio que queda.
 - **Mantenimiento de transición «Una nueva época está llegando»** (`js/navidad-transicion.js`, CSS al final de
   `css/temas/comun.css`): para el cambio de temporada (tema normal → Pre-Navidad). Se prende en el perfil del admin con
   «Pantalla de transición a Navidad» (`config/mantenimientoTransicion = 'navidad'`, lectura pública como

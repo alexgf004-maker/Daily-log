@@ -867,3 +867,20 @@ html.nav-pre .rban:not(.ok) .rban-t{color:#0b2d55!important} html.nav-pre .rban:
 html.nav-pre .rban .rban-body{background:#fbfdff!important;border-top-color:#cfe2f2!important}
 html.nv-reposo .rban .rban-ic{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){html.tema-navidad .rban .rban-ic{animation:none}}
+
+/* ═ Convivencia con el compañero en los encabezados (js/navidad-companero.js, no se toca) ═
+   El encabezado que lo aloja le deja una columna de ~112 px a la derecha en toda su altura. En Programación eso partía
+   la fecha en dos renglones y apretaba los 4 botones; en el gafete del perfil la franja azul quedaba corta. Aquí la
+   columna se reserva solo abajo, donde está él: la fecha y el «Guardado» van a todo lo ancho; los números y los botones
+   (en 2×2) a su izquierda. En el gafete la franja va completa y lo de abajo se centra en el espacio que le queda.
+   En la PC solo cambia la franja del gafete: el encabezado es ancho y la columna no estorba. */
+html.tema-navidad :is(#employeeScreen,#adminScreen) .pf-gafete.nv-con-companero{padding-inline-end:0!important}
+@media (max-width:700px){
+  html.tema-navidad :is(#employeeScreen,#adminScreen) .pg-hero.nv-con-companero{padding-inline-end:14px!important}
+  html.tema-navidad .pg-hero.nv-con-companero :is(.us-cnt,.pg-acts){margin-right:98px}
+  html.tema-navidad .pg-hero.nv-con-companero .us-cnt{gap:14px}
+  html.tema-navidad .pg-hero.nv-con-companero .pg-acts{display:grid;grid-template-columns:1fr 1fr}
+  html.tema-navidad .pf-gafete.nv-con-companero .pf-gafete-b{padding-right:104px}
+  html.tema-navidad .pf-gafete.nv-con-companero .pf-gafete-top i{left:calc(50% - 52px)}
+  html.tema-navidad .pf-gafete.nv-con-companero .pf-av{margin:-39px 0 0 calc(50% - 91px)}
+}
