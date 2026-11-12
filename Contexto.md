@@ -563,7 +563,16 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
     (la primera con el nombre del usuario recordado). El 24 la tarjeta se "abre" (moño y cinta caen, confeti) una
     vez por teléfono (`innova_nav_regalo`).
-  - `ano` (28 dic–4 ene): ciudad, banderines, pólvora continua y un cohete donde se toque el cielo; borde arcoíris.
+  - `ano` (28 dic–4 ene): «Pólvora en la terraza» (`js/navidad-ano.js`, `window.__nvAno(capa)`; elegida entre 3:
+    gala negro y dorado / terraza / brindis con champán; reemplazó a «ciudad + banderines + borde arcoíris», que a la
+    usuaria no le gustaba). Volcán de San Salvador (cima achatada y El Picacho) con la ciudad encendida al pie, pólvora
+    continua de colores y un cohete donde se toque el cielo (al estallar avisa a la mascota con `navidad:entorno`
+    «destello», máx. cada 6 s). Primer plano: terraza con piso de barro, baranda, guirnaldas de bombillos y mesa con las
+    12 uvas, frasco de estrellitas chisporroteando y cajita de cohetillos. El piso queda a la altura de los pies de la
+    mascota (la baranda detrás de ella); la escena se rearma si cambian el tamaño, la tarjeta o la mascota. Tarjeta
+    crema con cordón de foquitos (`.nva-foquitos`), «Recordar» como estrellita, mecha prendida que recorre «Ingresar».
+    CSS en `css/temas/navidad.css` («Año Nuevo: Pólvora en la terraza»). Canvas a 1.5× tope, solo con el login a la
+    vista; con movimiento reducido no hay cohetes automáticos (los tuyos sí).
   - Saludo del login con el nombre (de `innova_usuario_recordado`, "alex.gonzalez" → "Alex"); el 24, 25 y 1 de
     enero cambia ("Feliz Nochebuena"…). Cuenta regresiva bajo el nombre de la app en `casa` y `ano`.
   - El canvas solo dibuja con el login a la vista y la app en primer plano; con movimiento reducido no anima.

@@ -4,7 +4,7 @@
 //                    "Rumbo a Navidad", casita que se acerca y la tarjeta envuelta "Se abre el 24".
 //   casa (22–27 dic) Nochebuena en casa: árbol, chimenea, ventana nevada y medias (una con tu nombre).
 //                    El 24 se abre el regalo de la tarjeta (una vez por teléfono).
-//   ano  (28 dic–4 ene) Noche de pólvora: cohetes sin parar y, al tocar el cielo, el tuyo.
+//   ano  (28 dic–4 ene) Pólvora en la terraza (js/navidad-ano.js): volcán, cohetes sin parar y, al tocar el cielo, el tuyo.
 // Estilos en css/temas/navidad.css (solo se descarga con el tema activo). Todo vive dentro de .nv-capa y de elementos .nv-*,
 // así que al cambiar de etapa o de tema se quitan sin dejar rastro.
 (function(){
@@ -386,46 +386,8 @@
 
   /* ════════════════ AÑO NUEVO ════════════════ */
   function armarAno(capa,f){
-    // ciudad con ventanas encendidas
-    var c='<svg class="nv-ciudad" viewBox="0 0 412 170" preserveAspectRatio="xMidYMax slice"><defs><linearGradient id="nvEdif" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1236"/><stop offset="1" stop-color="#0a0618"/></linearGradient></defs>';
-    var x=0; while(x<412){ var w=R(26,52), h=R(50,140); c+='<rect x="'+x.toFixed(0)+'" y="'+(170-h).toFixed(0)+'" width="'+w.toFixed(0)+'" height="'+h.toFixed(0)+'" fill="url(#nvEdif)"/>';
-      for(var yy=170-h+8;yy<162;yy+=12) for(var xx=x+5;xx<x+w-6;xx+=9) if(Math.random()<.45) c+='<rect x="'+xx.toFixed(0)+'" y="'+yy.toFixed(0)+'" width="4" height="6" fill="'+(Math.random()<.8?'#ffcf70':'#9cc7ff')+'" opacity="'+R(.5,1).toFixed(2)+'"/>';
-      x+=w+R(0,4); }
-    capa.insertAdjacentHTML('beforeend',c+'</svg>');
-    // banderines
-    var b='<svg class="nv-banderines" viewBox="0 0 412 120" preserveAspectRatio="none">';
-    [[0,8,412,30,46],[0,38,412,14,40]].forEach(function(q,j){ b+='<path d="M'+q[0]+' '+q[1]+' Q206 '+((q[1]+q[3])/2+q[4])+' '+q[2]+' '+q[3]+'" stroke="rgba(255,255,255,.35)" stroke-width="1" fill="none"/>';
-      for(var i=1;i<16;i++){ var t=i/16, my=(q[1]+q[3])/2+q[4], X=(1-t)*(1-t)*q[0]+2*(1-t)*t*206+t*t*q[2], Y=(1-t)*(1-t)*q[1]+2*(1-t)*t*my+t*t*q[3];
-        b+='<path d="M'+(X-7).toFixed(1)+' '+Y.toFixed(1)+' L'+(X+7).toFixed(1)+' '+Y.toFixed(1)+' L'+X.toFixed(1)+' '+(Y+16).toFixed(1)+'Z" fill="'+['#ff3d6e','#ffb02e','#3ee08f','#3fb6ff','#b05cff'][(i+j)%5]+'" opacity=".9"/>'; } });
-    capa.insertAdjacentHTML('beforeend',b+'</svg>');
-    var ls=document.getElementById('loginScreen');
-    var hint=document.createElement('div'); hint.className='nv-extra nv-toca'; hint.textContent='✦ Toca el cielo para lanzar un cohete ✦'; ls.appendChild(hint);
-    // pólvora
-    var coh=[], chis=[], flash=0, prox=0, ultimoAviso=0;
-    var PAL=[['#ff3d6e','#ffd1dc'],['#ffb02e','#fff0c9'],['#3ee08f','#d9ffe9'],['#3fb6ff','#e0f3ff'],['#b05cff','#efdcff'],['#ffe14a','#ffffff']];
-    function lanzar(tx,ty){ var t=bucle&&bucle.tam(); if(!t||!t[0]) return; var W=t[0],H=t[1];
-      var x0=tx!=null?tx+R(-30,30):(Math.random()<.5?R(W*.06,W*.3):R(W*.7,W*.94)), dest=ty!=null?ty:R(H*.1,H*.42), vy=-Math.sqrt(2*.06*Math.max(60,H-150-dest));
-      coh.push({x:x0,y:H-150,vx:tx!=null?(tx-x0)/(Math.abs(vy)/.06):R(-.4,.4),vy:vy,col:PAL[(Math.random()*PAL.length)|0],cola:[],tipo:(Math.random()*4)|0}); }
-    function estalla(k){
-      var ahora=performance.now();
-      if(ahora-ultimoAviso>6000&&ls.classList.contains('active')){ultimoAviso=ahora;var b=capa.getBoundingClientRect();ls.dispatchEvent(new CustomEvent('navidad:entorno',{detail:{kind:'destello',x:b.left+k.x,y:b.top+k.y}}));}
-      for(var i=0;i<80;i++){ var a=i/80*6.283, s=k.tipo===0?R(.6,3.4):k.tipo===1?3:k.tipo===2?R(1,2.4):2.6;
-        var p={x:k.x,y:k.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,v:1,col:Math.random()<.6?k.col[0]:k.col[1],sauce:k.tipo===2,crep:k.tipo===3}; if(k.tipo===1&&i%2){ p.vx*=.55; p.vy*=.55; } chis.push(p); } flash=1; }
-    ls.addEventListener('pointerdown',function(e){ if(!capa.isConnected||e.target.closest('.login-form,.login-footer,button,input,label')) return; if(e.clientY<window.innerHeight*.45) lanzar(e.clientX,e.clientY); });
-    bucle=lienzo(capa,[function(cx,W,H,t){
-      if(reducido) return;
-      if(t>prox){ lanzar(); if(Math.random()<.4) setTimeout(function(){ lanzar(); },200); prox=t+R(700,1400); }
-      if(flash>0){ cx.fillStyle='rgba(255,200,240,'+(flash*.07)+')'; cx.fillRect(0,0,W,H); flash-=.035; }
-      for(var i=coh.length-1;i>=0;i--){ var k=coh[i]; k.cola.push([k.x,k.y]); if(k.cola.length>12) k.cola.shift(); k.x+=k.vx; k.y+=k.vy; k.vy+=.06;
-        cx.strokeStyle='rgba(255,220,170,.8)'; cx.lineWidth=1.6; cx.beginPath(); k.cola.forEach(function(p,j){ if(j) cx.lineTo(p[0],p[1]); else cx.moveTo(p[0],p[1]); }); cx.stroke();
-        if(k.vy>=-.4){ estalla(k); coh.splice(i,1); } }
-      cx.globalCompositeOperation='lighter';
-      for(i=chis.length-1;i>=0;i--){ var p=chis[i]; p.x+=p.vx; p.y+=p.vy; p.vx*=p.sauce?.975:.982; p.vy=p.vy*(p.sauce?.975:.982)+(p.sauce?.05:.035); p.v-=p.sauce?.0075:.012;
-        if(p.v<=0){ chis.splice(i,1); continue; } var al=p.crep?(Math.random()<.5?p.v:0):p.v;
-        cx.strokeStyle=p.sauce?'#ffd27a':p.col; cx.globalAlpha=al*.6; cx.lineWidth=p.sauce?1.6:1.3; cx.beginPath(); cx.moveTo(p.x-p.vx*(p.sauce?7:4),p.y-p.vy*(p.sauce?7:4)); cx.lineTo(p.x,p.y); cx.stroke();
-        cx.fillStyle=p.sauce?'#fff0c0':p.col; cx.globalAlpha=al; cx.beginPath(); cx.arc(p.x,p.y,1.7,0,6.283); cx.fill(); cx.globalAlpha=al*.22; cx.beginPath(); cx.arc(p.x,p.y,5,0,6.283); cx.fill(); }
-      cx.globalAlpha=1; cx.globalCompositeOperation='source-over';
-    }]);
+    // la escena «Pólvora en la terraza» vive en js/navidad-ano.js (volcán, cohetes, terraza; se acomoda a la mascota)
+    if(window.__nvAno) bucle=window.__nvAno(capa);
   }
 
   // Cuenta regresiva (casa y año nuevo) bajo el nombre de la app

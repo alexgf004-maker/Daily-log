@@ -455,25 +455,50 @@ html.nav-casa .nvc-hero>.nvc-bota{position:absolute;right:28px;top:calc(100% - 1
 .nav-casa.nvc-con-noche .dtile{box-shadow:0 10px 22px -12px rgba(0,10,30,.8)}
 @media (prefers-reduced-motion:reduce){html.nav-casa .nvc-hero>.nvc-bota{animation:none}}
 
-/* ═ Año Nuevo: noche de pólvora ═ */
-.nav-ano #loginScreen{background:radial-gradient(100% 60% at 50% 110%,#5a1d6e 0%,transparent 60%),linear-gradient(180deg,#05030f 0%,#120a2e 45%,#2a0f45 80%,#3b1450 100%)!important}
-.nv-ciudad{position:absolute;left:0;right:0;bottom:0;width:100%;height:170px}
-.nv-banderines{position:absolute;left:0;right:0;top:0;width:100%;height:120px}
-.nv-toca{position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:1;white-space:nowrap;font-size:11px;font-weight:700;letter-spacing:.06em;color:rgba(255,230,180,.75);pointer-events:none;animation:nvTw 1.6s ease-in-out infinite alternate}
-@property --nva{syntax:'<angle>';inherits:false;initial-value:0deg}
-@keyframes nvArco{to{--nva:360deg}}
-.nav-ano .login-logo{background:#1a0f30;border:2.5px solid transparent;background-clip:padding-box;isolation:isolate}
-.nav-ano .login-logo::after{content:'';position:absolute;inset:-3px;border-radius:22px;background:conic-gradient(from var(--nva),#ff3d6e,#ffb02e,#ffe14a,#3ee08f,#3fb6ff,#b05cff,#ff3d6e);z-index:-1;animation:nvArco 4s linear infinite}
-.nav-ano .login-brand-name .inn{background:linear-gradient(90deg,#ffb02e,#ff3d6e,#b05cff,#3fb6ff,#3ee08f,#ffb02e);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:nvFluye 6s linear infinite}
-@keyframes nvFluye{to{background-position:300% 0}}
-.nav-ano .nv-cuenta{background:rgba(255,255,255,.08);border:1px solid rgba(255,180,80,.45);color:#ffe7b0}
-.nav-ano .login-form{background:linear-gradient(180deg,#fffdfb,#fbf5ff);overflow:visible;isolation:isolate}
-.nav-ano .login-form::before{content:'';position:absolute;inset:-2.5px;top:-2.5px;left:-2.5px;right:-2.5px;height:auto;border-radius:24px;background:conic-gradient(from var(--nva),#ff3d6e,#ffb02e,#ffe14a,#3ee08f,#3fb6ff,#b05cff,#ff3d6e);z-index:-1;animation:nvArco 5s linear infinite}
-.nav-ano .login-form::after{content:'';position:absolute;inset:0;border-radius:22px;background:linear-gradient(180deg,#fffdfb,#fbf5ff);z-index:-1}
-.nav-ano .login-hola{color:#1d0f33}.nav-ano .login-hola em{color:#e8335e}
-.nav-ano .lg-chip{color:#b0245a}
-.nav-ano .btn-login{background:linear-gradient(110deg,#ff3d6e,#ff8a2e 50%,#ffb02e);box-shadow:0 12px 26px -10px rgba(255,61,110,.8)}
-.nav-ano .login-footer{display:table;padding:6px 13px;border-radius:99px;background:rgba(10,4,24,.6);color:rgba(240,225,255,.85);max-width:none}
+/* ═ Año Nuevo: «Pólvora en la terraza» (escena en js/navidad-ano.js) ═
+   Volcán de San Salvador con la ciudad encendida, cohetes, terraza con bombillos, las 12 uvas y estrellitas.
+   Tarjeta crema con cordón de foquitos; «Recordar» es una estrellita; una mecha prendida recorre «Ingresar». */
+.nav-ano #loginScreen{background:radial-gradient(120% 45% at 50% 100%,#c2566a 0%,rgba(194,86,106,0) 55%),linear-gradient(180deg,#07061c 0%,#14113a 38%,#2b1a55 66%,#5a2a62 86%,#7e3a5e 100%)!important}
+.nav-ano .nva-fondo,.nav-ano .nva-frente,.nav-ano .nva-polvora{position:absolute;inset:0;pointer-events:none}
+.nav-ano .nva-polvora{width:100%;height:100%} .nav-ano .nva-frente{z-index:1}
+.nva-cielo{position:absolute;inset:0;width:100%;height:100%}
+.nva-cielo .t{animation:nvaTw 3.4s ease-in-out infinite} @keyframes nvaTw{50%{opacity:.2}}
+.nva-volcan{position:absolute;left:0;right:0;width:100%}
+.nva-volcan .lz{animation:nvaTw 2.6s ease-in-out infinite}
+.nva-terraza{position:absolute;left:0;right:0;bottom:0;width:100%}
+.nva-terraza .bb{animation:nvaBomb 2.4s ease-in-out infinite} @keyframes nvaBomb{50%{opacity:.72}}
+.nva-chispas i{position:absolute;width:2.6px;height:2.6px;border-radius:50%;background:#fff6d0;box-shadow:0 0 6px 2px #ffc94a;animation:nvaChis .7s linear infinite}
+@keyframes nvaChis{0%{transform:translate(0,0);opacity:1}100%{transform:translate(var(--x),var(--y));opacity:0}}
+/* marca */
+.nav-ano .login-logo{background:linear-gradient(135deg,#ff5a3c,#ff9a2e);border:0;box-shadow:0 0 0 4px rgba(255,170,60,.18),0 14px 28px -10px rgba(255,90,60,.7)}
+.nav-ano .login-logo::after{display:none} .nav-ano .login-logo::before{border-color:rgba(255,200,120,.5)}
+.nav-ano .login-brand-eyebrow{color:rgba(255,220,190,.75)}
+.nav-ano .login-brand-name .inn{background:linear-gradient(90deg,#ffd27a,#ff9a6a,#ffd27a);-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:none}
+.nav-ano .login-brand-sub{color:rgba(255,236,220,.75)}
+.nav-ano .nv-cuenta{background:rgba(20,10,40,.55);border:1px solid rgba(255,190,110,.45);color:#ffe3b8}
+/* tarjeta */
+.nav-ano .login-form{background:linear-gradient(180deg,#fffaf3,#fff1e4);overflow:visible;box-shadow:0 30px 60px -20px rgba(10,0,30,.75)}
+.nav-ano .login-form::before,.nav-ano .login-form::after{display:none}
+.nva-foquitos{position:absolute;left:14px;right:14px;top:-9px;height:22px;pointer-events:none}
+.nav-ano .login-hola{color:#2a1236} .nav-ano .login-hola em{color:#e8433a}
+.nav-ano .lg-chip{color:#c2410c}
+.nav-ano .login-form .fl{color:#8a4a3a}
+.nav-ano .login-form .lg-wrap input{background:#fff;border:1.5px solid #f1d9c4;border-radius:14px}
+.nav-ano .login-form .lg-wrap input:focus{border-color:#ff8a3c;box-shadow:0 0 0 4px rgba(255,138,60,.16)}
+.nav-ano .lg-wrap:focus-within .lg-ico{color:#ff6a3c}
+/* «Recordar» como una estrellita: al prenderla echa chispas */
+.nav-ano .lg-rec-sw{background:#f1e2d4;box-shadow:inset 0 1px 2px rgba(80,30,10,.2)}
+.nav-ano .lg-rec input:checked+.lg-rec-sw{background:linear-gradient(90deg,#ff6a3c,#ffb02e)}
+.nav-ano .lg-rec input:checked+.lg-rec-sw i{background:radial-gradient(circle,#fffbe6 0 30%,#ffd35a 31% 60%,#fff 61%);box-shadow:0 0 10px 3px rgba(255,200,80,.85)}
+.nav-ano .lg-rec input:checked+.lg-rec-sw i::after{content:'';position:absolute;inset:-6px;background:radial-gradient(circle,#fff6c8 1px,transparent 1.6px) 0 0/6px 6px;border-radius:50%;animation:nvaGira 1s linear infinite;opacity:.9}
+@keyframes nvaGira{to{transform:rotate(360deg)}}
+/* «Ingresar»: la mecha prendida recorre la orilla del botón */
+.nav-ano .btn-login{position:relative;overflow:visible;background:linear-gradient(110deg,#e8433a,#ff7a2e 55%,#ffb02e);box-shadow:0 12px 26px -10px rgba(232,67,58,.75)}
+.nav-ano .btn-login::before{content:'';position:absolute;left:14px;right:14px;bottom:-1px;height:2px;border-radius:2px;background:repeating-linear-gradient(90deg,#7a2a12 0 5px,#c25a2a 5px 8px);opacity:.75}
+.nav-ano .btn-login::after{content:'';position:absolute;bottom:-5px;left:14px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#fff 0 20%,#ffd35a 40%,rgba(255,140,40,0) 70%);box-shadow:0 0 12px 4px rgba(255,190,80,.8);animation:nvaMecha 3.2s linear infinite}
+@keyframes nvaMecha{0%{left:14px;opacity:0}5%{opacity:1}90%{opacity:1}100%{left:calc(100% - 24px);opacity:0}}
+.nav-ano .login-footer{display:table;padding:6px 13px;border-radius:99px;max-width:none;background:rgba(20,8,36,.65);color:rgba(255,230,210,.85)}
+@media (prefers-reduced-motion:reduce){ .nav-ano .btn-login::after,.nav-ano .lg-rec input:checked+.lg-rec-sw i::after{animation:none} .nav-ano .btn-login::after{display:none} }
 
 @media (prefers-reduced-motion:reduce){
   .nv-capa *,.nv-extra,.nv-extra *{animation:none!important}
@@ -484,7 +509,7 @@ html.nav-casa .nvc-hero>.nvc-bota{position:absolute;right:28px;top:calc(100% - 1
   .nv-casita{left:20%}
 }
 /* celulares bajitos: los foquitos y guirnaldas más cortos para no tapar el logo */
-@media (max-height:700px){ .nv-focos{height:84px} .nv-banderines{height:70px} }
+@media (max-height:700px){ .nv-focos{height:84px} }
 
 /* ═ Pre-Navidad dentro de la app ═
    Fondo claro de siempre; encabezados de azul noche a azul hielo con un cordón de foquitos arriba; acentos
