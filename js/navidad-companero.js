@@ -109,6 +109,7 @@ function autonomous(name){
     if(name==='icehuff')setCold();actor.resume();regulate();return duration;
   }
   if(name==='environment')return contextAction()?remaining:0;
+  if(!GreenActor.SCENES[name])return 0;   // escenas del login (esfera, trineo, nieve): aquí no aplican
   return play(name)?remaining:0;
 }
 function notice(d){

@@ -852,6 +852,25 @@ bota, jugar con la guirnalda).
 - Textos sin groserías (antes decía «Pinche Navidad…»): Pre «¡Sin tocar! Ya bastante tengo con el hielo.», «Brrr… esto no
   se derrite solo.»…; casa «¡Oye, sin tocar!», «Bah… tanta Navidad.»…
 
+### Mascota: escenas con el escenario del login de Navidad en casa (parte 2, 13 nov 2026)
+`js/navidad-mascota-escenas.js` (`window.NavidadEscenas.create`), conectado desde `js/navidad-mascota.js` (`escenas`):
+- **esfera**: descuelga la esfera del árbol (`tug`), la admira, la vuelve a colgar (`offer`) y la esfera se columpia.
+- **escondite** (al tocarla): brinca, corre detrás del árbol, se asoma por la orilla, sale por la izquierda y vuelve. Para
+  que quede DETRÁS, `navidad-casa.js` pone encima una copia del árbol recortada con su silueta (`.nv-arbol-frente`, solo
+  por debajo del formulario).
+- **trineo**: el regalo de arriba del trineo es una pieza aparte (`.nv-regalo-suelto`); lo toma (`mischief`), lo sacude
+  junto a la oreja (`lookaround`) y lo regresa. En el teléfono el trineo ahora se estaciona junto a la mascota (a su
+  alcance, escala .7).
+- **nieve**: junta una bola entre las manos (`plot`), la avienta (`mischief` hacia arriba a la izquierda) por debajo del
+  formulario al techo de la casita y se deshace en polvo; se ríe (`scoff`).
+El escenario se expone en `login.__nvEscena` (`arbol(on)`, `orilla(y)`, `regalo()`, `moverRegalo(p,giro)`, `casita()`).
+La vida autónoma de casa (`navidad-vida.js`) intercala esfera, trineo y nieve; el compañero de adentro ignora esos
+nombres. En PC (el escenario queda junto al formulario) solo aplica la esfera. Vista previa:
+`__mascotaNavidadHistoria('esfera'|'escondite'|'trineo'|'nieve')`.
+- Arreglo: la esfera que puede tomar la mascota nunca aparecía en celulares (la prueba `isPointInPath` se hacía sobre un
+  lienzo ya escalado por la densidad de pantalla); ahora se prueba en un lienzo sin escala y mide al menos 6 px.
+- Frases nuevas en el globito (tono tranquilo): esfera, trineo, nieve, escondite.
+
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.
 Sin tema la app quieta usa 0 %. Con procesador normal (×1), antes → después de `mejoras/rendimiento`:

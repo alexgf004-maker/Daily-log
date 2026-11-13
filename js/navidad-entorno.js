@@ -123,6 +123,10 @@ function createDialogue(anchor,options){
     caught:['¡No estaba robando nada!','Esa botita se movió sola.'],
     blow:['Shhh… una luz menos.','Esa luz me estaba mirando.'],
     hat:['¡El gorro no!','¡Acabo de acomodarlo!'],
+    esfera:['Mmm… esta brilla bonito.','Esta es la mía.'],
+    trineo:['¿Calcetines otra vez?','Suena a… ¿carbón?'],
+    nieve:['¡Ja! Directo al techo.','Uy… se me resbaló.'],
+    escondite:['¡No me viste!','Aquí no hay nadie…'],
     ano:['¡Ya basta de cohetes!','Otro año… las mismas molestias.']
   };
   function hide(){clearTimeout(timer);timer=0;if(raf&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(raf);raf=0;if(node){node.hidden=true;node.textContent='';}options.express?.(null);}
@@ -146,7 +150,7 @@ function createDialogue(anchor,options){
     if(node.parentElement!==container)container.appendChild(node);
     var group=lines[reason]||lines[options.stage()]||lines.casa,n=counts[reason]||0;
     hide();node.hidden=false;node.textContent=group[n%group.length];counts[reason]=n+1;last=Date.now();
-    var tone=reason==='caught'?'startled':reason==='blow'?'quiet':'angry',level=tone==='angry'?(n%group.length===1?.95:.65):.4;
+    var tone=reason==='caught'?'startled':['blow','esfera','trineo','nieve','escondite'].includes(reason)?'quiet':'angry',level=tone==='angry'?(n%group.length===1?.95:.65):.4;
     node.dataset.tono=tone;position();options.express?.({tone:tone,level:level,animated:!options.reduced?.()});
     if(typeof requestAnimationFrame==='function'&&!options.reduced?.())raf=requestAnimationFrame(follow);
     timer=setTimeout(hide,Math.max(3200,Math.min(4800,node.textContent.length*85)));return true;

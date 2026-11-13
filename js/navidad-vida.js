@@ -4,7 +4,7 @@
 'use strict';
 var sequences={
   pre:['icewatch','trapped','icehuff','icedoze'],
-  casa:['lookaround','environment','hat','plot','doze','environment','scoff','thaw'],
+  casa:['lookaround','esfera','hat','trineo','doze','plot','nieve','environment','scoff','thaw'],   // esfera, trineo y nieve: escenas con el escenario del login
   ano:['lookaround','plot','doze','thaw']
 };
 function create(options){

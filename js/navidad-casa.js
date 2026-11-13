@@ -143,11 +143,11 @@ const NV=(()=>{
   // la casita roja de Pre-Navidad, de cerca: misma paleta (pared roja, techo blanco, ventanas amarillas)
   N.casitaPre=(x,cx,base,w,C,humo=true)=>{ N.casa(x,cx,base,w,w*.72,C,{pared:'#c4152c',techo:'#7a1020',humo}); };
   // el trineo del «Rumbo a Navidad», que ya llegó: rojo con filete dorado y regalos
-  N.trineoPre=(x,cx,base,s)=>{ x.save(); x.translate(cx,base); x.scale(s,s); x.lineCap='round';
+  N.trineoPre=(x,cx,base,s,sinArriba)=>{ x.save(); x.translate(cx,base); x.scale(s,s); x.lineCap='round';
     x.strokeStyle='#c9d4de'; x.lineWidth=5; x.beginPath(); x.moveTo(-70,0); x.lineTo(54,0); x.quadraticCurveTo(76,0,72,-18); x.stroke(); x.lineWidth=4; x.beginPath(); x.moveTo(-46,0); x.lineTo(-44,-12); x.moveTo(30,0); x.lineTo(28,-12); x.stroke();
     let g=x.createLinearGradient(0,-50,0,-10); g.addColorStop(0,'#e3263c'); g.addColorStop(1,'#8a0f1f'); x.fillStyle=g; x.beginPath(); x.moveTo(-64,-12); x.lineTo(-60,-46); x.quadraticCurveTo(-64,-66,-46,-64); x.lineTo(-40,-44); x.lineTo(40,-44); x.quadraticCurveTo(58,-48,60,-30); x.lineTo(54,-12); x.closePath(); x.fill();
     x.strokeStyle='#f2c45a'; x.lineWidth=3; x.beginPath(); x.moveTo(-58,-40); x.lineTo(44,-40); x.moveTo(-60,-18); x.lineTo(52,-18); x.stroke();
-    N.regalo(x,-22,-44,38,30,14,['#1f7a4f','#0f4a30'],['#ffe6a0','#c9952a']); N.regalo(x,16,-44,32,40,12,['#f2c45a','#b07a18'],['#d0283c','#8a0f1f']); N.regalo(x,-2,-80,26,20,10,['#2a6ad0','#123a7a'],['#fff4dc','#cfc0a0']); x.restore(); };
+    N.regalo(x,-22,-44,38,30,14,['#1f7a4f','#0f4a30'],['#ffe6a0','#c9952a']); N.regalo(x,16,-44,32,40,12,['#f2c45a','#b07a18'],['#d0283c','#8a0f1f']); if(!sinArriba) N.regalo(x,-2,-80,26,20,10,['#2a6ad0','#123a7a'],['#fff4dc','#cfc0a0']); x.restore(); };
   // cordón de foquitos de Pre-Navidad, ya encendido, como SVG del DOM (.nv-guirnalda con .nv-luz: la mascota roba el último)
   N.cordonPre=(W,alto)=>{ const tramos=Math.max(2,Math.round(W/225)), anT=W/tramos, cols=['#e3263c','#f2c45a','#e3263c','#2bb38a','#e3263c','#9cd7ff']; let s='', n=0;
     for(let t=0;t<tramos;t++){ const x0=t*anT-(t?0:10), x1=(t+1)*anT+(t===tramos-1?10:0), y0=t%2?20:12, y1=t%2?12:20, mx=(x0+x1)/2, my=(y0+y1)/2+alto*.5;
@@ -187,7 +187,7 @@ const NV=(()=>{
       pisos.push({yT,yB,hw,tw,borde}); }
     const camino=p=>{ const pa=new Path2D(); pa.moveTo(cx-p.tw,p.yT); pa.lineTo(cx+p.tw,p.yT); pa.quadraticCurveTo(cx+p.hw*.7,p.yT+(p.yB-p.yT)*.5,p.borde[p.borde.length-1][0],p.borde[p.borde.length-1][1]);
       for(let j=p.borde.length-2;j>=0;j--){ const a=p.borde[j+1], b=p.borde[j]; pa.quadraticCurveTo((a[0]+b[0])/2+rr(-2,2)*k,(a[1]+b[1])/2+rr(-1,3)*k,b[0],b[1]); } pa.quadraticCurveTo(cx-p.hw*.7,p.yT+(p.yB-p.yT)*.5,cx-p.tw,p.yT); pa.closePath(); return pa; };
-    const sil=new Path2D(); pisos.forEach(p=>{ p.ruta=camino(p); sil.addPath(p.ruta); });
+    const sil=new Path2D(); pisos.forEach(p=>{ p.ruta=camino(p); sil.addPath(p.ruta); }); if(C) C.arbolSil=sil;
     const yb=pisos[T-1].yB;
     // falda de terciopelo bajo el árbol
     if(falda&&adornos){ const fr=w*.42, fy=yb+h*.03; let g=x.createRadialGradient(cx,fy-fr*.1,4,cx,fy,fr); g.addColorStop(0,'#c4152c'); g.addColorStop(.8,'#7a0a18'); g.addColorStop(1,'#4a0610'); x.fillStyle=g; x.beginPath(); x.ellipse(cx,fy,fr,fr*.2,0,0,P); x.fill();
@@ -234,8 +234,10 @@ const NV=(()=>{
       puestas.forEach((q,i)=>{ if(q[3]!=='e'||q[0]<m.l+m.w*.55||q[0]>Math.min(C.W-10,m.r+m.w*.3)||Math.abs(q[1]-mano.y)>m.w*.2) return;
         const dx=(q[0]-m.l)/m.w*800-604,dy=(q[1]-m.t)/m.h*1067-580;if(dx>0&&Math.hypot(dx,dy)>165)return;const dist=Math.hypot(q[0]-mano.x,q[1]-mano.y); if(dist<menor){menor=dist;elegida=i;} }); }
     if(C.masc&&elegida<0){
-      const m=C.masc,px=Math.min(C.W-12,m.l+m.w*.85),py=m.t+m.h*.54,r=Math.max(4,m.w*.027);
-      if(!fuera(px,py,r+2)&&x.isPointInPath(sil,px,py)){
+      const m=C.masc,px=Math.min(C.W-12,m.l+m.w*.85),py=m.t+m.h*.54,r=Math.max(6,m.w*.04);
+      // ojo: x ya trae la escala de la pantalla (D); la prueba se hace en un lienzo sin escala o falla en celulares
+      const prueba=document.createElement('canvas').getContext('2d');
+      if(!fuera(px,py,r+2)&&prueba.isPointInPath(sil,px,py)){
         for(let i=puestas.length-1;i>=0;i--)if(Math.hypot(puestas[i][0]-px,puestas[i][1]-py)<puestas[i][2]+r+4)puestas.splice(i,1);
         elegida=puestas.length;puestas.push([px,py,r,'e']);
       }
@@ -327,10 +329,10 @@ function dibujar(x,C){
     N.pinoPre(x,cx+cw*1.05,lomaY(cx+cw*1.05)+3,.55); N.pinoPre(x,cx+cw*1.3,lomaY(cx+cw*1.3)+3,.75);
     N.casitaPre(x,cx,base,cw,C); casita={cx,base,w:cw,h:cw*.72}; }
   N.nieveSuelo(x,W,H,suelo);
-  if(!pc){ trineo={x:Math.min(W*.3,(masc?masc.l:W)-70),y:H-2,s:.5}; N.trineoPre(x,trineo.x,trineo.y,trineo.s); }
+  if(!pc){ trineo=masc?{x:masc.l+masc.w*.15,y:suelo+8,s:.7,suelto:true}:{x:Math.min(W*.3,W-70),y:H-2,s:.5}; N.trineoPre(x,trineo.x,trineo.y,trineo.s,trineo.suelto); }   // junto a la mascota: puede tomar el regalo de arriba
   N.arbolGrande(x,C,suelo); N.luzMascota(x,C,suelo);
   if(casita){ casita.chx=casita.cx+casita.w*.26; casita.chy=casita.base-casita.h-casita.h*.55*.8; }
-  C.hz=hz; C.huevos=cont=>N.huevos(C,{casita,trineo,cont});
+  C.hz=hz; C.trineo=trineo; C.casita=casita; C.huevos=cont=>N.huevos(C,{casita,trineo,cont});
   C.dom=N.cordonPre(W,pc?56:40); C.nCopos=pc?90:45;
 }
 // el motor de dibujo también lo usa js/navidad-casa-dentro.js (la noche detrás de las pantallas de adentro)
@@ -368,6 +370,32 @@ window.__nvCasa=function(capa){
     reset:function(){if(C?.adorno)moverAdorno({x:C.adorno.x,y:C.adorno.y});},
     react:function(kind){if(!C)return;var b=capa.getBoundingClientRect(),a=C.adorno;if(a)ls.dispatchEvent(new CustomEvent('navidad:entorno',{detail:{kind:kind,x:a.x+b.left,y:a.y+b.top}}));}
   };ls.__nvArbol=enlace;
+  // ── Lo que la mascota puede tocar del escenario (en coordenadas de pantalla) ──
+  // árbol: una copia recortada con su silueta que se pone ENCIMA de la mascota para que pase por detrás (solo debajo
+  // del formulario); el regalo de arriba del trineo (pieza aparte: lo puede tomar); la casita (blanco de la bola de nieve).
+  var frente=null, regaloEl=null, pruebaRuta=null;
+  function base(){ return capa.getBoundingClientRect(); }
+  function dibujarProps(fijo,D){
+    if(frente){frente.remove();frente=null;} if(regaloEl){regaloEl.remove();regaloEl=null;}
+    if(C?.arbolSil){ frente=NV.lienzo(W,H,D).c; frente.className='nv-arbol-frente'; frente.style.width=W+'px'; frente.style.height=H+'px'; var fx=frente.getContext('2d');
+      fx.save(); fx.setTransform(D,0,0,D,0,0); var lim=new Path2D(); lim.rect(0,(C.f?.b||0)+6,W,H); fx.clip(lim); fx.clip(C.arbolSil); fx.setTransform(1,0,0,1,0,0); fx.drawImage(fijo,0,0); fx.restore();
+      ls.appendChild(frente); }
+    var t=C?.trineo; if(t&&t.suelto){ var k=t.s, L=NV.lienzo(64,64,D); regaloEl=L.c; regaloEl.className='nv-regalo-suelto';
+      L.x.translate(32,46); L.x.scale(k,k); NV.regalo(L.x,0,0,26,20,10,['#2a6ad0','#123a7a'],['#fff4dc','#cfc0a0']);
+      regaloEl.__casa={x:t.x-2*k,y:t.y-80*k}; ls.appendChild(regaloEl); moverRegalo(null); }
+  }
+  function moverRegalo(p,giro){ if(!regaloEl) return; var c=regaloEl.__casa, q=p?{x:p.x-base().left,y:p.y-base().top+10*C.trineo.s}:c;   // p = centro del regalo
+    regaloEl.style.transform='translate('+(q.x-32).toFixed(1)+'px,'+(q.y-46).toFixed(1)+'px) rotate('+(giro||0).toFixed(1)+'deg)'; }
+  ls.__nvEscena={
+    arbol:function(on){ if(frente) frente.classList.toggle('nv-tapa',!!on); return !!frente; },
+    // la orilla izquierda del árbol a esa altura (para asomarse por un lado)
+    orilla:function(y){ if(!C?.arbolSil) return null; if(!pruebaRuta) pruebaRuta=document.createElement('canvas').getContext('2d'); var b=base(), yy=y-b.top;
+      for(var xx=0;xx<W;xx+=2) if(pruebaRuta.isPointInPath(C.arbolSil,xx,yy)) return xx+b.left; return null; },
+    regalo:function(){ if(!regaloEl) return null; var b=base(), c=regaloEl.__casa; return {x:c.x+b.left,y:c.y+b.top-10*C.trineo.s,r:12*C.trineo.s}; },
+    moverRegalo:moverRegalo,
+    casita:function(){ var c=C?.casita; if(!c) return null; var b=base(); return {x:c.cx+b.left,y:c.base-c.h*1.05+b.top,w:c.w}; },
+    suelo:function(){ var b=base(); return C?.masc?C.masc.pies-6+b.top:null; }
+  };
   function rc(e,base){ var r=e.getBoundingClientRect(); var l=r.left-base.left, t=r.top-base.top; return {l:l,t:t,r:l+r.width,b:t+r.height,w:r.width,h:r.height,cx:l+r.width/2,cy:t+r.height/2}; }
   function medir(){ var base=capa.getBoundingClientRect(), q=function(s){ var e=ls.querySelector(s); return e&&e.offsetWidth?rc(e,base):null; };
     if(!q('.login-logo')||!q('.login-brand')||!q('.login-form')) return null;
@@ -378,7 +406,7 @@ window.__nvCasa=function(capa){
     W=M.W; H=M.H; var D=Math.min(1.5,window.devicePixelRatio||1); M.luces=[]; M.chispas=[]; M.anim=[]; M.hits=[]; NV.sem(101);
     var fijo=NV.lienzo(W,H,D); dibujar(fijo.x,M); var v=NV.lienzo(W,H,1);   // capa viva a 1×: nieve y brillos suaves, se pinta mucho menos
     cont.innerHTML=''; cont.appendChild(fijo.c); cont.appendChild(v.c); if(M.dom) cont.insertAdjacentHTML('beforeend',M.dom);
-    C=M; vivo=v.x; cps=reducido?[]:NV.copos(W,H,M.nCopos||(M.pc?90:45)); if(M.huevos) M.huevos(cont);dibujarAdorno();
+    C=M; vivo=v.x; cps=reducido?[]:NV.copos(W,H,M.nCopos||(M.pc?90:45)); if(M.huevos) M.huevos(cont);dibujarAdorno();dibujarProps(fijo.c,D);
     if(reducido) NV.vivo(vivo,W,H,0,C.luces,[],[]); else seguir(); }
   function aLaVista(){ return !document.hidden&&ls.classList.contains('active'); }
   var ultCuadro=0;
@@ -396,6 +424,6 @@ window.__nvCasa=function(capa){
   var mo=new MutationObserver(function(){ if(!C) armar(); seguir(); }); mo.observe(ls,{attributes:true,attributeFilter:['class']});   // al salir la carga se dibuja en ese mismo cuadro, sin esperar
   armar(); var t1=setTimeout(armar,700), t2=setTimeout(armar,1800);      // la mascota y las fuentes se acomodan un momento después
   var ro=window.ResizeObserver?new ResizeObserver(function(){ clearTimeout(t1); t1=setTimeout(armar,200); }):null; if(ro){ ro.observe(capa); var mm=ls.querySelector('.nv-mascota'); if(mm) ro.observe(mm); }
-  return {detener:function(){ parado=true; if(raf) cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); if(ro) ro.disconnect(); mo.disconnect(); ls.removeEventListener('pointerdown',toque); document.removeEventListener('visibilitychange',seguir);if(adornoSVG)adornoSVG.remove();if(ls.__nvArbol===enlace)delete ls.__nvArbol;delete ls.dataset.adorno;cont.remove(); }};
+  return {detener:function(){ parado=true; if(raf) cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); if(ro) ro.disconnect(); mo.disconnect(); ls.removeEventListener('pointerdown',toque); document.removeEventListener('visibilitychange',seguir);if(adornoSVG)adornoSVG.remove();if(frente)frente.remove();if(regaloEl)regaloEl.remove();if(ls.__nvEscena)delete ls.__nvEscena;if(ls.__nvArbol===enlace)delete ls.__nvArbol;delete ls.dataset.adorno;cont.remove(); }};
 };
 })();

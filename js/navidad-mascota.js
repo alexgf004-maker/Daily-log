@@ -5,7 +5,8 @@ var mount=null,actor=null,ice=null,environment=null,observer=null,login=null,for
 var stageNow='',previewDay=null,flow=null,nap=14,manualRemaining=0,focusTarget=null;
 var frostTimer=0,frozenRemaining=0;
 var world=null,dialogue=null,life=null,editing=false,editingTimer=0;
-var previewPaused=false;
+var previewPaused=false,escenas=null;
+var ESCENAS=['esfera','escondite','trineo','nieve'];
 var media=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)'),reduced=!!media?.matches;
 function theme(){var t=window.__temas;return t?.activo?.id==='navidad'?t:null;}
 function engaged(){return !!focusTarget&&(focusTarget.id==='loginPin'||editing);}
@@ -15,7 +16,7 @@ function seasonKey(){return 'innova_nv_liberado_'+new Date().getFullYear();}
 function dayPre(){var d=new Date();if(preview())return previewDay===null?1:previewDay;return d.getMonth()===11&&d.getDate()<=21?d.getDate():1;}
 function giftDay(){var d=new Date();return d.getMonth()===11&&d.getDate()>=24;}
 function shouldIntroduce(){if(preview())return true;try{return localStorage.getItem(seasonKey())!=='1';}catch(e){return true;}}
-function stopStory(){world?.cancelBlow?.();if(environment)environment.restore();actor?.reachFor?.(null);if(mount){delete mount.dataset.historia;delete mount.dataset.gesto;}flow=null;manualRemaining=0;nap=14;}
+function stopStory(){escenas?.stop();world?.cancelBlow?.();if(environment)environment.restore();actor?.reachFor?.(null);if(mount){delete mount.dataset.historia;delete mount.dataset.gesto;}flow=null;manualRemaining=0;nap=14;}
 function idle(){if(!actor)return;if(mount)delete mount.dataset.gesto;actor.lookAt?.(null);actor.play('idle');}
 function clearAll(){
   life?.destroy();life=null;clearTimeout(editingTimer);editingTimer=0;editing=false;
@@ -24,7 +25,7 @@ function clearAll(){
   stopStory();if(observer){observer.disconnect();observer=null;}
   if(form){form.removeEventListener('focusin',onFocus);form.removeEventListener('focusout',onBlur);form.removeEventListener('input',onFocus);}
   if(actor){actor.svg.removeEventListener('pointerdown',onTap);actor.svg.removeEventListener('keydown',onKey);actor.destroy();actor=null;}
-  if(ice){ice.destroy();ice=null;}if(environment){environment.destroy();environment=null;}
+  escenas=null;if(ice){ice.destroy();ice=null;}if(environment){environment.destroy();environment=null;}
   if(mount){mount.classList.remove('nv-mascota-ojos-pausa','nv-mascota-congelada','nv-mascota-libre','nv-mascota-bloque');delete mount.dataset.historia;delete mount.dataset.reaccion;delete mount.dataset.mirada;}
   mount=login=form=focusTarget=null;stageNow='';
   previewPaused=false;
@@ -79,7 +80,7 @@ function caught(){
 }
 function finishStory(){var first=flow?.kind==='liberacion';stopStory();delete mount.dataset.historia;idle();nap=first?2.4:14;}
 function autonomous(name){
-  if(!actor||engaged()||flow||manualRemaining>0||frozenRemaining>0)return 0;
+  if(!actor||engaged()||flow||escenas?.activa()||manualRemaining>0||frozenRemaining>0)return 0;
   world?.resetGaze();
   if(ice){
     frozenRemaining=GreenActor.SCENES[name]?.duration||0;if(!frozenRemaining)return 0;
@@ -88,6 +89,7 @@ function autonomous(name){
     actor.resume();return frozenRemaining;
   }
   if(name==='environment')return contextAction()?flow?9:manualRemaining:0;
+  if(ESCENAS.includes(name))return escenas?.start(name)||0;   // interacciones con el escenario (js/navidad-mascota-escenas.js)
   var duration=GreenActor.SCENES[name]?.duration;if(!duration)return 0;
   actor.lookAt?.(null);actor.reachFor?.(null);actor.play(name);mount.dataset.gesto=name;manualRemaining=duration+.15;
   return manualRemaining;
@@ -95,6 +97,7 @@ function autonomous(name){
 function frame(info,dt){
   if(!actor||reduced||document.hidden||!login?.classList.contains('active')||engaged())return;
   if(ice){if(frozenRemaining>0){frozenRemaining-=dt;if(frozenRemaining<=0){frozenRemaining=0;actor.play('idle');actor.render(0);actor.pause();delete mount.dataset.gesto;}}return;}
+  if(escenas?.activa()){escenas.frame(dt);return;}
   if(flow){
     flow.time+=dt;var t=flow.time;
     if(flow.kind==='liberacion'){
@@ -134,9 +137,10 @@ function onTap(event){
   if(focusTarget){focusTarget.blur?.();focusTarget=null;}
   if(!actor||reduced)return;
   if(flow?.kind==='travesura'){caught();return;}
-  if(flow||manualRemaining>0)return;
+  if(flow||escenas?.activa()||manualRemaining>0)return;
   var p=Number.isFinite(event.clientX)&&window.NavidadEntorno?.point(actor.svg,{x:event.clientX,y:event.clientY});
   if(stageNow==='casa'&&p&&p.x>250&&p.x<580&&p.y>60&&p.y<250&&mount.querySelector('#santa-hat')){actor.play('hat');manualRemaining=4.2;return;}
+  if(stageNow==='casa'&&escenas?.start('escondite'))return;
   contextAction();
 }
 function onKey(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();onTap(event);}}
@@ -167,18 +171,19 @@ function sync(){
     var svg=mount.querySelector('svg');if(!svg||typeof GreenActor!=='function')throw Error('Motor o SVG no disponible');
     actor=new GreenActor(svg,{initialScene:'idle',embedded:true,personality:current==='casa',frozen:current==='pre',onFrame:frame});
     form=login.querySelector('.login-form');
-    world=window.NavidadEntorno?.create(login,mount,{frozen:function(){return !!ice;},react:reactToWorld,busy:function(){return engaged()||!!flow||manualRemaining>0||frozenRemaining>0;},restoreFocus:function(){if(ice&&focusTarget?.id==='loginPin')mount.dataset.mirada='apartada';}})||null;
+    world=window.NavidadEntorno?.create(login,mount,{frozen:function(){return !!ice;},react:reactToWorld,busy:function(){return engaged()||!!flow||!!escenas?.activa()||manualRemaining>0||frozenRemaining>0;},restoreFocus:function(){if(ice&&focusTarget?.id==='loginPin')mount.dataset.mirada='apartada';}})||null;
     if(current==='pre'){
       ice=window.NavidadHielo.create(dayPre(),mount);actor.pause();mount.classList.add('nv-mascota-congelada','nv-mascota-bloque');
     }else{
       mount.classList.add('nv-mascota-libre');
       environment=window.NavidadHistoria.create(login,mount);
+      if(current==='casa')escenas=window.NavidadEscenas?.create({login:login,mount:mount,actor:actor,environment:environment,aim:aim,say:function(r){dialogue?.say(r);},onEnd:function(){if(mount)delete mount.dataset.gesto;}})||null;
       if(current==='casa'&&shouldIntroduce())startStory('liberacion');
       else if(current==='casa'&&giftDay())nap=4;
       else if(current==='ano')idle();
     }
     dialogue=window.NavidadEntorno?.createDialogue?.(mount,{container:function(){return login;},stage:function(){return stageNow;},reduced:function(){return reduced;},express:function(e){actor?.speak?.(e);}});
-    life=window.NavidadVida?.create({active:function(){return !!actor&&!reduced&&!document.hidden&&login?.classList.contains('active')&&!previewPaused&&!engaged();},busy:function(){return !!flow||manualRemaining>0||frozenRemaining>0;},stage:function(){return stageNow;},run:autonomous})||null;
+    life=window.NavidadVida?.create({active:function(){return !!actor&&!reduced&&!document.hidden&&login?.classList.contains('active')&&!previewPaused&&!engaged();},busy:function(){return !!flow||!!escenas?.activa()||manualRemaining>0||frozenRemaining>0;},stage:function(){return stageNow;},run:autonomous})||null;
     svg.addEventListener('pointerdown',onTap);svg.addEventListener('keydown',onKey);
     form?.addEventListener('focusin',onFocus);form?.addEventListener('focusout',onBlur);form?.addEventListener('input',onFocus);
     observer=new MutationObserver(regulate);observer.observe(login,{attributes:true,attributeFilter:['class']});
@@ -192,7 +197,7 @@ window.__mascotaNavidadTap=function(){onTap({stopPropagation:function(){}});};
 window.__mascotaNavidadEstado=function(){return {etapa:stageNow,congelada:!!ice,dia:ice?Number(ice.node.dataset.dia):null,escena:actor?.scene||null,historia:flow?.kind||null,tiempo:flow?.time||0};};
 window.__mascotaNavidadPreviewDia=function(day){if(!preview()||stage()!=='pre')return false;var n=Number(day);if(!Number.isInteger(n)||n<1||n>21)return false;previewDay=n;if(ice)ice.update(dayPre());return true;};
 // Solo pruebas locales mediante "Ver ahora"; no cambia fechas ni temas globales.
-window.__mascotaNavidadHistoria=function(name){if(!preview()||!['liberacion','travesura','regalo'].includes(name))return false;return startStory(name);};
+window.__mascotaNavidadHistoria=function(name){if(!preview())return false;if(ESCENAS.includes(name)){stopStory();return !!escenas?.start(name);}if(!['liberacion','travesura','regalo'].includes(name))return false;return startStory(name);};
 window.__mascotaNavidadPausa=function(paused){if(!preview()||ice)return false;previewPaused=!!paused;regulate();return true;};
 window.__mascotaNavidadAvanzar=function(seconds){
   if(!preview()||ice||!actor||document.hidden||!Number.isFinite(seconds)||seconds<0||seconds>10)return false;

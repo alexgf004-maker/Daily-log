@@ -161,6 +161,14 @@
 /* Cable y foco de la guirnalda real: decoración sin superficie interactiva. */
 .tema-navidad .nv-historia-capa{position:absolute;left:0;top:0;z-index:3;pointer-events:none;overflow:hidden}
 .tema-navidad .nv-arbol-adorno{position:absolute;left:0;top:0;z-index:3;pointer-events:none;overflow:visible}
+/* El árbol puede quedar delante de la mascota (se esconde detrás); el regalo de arriba del trineo y la bola de nieve
+   son piezas sueltas que ella toma o lanza. */
+.tema-navidad .nv-arbol-frente{position:absolute;left:0;top:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .18s}
+.tema-navidad .nv-arbol-frente.nv-tapa{opacity:1}
+.tema-navidad .nv-regalo-suelto{position:absolute;left:0;top:0;width:64px;height:64px;z-index:3;pointer-events:none;transform-origin:32px 40px;will-change:transform}
+.tema-navidad .nv-bola-nieve{position:absolute;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;z-index:5;pointer-events:none;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff 0 40%,#e2eef8 70%,#b9cfe2);box-shadow:0 2px 3px rgba(20,40,70,.3);will-change:transform}
+.tema-navidad .nv-nieve-polvo{position:absolute;left:0;top:0;width:6px;height:6px;margin:-3px 0 0 -3px;z-index:5;pointer-events:none;border-radius:50%;background:#fff;will-change:transform,opacity}
 
 /* Resoplido contra la pared interior: nace en la boca, se extiende y se evapora. */
 .nv-mascota-congelada:is([data-reaccion="frio"],[data-reaccion="molesto"]) #nvice-breath{animation:nvCristalEmpanado 2.6s .35s ease-out both}
