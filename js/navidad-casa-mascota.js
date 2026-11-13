@@ -1,4 +1,4 @@
-// ── Navidad en casa (22–27 dic): «¡Listo, guardado!» con la mascota de protagonista ──
+// ── Navidad en casa (1–26 dic): «¡Listo, guardado!» con la mascota de protagonista ──
 // Lo usa mostrarGuardadoOK en index.html. Solo dibuja; no toca cómo se guarda el registro.
 // La mascota es el mismo personaje animado del login (con su gorro de Santa en esta etapa): se copia su dibujo con
 // ids propios, como el compañero de adentro, y la mueve su propio GreenActor (30 cps). Sala cálida con guirnalda.

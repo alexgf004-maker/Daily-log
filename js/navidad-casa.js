@@ -1,4 +1,4 @@
-// ── Navidad en casa (22–27 dic): escena del login «Llegamos a la casita» ──
+// ── Navidad en casa (1–26 dic): escena del login «Llegamos a la casita» ──
 // Es el final de la historia de Pre-Navidad: el mismo mundo (aurora, montañas nevadas, lago congelado, pinos escarchados
 // con moño rojo), la casita roja que se venía acercando ya de cerca con humo en la chimenea, el trineo del «Rumbo a
 // Navidad» estacionado en su puerta con los regalos, el cordón de foquitos arriba ya todo encendido y el árbol de

@@ -13,7 +13,7 @@ class Element {
  contains(target){return !!target&&Object.values(this.children).includes(target)}
  emit(k,event={}){for(const fn of this.events[k]||[])fn({stopPropagation(){},...event})}
 }
-function fixture({date='2026-12-01',mode='auto',reduced=false,autonomous=false}={}){
+function fixture({date='2026-11-13',mode='auto',reduced=false,autonomous=false}={}){
  let now=new Date(date+'T12:00:00');
  const mount=new Element(),svg=new Element(),iceNode=new Element(),login=new Element(),form=new Element(),pin=new Element(),user=new Element();pin.id='loginPin';user.id='loginUser';form.children={pin,user};login.children['.login-form']=form;
  mount.children.svg=svg;mount.children['.nv-hielo-fijo']=iceNode;login.children['.nv-mascota']=mount;login.classList.add('active');
@@ -26,7 +26,9 @@ function fixture({date='2026-12-01',mode='auto',reduced=false,autonomous=false}=
  const ctx={console,Date:class extends Date{constructor(...args){super(...(args.length?args:[now]))}},MutationObserver:class{observe(){}disconnect(){}},GreenActor:Actor,document:{hidden:false,getElementById:id=>({loginScreen:login,loginPin:pin,loginUser:user}[id]||null),addEventListener:(e,fn)=>callbacks[e]=fn},setTimeout:(fn,ms=0)=>{timers.set(++timerID,fn);due.set(timerID,clock+ms);return timerID},clearTimeout:id=>{timers.delete(id);due.delete(id);},setInterval:(fn,ms)=>intervals.push({fn,ms}),matchMedia:()=>({matches:reduced,addEventListener:(name,fn)=>callbacks.mediachange=fn})};
  ctx.localStorage={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)};
  ctx.NavidadHistoria={create(){const e={taken:false,start(){return true},pull(t){this.taken=t>=3.2},give(t){this.taken=t<3.8},release(){},drop(t){if(t>=2.4)this.taken=false},restore(){this.taken=false},destroy(){this.taken=false}};envs.push(e);return e}};
- ctx.window=ctx;ctx.__temas={modo:mode,activo:{id:'navidad'},etapaDe:()=>({id:now.getDate()<=21?'pre':'casa'})};
+ ctx.window=ctx;ctx.__temas={modo:mode,activo:{id:'navidad'},etapaDe:()=>({id:now.getMonth()===10?'pre':'casa'}),
+   // como T.diaPre de index.html: Pre-Navidad 13–30 nov repartida en los días virtuales 1–21
+   diaPre:()=>{const real=now.getMonth()===10&&now.getDate()>=13,idx=now.getDate()-12;return {real,dv:real?1+Math.round((idx-1)*20/17):1};}};
  vm.createContext(ctx);vm.runInContext(read('js/navidad-hielo.js'),ctx);if(autonomous)vm.runInContext(read('js/navidad-vida.js'),ctx);vm.runInContext(read('js/navidad-mascota.js'),ctx);
  function advance(seconds){let left=seconds;while(left>0){const dt=Math.min(.05,left);left-=dt;clock+=dt*1000;if(autonomous)for(const [id,at] of [...due])if(at<=clock){const fn=timers.get(id);timers.delete(id);due.delete(id);fn?.();}const a=actors.at(-1);if(!a||a.paused||a.destroyed)continue;const meta=Actor.SCENES[a.scene];a.elapsed=meta.loop?(a.elapsed+dt)%meta.duration:Math.min(meta.duration,a.elapsed+dt);a.options.onFrame(a.getSceneInfo(),dt);}}
  return {ctx,mount,iceNode,svg,login,form,pin,user,actors,callbacks,intervals,timers,advance,envs,storage,setDate:d=>{now=new Date(d+'T12:00:00')}};
@@ -48,11 +50,12 @@ test('actualización idempotente y limpieza de hielo',()=>{
  ice.update(12);assert.equal(f.iceNode.children['#nvice-body'].attrs.d,shape);
  ice.touch();assert.equal(f.timers.size,1);ice.destroy();assert.equal(f.timers.size,0);assert.equal(f.mount.style['--nv-frio'],undefined);
 });
-test('permanece inmóvil del 1 al 21; se libera al cambiar al 22 sin recargar',()=>{
- const f=fixture();f.ctx.__mascotaNavidadSync();assert.equal(f.actors[0].paused,true);
- f.setDate('2026-12-21');f.ctx.__mascotaNavidadSync();assert.equal(f.ctx.__mascotaNavidadEstado().dia,21);
+test('permanece inmóvil del 13 al 30 nov (días 1–21 del deshielo); se libera el 1 dic sin recargar',()=>{
+ const f=fixture();f.ctx.__mascotaNavidadSync();assert.equal(f.actors[0].paused,true);assert.equal(f.ctx.__mascotaNavidadEstado().dia,1);
+ f.setDate('2026-11-21');f.ctx.__mascotaNavidadSync();assert.equal(f.ctx.__mascotaNavidadEstado().dia,10);
+ f.setDate('2026-11-30');f.ctx.__mascotaNavidadSync();assert.equal(f.ctx.__mascotaNavidadEstado().dia,21);
  assert.equal(f.ctx.__mascotaNavidadPlay('steal'),false);
- f.setDate('2026-12-22');f.ctx.__mascotaNavidadSync();assert.equal(f.actors[0].destroyed,true);
+ f.setDate('2026-12-01');f.ctx.__mascotaNavidadSync();assert.equal(f.actors[0].destroyed,true);
  assert.equal(f.ctx.__mascotaNavidadEstado().congelada,false);assert.ok(f.mount.classList.contains('nv-mascota-libre'));assert.equal(f.actors[1].paused,false);
 });
 test('regresar a la pestaña el 22 actualiza la liberación inmediatamente',()=>{
@@ -60,10 +63,10 @@ test('regresar a la pestaña el 22 actualiza la liberación inmediatamente',()=>
  f.setDate('2026-12-22');f.ctx.document.hidden=false;f.callbacks.visibilitychange();assert.equal(f.ctx.__mascotaNavidadEstado().congelada,false);
 });
 test('la previsualización local empieza en 1 y rechaza días fuera de rango',()=>{
- const f=fixture({date:'2026-12-12',mode:'ver'});f.ctx.__mascotaNavidadSync();assert.equal(f.ctx.__mascotaNavidadEstado().dia,1);
+ const f=fixture({date:'2026-11-24',mode:'ver'});f.ctx.__mascotaNavidadSync();assert.equal(f.ctx.__mascotaNavidadEstado().dia,1);
  assert.equal(f.ctx.__mascotaNavidadPreviewDia(12),true);assert.equal(f.ctx.__mascotaNavidadEstado().dia,12);
  for(const day of [0,22,1.5,'otro'])assert.equal(f.ctx.__mascotaNavidadPreviewDia(day),false);
- f.ctx.__temas.modo='auto';assert.equal(f.ctx.__mascotaNavidadPreviewDia(7),false);f.ctx.__mascotaNavidadSync();assert.equal(f.ctx.__mascotaNavidadEstado().dia,12);
+ f.ctx.__temas.modo='auto';assert.equal(f.ctx.__mascotaNavidadPreviewDia(7),false);f.ctx.__mascotaNavidadSync();assert.equal(f.ctx.__mascotaNavidadEstado().dia,14);   // 24 nov → día 14 del deshielo
 });
 test('cambiar de tema retira el motor y sus escuchadores; volver no duplica toques',()=>{
  const f=fixture({date:'2026-12-22'});
@@ -269,10 +272,10 @@ test('las manos siguen conectadas a los hombros al cubrir el PIN y al bajar',()=
  assert.equal(actor.n('hands-eyes').attrs.opacity,'0');assert.equal(actor.n('arm-left').attrs.opacity,'1');
 });
 
-test('el controlador conserva la pose congelada al avanzar el deshielo y la retira el 22',()=>{
+test('el controlador conserva la pose congelada al avanzar el deshielo y la retira el 1 dic',()=>{
  const f=fixture();f.ctx.__mascotaNavidadSync();assert.equal(f.actors.at(-1).options.frozen,true);
- f.setDate('2026-12-21');f.ctx.__mascotaNavidadSync();assert.equal(f.actors.at(-1).options.frozen,true);
- f.setDate('2026-12-22');f.ctx.__mascotaNavidadSync();assert.equal(f.actors.at(-1).options.frozen,false);
+ f.setDate('2026-11-30');f.ctx.__mascotaNavidadSync();assert.equal(f.actors.at(-1).options.frozen,true);
+ f.setDate('2026-12-01');f.ctx.__mascotaNavidadSync();assert.equal(f.actors.at(-1).options.frozen,false);
 });
 test('la amortiguación y su reloj permanecen quietos durante la pausa',()=>{
  const {actor,tick}=realActor();actor.play('grump');for(let i=0;i<45;i++)tick(1/60);

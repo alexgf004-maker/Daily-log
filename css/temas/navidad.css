@@ -1,6 +1,6 @@
 /* Tema Navidad — se carga solo con el tema activo */
 /* ── Tema Navidad (1 dic – 4 ene), en tres etapas ──
-   html.tema-navidad + .nav-pre (1–21 dic) | .nav-casa (22–27 dic) | .nav-ano (28 dic–4 ene).
+   html.tema-navidad + .nav-pre (13–30 nov) | .nav-casa (1–26 dic) | .nav-ano (27 dic–4 ene).
    La escena del login la arma js/navidad.js dentro de .nv-capa; lo que agrega al panel lleva .nv-extra. */
 .nv-capa{position:absolute;inset:0 0 auto;min-height:100%;overflow:hidden;pointer-events:none;z-index:0}
 /* El degradado y los objetos terminan en el mismo suelo, también al desplazarse. */

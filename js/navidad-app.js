@@ -13,7 +13,7 @@ const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábad
 
 // Sorpresas del Adviento: textos propios (curiosidades, consejos y detalles para el equipo)
 export const ADVIENTO = [
-  { ico:'⭐', t:'Arranca diciembre', x:'Hoy empieza el camino a Navidad. Cada día se abre una puertita nueva: pasa por aquí antes de registrar.' },
+  { ico:'⭐', t:'Arranca diciembre', x:'Hoy se enciende la Navidad en la app. Cada día se abre una puertita nueva hasta Nochebuena: pasa por aquí antes de registrar.' },
   { ico:'☕', t:'Pausa con café', x:'Un descanso corto de 5 minutos a media mañana ayuda a concentrarse mejor el resto del día. Te lo ganaste.' },
   { ico:'🧤', t:'Manos a salvo', x:'En campo, revisa tus guantes y herramientas antes de salir. Lo mejor de diciembre es llegar bien a casa.' },
   { ico:'🌺', t:'La flor de pascua', x:'La pascua, tan típica en nuestras casas en diciembre, es originaria de México y Centroamérica. Lo rojo no son pétalos: son hojas.' },
@@ -26,15 +26,15 @@ export const ADVIENTO = [
   { ico:'🍬', t:'Dulce del mes', x:'¿Sabías que los bastones de dulce tienen más de 300 años? Hoy, si puedes, comparte algo dulce con alguien.' },
   { ico:'🧭', t:'Ruta segura', x:'Antes de salir a campo, avisa por dónde vas a andar. Si algo pasa, tu equipo sabe dónde buscarte.' },
   { ico:'🎁', t:'Regalos que no se compran', x:'Una llamada a tu familia a medio día, un mensaje a un amigo: hay regalos que no cuestan nada y valen mucho.' },
-  { ico:'⏰', t:'Diez minutos antes', x:'Salir diez minutos antes de casa es la fórmula más sencilla para llegar sin carreras y encender tu foquito.' },
-  { ico:'🌟', t:'Mitad del camino', x:'Ya vamos a la mitad del camino a Navidad. Mira tu cordón de foquitos: cada uno es un día que llegaste a tiempo.' },
+  { ico:'⏰', t:'Diez minutos antes', x:'Salir diez minutos antes de casa es la fórmula más sencilla para llegar sin carreras y empezar el día tranquilo.' },
+  { ico:'🌟', t:'Mitad del camino', x:'Ya vamos a la mitad del camino a Nochebuena. Quedan nueve puertitas: no te pierdas ninguna.' },
   { ico:'🫓', t:'Tamales y pan con pavo', x:'En El Salvador la Nochebuena suele llevar pan con pavo o tamales. ¿Cuál es el plato que no puede faltar en tu casa?' },
   { ico:'😴', t:'Dormir también es trabajo', x:'Dormir 7 u 8 horas mejora la atención en campo. Hoy intenta acostarte un poquito más temprano.' },
   { ico:'🔦', t:'Revisión de equipo', x:'Linterna con batería, cargador y datos móviles: revísalos hoy y te ahorras sustos en la semana.' },
   { ico:'🤝', t:'Equipo que se ayuda', x:'Si terminas antes, pregunta si alguien necesita una mano. Los equipos que se ayudan cierran el año más tranquilos.' },
-  { ico:'🧊', t:'Se derrite el hielo', x:'Faltan pocos días. El invierno de la app se está despidiendo y la casita del camino ya está casi encendida.' },
-  { ico:'🎄', t:'Último día del camino', x:'Hoy termina la Pre-Navidad. Mañana la app cambia de escena: nos vemos en la sala, junto al árbol.' },
-  { ico:'🕯️', t:'La sala está lista', x:'El árbol ya está encendido y la chimenea calientita. Estos días, cuida tus gastos y disfruta a los tuyos.' },
+  { ico:'🧦', t:'Medias en la chimenea', x:'Cuenta la historia que unas monedas cayeron por una chimenea y fueron a dar a unas medias que se secaban junto al fuego. De ahí viene colgarlas.' },
+  { ico:'🎄', t:'Luces seguras', x:'Si en tu casa ya brilla el árbol, revisa que las extensiones no queden bajo alfombras ni cerca de cortinas, y apágalas al dormir.' },
+  { ico:'🕯️', t:'Faltan dos días', x:'El árbol encendido y la chimenea calientita: ya casi es Nochebuena. Estos días, cuida tus gastos y disfruta a los tuyos.' },
   { ico:'✨', t:'Víspera de Nochebuena', x:'Mañana es Nochebuena. Si vas a usar pólvora, que sea lejos de niños y mascotas, y siempre con un adulto responsable.' },
   { ico:'🌠', t:'¡Feliz Nochebuena!', x:'Llegamos. Gracias por cada registro, cada marcaje y cada día de trabajo este año. ¡Feliz Nochebuena para ti y tu familia!' },
 ];
@@ -51,10 +51,23 @@ export function diaNavidad(hoyISO) {
 
 /* ═══════════════════ 1. Cordón personal de foquitos ═══════════════════ */
 // dias: [{fecha, dia, estado:'on'|'frio'|'hoy'|'futuro'}]
-export function diasDelCordon({ anio, diaHoy, real, uid, marcajes, sabados, asuetos, empleadoTrabajaSabado }) {
+// fechas: los días de la etapa Pre-Navidad hasta hoy (AAAA-MM-DD, de T.diaPre) más los que faltan de la etapa no se
+// dibujan; sin fechas (vista previa fuera de temporada) se usan los días 1–21 de diciembre como antes.
+export function diasDelCordon({ fechas, hoy, anio, diaHoy, real, uid, marcajes, sabados, asuetos, empleadoTrabajaSabado }) {
   const asu = new Set((asuetos || []).map(a => a.fecha || a));
   const porFecha = Object.fromEntries((marcajes || []).map(m => [m.fecha, m]));
   const out = [];
+  if (fechas && fechas.length) {
+    for (const fecha of fechas) {
+      const dow = new Date(fecha + 'T12:00:00').getDay(), d = Number(fecha.slice(8));
+      if (dow === 0 || asu.has(fecha)) continue;
+      if (dow === 6 && !(empleadoTrabajaSabado && empleadoTrabajaSabado(sabados, fecha, uid))) continue;
+      const e = porFecha[fecha]?.entrada;
+      const estado = e && (e.estado === 'a_tiempo' || e.justificado) ? 'on' : fecha === hoy ? (e ? 'frio' : 'hoy') : 'frio';
+      out.push({ fecha, dia: d, dow, estado });
+    }
+    return out;
+  }
   for (let d = 1; d <= 21; d++) {
     const fecha = `${anio}-12-${String(d).padStart(2, '0')}`;
     const dow = new Date(fecha + 'T12:00:00').getDay();
@@ -94,7 +107,7 @@ export function cordonHTML(dias, nombre, real) {
   const frase = on === 0
     ? (quien ? `${quien}, tu primer foquito se enciende al marcar a tiempo` : 'Tu primer foquito se enciende al marcar a tiempo')
     : `${quien ? quien + ', llevas' : 'Llevas'} <b>${on}</b> ${on === 1 ? 'foquito encendido' : 'foquitos encendidos'}`;
-  return `<div class="nvp-foq${real ? '' : ' demo'}" aria-label="Tu cordón de foquitos de diciembre">
+  return `<div class="nvp-foq${real ? '' : ' demo'}" aria-label="Tu cordón de foquitos de la temporada">
     <svg viewBox="0 -2 ${W} 40" preserveAspectRatio="none"><defs><filter id="nvpLuz" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
       <path d="M0 6 Q${W / 2} ${6 + cae * 2} ${W} 6" stroke="rgba(207,227,242,.6)" stroke-width="1" fill="none"/>${focos}</svg>
     <div class="nvp-foq-t">${frase}${real ? '' : ' <span>· vista previa</span>'}</div></div>`;

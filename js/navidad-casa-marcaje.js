@@ -1,4 +1,4 @@
-// ── Navidad en casa (22–27 dic): marcaje «Santa se asoma» ──
+// ── Navidad en casa (1–26 dic): marcaje «Santa se asoma» ──
 // Lo usa el módulo principal de index.html (renderMarcajeCard y "Probar animaciones"). Solo dibuja; no toca cómo se
 // marca ni qué se guarda.
 //  · A tiempo: Santa se asoma por detrás de la tarjeta, saca un regalo y lo lanza girando al punto; se ríe

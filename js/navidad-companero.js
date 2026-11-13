@@ -29,7 +29,7 @@ function covered(){return Array.from(document.querySelectorAll(MODAL)).some(func
   if(typeof getComputedStyle!=='function')return true;
   var style=getComputedStyle(el);return style.visibility!=='hidden'&&style.display!=='none'&&Number(style.opacity)!==0;
 });}
-function day(){var d=new Date();if(window.__temas?.modo==='ver')return Number(document.querySelector('#loginScreen .nv-hielo-fijo')?.dataset.dia)||1;return d.getMonth()===11?Math.min(21,d.getDate()):1;}
+function day(){if(window.__temas?.modo==='ver')return Number(document.querySelector('#loginScreen .nv-hielo-fijo')?.dataset.dia)||1;var P=window.__temas?.diaPre?.();return P&&P.real?P.dv:1;}   // día 1–21 del deshielo (index.html, T.diaPre)
 function createOrnament(h,svg){
   var node=null,anchor=null,last=null,contact=false,released=false,time=0;
   function restore(){if(node){node.classList.remove('nv-bota-tirada');['--nv-bota-x','--nv-bota-y','--nv-bota-giro'].forEach(function(k){node.style.removeProperty(k);});}node=anchor=last=null;contact=released=false;time=0;}

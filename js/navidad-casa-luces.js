@@ -1,4 +1,4 @@
-// ── Navidad en casa (22–27 dic): «Todo se enciende» ──
+// ── Navidad en casa (1–26 dic): «Todo se enciende» ──
 // Lo que se usa a diario se ilumina con foquitos de colores según lo que hace la persona:
 //   · pestañas del técnico: un foquito colgando sobre cada una; se enciende el de la pestaña abierta;
 //   · «Mi marcaje» (técnico y admin): la barra entre entrada y salida es un cordón que se enciende conforme avanza la

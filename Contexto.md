@@ -358,11 +358,11 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
   así el cambio de etapa (21→22 dic) se aplica solo. Fuera de temporada ("Ver ahora"), la etapa es la guardada en
   `localStorage.innova_tema_etapa` o la primera.
 - **Tema Navidad** (1 dic – 4 ene, `js/navidad.js` + `css/temas/navidad.css`). Login por etapa:
-  - `pre` (1–21 dic) invierno mágico: aurora (canvas), copos de cristal, montañas y lago al ancho real de la
+  - `pre` (13–30 nov) invierno mágico: aurora (canvas), copos de cristal, montañas y lago al ancho real de la
     pantalla, pinos con moños y esferas rojas, trineo; cordón de foquitos congelados que prenden más cada día (el
     17 todos); casita a lo lejos que se acerca y enciende ventanas; camino "Rumbo a Navidad" (24 huellitas y el
     trineo en el día de hoy) bajo el nombre de la app; tarjeta envuelta con cinta, moño y "Se abre el 24".
-  - `casa` (22–27 dic) «Llegamos a la casita» (`js/navidad-casa.js`, `window.__nvCasa(capa)` lo llama `armarCasa`): es
+  - `casa` (1–26 dic) «Llegamos a la casita» (`js/navidad-casa.js`, `window.__nvCasa(capa)` lo llama `armarCasa`): es
     el final de la historia de Pre-Navidad. Mismo mundo (aurora, montañas nevadas, lago congelado, pinos escarchados
     con moño rojo); la casita roja que se acercaba, ya de cerca, con humo; el trineo del «Rumbo a Navidad» estacionado
     con regalos; el cordón de foquitos arriba ya todo encendido; y el árbol de Navidad grande (estilo clásico: 8 pisos
@@ -400,7 +400,7 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     datos del calendario en azul noche; estados sin cambiar. A mano: cordón de foquitos arriba de los encabezados,
     barra de la marca roja y nieve suave en las pantallas (`.nv-amb`, la crea `js/navidad.js`; no sale en el login).
   - **Cordón personal de foquitos** (Pre-Navidad, `js/navidad-app.js`, lo pinta `navidadApp()` en index.html): en el
-    encabezado de "Registro de actividades" del técnico, un foquito por día hábil del 1 al 21 dic (sin domingos ni
+    encabezado de "Registro de actividades" del técnico, un foquito por día hábil de la Pre-Navidad (13–30 nov) (sin domingos ni
     asuetos; sábados solo si le tocan). Encendido si ese día marcó la entrada a tiempo o la justificó; congelado si no;
     tenue si todavía no llega. Una sola lectura de `marcajes/<uid>`. Fuera de diciembre muestra un ejemplo.
   - **Calendario de Adviento** (1–24 dic, técnico y dashboard del admin): 24 puertitas; se abre la de hoy y las pasadas.
@@ -571,10 +571,10 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     1280×560. No toca la mascota: baja junto con el panel porque se ancla a su borde inferior.
   - **"Probar animaciones"** se muestra solo con Halloween, Muertos y Pre-Navidad (regla en `comun.css`; antes vivía en
     `halloween.css` y fuera de Halloween el botón salía sin hacer nada).
-  - `casa` (22–27 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
+  - `casa` (1–26 dic): sala con tapiz, árbol con luces, ventana nevada, guirnalda, chimenea con fuego y medias
     (la primera con el nombre del usuario recordado). El 24 la tarjeta se "abre" (moño y cinta caen, confeti) una
     vez por teléfono (`innova_nav_regalo`).
-  - `ano` (28 dic–4 ene): «Pólvora en la terraza» (`js/navidad-ano.js`, `window.__nvAno(capa)`; elegida entre 3:
+  - `ano` (27 dic–4 ene): «Pólvora en la terraza» (`js/navidad-ano.js`, `window.__nvAno(capa)`; elegida entre 3:
     gala negro y dorado / terraza / brindis con champán; reemplazó a «ciudad + banderines + borde arcoíris», que a la
     usuaria no le gustaba). Volcán de San Salvador (cima achatada y El Picacho) con la ciudad encendida al pie, pólvora
     continua de colores y un cohete donde se toque el cielo (al estallar avisa a la mascota con `navidad:entorno`
@@ -911,6 +911,16 @@ copete de nieve, vidrio congelado y cable escarchado. Elegido entre 3 (cordón d
 Colores por tipo en variables (`--c`, `--cl`, `--cd`, `--cg`), sin `color-mix`.
 El encabezado del perfil del técnico en el admin (`.rg-ph`, Registros y Asistencia) va en una tarjeta oscura con borde
 dorado (plateado en Pre): el nombre salía oscuro sobre la noche.
+
+### Navidad: fechas nuevas de la temporada (desde 2026)
+Pedido de la empresa: Pre-Navidad **13–30 nov**, Navidad en casa **1–26 dic**, Año Nuevo **27 dic–4 ene** (el tema entero
+va del 13 nov al 4 ene). Se cambian solo en `TEMAS` (index.html). Lo que avanza día a día en Pre-Navidad (el hielo que se
+derrite, la casita que se acerca, el camino del trineo) se diseñó en «días 1 a 21»: `__temas.diaPre()` reparte la etapa
+real en esos 21 días (`dv`; 13 nov = 1, 21 nov = 10, 30 nov = 21) y da `faltan` (días reales para Nochebuena, el letrero
+«Rumbo a Navidad faltan N días») y `fechas` (los días de la etapa hasta hoy, para el cordón personal de foquitos, que lee
+los marcajes de noviembre). La mascota se libera el 1 dic (sale la etapa casa). El calendario de Adviento (1–24 dic) ahora
+vive en Navidad en casa, con «Faltan N días para Nochebuena»; sus textos se reescribieron para no hablar del hielo ni de la
+Pre-Navidad. Si cambian otra vez las fechas, basta con mover los `desde`/`hasta` de las etapas.
 
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.

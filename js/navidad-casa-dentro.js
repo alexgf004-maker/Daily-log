@@ -1,4 +1,4 @@
-// ── Navidad en casa (22–27 dic) dentro de la app: «Noche en la casita» ──
+// ── Navidad en casa (1–26 dic) dentro de la app: «Noche en la casita» ──
 // Sigue la escena del login: detrás de las pantallas de adentro está la misma noche (aurora, luna, montañas nevadas,
 // la casita roja con luces, el árbol grande y el plato de galletas con leche que le dejamos a Santa en la nieve).
 // Cada 40–70 s Santa y sus renos cruzan la pantalla con una estela dorada (por encima del contenido y debajo de la

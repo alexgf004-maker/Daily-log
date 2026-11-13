@@ -1,4 +1,4 @@
-// ── Año Nuevo (28 dic–4 ene): escena del login «Pólvora en la terraza» ──
+// ── Año Nuevo (27 dic–4 ene): escena del login «Pólvora en la terraza» ──
 // El volcán de San Salvador (ancho, cima achatada y El Picacho a un lado) con la ciudad encendida a sus pies, cohetes
 // de colores sin parar y, al tocar el cielo, el tuyo. En primer plano una terraza: piso de barro, baranda de madera,
 // guirnaldas de bombillos y una mesa con mantel, las 12 uvas, un frasco de estrellitas chisporroteando y una cajita de

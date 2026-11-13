@@ -1,10 +1,10 @@
 // ── Tema de Navidad: escenas del login por etapa ──
 // Se carga con defer desde el <head>. La etapa la decide window.__temas (index.html):
-//   pre  (1–21 dic)  Invierno mágico: aurora, foquitos congelados que prenden día a día, camino
+//   pre  (13–30 nov)  Invierno mágico: aurora, foquitos congelados que prenden día a día, camino
 //                    "Rumbo a Navidad", casita que se acerca y la tarjeta envuelta "Se abre el 24".
-//   casa (22–27 dic) Nochebuena en casa: árbol, chimenea, ventana nevada y medias (una con tu nombre).
+//   casa (1–26 dic) Nochebuena en casa: árbol, chimenea, ventana nevada y medias (una con tu nombre).
 //                    El 24 se abre el regalo de la tarjeta (una vez por teléfono).
-//   ano  (28 dic–4 ene) Pólvora en la terraza (js/navidad-ano.js): volcán, cohetes sin parar y, al tocar el cielo, el tuyo.
+//   ano  (27 dic–4 ene) Pólvora en la terraza (js/navidad-ano.js): volcán, cohetes sin parar y, al tocar el cielo, el tuyo.
 // Estilos en css/temas/navidad.css (solo se descarga con el tema activo). Todo vive dentro de .nv-capa y de elementos .nv-*,
 // así que al cambiar de etapa o de tema se quitan sin dejar rastro.
 (function(){
@@ -21,6 +21,8 @@
     var d=new Date(), m=d.getMonth()+1, n=d.getDate(), T=window.__temas;
     var md=('0'+m).slice(-2)+'-'+('0'+n).slice(-2);
     if(T&&T.modo==='ver'&&et.id==='pre') return {mes:12,dia:1,real:false};
+    // Pre-Navidad (13–30 nov): el día virtual 1–21 con el que avanzan la casita y el camino (index.html, T.diaPre)
+    if(et.id==='pre'&&T&&T.diaPre){ var P=T.diaPre(); return {mes:12,dia:P.real?P.dv:10,real:P.real,faltan:P.real?P.faltan:null}; }
     if(T&&T.enRango(md,et.desde,et.hasta)) return {mes:m,dia:n,real:true};
     return {mes:12,dia:{pre:10,casa:23,ano:31}[et.id],real:false};
   }
@@ -232,7 +234,7 @@
     for(i=0;i<8;i++){ var sz=R(16,38); capa.insertAdjacentHTML('beforeend','<div class="nv-cristal" style="left:'+R(0,95).toFixed(1)+'%;width:'+sz.toFixed(0)+'px;height:'+sz.toFixed(0)+'px;--dx:'+R(-40,40).toFixed(0)+'px;animation-duration:'+R(10,20).toFixed(1)+'s,'+R(14,26).toFixed(1)+'s;animation-delay:-'+R(0,20).toFixed(1)+'s,-'+R(0,26).toFixed(1)+'s">'+copo+'</div>'); }
 
     // camino "Rumbo a Navidad" (bajo el nombre de la app): 24 días, el trineo avanza hasta hoy
-    var hoy=Math.min(d,24), faltan=24-hoy, X=function(k){ return 8+(k-1)*(224/23); }, Y=function(k){ return 14+Math.sin(k*.7)*3.5; };
+    var hoy=Math.min(d,24), faltan=f.faltan!=null?f.faltan:24-hoy, X=function(k){ return 8+(k-1)*(224/23); }, Y=function(k){ return 14+Math.sin(k*.7)*3.5; };
     var huellas='', trazo='M8 14', hecho='M8 14';
     for(var k2=1;k2<=24;k2++){ if(k2>1){ trazo+=' L'+X(k2).toFixed(1)+' '+Y(k2).toFixed(1); if(k2<=hoy) hecho+=' L'+X(k2).toFixed(1)+' '+Y(k2).toFixed(1); }
       if(k2!==hoy) huellas+='<circle cx="'+X(k2).toFixed(1)+'" cy="'+Y(k2).toFixed(1)+'" r="'+(k2%6===0?3:2.1)+'" fill="'+(k2<hoy?'#ff6b7a':'rgba(255,255,255,.45)')+'"/>'; }

@@ -1,7 +1,7 @@
 // ── Ilustraciones del encabezado de la imagen de Programación en Navidad ──
-// Pre-Navidad (1–21 dic): paisaje de Nochebuena (casita roja con foquitos, árbol grande, muñeco de nieve, trineo,
+// Pre-Navidad (13–30 nov): paisaje de Nochebuena (casita roja con foquitos, árbol grande, muñeco de nieve, trineo,
 //   bastones de caramelo, cerca con luces, faroles, pueblito con iglesia, luna; Santa la cruza, lo dibuja index.html).
-// Navidad en casa (22–27 dic): la sala por dentro (ventana nevada con cortinas y guirnalda, árbol con regalos y tren,
+// Navidad en casa (1–26 dic): la sala por dentro (ventana nevada con cortinas y guirnalda, árbol con regalos y tren,
 //   chimenea encendida con las botitas, velas y reloj, leche y galletas «Para Santa», sillón, flor de pascua, gatito).
 // Son SVG que se arman al ancho que necesita la imagen (WT = ancho en unidades de 520 de alto): si la programación es
 // larga y la imagen sale más ancha, la escena se extiende hacia la izquierda (más cielo, lomas, pueblo o pared) en vez

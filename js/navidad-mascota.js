@@ -13,7 +13,7 @@ function engaged(){return !!focusTarget&&(focusTarget.id==='loginPin'||editing);
 function stage(){var t=theme();return t&&t.etapaDe(t.activo)?.id||'';}
 function preview(){return theme()?.modo==='ver';}
 function seasonKey(){return 'innova_nv_liberado_'+new Date().getFullYear();}
-function dayPre(){var d=new Date();if(preview())return previewDay===null?1:previewDay;return d.getMonth()===11&&d.getDate()<=21?d.getDate():1;}
+function dayPre(){if(preview())return previewDay===null?1:previewDay;var P=window.__temas?.diaPre?.();return P&&P.real?P.dv:1;}   // día 1–21 del deshielo (index.html, T.diaPre)
 function giftDay(){var d=new Date();return d.getMonth()===11&&d.getDate()>=24;}
 function shouldIntroduce(){if(preview())return true;try{return localStorage.getItem(seasonKey())!=='1';}catch(e){return true;}}
 function stopStory(){escenas?.stop();world?.cancelBlow?.();if(environment)environment.restore();actor?.reachFor?.(null);if(mount){delete mount.dataset.historia;delete mount.dataset.gesto;}flow=null;manualRemaining=0;nap=14;}
