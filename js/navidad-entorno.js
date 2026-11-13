@@ -118,8 +118,8 @@ function create(login,mount,options){
 function createDialogue(anchor,options){
   var node=null,timer=0,raf=0,last=-Infinity,counts={},stopped=false,following=0;
   var lines={
-    pre:['¡No me toques! Este hielo…','Pinche Navidad… y este hielo.','¿Vas a ayudar o a molestar?'],
-    casa:['¡No me toques!','Pinche Navidad…','¡Ya basta, déjame en paz!'],
+    pre:['¡Sin tocar! Ya bastante tengo con el hielo.','Brrr… esto no se derrite solo.','¿Vienes a ayudar o a mirar?','Cuando salga de aquí… ya verás.'],
+    casa:['¡Oye, sin tocar!','Bah… tanta Navidad.','¡Déjame, estoy ocupado!','Shh… estoy tramando algo.'],
     caught:['¡No estaba robando nada!','Esa botita se movió sola.'],
     blow:['Shhh… una luz menos.','Esa luz me estaba mirando.'],
     hat:['¡El gorro no!','¡Acabo de acomodarlo!'],
@@ -133,7 +133,8 @@ function createDialogue(anchor,options){
     if(!h||!r||!r.width)return;
     var origin=node.offsetParent||container,o=origin.getBoundingClientRect(),b=node.getBoundingClientRect(),scroll=origin.scrollTop||0,cx=h.left+h.width/2;
     var left=Math.max(10,Math.min(r.width-b.width-10,cx-r.left-b.width*.65));
-    var top=Math.max(8-o.top+scroll,h.top-o.top-b.height-12+scroll);
+    var card=options.inside?(anchor.parentElement?.getBoundingClientRect?.()||r):null;
+    var top=options.inside?card.top-o.top-b.height*.62+scroll:Math.max(8-o.top+scroll,h.top-o.top-b.height-12+scroll);   // adentro: montado en la orilla de arriba de la tarjeta, sin tapar el título
     node.style.left=(left+r.left-o.left+(origin.scrollLeft||0))+'px';node.style.top=top+'px';
     node.style.setProperty('--nv-cola-x',Math.max(14,Math.min(b.width-18,cx-r.left-left-6))+'px');
   }

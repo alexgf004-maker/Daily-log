@@ -838,6 +838,20 @@ script de Python (`postal.py`, fuera del repo): para cambiarlas, editar los colo
 La escena se repite a lo ancho (`auto 100% repeat-x`) y está hecha para empatar sin costura (aurora con tres copias
 desplazadas 400 px), así que en PC no se agranda ni se recorta.
 
+### Mascota: globito de diálogo y textos (13 nov 2026)
+Plan pedido por la usuaria (la mascota debe actuar según el escenario, interactuar con él y no ser tan quieta), por
+partes: 1) globito y textos (esto), 2) login de Navidad en casa (esferas del árbol, esconderse tras el árbol, hurgar en
+el trineo, bola de nieve), 3) Pre-Navidad en el hielo (dibujar en el vaho, raspar un agujerito, golpe y grietas,
+tiritar y estornudar), 4) adentro (reaccionar a lo que hace la persona, asomarse al hacer scroll, sacar algo de la
+bota, jugar con la guirnalda).
+- Globito estilo cómic (`.nv-dialogo` en `css/navidad-mascota.css`): blanco, contorno grueso `--nv-tinta` (azul noche;
+  azul hielo en Pre, morado en Año Nuevo, rojo cuando está enojado), letra gruesa, colita curva; aparece con rebote y
+  enojado tiembla. Elegido entre 3 (cómic, de la escena, burbuja oscura).
+- Adentro (`createDialogue` con `inside`), el globito se monta en la orilla de arriba de la tarjeta de la mascota en vez
+  de encima de la cabeza: así no tapa el título de la tarjeta.
+- Textos sin groserías (antes decía «Pinche Navidad…»): Pre «¡Sin tocar! Ya bastante tengo con el hielo.», «Brrr… esto no
+  se derrite solo.»…; casa «¡Oye, sin tocar!», «Bah… tanta Navidad.»…
+
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.
 Sin tema la app quieta usa 0 %. Con procesador normal (×1), antes → después de `mejoras/rendimiento`:

@@ -138,9 +138,9 @@ function dialogueFixture(){
 test('el diálogo responde al toque con frases locales, sin modal ni acceso a campos',()=>{
  const f=dialogueFixture();Object.defineProperty(f.document,'activeElement',{get(){throw Error('No leer formularios');}});
  assert.equal(f.parent.children.length,0);assert.equal(f.dialogue.say('casa'),true);const bubble=f.parent.children[0];
- assert.equal(bubble.textContent,'¡No me toques!');assert.equal(bubble.attrs.role,'status');assert.equal(bubble.attrs['aria-live'],'polite');
- assert.equal(f.dialogue.say('casa'),false);assert.equal(bubble.textContent,'¡No me toques!');
- f.next();f.dialogue.say('casa');assert.match(bubble.textContent,/Pinche Navidad/);assert.equal(f.parent.children.length,1);
+ assert.equal(bubble.textContent,'¡Oye, sin tocar!');assert.equal(bubble.attrs.role,'status');assert.equal(bubble.attrs['aria-live'],'polite');
+ assert.equal(f.dialogue.say('casa'),false);assert.equal(bubble.textContent,'¡Oye, sin tocar!');
+ f.next();f.dialogue.say('casa');assert.match(bubble.textContent,/tanta Navidad/);assert.equal(f.parent.children.length,1);
  f.next();f.dialogue.say('caught');assert.match(bubble.textContent,/robando/);assert.equal(f.parent.children.length,1);
 });
 test('el texto se retira por tiempo, Escape, navegación, ocultación y destrucción',()=>{
