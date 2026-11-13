@@ -931,6 +931,15 @@ Arreglo (13 nov): en el teléfono el login de Pre-Navidad se podía correr de la
 tarjeta salía 7 px de la pantalla y `#loginScreen` tiene scroll): ahora `#loginScreen` lleva `overflow-x:clip` y el moño
 queda en `right:-12px` en pantallas de hasta 480 px.
 
+### Programación: «Qué harán» en los grupos de Plantel (13 nov 2026)
+Los grupos de Plantel (oficina, sellado, bodega) ahora tienen su renglón de texto como los de Campo, con otro texto guía:
+«📝 Qué harán o comentario» (fondo amarillo claro, `.pg-zona.nota`, hasta 160 letras). Se guarda en el mismo campo
+`zona` del grupo, así que se copia de un día a otro y sale en el historial sin más cambios. Donde se muestra: la imagen
+para compartir (📝 en plantel, 📍 en campo; si es largo se parte en hasta 3 renglones en vez de cortarse:
+`lineasZona`/`zonaDibN`), el historial de programación, la tarjeta «Mi programación» del técnico (`.pe-det`, también
+la zona en campo, que antes no salía) y las Actividades prellenadas: en plantel «Campaña: lo que harán, con …», en campo
+sigue «Campaña en zona, con …».
+
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.
 Sin tema la app quieta usa 0 %. Con procesador normal (×1), antes → después de `mejoras/rendimiento`:

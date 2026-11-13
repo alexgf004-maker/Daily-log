@@ -477,6 +477,7 @@ tbody tr:hover td{background:var(--bluelt)}
 .pe-tx{min-width:0}
 .pe-k{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:rgba(255,255,255,.55)}
 .pe-camp{font-size:20px;font-weight:800;line-height:1.2;margin-top:3px}
+.pe-det{font-size:13px;font-weight:600;line-height:1.35;margin-top:5px;opacity:.9;overflow-wrap:anywhere}
 .pe-placa{flex-shrink:0;margin-top:4px;font:800 12.5px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1px;color:#0b1a33;background:#fff;border-radius:6px;padding:4px 9px;box-shadow:inset 0 3px 0 var(--blue)}
 .pe-cut{position:relative;border-top:2px dashed rgba(255,255,255,.22);margin:0 14px}
 .pe-cut::before,.pe-cut::after{content:'';position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:var(--bg)}
@@ -997,6 +998,7 @@ tbody tr:hover td{background:var(--bluelt)}
 .pg-placa{display:inline-flex;align-items:center;gap:5px;font:800 11.5px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1px;color:#0b1a33;background:#fff;border:1.5px solid #1e3a5f;border-radius:6px;padding:2px 6px 2px 7px;box-shadow:inset 0 2px 0 #2563eb;cursor:pointer}
 .pg-vadd{font:700 11.5px var(--sans);color:#2563eb;background:#fff;border:1.5px dashed #93c5fd;border-radius:7px;padding:3px 8px;cursor:pointer}
 #adProg .pg-zona{margin-top:8px;height:34px;padding:0 10px;font-size:12.5px;border-radius:9px;border:1px solid var(--gray200);background:var(--gray50)}
+#adProg .pg-zona.nota{background:#fffbeb;border-color:#fde68a}   /* plantel/oficina: lo que harán */
 .pg-vpanel{margin-top:8px}
 /* hoja para elegir vehículo del grupo */
 .pg-vop{min-height:92px}

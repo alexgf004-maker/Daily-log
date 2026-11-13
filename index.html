@@ -61,7 +61,7 @@
 </script>
 <!-- Si el diseño principal no llega (señal débil), que nunca se vean todas las pantallas encimadas -->
 <style>.screen{display:none;flex-direction:column;min-height:100vh}.screen.active{display:flex}</style>
-<link rel="stylesheet" href="css/styles.css?v=82" id="cssBase">
+<link rel="stylesheet" href="css/styles.css?v=83" id="cssBase">
 <script>
 // ── Diseño principal sin señal ──
 // Si css/styles.css no se descarga (se cortó la conexión), la app salía sin tamaños ni colores: todas las
@@ -85,7 +85,7 @@
     if(intentos>=MAX){ if(document.body) aviso(); else document.addEventListener('DOMContentLoaded',aviso); return; }
     intentos++;
     var viejo=document.getElementById('cssBase'), l=document.createElement('link');
-    l.rel='stylesheet'; l.id='cssBase'; l.href='css/styles.css?v=82&r='+Date.now();
+    l.rel='stylesheet'; l.id='cssBase'; l.href='css/styles.css?v=83&r='+Date.now();
     l.onload=function(){ setTimeout(reintentar,0); }; l.onerror=function(){ setTimeout(reintentar,800); };
     if(viejo&&viejo.parentNode) viejo.parentNode.replaceChild(l,viejo); else document.head.appendChild(l);
   }
@@ -2761,6 +2761,7 @@ async function renderProgEmpCard(){
           <div class="pe-tx">
             <div class="pe-k">Mi programación · ${esCampo?'Campo':'Plantel'}</div>
             <div class="pe-camp">${escHtml(grupo.campania)}</div>
+            ${String(grupo.zona||'').trim()?`<div class="pe-det">${esCampo?'📍':'📝'} ${escHtml(String(grupo.zona).trim())}</div>`:''}
           </div>
           ${grupo.vehiculoNombre?`<span class="pe-placa" title="Vehículo">${escHtml(grupo.vehiculoNombre)}</span>`:''}
         </div>
@@ -2796,8 +2797,9 @@ function textoDeProgramacion(g){
   // "y" antes de i/hi se vuelve "e" (Ana e Isabel)
   const yo=n=>/^h?i(?![aeiouáéíóú])/i.test(n)?' e ':' y ';
   const con=comp.length>1?comp.slice(0,-1).join(', ')+yo(comp[comp.length-1])+comp[comp.length-1]:comp[0];
+  // el detalle del grupo: en campo es la zona ("en Soyapango"); en plantel/oficina es lo que harán ("Oficina: digitar órdenes")
   const zona=String(g.zona||'').trim();
-  if(zona) t+=' en '+zona;
+  if(zona) t+=g.area==='campo'?' en '+zona:': '+zona.replace(/[.\s]+$/,'');
   if(con) t+=', con '+con;
   return t+'.';
 }
@@ -7170,7 +7172,7 @@ function renderArmar(){
         <b>Grupo ${(g.__n||0)}</b>
         <div class="pg-g-hd-r">${vehSelector(idx,g)}<span class="pg-g-del" onclick="event.stopPropagation();progEliminarGrupo(${idx})" title="Quitar grupo">×</span></div>
       </div>
-      ${g.area==='campo'?`<input type="text" class="pg-zona" placeholder="📍 Zona o detalle" value="${(g.zona||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()" onchange="progSetZona(${idx},this.value)">`:''}
+      <input type="text" class="pg-zona${g.area==='campo'?'':' nota'}" maxlength="160" placeholder="${g.area==='campo'?'📍 Zona o detalle':'📝 Qué harán o comentario'}" value="${(g.zona||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation()" onchange="progSetZona(${idx},this.value)">
       <div class="pg-g-pp">${personas}<button class="pg-add" onclick="event.stopPropagation();progAgregarPersona(${idx})">+ Persona</button></div>
     </div>`;
   };
@@ -7774,11 +7776,23 @@ window.progGenerarImagen=async()=>{
     ctx.save(); rrect(x,cy-16,w,32,8); ctx.clip(); ctx.fillStyle=C.azul2; ctx.fillRect(x,cy-16,w,4); ctx.restore();
     fuente(800,19); esp('2px'); texto(t,x+w/2+1,cy+1,'#0b1a33','center'); esp('0px');
   };
-  const anchoZona=(z)=>{ fuente(700,18); return ancho('📍 '+z)+22; };
+  // z ya trae su icono (etqZona): 📍 la zona en campo, 📝 lo que harán en plantel
+  const etqZona=g=>(g.area==='campo'?'📍 ':'📝 ')+g.zona;
+  const anchoZona=(z)=>{ fuente(700,18); return ancho(z)+22; };
   const zonaDib=(z,x,cy,max)=>{
-    fuente(700,18); const t=recortar('📍 '+z,max-22); const w=ancho(t)+22;
+    fuente(700,18); const t=recortar(z,max-22); const w=ancho(t)+22;
     ctx.fillStyle=C.zona[0]; rrect(x,cy-15,w,30,8); ctx.fill();
     texto(t,x+11,cy+1,C.zona[1]);
+  };
+  // Detalle largo (lo que harán en plantel): en vez de cortarlo se parte en hasta 3 renglones dentro de la misma etiqueta
+  const ZL=24;
+  const lineasZona=(z,max)=>{ fuente(700,18); if(ancho(z)+22<=max) return [z]; const ls=envolver(z,max-22);
+    if(ls.length>3){ ls.length=3; ls[2]=recortar(ls[2]+'…',max-22); } return ls; };
+  const altoZona=ls=>30+(ls.length-1)*ZL;
+  const zonaDibN=(ls,x,ytop)=>{
+    fuente(700,18); const w=Math.max(...ls.map(ancho))+22, h=altoZona(ls);
+    ctx.fillStyle=C.zona[0]; rrect(x,ytop,w,h,8); ctx.fill();
+    ls.forEach((l,i)=>texto(l,x+11,ytop+15+i*ZL+1,C.zona[1]));
   };
   const numDib=(n,cx,cy,color)=>{ if(TI==='casa'){ numeroCasaProg(ctx,n,cx,cy,NUM/2,color,fuente,texto); return; } ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,NUM/2,0,Math.PI*2); ctx.fill(); fuente(800,17); texto(String(n),cx,cy+1,'#ffffff','center'); };
   // Nombres partidos entre nombres completos (nunca a la mitad de un nombre)
@@ -7799,15 +7813,16 @@ window.progGenerarImagen=async()=>{
     const tx=NUM+14, max=w-tx-(pw?pw+14:0);
     const nl=lineasNombres(g,max);
     fuente(700,23); const ult=ancho(nl.lineas[nl.lineas.length-1]);
-    const zw=g.zona?anchoZona(g.zona):0;
+    const zw=g.zona?anchoZona(etqZona(g)):0;
     const zonaAbajo=g.zona&&ult+12+zw>max;
-    const alto=Math.max(nl.lineas.length*LH+(zonaAbajo?36:0),NUM);
+    const zl=zonaAbajo?lineasZona(etqZona(g),max):null, za=zl?altoZona(zl)+6:0;
+    const alto=Math.max(nl.lineas.length*LH+za,NUM);
     const h=alto+20;
     return {h, draw:(x,y)=>{
-      const top=y+10+(alto-(nl.lineas.length*LH+(zonaAbajo?36:0)))/2;
+      const top=y+10+(alto-(nl.lineas.length*LH+za))/2;
       numDib(n,x+NUM/2,y+h/2,color);
       nombresDib(nl,x+tx,top+LH/2);
-      if(g.zona){ if(zonaAbajo) zonaDib(g.zona,x+tx,top+nl.lineas.length*LH+18,max); else zonaDib(g.zona,x+tx+ult+12,top+(nl.lineas.length-1)*LH+LH/2,max-ult-12); }
+      if(g.zona){ if(zonaAbajo) zonaDibN(zl,x+tx,top+nl.lineas.length*LH+3); else zonaDib(etqZona(g),x+tx+ult+12,top+(nl.lineas.length-1)*LH+LH/2,max-ult-12); }
       if(placa) placaDib(placa,x+w-pw,y+h/2,pw);
     }};
   };
@@ -7816,17 +7831,18 @@ window.progGenerarImagen=async()=>{
     const placa=placaDe(g), pw=anchoPlaca(placa);
     const tx=NUM+14;
     // Sin zona, o si la zona no cabe junto a la placa, la placa sube a la línea de los nombres
-    const placaArriba=!!(placa&&(!g.zona||anchoZona(g.zona)>w-tx-pw-10));
+    const placaArriba=!!(placa&&(!g.zona||anchoZona(etqZona(g))>w-tx-pw-10));
     const nl=lineasNombres(g,w-tx-(placaArriba?pw+10:0));
     const sub=!!(g.zona||(placa&&!placaArriba));
-    const h=10+nl.lineas.length*LH+(sub?42:0)+8;
+    const zl=g.zona?lineasZona(etqZona(g),w-tx-(placa&&!placaArriba?pw+10:0)):null, extra=zl?(zl.length-1)*ZL:0;
+    const h=10+nl.lineas.length*LH+(sub?42:0)+extra+8;
     return {h, draw:(x,y)=>{
       numDib(n,x+NUM/2,y+10+LH/2,color);
       nombresDib(nl,x+tx,y+10+LH/2);
       const cy=y+10+nl.lineas.length*LH+21;
       if(placaArriba) placaDib(placa,x+w-pw,y+10+LH/2,pw);
       else if(placa) placaDib(placa,x+w-pw,cy,pw);
-      if(g.zona) zonaDib(g.zona,x+tx,cy,w-tx-(placa&&!placaArriba?pw+10:0));
+      if(zl) zonaDibN(zl,x+tx,cy-15);
     }};
   };
   // Tarjeta de campaña. "w" es el ancho total de la tarjeta.
@@ -8179,7 +8195,7 @@ window.verHistorialDia=(fecha,inicial)=>{
   const secc=(area,tit)=>{
     const ag=gs.filter(g=>g.area===area); if(!ag.length) return '';
     return `<div class="ps-sec ${area}">${tit}</div>`+ag.map(g=>`<div class="ph-g ${area}"><span class="ph-g-bar"></span>
-      <span class="ph-g-x"><b>${escHtml(g.campania)}</b>${g.zona?`<span class="ph-zona">📍 ${escHtml(g.zona)}</span>`:''}<span class="ph-g-p">${escHtml((g.empleadosNombres||[]).filter(Boolean).join(' · ')||'Sin personal')}</span></span>
+      <span class="ph-g-x"><b>${escHtml(g.campania)}</b>${g.zona?`<span class="ph-zona">${g.area==='campo'?'📍':'📝'} ${escHtml(g.zona)}</span>`:''}<span class="ph-g-p">${escHtml((g.empleadosNombres||[]).filter(Boolean).join(' · ')||'Sin personal')}</span></span>
       ${placa(g)?`<span class="ph-placa">${escHtml(placa(g))}</span>`:''}</div>`).join('');
   };
   cont.innerHTML=`<div class="ph-det-hd"><div class="ph-det-t"><b>${titulo.charAt(0).toUpperCase()+titulo.slice(1)}</b><span>${gs.length} ${gs.length===1?'grupo':'grupos'} · ${nPers} ${nPers===1?'persona':'personas'}${nVeh?` · ${nVeh} ${nVeh===1?'vehículo':'vehículos'}`:''}</span></div>
