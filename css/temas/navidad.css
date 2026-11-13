@@ -274,7 +274,7 @@ html.nav-casa #loginScreen .lg-rec input:focus-visible+.lg-rec-sw{box-shadow:0 0
 .nav-casa .mk3-pt.nvc-espera :is(.mk3-t,.tg){opacity:0;transform:translateY(6px);animation:none}
 .nav-casa .mk3-pt.nvc-espera .mk3-dot{opacity:0;animation:none}
 
-/* ═ Navidad en casa · «¡Listo, guardado!»: Santa lo anota en su lista (escenaListaNV en js/navidad-casa-guardado.js) ═ */
+/* ═ Navidad en casa · «¡Listo, guardado!»: la mascota enciende el árbol (escenaMascotaCasaNV en js/navidad-casa-mascota.js) ═ */
 .fx-ok.nvl{background:#2a110a!important;justify-content:flex-end;padding-bottom:6vh;overflow:hidden}
 .fx-ok.nvl .fxn{position:absolute;inset:0;z-index:0;pointer-events:none}
 .fx-ok.nvl .fxn>*{position:absolute;left:0;top:0;width:100%;height:100%}

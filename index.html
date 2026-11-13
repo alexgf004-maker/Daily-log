@@ -889,7 +889,7 @@ import { diaNavidad, diasDelCordon, cordonHTML, adventoHTML, abrirPuerta, lineaP
 import { adornoNV, escenaMarcajeNV, pintarGuirnaldaNV, etiquetaRegaloNV } from "./js/navidad-marcaje.js?v=4";
 import { escenaVentanaNV } from "./js/navidad-guardado.js?v=2";
 import { adornoSantaNV, escenaSantaNV } from "./js/navidad-casa-marcaje.js?v=3";
-import { escenaListaNV } from "./js/navidad-casa-guardado.js?v=1";
+import { escenaMascotaCasaNV } from "./js/navidad-casa-mascota.js?v=1";
 import { configurarAvisos, estadoAvisos, activarAvisos, refrescarAvisos, quitarAvisosDeEsteTelefono, apagarAvisos, probarAviso, esIOS } from "./js/avisos.js";
 import { iniciarMusica, subirMusica, activarMusica, quitarMusica, esperarMusica, MAX_BYTES as MUSICA_MAX } from "./js/musica.js";
 import { obtenerCampanias, obtenerVehiculos, sembrarCatalogos, guardarCampania, eliminarCampania, guardarVehiculo, eliminarVehiculo, obtenerProgramacion, guardarProgramacion, obtenerFechasProgramadas, detectarConflictos, grupoDeEmpleado, ESTADOS_VEHICULO, CAMPANIAS_SEED } from "./js/programacion.js";
@@ -3284,17 +3284,17 @@ function mostrarGuardadoOK(pills){
   o.querySelectorAll('.fxm-cf').forEach(e=>e.remove());
   // Pre-Navidad: la ventana empañada; un dedo verde y peludo escribe "¡Listo!" en el vaho (js/navidad-guardado.js)
   const nv=!hw&&!mu&&nvPreTema(); o.classList.toggle('nv',nv); o.classList.remove('nv-txt');
-  // Navidad en casa: Santa anota tu nombre en su lista y la sella (js/navidad-casa-guardado.js)
+  // Navidad en casa: la mascota coloca su foquito en el árbol y todo se enciende (js/navidad-casa-mascota.js)
   const nl=!hw&&!mu&&!nv&&nvCasaTema(); o.classList.toggle('nvl',nl);
   if(o._nvEsc){ o._nvEsc.detener(); o._nvEsc=null; } o.querySelector('.fxn')?.remove();
   if(nv&&sub) sub.textContent='Lo escribiste en tu historial';
-  if(nl&&sub) sub.textContent='Santa ya te anotó en su lista';
+  if(nl&&sub) sub.textContent='Tu foquito ya brilla en el árbol';
   o.classList.remove('on'); void o.offsetWidth; o.classList.add('on');
   if(mu) confetiGuardadoMU(o);
   if(nv){ const c=document.createElement('div'); c.className='fxn'; c.setAttribute('aria-hidden','true'); o.insertBefore(c,o.firstChild);
     o._nvEsc=escenaVentanaNV(c,{alTexto:()=>o.classList.add('nv-txt')}); }
   if(nl){ const c=document.createElement('div'); c.className='fxn'; c.setAttribute('aria-hidden','true'); o.insertBefore(c,o.firstChild);
-    o._nvEsc=escenaListaNV(c,{nombre:me?.nombre||me?.username||'',alTexto:()=>o.classList.add('nv-txt')}); }
+    o._nvEsc=escenaMascotaCasaNV(c,{alTexto:()=>o.classList.add('nv-txt')}); }
   clearTimeout(_fxOkTimer); _fxOkTimer=setTimeout(cerrarGuardadoOK,hw?4400:mu?4200:(nv||nl)?Math.round(o._nvEsc.duracion*1000):3200);
 }
 const ESCENA_GUARDADO_MU=`<div class="fxm" aria-hidden="true"><div class="fxm-cal"><svg viewBox="0 0 120 130"><path fill="#fff7ed" d="M60 8C31 8 12 28 12 56c0 17 8 30 20 37v14c0 6 5 10 10 10h36c5 0 10-4 10-10V93c12-7 20-20 20-37C108 28 89 8 60 8z"/><g class="fxm-guino"><circle cx="40" cy="58" r="14" fill="#7e22ce"/><circle cx="40" cy="58" r="6" fill="#facc15"/></g><circle cx="80" cy="58" r="14" fill="#db2777"/><circle cx="80" cy="58" r="6" fill="#f97316"/><path fill="#4a044e" d="M60 72l-6 12h12z"/><path stroke="#4a044e" stroke-width="2.6" stroke-linecap="round" fill="none" d="M38 98h44M46 92v12M54 92v12M62 92v12M70 92v12M78 92v12"/><path fill="#16a34a" d="M60 20c-6 6-6 12 0 16 6-4 6-10 0-16z"/><circle cx="46" cy="28" r="3.5" fill="#f97316"/><circle cx="74" cy="28" r="3.5" fill="#db2777"/><path fill="none" stroke="#db2777" stroke-width="2.4" d="M22 70c4 4 8 4 12 0M86 70c4 4 8 4 12 0"/></svg></div><div class="fxm-sello">✓ GUARDADO</div></div>`;

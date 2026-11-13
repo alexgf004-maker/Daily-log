@@ -506,16 +506,19 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     abajo, saluda y dice «¡Hola, <primer nombre>!» (de `innova_session`), guiña y se va (`.nvc-bienvenida-santa`, fijo,
     sin bloquear toques). Movimiento reducido: sin escenas. El 24 de dic el listón y el moño quedan dentro de la tarjeta
     de galleta.
-  - **«¡Listo, guardado!» de Navidad en casa: Santa lo anota en su lista** (`js/navidad-casa-guardado.js`,
-    `escenaListaNV(cont,{nombre,alTexto})` → `{detener,duracion}`; la llama `mostrarGuardadoOK` con clase `.fx-ok.nvl`;
-    estilos en `navidad.css`). Sala cálida (guirnalda con foquitos, chimenea); Santa de medio cuerpo (redibujado: banda
-    de piel que abraza la frente, punta del gorro con pompón, barba con rizos, bigote de dos lóbulos) sostiene su «Lista
-    de Santa» por el rodillo; la lista se desenrolla, una pluma de ganso escribe en cursiva el **primer nombre de quien
-    guardó** (`me.nombre`), pone la palomita roja y cae el sello de lacre; Santa asiente, se ríe y guiña. La cursiva es
-    Hershey Script 1-stroke (A–Z, a–z, ~10 KB embebidos; tildes, diéresis y ñ se trazan aparte al final; el nombre se
-    achica si no cabe). Fondo pintado una vez; capa viva solo con foquitos, chimenea, tinta y chispas; ~6.2 s.
-    Movimiento reducido: sale la lista ya escrita. «Probar animaciones» → «Guardar registro» ya la muestra en la etapa
-    casa (la ventanita de prueba ahora se oculta con `display:none`: con `visibility` su desenfoque se pintaba encima).
+  - **«¡Listo, guardado!» de Navidad en casa: «Enciende el árbol», con la mascota de protagonista** (13 nov 2026;
+    `js/navidad-casa-mascota.js`, `escenaMascotaCasaNV(cont,{alTexto})` → `{detener,duracion}`; la llama
+    `mostrarGuardadoOK` con clase `.fx-ok.nvl`, frase «Tu foquito ya brilla en el árbol»). Sala cálida (la misma de
+    antes: madera, luces desenfocadas, piso y guirnalda, pintada una vez). La mascota es el personaje animado del login
+    (con su gorro de Santa): se copia el SVG de `#loginScreen .nv-mascota` con prefijo `nvmg-` (como el compañero) y la
+    mueve su propio `GreenActor` (`embedded`, 30 cps). Entra de puntillas (`sneak`) con un foquito encendido en la mano
+    derecha (se dibuja en el lienzo siguiendo `hand-right` solo mientras lo carga), lo coloca en el árbol apagado
+    estirando la mano (`offer` + `reachFor` al punto del árbol: su brazo llega ~735 unidades del SVG con el paso que
+    da), el árbol se enciende en onda desde ese foco, se prende la estrella con chispas y ella lo mira y se sonroja
+    (`tap3`). Sombra en el piso como elipse SVG (no `filter` sobre la mascota que se mueve). ~6.8 s; el texto sale a los
+    4.2 s. Movimiento reducido: escena final quieta, sin animar a la mascota. Elegida entre 3 (árbol, regalo en la bota
+    con su nombre, huellita en el registro). Reemplazó a «Santa lo anota en su lista» (`js/navidad-casa-guardado.js`,
+    borrado; está en el historial de git si se quiere volver).
   - **Marcaje de Navidad en casa «Santa se asoma»** (`js/navidad-casa-marcaje.js`, módulo importado por index.html:
     `adornoSantaNV(tono,hora)` para el punto y `escenaSantaNV(card,pt,{tarde,hora,cual})` al marcar; estilos en
     `navidad.css` «Navidad en casa · marcaje»). Santa ilustrado en SVG (lentes, barba, gorro) se asoma por detrás de la
