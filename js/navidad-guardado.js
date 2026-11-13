@@ -1,8 +1,9 @@
 // ── Pre-Navidad: "¡Listo, guardado!" — la ventana empañada ──
 // Lo usa mostrarGuardadoOK en index.html. Solo dibuja; no toca cómo se guarda el registro.
 // Escena: una ventana de madera con foquitos; afuera un pueblito nevado. El vidrio se empaña como con un aliento
-// y un dedo verde y peludo (con uña) escribe "¡Listo!" trazo por trazo, se levanta entre letra y letra y hace una
-// palomita. Donde pasa el dedo se limpia el vaho y quedan perlitas de agua; al pie de algunos trazos se juntan gotas
+// y la mano del personaje (su mismo dibujo: índice estirado, pulgar cruzado, brazo verde desde la esquina) escribe
+// "¡Listo!" trazo por trazo, se levanta entre letra y letra y hace una palomita; al final el personaje se asoma por la
+// orilla derecha, contento, mirando lo que escribió. Donde pasa el dedo se limpia el vaho y quedan perlitas de agua; al pie de algunos trazos se juntan gotas
 // que resbalan a tirones. Al terminar de escribir se llama alTexto() para mostrar el texto y los datos.
 // Con movimiento reducido no hay animación: sale la ventana ya escrita.
 
@@ -33,30 +34,26 @@ function catmull(pts, n = 10) {
   out.push(pts[pts.length - 1]); return out;
 }
 
-// Dedo verde y peludo con uña (dibujo plano). Origen = yema que toca el vidrio; el dedo sale hacia +y.
-function dedoVerde(x, R, t, pelo) {
-  const A = R * 1.95, L = R * 17, top = R * .2;
-  const lado = s => { const pts = [], o = pelo.orilla[s > 0 ? 0 : 1];
-    for (let i = 0; i < o.length; i++) { const y = top + R * 1.2 + i * (L - top) / o.length, m = o[i], sway = Math.sin(t * 2.4 + i * .9) * .06, base = s * A * (1 + .03 * Math.sin(i * 1.7));
-      pts.push([base, y]); pts.push([base + s * R * m.l * (1 + sway), y + R * (.55 + m.d)]); pts.push([base + s * R * .08, y + R * (.7 + m.d * .6)]); }
-    return pts; };
-  const der = lado(1), izq = lado(-1).reverse();
-  x.beginPath(); x.moveTo(-A, top + R * 1.2); x.bezierCurveTo(-A, -R * 1.9, A, -R * 1.9, A, top + R * 1.2);
-  der.forEach(p => x.lineTo(p[0], p[1])); x.lineTo(A, L); x.lineTo(-A, L); izq.forEach(p => x.lineTo(p[0], p[1])); x.closePath();
-  const g = x.createLinearGradient(-A, 0, A, 0); g.addColorStop(0, '#3b7a1f'); g.addColorStop(.42, '#72c544'); g.addColorStop(.7, '#5aa834'); g.addColorStop(1, '#2f6418');
-  x.fillStyle = g; x.fill(); x.strokeStyle = 'rgba(28,64,12,.55)'; x.lineWidth = 1.2; x.stroke();
-  x.lineCap = 'round';
-  for (const m of pelo.mechones) { const y = R * 2.4 + m.u * (L - R * 3), xx = (m.a - .5) * A * 1.6, l = R * (.7 + m.l * .9), ang = .25 + (m.a - .5) * .7 + Math.sin(t * 2 + m.u * 7) * .05;
-    for (let k = -1; k <= 1; k++) { x.strokeStyle = k ? 'rgba(40,90,20,.55)' : 'rgba(170,230,120,.7)'; x.lineWidth = k ? 1.1 : 1.4; x.beginPath(); x.moveTo(xx + k * 1.6, y);
-      x.quadraticCurveTo(xx + k * 1.6 + Math.sin(ang) * l * .6, y + l * .4, xx + k * 1.6 + Math.sin(ang) * l, y + Math.cos(ang) * l); x.stroke(); } }
-  x.strokeStyle = 'rgba(28,64,12,.6)'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(-A * .55, R * 5.4); x.quadraticCurveTo(0, R * 4.8, A * .55, R * 5.4);
-  x.moveTo(-A * .45, R * 6.1); x.quadraticCurveTo(0, R * 5.6, A * .45, R * 6.1); x.stroke();
-  const gu = x.createLinearGradient(0, -R * 2.2, 0, R * 2.2); gu.addColorStop(0, '#f6f0cf'); gu.addColorStop(.6, '#e2d59a'); gu.addColorStop(1, '#bfae6a');
-  x.fillStyle = gu; x.beginPath(); x.moveTo(-A * .6, R * 2.0); x.bezierCurveTo(-A * .72, -R * .6, -A * .3, -R * 1.9, 0, -R * 2.35); x.bezierCurveTo(A * .3, -R * 1.9, A * .72, -R * .6, A * .6, R * 2.0);
-  x.quadraticCurveTo(0, R * 2.5, -A * .6, R * 2.0); x.fill(); x.strokeStyle = 'rgba(110,90,35,.65)'; x.lineWidth = 1.1; x.stroke();
-  x.strokeStyle = 'rgba(255,252,235,.85)'; x.lineWidth = 1.4; x.beginPath(); x.moveTo(-A * .42, -R * .4); x.quadraticCurveTo(-A * .1, -R * 1.7, A * .25, -R * 1.75); x.stroke();
-  x.fillStyle = 'rgba(255,255,255,.6)'; x.beginPath(); x.ellipse(-A * .25, R * .2, R * .22, R * .75, -.15, 0, 7); x.fill();
-  x.strokeStyle = 'rgba(150,120,60,.35)'; x.lineWidth = 1; x.beginPath(); x.moveTo(-A * .5, R * 1.5); x.quadraticCurveTo(0, R * 1.9, A * .5, R * 1.5); x.stroke();
+// Mano de la mascota (mismos colores y trazo que el sprite). Origen = yema del índice; el dedo sale hacia +y.
+// La mano del personaje (mismos colores y trazo que su SVG en index.html: furLight, contorno #466c35, brazo #486c3b).
+// MANO_DEDO: el índice estirado (origen = yema; el dedo sale hacia +y), puño de lado y el pulgar cruzado por delante.
+const MANO_DEDO = 'M-7 3Q-7-5 0-5Q7-5 7 3L8 29Q12 25 17 28Q22 26 25 32Q31 32 32 39Q38 45 34 55Q31 68 16 70L0 70Q-12 69-12 57L-9 35Q-8 31-7 28Z';
+const PULGAR = 'M-13 53Q-13 43-3 42L13 41Q20 41 20 46Q20 51 13 51L-3 53Q-11 58-13 53Z';
+const MANO_RAYAS = 'M17 29Q19 33 17 37M25 33Q27 37 25 41M32 40Q33 44 31 47M-3 23Q0 25 3 23';
+function piel(x, x0, y0, x1, y1) { const g = x.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, '#d4eb84'); g.addColorStop(.5, '#a9d254'); g.addColorStop(1, '#608f3d'); return g; }
+function manoMascota(x, s) {
+  x.save(); x.scale(s, s); x.lineCap = 'round'; x.lineJoin = 'round';
+  const brazo = new Path2D('M4 62C8 150 22 300 40 900');
+  x.strokeStyle = '#486c3b'; x.lineWidth = 34; x.stroke(brazo);
+  x.strokeStyle = piel(x, -12, 0, 24, 0); x.lineWidth = 28; x.stroke(brazo);
+  x.strokeStyle = 'rgba(208,226,160,.38)'; x.lineWidth = 6; x.stroke(brazo);
+  const m = new Path2D(MANO_DEDO);
+  x.fillStyle = piel(x, -14, -5, 34, 70); x.fill(m);
+  x.strokeStyle = '#466c35'; x.lineWidth = 3; x.stroke(m);
+  x.strokeStyle = '#5a7941'; x.lineWidth = 2.5; x.stroke(new Path2D(MANO_RAYAS));
+  const p = new Path2D(PULGAR); x.fillStyle = piel(x, -14, 40, 22, 54); x.fill(p); x.strokeStyle = '#466c35'; x.lineWidth = 3; x.stroke(p);
+  x.strokeStyle = 'rgba(224,234,182,.55)'; x.stroke(new Path2D('M-3-1Q-3 12-2 24M-6 45Q2 44 10 44'));
+  x.restore();
 }
 
 // Arma la escena dentro de "cont" (un div que cubre la pantalla). Devuelve { duracion (s), detener() }.
@@ -98,7 +95,25 @@ export function escenaVentanaNV(cont, { alTexto } = {}) {
   const tIni = .3, VEL = 520 * k / 1.3, LEV = .09; let tt = tIni + .9;
   const plan = trazos.map((s, i) => { const d = largo(s) / VEL + (s.length <= 2 ? .06 : 0), p = { s, i0: tt, i1: tt + d, L: largo(s), hecho: 0 }; tt += d + LEV + (i === LETRAS.length - 1 ? .25 : 0); return p; });
   const tFin = tt, R = 8.5 * k;
-  const pelo = { orilla: [0, 1].map(() => [...Array(26)].map(() => ({ l: .35 + rnd() * .95, d: rnd() * .5 }))), mechones: [...Array(46)].map(() => ({ u: rnd(), a: rnd(), l: rnd() })) };
+  const SM = R * .165;   // escala de la mano (unidades del dibujo del personaje → px)
+  // Al final se asoma la cabeza del personaje (el mismo dibujo), contenta, por la esquina de abajo
+  let cab = null;
+  const arte = document.getElementById('nv-green-character');
+  if (arte && !reducido) {
+    const cl = arte.cloneNode(true), q = id => cl.querySelector('#' + id);
+    cl.querySelectorAll('[id]').forEach(n => { if (/^(hands-|cover-|peek-|sweat|bubble|speech-|dust|roof-|wire-|hanging-|stolen-|bag|rolling-|christmas-star|lights-string|night-overlay|celebration|reach-arm|sitting-legs|speed-lines|expression-|smirk-)/.test(n.id)) n.setAttribute('opacity', '0'); });
+    q('mouth')?.setAttribute('opacity', '0'); q('smile')?.setAttribute('opacity', '1'); q('blush')?.setAttribute('opacity', '.85');
+    ['lid-left', 'lid-right'].forEach(id => q(id)?.setAttribute('opacity', '0'));
+    ['brow-left', 'brow-right', 'eye-left', 'eye-right'].forEach(id => q(id)?.removeAttribute('transform'));
+    ['pupil-left', 'pupil-right'].forEach(id => q(id)?.setAttribute('transform', 'translate(-9 -6)'));   // mira lo que escribió
+    const sv = new XMLSerializer().serializeToString(cl);
+    const img = new Image(), url = URL.createObjectURL(new Blob([sv], { type: 'image/svg+xml' }));
+    cab = { img, ok: false, ...lienzo(4) }; img.onload = () => { cab.ok = true; URL.revokeObjectURL(url); }; img.src = url; }
+  // se asoma por la orilla derecha, ladeado hacia lo que escribió, y se vuelve a esconder
+  const asomar = u => { const c = cab.x; c.clearRect(0, 0, W, H); if (!cab.ok || u < .2 || u > 2.9) return;
+    const sube = eOut(seg(u, .2, .8)) * (1 - eIO(seg(u, 2.3, 2.85))), cw = Math.min(W * .44, 190), ch = cw * 500 / 420;
+    c.save(); c.translate(W + cw * .55 - cw * .78 * sube, H * .6); c.rotate(-.42 + Math.sin(u * 3.2) * .05 * sube);
+    c.drawImage(cab.img, 190, 60, 420, 500, -cw / 2, -ch / 2, cw, ch); c.restore(); };
   const brocha = (cx, cy, r) => { const g = limpio.x.createRadialGradient(cx, cy, r * .35, cx, cy, r); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); limpio.x.fillStyle = g; limpio.x.beginPath(); limpio.x.arc(cx, cy, r, 0, 7); limpio.x.fill(); };
   const gotas = [], bordes = [];
   let avisado = false;
@@ -134,10 +149,12 @@ export function escenaVentanaNV(cont, { alTexto } = {}) {
     for (const g of gotas) { if (g.r <= 0) continue; x.fillStyle = 'rgba(232,244,255,.92)'; x.beginPath(); x.ellipse(g.x, g.y, g.r, g.r * 1.25, 0, 0, 7); x.fill(); x.fillStyle = '#fff'; x.beginPath(); x.arc(g.x - g.r * .35, g.y - g.r * .45, g.r * .35, 0, 7); x.fill(); }
     const visible = clamp(seg(t, tIni + .3, tIni + .8)) * (1 - seg(t, tFin, tFin + .5));
     if (visible > 0 && !reducido) { const ult = plan[plan.length - 1].s.slice(-1)[0], d = dedo || { x: ult[0], y: ult[1], toca: 0 };
-      const sal = (1 - visible) * 240, px = d.x + sal * .6, py = d.y + sal, toca = d.toca;
+      const sal = (1 - visible) * 260, px = d.x + sal * .6, py = d.y + sal, toca = d.toca;
       x.save(); x.translate(px, py); x.rotate(-.62);
-      x.fillStyle = `rgba(40,60,90,${.18 + .12 * toca})`; x.beginPath(); x.ellipse(6 + (1 - toca) * 10, 4 + (1 - toca) * 10, R * 1.8, R * 1.3, 0, 0, 7); x.fill();
-      const lev = (1 - toca) * -9; x.translate(lev * .4, lev); dedoVerde(x, R, t, pelo); x.restore(); }
+      { const sx = 14 * SM + (1 - toca) * 12, sy = 48 * SM + (1 - toca) * 12, sr = 34 * SM, g = x.createRadialGradient(sx, sy, 0, sx, sy, sr);   // sombra suave en el vidrio
+        g.addColorStop(0, `rgba(30,50,80,${.13 + .07 * toca})`); g.addColorStop(1, 'rgba(30,50,80,0)'); x.fillStyle = g; x.beginPath(); x.arc(sx, sy, sr, 0, 7); x.fill(); }
+      const lev = (1 - toca) * -9; x.translate(lev * .4, lev); manoMascota(x, SM); x.restore(); }
+    if (cab) asomar(t - tFin);
     if (!avisado && t >= tFin) { avisado = true; alTexto && alTexto(); }
   });
 

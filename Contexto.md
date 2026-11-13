@@ -435,11 +435,19 @@ espejo, unos pocos MB. Medición y comparación de pantallas antes/después en l
     pantallas del admin siguen con el texto normal.
   - **"¡Listo, guardado!" — la ventana empañada** (Pre-Navidad, `escenaVentanaNV` en `js/navidad-guardado.js`, clase
     `.fx-ok.nv` + `.fxn`): ventana de madera con foquitos y un pueblito nevado afuera; el vidrio se empaña como con un
-    aliento y un dedo verde y peludo con uña (genérico, sin rasgos de ningún personaje) escribe "¡Listo!" trazo por
+    aliento y la mano de la mascota escribe "¡Listo!" trazo por
     trazo (`LETRAS`, en orden de la mano, se levanta entre letras) y una palomita; se limpia el vaho con perlitas en la
     orilla y algunas gotas resbalan a tirones. Al terminar de escribir sale "¡Listo, guardado! · Lo escribiste en tu
     historial" con los datos (`.nv-txt`) y se cierra 3 s después (o al tocar). Elegida tras varias rondas: la usuaria
     pidió ideas planas pero creativas y bien animadas (no 3D). Con movimiento reducido sale la ventana ya escrita.
+    **Mano de la mascota (13 nov 2026, opción «Se asoma»)**: el dedo peludo con uña se cambió por la mano del personaje
+    (`manoMascota`): los mismos colores y trazo que su SVG en index.html (degradado `furLight` #d4eb84→#608f3d,
+    contorno #466c35, rayitas #5a7941, brazo #486c3b), índice estirado en la orilla del puño y pulgar cruzado (no
+    debe parecer otro gesto), brazo que entra desde la esquina y sombra suave en el vidrio. Al terminar, la cabeza del
+    personaje se asoma por la orilla derecha (`asomar`, lienzo encima del marco): se clona `#nv-green-character`, se le
+    pone la sonrisa y el rubor, se quitan accesorios y se le mira hacia el texto; sube, se mece y se esconde (~2.6 s)
+    sin tapar el texto ni los datos. Con movimiento reducido no aparece. Elegida entre 3 (A solo la mano, B se asoma,
+    C deja su huellita en el vaho).
   - **Interior «Cristal escarchado»** (Pre-Navidad, `js/navidad-dentro.js` + bloque «Cristal escarchado» al final de
     `css/temas/navidad.css`): carámbanos bajo la barra de arriba (`.nvd-car`, de los largos cae una gota de vez en
     cuando), aurora boreal que se mece en los encabezados (`.nvd-au` dentro de `.page-header`, `.dash-hero`, `.rg-hero`,
