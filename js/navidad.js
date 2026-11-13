@@ -49,7 +49,19 @@
     document.querySelectorAll('.nv-capa,.nv-extra').forEach(function(e){ e.remove(); });
     document.querySelectorAll('#loginScreen .nv-deshielo,#loginScreen .nv-libre').forEach(function(e){ e.classList.remove('nv-deshielo','nv-libre'); });
     if(bucle){ bucle.detener(); bucle=null; }
+    pieAfuera();
     armada=null;
+  }
+  // El aviso «¿Olvidaste tu PIN?» va dentro de la tarjeta, bajo el botón, mientras dura la Navidad: afuera flotaba sobre
+  // el dibujo (y en Navidad en casa le quitaba el lugar a la casita). Al quitar el tema vuelve a su sitio.
+  var pieLugar=null;
+  function pieDentro(ls){
+    var p=ls.querySelector('.login-footer'), fm=ls.querySelector('.login-form'); if(!p||!fm||p.parentElement===fm) return;
+    pieLugar={padre:p.parentElement,sig:p.nextSibling}; p.classList.add('nv-pie-dentro'); fm.appendChild(p);
+  }
+  function pieAfuera(){
+    var p=document.querySelector('#loginScreen .login-footer.nv-pie-dentro'); if(!p||!pieLugar) return;
+    p.classList.remove('nv-pie-dentro'); pieLugar.padre.insertBefore(p,pieLugar.sig&&pieLugar.sig.parentNode===pieLugar.padre?pieLugar.sig:null); pieLugar=null;
   }
 
   // La decoración comparte la altura del contenido, aunque el login tenga scroll.
@@ -417,6 +429,7 @@
     var ls=document.getElementById('loginScreen'); if(!ls) return;
     if(armada===et.id) return;
     quitar();
+    pieDentro(ls);
     var f=dia(et), capa=document.createElement('div');
     capa.className='nv-capa nv-'+et.id; if(et.id!=='casa') capa.setAttribute('aria-hidden','true');
     ls.insertBefore(capa,ls.firstChild);

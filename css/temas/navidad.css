@@ -994,3 +994,14 @@ html.tema-navidad .rg-ph{background:linear-gradient(160deg,#0f2a4af0,#081a33f0);
 html.tema-navidad.nav-pre .rg-ph{background:linear-gradient(160deg,#0d2c4ff0,#061a33f0);border-color:#cfe6f5}
 html.tema-navidad .rg-ph-n{color:#fff}
 html.tema-navidad .rg-ph-c{color:#cfe0f2}
+/* Aviso «¿Olvidaste tu PIN?» dentro de la tarjeta (js/navidad.js lo mueve ahí): una línea discreta con su llavecita */
+html.tema-navidad #loginScreen .login-footer.nv-pie-dentro{display:block;max-width:none;text-wrap:balance;width:auto;margin:14px 0 0;padding:10px 0 0;
+  background:none!important;border:0;border-top:1px dashed currentColor;border-radius:0;box-shadow:none;grid-column:auto;grid-row:auto;align-self:auto;
+  font-size:12px;font-weight:600;line-height:1.35;text-align:center;opacity:1}
+html.tema-navidad #loginScreen .login-footer.nv-pie-dentro::before{content:'';display:inline-block;width:13px;height:13px;margin:0 6px -2px 0;background:currentColor;
+  -webkit-mask:var(--nv-llave) center/contain no-repeat;mask:var(--nv-llave) center/contain no-repeat}
+html.tema-navidad{--nv-llave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='15' r='4.5'/%3E%3Cpath d='M11.2 11.8 20 3M16.5 6.5l2.5 2.5M14 9l2 2'/%3E%3C/svg%3E")}
+html.nav-pre #loginScreen .login-footer.nv-pie-dentro{color:#3d6684;border-top-color:#bcdcef}
+html.nav-casa #loginScreen .login-footer.nv-pie-dentro{color:#7a4a2a;border-top-color:#e2c08a}
+html.nav-ano #loginScreen .login-footer.nv-pie-dentro{color:#6a4a7a;border-top-color:#d9c6e6}
+

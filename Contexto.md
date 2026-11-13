@@ -922,6 +922,12 @@ los marcajes de noviembre). La mascota se libera el 1 dic (sale la etapa casa). 
 vive en Navidad en casa, con «Faltan N días para Nochebuena»; sus textos se reescribieron para no hablar del hielo ni de la
 Pre-Navidad. Si cambian otra vez las fechas, basta con mover los `desde`/`hasta` de las etapas.
 
+### Navidad: aviso «¿Olvidaste tu PIN?» dentro de la tarjeta del login
+Con el tema de Navidad, `js/navidad.js` (`pieDentro`/`pieAfuera`) mueve `.login-footer` al final de `.login-form` (bajo el
+botón Ingresar, con una llavecita y una línea punteada, `.nv-pie-dentro`) y lo regresa a su sitio al quitar el tema.
+Antes flotaba como caja gris sobre el dibujo y en Navidad en casa le quitaba el lugar a la casita. `navidad-casa.js` ya no
+usa el aviso para acomodar el horizonte cuando está dentro de la tarjeta.
+
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.
 Sin tema la app quieta usa 0 %. Con procesador normal (×1), antes → después de `mejoras/rendimiento`:

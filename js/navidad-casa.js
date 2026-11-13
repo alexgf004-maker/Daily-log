@@ -400,7 +400,7 @@ window.__nvCasa=function(capa){
   function medir(){ var base=capa.getBoundingClientRect(), q=function(s){ var e=ls.querySelector(s); return e&&e.offsetWidth?rc(e,base):null; };
     if(!q('.login-logo')||!q('.login-brand')||!q('.login-form')) return null;
     var masc=q('.nv-mascota'); if(masc){ var pies=0; ls.querySelectorAll('.nv-mascota [id="foot-left"],.nv-mascota [id="foot-right"]').forEach(function(e){ var r=e.getBoundingClientRect(); if(r.height) pies=Math.max(pies,r.bottom-base.top); }); masc.pies=pies||masc.b; }   // el dibujo trae aire bajo los pies: se lee dónde pisa (sin tocar la mascota)
-    return {W:Math.round(capa.clientWidth),H:Math.round(capa.clientHeight),pc:capa.clientWidth>=760,logo:q('.login-logo'),marca:q('.login-brand'),f:q('.login-form'),masc:masc,pie:q('.login-footer')}; }
+    return {W:Math.round(capa.clientWidth),H:Math.round(capa.clientHeight),pc:capa.clientWidth>=760,logo:q('.login-logo'),marca:q('.login-brand'),f:q('.login-form'),masc:masc,pie:ls.querySelector('.login-form .login-footer')?null:q('.login-footer')}; }
   function armar(){ if(parado||!capa.isConnected) return; var M=medir(); if(!M||!M.W||!M.H) return;
     var fi=[M.W,M.H,Math.round(M.f.t),M.masc?[Math.round(M.masc.l),Math.round(M.masc.t),Math.round(M.masc.w),Math.round(M.masc.pies)].join(','):'-'].join('|'); if(fi===firma) return; firma=fi;
     W=M.W; H=M.H; var D=Math.min(1.5,window.devicePixelRatio||1); M.luces=[]; M.chispas=[]; M.anim=[]; M.hits=[]; NV.sem(101);
