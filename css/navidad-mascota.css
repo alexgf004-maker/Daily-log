@@ -114,6 +114,7 @@
   .tema-navidad #loginScreen{
     height:100vh;height:100dvh;min-height:0;
     justify-content:flex-start;overflow-y:auto;overscroll-behavior-y:contain;
+    overflow-x:hidden;overflow-x:clip;   /* nada del dibujo (el moño de la tarjeta) debe dejar que el login se corra de lado */
   }
   .tema-navidad #loginScreen .login-panel{
     display:grid;flex:none;--nv-mascota-ancho:144px;

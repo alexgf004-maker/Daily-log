@@ -927,6 +927,9 @@ Con el tema de Navidad, `js/navidad.js` (`pieDentro`/`pieAfuera`) mueve `.login-
 botón Ingresar, con una llavecita y una línea punteada, `.nv-pie-dentro`) y lo regresa a su sitio al quitar el tema.
 Antes flotaba como caja gris sobre el dibujo y en Navidad en casa le quitaba el lugar a la casita. `navidad-casa.js` ya no
 usa el aviso para acomodar el horizonte cuando está dentro de la tarjeta.
+Arreglo (13 nov): en el teléfono el login de Pre-Navidad se podía correr de lado unos píxeles (el moño `.nv-mono` de la
+tarjeta salía 7 px de la pantalla y `#loginScreen` tiene scroll): ahora `#loginScreen` lleva `overflow-x:clip` y el moño
+queda en `right:-12px` en pantallas de hasta 480 px.
 
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.

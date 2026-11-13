@@ -1004,4 +1004,6 @@ html.tema-navidad{--nv-llave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3
 html.nav-pre #loginScreen .login-footer.nv-pie-dentro{color:#3d6684;border-top-color:#bcdcef}
 html.nav-casa #loginScreen .login-footer.nv-pie-dentro{color:#7a4a2a;border-top-color:#e2c08a}
 html.nav-ano #loginScreen .login-footer.nv-pie-dentro{color:#6a4a7a;border-top-color:#d9c6e6}
+/* En el teléfono el moño de la tarjeta de Pre-Navidad queda dentro de la pantalla (antes salía 7 px y el login se corría) */
+@media(max-width:480px){.nav-pre .login-form>.nv-mono{right:-12px}}
 
