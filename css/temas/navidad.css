@@ -930,3 +930,62 @@ html.nav-ano :is(#employeeScreen,#adminScreen) .pf-gafete{box-shadow:inset 0 0 0
 html.nav-ano .pf-av{background:linear-gradient(135deg,#e8433a,#ff9a2e);border-color:#fff6ea;box-shadow:0 6px 14px -6px rgba(20,0,10,.55)}
 html.nav-ano .pf-k{color:#8a4a3a} html.nav-ano .pf-row{border-top-color:rgba(232,160,110,.3)} html.nav-ano .pf-nom{color:#2a1236} html.nav-ano .pf-cargo{color:#8a6a5a} html.nav-ano .pf-marca{color:#c2410c}
 html.nav-ano .pf-ic.b{background:#fff1eb;color:#e8433a} html.nav-ano .pf-ic.g{background:#e8f7ee;color:#1f8a52} html.nav-ano .pf-ic.v{background:#f3eefe;color:#7a4ad8} html.nav-ano .pf-ic.a{background:#fff4dc;color:#c2780c} html.nav-ano .pf-ic.r{background:#fff1eb;color:#e8433a}
+
+/* ═ Calendario y registros «Cordón de luces» (Mi Historial, perfil del técnico en el admin, Asistencia, lista de Registros)
+   Navidad en casa: tablero de noche con guirnalda; los días registrados son foquitos encendidos del color de su tipo
+   (casquillo dorado), los que no han llegado focos apagados, los que faltan con borde rojo punteado. La línea del
+   historial es un cable verde con un foco por día. Pre-Navidad (más abajo): «luces escarchadas» bajo la aurora: focos
+   con copete de nieve, vidrio congelado y cable escarchado. Solo degradados fijos (sin animaciones); sin color-mix
+   para que se vea igual en Chrome viejo. ═ */
+html.tema-navidad{--nl-ok:#3b82f6;--nl-vi:#22c55e;--nl-he:#f59e0b;--nl-aus:#a855f7;--nl-asu:#94a3b8;--nl-mal:#ef4444;--nl-panel1:#0f2a4a;--nl-panel2:#081a33;--nl-borde:#d9b45a}
+html.tema-navidad.nav-pre{--nl-panel1:#0d2c4f;--nl-panel2:#061a33;--nl-borde:#a9cfe6}
+html.tema-navidad .rg-cal{position:relative;background:radial-gradient(120% 80% at 50% 0,var(--nl-panel1),var(--nl-panel2));border:1.5px solid var(--nl-borde);box-shadow:0 10px 26px -14px #000c,inset 0 0 0 3px #ffffff0d;padding:30px 14px 14px;overflow:hidden}
+html.tema-navidad .rg-cal::before{content:'';position:absolute;left:-6px;right:-6px;top:-4px;height:30px;pointer-events:none;
+  background:radial-gradient(4px 6px at 50% 21px,#ff4d5e 98%,#0000) 0 0/52px 30px repeat-x,radial-gradient(4px 6px at 50% 21px,#ffd23f 98%,#0000) 13px 0/52px 30px repeat-x,radial-gradient(4px 6px at 50% 21px,#3ee08f 98%,#0000) 26px 0/52px 30px repeat-x,radial-gradient(4px 6px at 50% 21px,#4cc3ff 98%,#0000) 39px 0/52px 30px repeat-x,
+  radial-gradient(60% 9px at 50% 6px,#0000 92%,#1f5a38 94% 100%,#0000) 0 0/26px 30px repeat-x}
+html.tema-navidad .rg-cal-h{color:var(--nl-borde);font-weight:800}
+html.tema-navidad .rg-cd{position:relative;height:36px;border-radius:50% 50% 46% 46%/58% 58% 42% 42%;color:#fff;margin:6px 3px 0;text-shadow:0 1px 2px #0006}
+html.tema-navidad .rg-cd::before{content:'';position:absolute;left:50%;top:-6px;width:12px;height:7px;margin-left:-6px;border-radius:2px 2px 3px 3px;background:linear-gradient(90deg,#8a6a1c,#f6e2a0 50%,#8a6a1c)}
+html.tema-navidad .rg-cd:is(.ok,.vi,.he,.aus,.asu,.as-ok,.as-t,.as-s){--c:#3b82f6;--cl:#93c0fb;--cd:#2556a8;--cg:rgba(59,130,246,.7);background:radial-gradient(circle at 35% 30%,#fff9 0 12%,#0000 30%),radial-gradient(circle at 50% 60%,var(--cl) 0,var(--c) 55%,var(--cd) 100%);box-shadow:0 0 12px 1px var(--cg)}
+html.tema-navidad .rg-cd.vi{--c:#22c55e;--cl:#8fe3ad;--cd:#16803d;--cg:rgba(34,197,94,.7)}html.tema-navidad .rg-cd.he{--c:#f59e0b;--cl:#fac86e;--cd:#a86c07;--cg:rgba(245,158,11,.7)}html.tema-navidad .rg-cd.aus{--c:#a855f7;--cl:#d2a8fb;--cd:#7339ad;--cg:rgba(168,85,247,.7)}html.tema-navidad .rg-cd.asu{--c:#94a3b8;--cl:#c8d0db;--cd:#66707e;--cg:rgba(148,163,184,0)}html.tema-navidad .rg-cd.as-ok{--c:#22c55e;--cl:#8fe3ad;--cd:#16803d;--cg:rgba(34,197,94,.7)}html.tema-navidad .rg-cd.as-t{--c:#ef4444;--cl:#f79a9a;--cd:#a82f2f;--cg:rgba(239,68,68,.6)}html.tema-navidad .rg-cd.as-s{--c:#f59e0b;--cl:#fac86e;--cd:#a86c07;--cg:rgba(245,158,11,.7)}html.tema-navidad .rg-cd.asu{box-shadow:none}
+html.tema-navidad .rg-cd.fut{background:radial-gradient(circle at 38% 30%,#ffffff22 0 14%,#0000 32%),#ffffff14;border:1px solid #ffffff22;color:#cfe0f2}
+html.tema-navidad .rg-cd.off{color:#ffffff40}html.tema-navidad .rg-cd.off::before{opacity:.25}
+html.tema-navidad .rg-cd.falta{background:#ffffff0d;border:2px dashed #ff8a95;color:#ffb3ba}
+html.tema-navidad .rg-cd.falta.tap{background:#ff4d5e22}
+html.tema-navidad .rg-cd.hoy{box-shadow:0 0 0 2px var(--nl-panel2),0 0 0 4px #fff,0 0 16px 4px #fff6}
+html.tema-navidad .rg-cal-ley span{color:#cfe0f2}
+html.tema-navidad .rg-cal-ley i{border-radius:50%;box-shadow:0 0 6px currentColor}
+html.tema-navidad .rg-cal-ley i.as-ok{background:#22c55e;color:#22c55e}html.tema-navidad .rg-cal-ley i.as-t{background:#ef4444;color:#ef4444}html.tema-navidad .rg-cal-ley i.as-s{background:#f59e0b;color:#f59e0b}
+html.tema-navidad .rg-cal-ley i.ok{background:var(--nl-ok);color:var(--nl-ok)}html.tema-navidad .rg-cal-ley i.vi{background:var(--nl-vi);color:var(--nl-vi)}html.tema-navidad .rg-cal-ley i.he{background:var(--nl-he);color:var(--nl-he)}html.tema-navidad .rg-cal-ley i.aus{background:var(--nl-aus);color:var(--nl-aus)}
+html.tema-navidad .hist-cal-tip{display:table;margin:10px auto 0;padding:5px 12px;border-radius:99px;background:#0f2a4ae6;color:#fff;border:1px solid var(--nl-borde)}
+/* el historial: un cable con un foco por día */
+html.tema-navidad .hl::before{left:8px;width:3px;background:linear-gradient(90deg,#123f26,#2f7a4c,#123f26);border-radius:2px;box-shadow:0 0 0 1px #0a2a1640}
+html.tema-navidad .hl-it::before{--c:#3b82f6;--cl:#93c0fb;--cd:#2556a8;--cg:rgba(59,130,246,.7);left:-23px;top:3px;width:14px;height:18px;border:0;border-radius:50% 50% 46% 46%/58% 58% 42% 42%;
+  background:linear-gradient(#c9a032 0 4px,#0000 4px),radial-gradient(circle at 38% 45%,#fffc 0 14%,#0000 32%),radial-gradient(circle at 50% 65%,var(--cl),var(--c) 60%);box-shadow:0 0 10px 2px var(--cg)}
+html.tema-navidad .hl-it.pend::before{--c:#f59e0b;--cl:#fac86e;--cd:#a86c07;--cg:rgba(245,158,11,.7)}html.tema-navidad .hl-it.aus::before{--c:#a855f7;--cl:#d2a8fb;--cd:#7339ad;--cg:rgba(168,85,247,.7)}html.tema-navidad .hl-it.mal::before{--c:#ef4444;--cl:#f79a9a;--cd:#a82f2f;--cg:rgba(239,68,68,.6)}
+html.tema-navidad .hl-f{display:inline-block;background:var(--nl-panel2);color:#fff;padding:3px 10px;border-radius:99px;border:1px solid var(--nl-borde)}
+html.tema-navidad .hl-f span{color:#cfe0f2}
+html.tema-navidad .hl-c{border:1px solid #e9d9b0;box-shadow:0 8px 18px -12px #000a;background:linear-gradient(180deg,#fffdf8,#fff)}
+html.tema-navidad.nav-pre .hl-c{border-color:#cfe4f2;background:linear-gradient(180deg,#f7fbff,#fff)}
+/* admin: la columna del número como un foco */
+html.tema-navidad .rg-emp-n{background:radial-gradient(circle at 50% 30%,#ffd76a55,#0000 60%),linear-gradient(160deg,var(--nl-panel1),var(--nl-panel2));border-right:1.5px solid var(--nl-borde)}
+html.tema-navidad .rg-emp{border-color:#e9d9b0}
+html.tema-navidad .rg-det{border-color:#e9d9b0}
+/* ── Pre-Navidad: luces escarchadas bajo la aurora ── */
+html.tema-navidad.nav-pre .rg-cal{background:radial-gradient(80% 30% at 28% 4%,#3ee0a8a0,#0000 72%),radial-gradient(70% 28% at 76% 10%,#8f7affa0,#0000 72%),radial-gradient(90% 22% at 50% 22%,#3ee0a840,#0000 70%),radial-gradient(120% 80% at 50% 0,#0d2c4f,#061a33);border-color:#cfe6f5;box-shadow:0 10px 26px -14px #000c,inset 0 0 0 3px #ffffff12,inset 0 -18px 30px -20px #cfe6f580}
+html.tema-navidad.nav-pre .rg-cal::before{background:radial-gradient(4px 6px at 50% 21px,#cfe6f5 98%,#0000) 0 0/52px 30px repeat-x,radial-gradient(4px 6px at 50% 21px,#ff8a95 98%,#0000) 13px 0/52px 30px repeat-x,radial-gradient(4px 6px at 50% 21px,#e8f6ff 98%,#0000) 26px 0/52px 30px repeat-x,radial-gradient(4px 6px at 50% 21px,#9fd6ff 98%,#0000) 39px 0/52px 30px repeat-x,
+  radial-gradient(60% 9px at 50% 6px,#0000 92%,#9fc3dc 94% 100%,#0000) 0 0/26px 30px repeat-x}
+html.tema-navidad.nav-pre .rg-cal-h{color:#cfe6f5}
+html.tema-navidad.nav-pre .rg-cd::before{background:linear-gradient(90deg,#8aa7bd,#f2fbff 50%,#8aa7bd)}
+/* copete de nieve sobre los focos encendidos */
+html.tema-navidad.nav-pre .rg-cd:is(.ok,.vi,.he,.aus,.asu,.as-ok,.as-t,.as-s){background:radial-gradient(60% 22% at 50% 4%,#fff 0 60%,#0000 64%),radial-gradient(circle at 35% 34%,#fff9 0 12%,#0000 30%),radial-gradient(circle at 50% 62%,var(--cl) 0,var(--c) 55%,var(--cd) 100%)}
+/* los que no han llegado: focos de vidrio congelado */
+html.tema-navidad.nav-pre .rg-cd.fut{background:radial-gradient(60% 22% at 50% 4%,#ffffffd0 0 60%,#0000 64%),radial-gradient(circle at 38% 34%,#ffffff55 0 14%,#0000 34%),linear-gradient(160deg,#e8f6ff40,#9fc3dc22);border:1px solid #cfe6f560;color:#e8f6ff}
+html.tema-navidad.nav-pre .rg-cd.falta{background:#cfe6f514}
+html.tema-navidad.nav-pre .rg-cal-ley span{color:#cfe6f5}
+html.tema-navidad.nav-pre .hist-cal-tip{border-color:#cfe6f5}
+/* lista: cable escarchado y focos con nieve */
+html.tema-navidad.nav-pre .hl::before{background:linear-gradient(90deg,#7fa6c2,#f2fbff,#7fa6c2);box-shadow:0 0 6px #cfe6f5}
+html.tema-navidad.nav-pre .hl-it::before{background:radial-gradient(60% 24% at 50% 4%,#fff 0 60%,#0000 64%),linear-gradient(#9fb8cc 0 4px,#0000 4px),radial-gradient(circle at 38% 45%,#fffc 0 14%,#0000 32%),radial-gradient(circle at 50% 65%,var(--cl),var(--c) 60%)}
+html.tema-navidad.nav-pre .hl-f{border-color:#cfe6f5}
+html.tema-navidad.nav-pre .rg-emp-n{background:radial-gradient(70% 40% at 30% 0,#3ee0a840,#0000 70%),linear-gradient(160deg,#0d2c4f,#061a33);border-right-color:#cfe6f5}

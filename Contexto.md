@@ -900,6 +900,16 @@ En `js/navidad-companero.js`:
   (`button.nv-asoma`, ids `nvs-`) se asoma por la orilla derecha; al tocarla vuelve arriba. En Pre sale dentro de su hielo.
 Vista previa: `__nvCompanero('bota'|'guirnalda')`. Frases nuevas en `navidad-entorno.js`.
 
+### Navidad: calendario y registros «Cordón de luces» (14 nov 2026)
+Antes el calendario por colores (`.rg-cal`/`.rg-cd`, Mi Historial, perfil del técnico, Asistencia) y la lista del historial
+(`.hl`/`.hl-it`/`.hl-c`) y la de Registros del admin (`.rg-emp`) se veían como el tema base. Ahora (bloque al final de
+`css/temas/navidad.css`): Navidad en casa, tablero de noche con guirnalda y días como foquitos encendidos del color de su
+tipo, focos apagados para los días por venir; la línea del historial es un cable con un foco por día; los títulos de cada
+día van en una píldora oscura (antes eran blancos sobre fondo claro) y el aviso «Toca un día con borde rojo…» también
+(antes no se leía sobre el dibujo). Pre-Navidad, «luces escarchadas»: aurora en el tablero, guirnalda congelada, focos con
+copete de nieve, vidrio congelado y cable escarchado. Elegido entre 3 (cordón de luces, postal y etiquetas, galleta/hielo).
+Colores por tipo en variables (`--c`, `--cl`, `--cd`, `--cg`), sin `color-mix`.
+
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.
 Sin tema la app quieta usa 0 %. Con procesador normal (×1), antes → después de `mejoras/rendimiento`:
