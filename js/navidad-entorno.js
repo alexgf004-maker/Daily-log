@@ -127,6 +127,12 @@ function createDialogue(anchor,options){
     trineo:['¿Calcetines otra vez?','Suena a… ¿carbón?'],
     nieve:['¡Ja! Directo al techo.','Uy… se me resbaló.'],
     escondite:['¡No me viste!','Aquí no hay nadie…'],
+    atiempo:['Mmm… a tiempo. Qué raro.','Puntual… sospechoso.'],
+    tarde:['¡Tarde! Lo vi todo.','Ajá… tarde otra vez.'],
+    guardado:['Bien… ya quedó guardado.','Ok, ok… buen trabajo.'],
+    dulce:['¡Un bastón de dulce! Es mío.','Mmm… dulce.'],
+    carbon:['¿Carbón? ¿Otra vez?','Hmph… carbón.'],
+    guirnalda:['¡Ups! Casi se cae.','Estas luces están chuecas.'],
     ano:['¡Ya basta de cohetes!','Otro año… las mismas molestias.']
   };
   function hide(){clearTimeout(timer);timer=0;if(raf&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(raf);raf=0;if(node){node.hidden=true;node.textContent='';}options.express?.(null);}
@@ -150,7 +156,7 @@ function createDialogue(anchor,options){
     if(node.parentElement!==container)container.appendChild(node);
     var group=lines[reason]||lines[options.stage()]||lines.casa,n=counts[reason]||0;
     hide();node.hidden=false;node.textContent=group[n%group.length];counts[reason]=n+1;last=Date.now();
-    var tone=reason==='caught'?'startled':['blow','esfera','trineo','nieve','escondite'].includes(reason)?'quiet':'angry',level=tone==='angry'?(n%group.length===1?.95:.65):.4;
+    var tone=reason==='caught'?'startled':['blow','esfera','trineo','nieve','escondite','atiempo','guardado','dulce','guirnalda'].includes(reason)?'quiet':'angry',level=tone==='angry'?(n%group.length===1?.95:.65):.4;
     node.dataset.tono=tone;position();options.express?.({tone:tone,level:level,animated:!options.reduced?.()});
     if(typeof requestAnimationFrame==='function'&&!options.reduced?.())raf=requestAnimationFrame(follow);
     timer=setTimeout(hide,Math.max(3200,Math.min(4800,node.textContent.length*85)));return true;

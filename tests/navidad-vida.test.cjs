@@ -13,7 +13,7 @@ test('el hielo alterna cuatro gestos propios con pausas y un solo temporizador',
  f.advance(40000);assert.deepEqual(f.plays.slice(0,4),['icewatch','icedraw','trapped','icesneeze']);assert.equal(f.timers.size,1);
 });
 test('libre puede observar, reír, estirarse y acomodar el gorro sin adornos cercanos',()=>{
- const f=fixture('casa');f.setObjects(false);f.life.sync();f.advance(85000);
+ const f=fixture('casa');f.setObjects(false);f.life.sync();f.advance(140000);
  for(const name of ['lookaround','hat','plot','doze','scoff','thaw'])assert.ok(f.plays.includes(name),name);
  assert.equal(f.plays.includes('environment'),false);
 });

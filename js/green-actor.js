@@ -46,6 +46,7 @@ const SCENES = Object.freeze({
  icedraw:  {duration:6.6,loop:false,title:'Dibujar en el vaho',detail:'Empaña el hielo con su aliento y dibuja con el dedo una carita enojada.',group:'Vida propia'},
  icescrape:{duration:5.6,loop:false,title:'Raspar un agujerito',detail:'Raspa el hielo con la uña frente a su ojo y se asoma por el hueco.',group:'Vida propia'},
  icepunch: {duration:3.8,loop:false,title:'Golpe al hielo',detail:'Toma impulso y le pega al hielo: el bloque se sacude, cae escarcha y queda una grieta.',group:'Vida propia'},
+ lights:   {duration:4.2,loop:false,title:'Jalar la guirnalda',detail:'Alza el brazo por encima de la cabeza, da dos jalones a la guirnalda y sonríe de lado.',group:'Interacciones'},
  icesneeze:{duration:4.8,loop:false,title:'Tiritar y estornudar',detail:'Tirita de frío, toma aire y estornuda; el bloque se sacude.',group:'Vida propia'},
  nye:      {duration:5.6,loop:true,title:'31 de diciembre', detail:'Los destellos lo asustan: tiembla y se tapa los oídos.', group:'Fechas especiales'},
 });
@@ -257,7 +258,7 @@ class GreenActor {
   const mode=this.scene;const D=SCENES[mode].duration;const p=clamp(t/D);
   let v={dx:0,dy:0,s:1,angle:0,head:0,body:1,leftLeg:0,rightLeg:0,leftArm:0,rightArm:0,
     scarf:0,tail:0,knot:0,hair:0,earL:0,earR:0,eyeL:1,eyeR:1,pupilX:0,pupilY:0,browL:0,browR:0,lidL:0,lidR:0,grump:0,sly:0,surprise:0,reach:0,cover:0,headY:0,alpha:1,
-    talk:0,heat:0,hatTilt:0,hatSlip:0,hatTouch:0,laughCover:0,trapPress:0,leftWorldReach:0,leftWorldHandX:this._pose?.leftWorldHandX??306,leftWorldHandY:this._pose?.leftWorldHandY??750,
+    talk:0,heat:0,upReach:0,upY:150,hatTilt:0,hatSlip:0,hatTouch:0,laughCover:0,trapPress:0,leftWorldReach:0,leftWorldHandX:this._pose?.leftWorldHandX??306,leftWorldHandY:this._pose?.leftWorldHandY??750,
     worldReach:0,worldHandX:this._pose?.worldHandX||494,worldHandY:this._pose?.worldHandY||750};
   const personality=this.options.embedded&&this.options.personality!==false;
   const frozen=!!this.options.frozen;
@@ -504,6 +505,12 @@ class GreenActor {
         v.scarf=5*tug;v.reach=-26*reach+5*tug;
       }
       break;}
+    case 'lights':{
+      // alza la mano derecha por encima de la cabeza (a la guirnalda), dos jalones, y una sonrisa de lado
+      const up=bump(t,.15,.7,2.5,3.2),tug=bump(t,.95,1.1,1.25,1.45)+bump(t,1.6,1.75,1.9,2.15);
+      v.upReach=up;v.upY=175+40*tug;v.head=-6*up+2*tug;v.pupilY=-9*up;v.pupilX=5*up;v.dy=-16*up+6*tug;v.leftArm=6*up;
+      if(personality){v.grump=.5*(1-between(t,2.4,3.4));v.sly=.55*bump(t,2.6,3,3.8,4.2);v.lidL=.45*up;v.lidR=.35*up;}
+      break;}
     case 'offer':{
       const reach=between(t,0,.8)*(1-between(t,3.8,5));
       v.head=-7*reach;v.pupilY=-9*reach;v.leftArm=8*reach;
@@ -658,7 +665,7 @@ class GreenActor {
   if(this.n('leg-left-curve')){
     // Compensar la respiración en el apoyo, pero conservar los saltos y carreras.
     const stride=['sneak','run','climb'].includes(mode)||mode==='mischief'&&t<.85;
-    const planted=stride||['idle','grump','plot','privacy','tug','offer','tap2','tap3','ack','mischief','trapped','blow','hat','scoff','shoo','doze'].includes(mode);
+    const planted=stride||['idle','grump','plot','privacy','tug','offer','lights','tap2','tap3','ack','mischief','trapped','blow','hat','scoff','shoo','doze'].includes(mode);
     const ground=side=>planted?v.dy+Math.sin(v.angle*PI/180)*((side==='left'?365:445)-400):0;
     this.poseLeg('left',v.leftLeg,ground('left'),stride);this.poseLeg('right',v.rightLeg,ground('right'),stride);
   }else{
@@ -666,7 +673,7 @@ class GreenActor {
   }
   if(this.n('arm-left-curve')){
     const leftGoal=v.trapPress>.0001?{x:215,y:530,amount:clamp(v.trapPress)}:v.leftWorldReach>.0001?{x:v.leftWorldHandX,y:v.leftWorldHandY,amount:clamp(v.leftWorldReach)}:null;
-    const rightGoal=v.trapPress>.0001?{x:605,y:530,amount:clamp(v.trapPress)}:v.hatTouch>.0001?{x:492,y:245+v.headY+v.hatSlip,amount:clamp(v.hatTouch)}:v.laughCover>.0001?{x:448,y:445+v.headY,amount:clamp(v.laughCover)}:handGoal;
+    const rightGoal=v.trapPress>.0001?{x:605,y:530,amount:clamp(v.trapPress)}:v.upReach>.0001?{x:650,y:v.upY,amount:clamp(v.upReach)}:v.hatTouch>.0001?{x:492,y:245+v.headY+v.hatSlip,amount:clamp(v.hatTouch)}:v.laughCover>.0001?{x:448,y:445+v.headY,amount:clamp(v.laughCover)}:handGoal;
     this.poseArm('left',v.leftArm,v.forearmL,leftGoal);this.poseArm('right',v.rightArm,v.forearmR,rightGoal);
   }else{
     this.rot('arm-left',v.leftArm,352,580);this.rot('arm-right',v.rightArm,444,580);

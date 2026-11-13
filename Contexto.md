@@ -886,6 +886,20 @@ Se intercalan en la vida autónoma de Pre (`navidad-vida.js`) en el login y en e
 evita el gesto si el hielo ya bajó de esa altura (con los días se derrite). Vista previa:
 `__mascotaNavidadHielo('icedraw'|'icescrape'|'icepunch'|'icesneeze')`.
 
+### Mascota de adentro: reacciona y juega con lo que tiene alrededor (parte 4, 13 nov 2026)
+En `js/navidad-companero.js`:
+- **Reacciona a lo que haces**: `index.html` emite `document` → `innova:accion` al marcar (`{tipo:'marcaje',estado}`) y al
+  guardar (`{tipo:'guardado'}`). A tiempo asiente (`ack`, «Mmm… a tiempo. Qué raro.»), tarde refunfuña (`grump`, «¡Tarde!
+  Lo vi todo.»), al guardar se sonroja (`tap3`). En el hielo mira o resopla. Si hay una ventana encima espera a que se
+  cierre (hasta 30 s).
+- **Saca algo de su bota** (casa, vida autónoma `bota`): mete la mano (`mischief` hacia la bota, sin moverla), saca un
+  bastón de dulce (60 %) o un carbón (`.nv-bota-premio`, sigue a la mano) y reacciona (`tap3` / `grump`).
+- **Jala la guirnalda** (casa, `guirnalda`): escena nueva del motor `lights` (alza el brazo derecho junto a la cabeza con
+  `upReach`, de puntitas, dos jalones); la guirnalda `.nvc-cordon` se columpia y los focos parpadean (`.nvc-jalada`).
+- **Se asoma al bajar**: un IntersectionObserver sobre la tarjeta; cuando sale por arriba, una copia quieta del dibujo
+  (`button.nv-asoma`, ids `nvs-`) se asoma por la orilla derecha; al tocarla vuelve arriba. En Pre sale dentro de su hielo.
+Vista previa: `__nvCompanero('bota'|'guirnalda')`. Frases nuevas en `navidad-entorno.js`.
+
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.
 Sin tema la app quieta usa 0 %. Con procesador normal (×1), antes → después de `mejoras/rendimiento`:
