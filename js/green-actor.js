@@ -43,9 +43,25 @@ const SCENES = Object.freeze({
  icewatch: {duration:3.8,loop:false,title:'Mirar desde el hielo',detail:'Sigue algo con los ojos y gira un poco la cabeza dentro del bloque.',group:'Vida propia'},
  icehuff:  {duration:3.6,loop:false,title:'Resoplar de frío',detail:'Toma aire y empaña el hielo, sin mover el cuerpo de su sitio.',group:'Vida propia'},
  icedoze:  {duration:5.0,loop:false,title:'Cabecear en el hielo',detail:'Se adormece y despierta disimulando, todavía atrapado.',group:'Vida propia'},
+ icedraw:  {duration:6.6,loop:false,title:'Dibujar en el vaho',detail:'Empaña el hielo con su aliento y dibuja con el dedo una carita enojada.',group:'Vida propia'},
+ icescrape:{duration:5.6,loop:false,title:'Raspar un agujerito',detail:'Raspa el hielo con la uña frente a su ojo y se asoma por el hueco.',group:'Vida propia'},
+ icepunch: {duration:3.8,loop:false,title:'Golpe al hielo',detail:'Toma impulso y le pega al hielo: el bloque se sacude, cae escarcha y queda una grieta.',group:'Vida propia'},
+ icesneeze:{duration:4.8,loop:false,title:'Tiritar y estornudar',detail:'Tirita de frío, toma aire y estornuda; el bloque se sacude.',group:'Vida propia'},
  nye:      {duration:5.6,loop:true,title:'31 de diciembre', detail:'Los destellos lo asustan: tiembla y se tapa los oídos.', group:'Fechas especiales'},
 });
+// Carita enojada que dibuja con el dedo en el vaho (coordenadas del SVG, junto a su hombro derecho).
+// trazoHielo(u) → {x,y,pluma}: u de 0 a 1 recorre trazos y saltos; pluma=false en los saltos (dedo levantado).
+const TRAZO_HIELO=(()=>{const c=[520,470],r=62,T=[];
+  T.push(Array.from({length:25},(_,i)=>[c[0]+r*Math.cos(-Math.PI/2+i/24*Math.PI*2),c[1]+r*Math.sin(-Math.PI/2+i/24*Math.PI*2)]));
+  T.push([[c[0]-36,c[1]-30],[c[0]-12,c[1]-18]],[[c[0]+36,c[1]-30],[c[0]+12,c[1]-18]]);          // cejas enojadas
+  T.push([[c[0]-20,c[1]-6],[c[0]-20,c[1]-1]],[[c[0]+20,c[1]-6],[c[0]+20,c[1]-1]]);           // ojitos
+  T.push(Array.from({length:9},(_,i)=>[c[0]-26+i*6.5,c[1]+34-Math.sin(i/8*Math.PI)*14]));       // boca chueca
+  const pts=[];T.forEach((t,k)=>t.forEach((p,i)=>pts.push({x:p[0],y:p[1],pluma:i>0})));
+  let L=0;pts.forEach((p,i)=>{p.l=i?L+=Math.hypot(p.x-pts[i-1].x,p.y-pts[i-1].y):0;});return {pts,L};})();
 class GreenActor {
+ static trazoHielo(u){const {pts,L}=TRAZO_HIELO,l=Math.max(0,Math.min(1,u))*L;let i=1;while(i<pts.length-1&&pts[i].l<l)i++;
+  const a=pts[i-1],b=pts[i],k=(l-a.l)/Math.max(1e-6,b.l-a.l);return {x:a.x+(b.x-a.x)*k,y:a.y+(b.y-a.y)*k,pluma:b.pluma,l:l,L:L};}
+ static get TRAZO_HIELO(){return TRAZO_HIELO;}
  constructor(svg, options={}){
   if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error('GreenActor requires the actual inline <svg> element.');
   this.svg=svg; this.options=options; this.nodes={};
@@ -578,6 +594,31 @@ class GreenActor {
       v.head=6*sleep-3*wake;v.headY=5*sleep;v.eyeL=1-.94*sleep;v.eyeR=v.eyeL;
       v.lidL=.9+(-.4+.4*sleep)*act;v.lidR=.82+(-.32+.4*sleep)*act;v.grump=lerp(1,.4,act);v.surprise=.6*wake;
       v.pupilX=lerp(-5,-7*bump(t,3.85,4.1,4.4,4.7),act);
+    }else if(mode==='icedraw'){
+      // empaña con el aliento y, con el dedo, dibuja una carita enojada en el vaho (GreenActor.trazoHielo)
+      const inhale=bump(t,.1,.5,.7,1),huff=bump(t,.75,1.05,1.5,2.1),pen=bump(t,1.9,2.3,5.3,5.8),act=bump(t,.05,.3,6,6.6);
+      v.head=-3*inhale+2*huff+5*pen;v.headY=2*huff;v.talk=.7*huff;v.pupilY=-6*inhale+5*pen;v.pupilX=lerp(-5,9,pen);
+      v.grump=1;v.sly=.35*bump(t,5.3,5.6,6.1,6.6);v.lidL=lerp(.9,.55,act);v.lidR=lerp(.82,.5,act);
+      if(pen>0){const q=GreenActor.trazoHielo(clamp((t-2.3)/3));v.worldReach=pen;v.worldHandX=q.x;v.worldHandY=q.y;}
+    }else if(mode==='icescrape'){
+      // raspa con la uña frente a su ojo derecho y se asoma por el hueco
+      const reach=bump(t,.2,.7,2.6,3.1),scratch=bump(t,.75,.9,2.4,2.6),peek=bump(t,2.9,3.3,4.9,5.5);
+      if(reach>0){v.worldReach=reach;v.worldHandX=468+6*Math.sin(t*26)*scratch;v.worldHandY=338+5*Math.cos(t*26)*scratch;}
+      v.head=4*peek+2*reach;v.headY=-2*peek;v.pupilX=lerp(-5,3,reach)+6*peek;v.pupilY=-3*reach+2*peek;
+      v.grump=lerp(1,.35,peek);v.lidL=lerp(.9,.4,peek);v.lidR=lerp(.82,.15,peek);v.browR=-8*peek;v.surprise=.25*peek;
+    }else if(mode==='icepunch'){
+      // toma impulso, golpea la pared del hielo y se sacude la mano
+      const wind=bump(t,.1,.6,.85,.95),hit=bump(t,.85,.95,1.25,1.7),shake=bump(t,1.6,1.8,2.6,3.1);
+      const r=Math.max(wind,hit,shake);
+      if(r>0){v.worldReach=r;v.worldHandX=lerp(500,628,hit)-20*wind;v.worldHandY=lerp(600,515,hit)+40*wind+8*Math.sin(t*30)*shake;}
+      v.head=-4*wind+3*hit;v.grump=1;v.lidL=.95;v.lidR=.9;v.browL=8*hit;v.browR=-8*hit;v.dx=-3*wind+2*hit;
+      v.pupilX=lerp(-5,10,hit+shake);v.surprise=.3*shake;
+    }else if(mode==='icesneeze'){
+      // tirita, toma aire, ¡achú! (la cabeza va al frente) y se sorbe la nariz
+      const shiver=bump(t,.05,.25,1.4,1.7),inhale=bump(t,1.6,2.0,2.3,2.4),achu=bump(t,2.35,2.42,2.6,3.1),sniff=bump(t,3.3,3.45,3.6,3.8);
+      v.dx=2*Math.sin(t*62)*shiver;v.head=1.4*Math.sin(t*48)*shiver-6*inhale+8*achu;v.headY=-3*inhale+5*achu-1.5*sniff;
+      v.eyeL=v.eyeR=1-.9*Math.max(inhale*.5,achu);v.talk=.5*inhale+1*achu;v.pupilY=-5*inhale;v.grump=lerp(1,.6,achu);
+      v.earL=4+5*achu;v.earR=-3-5*achu;
     }
   }
   if(this._speech){

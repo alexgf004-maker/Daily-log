@@ -101,7 +101,7 @@ test('el toque muestra diálogo incluso con movimiento reducido y se limpia al s
 test('el encabezado congelado despierta por sí mismo y vuelve a pausar entre gestos',()=>{
  const f=fixture({stage:'pre',autonomous:true});f.advance(2.6);assert.equal(f.actors[0].scene,'icewatch');assert.equal(f.actors[0].paused,false);
  f.advance(4);assert.equal(f.actors[0].scene,'idle');assert.equal(f.actors[0].paused,true);
- f.advance(45);for(const name of ['icewatch','trapped','icehuff','icedoze'])assert.ok(f.actors[0].plays.includes(name),name);
+ f.advance(120);for(const name of ['icewatch','trapped','icehuff','icedoze','icedraw','icesneeze'])assert.ok(f.actors[0].plays.includes(name),name);
  assert.equal(f.ices.length,1);
 });
 test('el encabezado libre tiene gestos variados sin depender de la botita o los focos',()=>{

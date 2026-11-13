@@ -5,7 +5,7 @@ var mount=null,actor=null,ice=null,environment=null,observer=null,login=null,for
 var stageNow='',previewDay=null,flow=null,nap=14,manualRemaining=0,focusTarget=null;
 var frostTimer=0,frozenRemaining=0;
 var world=null,dialogue=null,life=null,editing=false,editingTimer=0;
-var previewPaused=false,escenas=null;
+var previewPaused=false,escenas=null,gestosHielo=null;
 var ESCENAS=['esfera','escondite','trineo','nieve'];
 var media=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)'),reduced=!!media?.matches;
 function theme(){var t=window.__temas;return t?.activo?.id==='navidad'?t:null;}
@@ -25,7 +25,7 @@ function clearAll(){
   stopStory();if(observer){observer.disconnect();observer=null;}
   if(form){form.removeEventListener('focusin',onFocus);form.removeEventListener('focusout',onBlur);form.removeEventListener('input',onFocus);}
   if(actor){actor.svg.removeEventListener('pointerdown',onTap);actor.svg.removeEventListener('keydown',onKey);actor.destroy();actor=null;}
-  escenas=null;if(ice){ice.destroy();ice=null;}if(environment){environment.destroy();environment=null;}
+  escenas=null;gestosHielo?.destroy();gestosHielo=null;if(ice){ice.destroy();ice=null;}if(environment){environment.destroy();environment=null;}
   if(mount){mount.classList.remove('nv-mascota-ojos-pausa','nv-mascota-congelada','nv-mascota-libre','nv-mascota-bloque');delete mount.dataset.historia;delete mount.dataset.reaccion;delete mount.dataset.mirada;}
   mount=login=form=focusTarget=null;stageNow='';
   previewPaused=false;
@@ -83,6 +83,7 @@ function autonomous(name){
   if(!actor||engaged()||flow||escenas?.activa()||manualRemaining>0||frozenRemaining>0)return 0;
   world?.resetGaze();
   if(ice){
+    if(gestosHielo&&!gestosHielo.puede(name))return 0;   // con los días el hielo baja: sin hielo enfrente no hay gesto
     frozenRemaining=GreenActor.SCENES[name]?.duration||0;if(!frozenRemaining)return 0;
     actor.play(name);mount.dataset.gesto=name;
     if(name==='icehuff'){mount.dataset.reaccion='frio';clearTimeout(frostTimer);frostTimer=setTimeout(function(){if(mount)delete mount.dataset.reaccion;frostTimer=0;},3600);}
@@ -174,6 +175,7 @@ function sync(){
     world=window.NavidadEntorno?.create(login,mount,{frozen:function(){return !!ice;},react:reactToWorld,busy:function(){return engaged()||!!flow||!!escenas?.activa()||manualRemaining>0||frozenRemaining>0;},restoreFocus:function(){if(ice&&focusTarget?.id==='loginPin')mount.dataset.mirada='apartada';}})||null;
     if(current==='pre'){
       ice=window.NavidadHielo.create(dayPre(),mount);actor.pause();mount.classList.add('nv-mascota-congelada','nv-mascota-bloque');
+      gestosHielo=window.NavidadHieloGestos?.create(mount,actor)||null;
     }else{
       mount.classList.add('nv-mascota-libre');
       environment=window.NavidadHistoria.create(login,mount);
@@ -193,6 +195,7 @@ function sync(){
 }
 window.__mascotaNavidadSync=sync;
 window.__mascotaNavidadPlay=play;
+window.__mascotaNavidadHielo=function(name){if(!preview()||!ice)return false;frozenRemaining=0;return autonomous(name)>0;};   // vista previa de los gestos del hielo
 window.__mascotaNavidadTap=function(){onTap({stopPropagation:function(){}});};
 window.__mascotaNavidadEstado=function(){return {etapa:stageNow,congelada:!!ice,dia:ice?Number(ice.node.dataset.dia):null,escena:actor?.scene||null,historia:flow?.kind||null,tiempo:flow?.time||0};};
 window.__mascotaNavidadPreviewDia=function(day){if(!preview()||stage()!=='pre')return false;var n=Number(day);if(!Number.isInteger(n)||n<1||n>21)return false;previewDay=n;if(ice)ice.update(dayPre());return true;};

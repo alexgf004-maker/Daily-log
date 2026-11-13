@@ -4,7 +4,7 @@
 'use strict';
 var HERO='.page-header,.dash-hero,.rg-hero,.pg-hero,.ps-hero,.pf-gafete,.perfil-hero';
 var MODAL='.mo.open,.fx-ok.on,.nv-pan,.rm-card,#tcCapa,#avAnuncio,#novReg,[aria-modal="true"]';
-var prefix='nvi-',mount=null,hero=null,screen=null,actor=null,ice=null,world=null,dialogue=null,life=null;
+var prefix='nvi-',mount=null,hero=null,screen=null,actor=null,ice=null,world=null,dialogue=null,life=null,gestosHielo=null;
 var editing=false,editingTimer=0;
 var stage='',pending=0,touchTimer=0,remaining=0,nap=1.4,inView=true,blocked=false;
 var intersection=null,observer=null,ornament=null,turn=0,released=false,palmHit=false;
@@ -80,7 +80,7 @@ function pressIce(){
 }
 function regulate(){
   if(!actor)return;var modal=covered(),off=document.hidden||!inView;
-  var frozenAct=!!ice&&remaining>0&&['trapped','icewatch','icehuff','icedoze'].includes(mount.dataset.accion);
+  var frozenAct=!!ice&&remaining>0&&['trapped','icewatch','icehuff','icedoze','icedraw','icescrape','icepunch','icesneeze'].includes(mount.dataset.accion);
   // «Reposo» de la app (25 s sin tocar, js/navidad-dentro.js): el compañero se queda quieto como el resto de la escena
   var quieto=!!window.__nvReposo?.quieto?.()&&remaining<=0;
   var stop=media?.matches||off||privateField()||modal||quieto||!!ice&&!frozenAct;
@@ -104,6 +104,7 @@ function autonomous(name){
   if(!allowed()||remaining>0)return 0;
   world?.resetGaze();
   if(ice){
+    if(gestosHielo&&!gestosHielo.puede(name))return 0;
     var duration=GreenActor.SCENES[name]?.duration;if(!duration)return 0;
     actor.lookAt(null);actor.play(name);remaining=duration;palmHit=false;mount.dataset.accion=name;
     if(name==='icehuff')setCold();actor.resume();regulate();return duration;
@@ -152,7 +153,7 @@ function touch(event){
 function destroy(){
   life?.destroy();life=null;clearTimeout(editingTimer);editingTimer=0;editing=false;
   dialogue?.destroy();dialogue=null;clearTimeout(touchTimer);intersection?.disconnect();intersection=null;world?.destroy();world=null;ornament?.destroy();ornament=null;
-  actor?.destroy();actor=null;ice?.destroy();ice=null;mount?.remove();mount=null;
+  gestosHielo?.destroy();gestosHielo=null;actor?.destroy();actor=null;ice?.destroy();ice=null;mount?.remove();mount=null;
   hero?.classList.remove('nv-con-companero');hero=screen=null;stage='';
   remaining=0;nap=1.4;turn=0;inView=true;blocked=false;released=palmHit=false;
 }
@@ -168,6 +169,7 @@ function build(s,h,next){
   actor=new GreenActor(svg,{embedded:true,idPrefix:prefix,personality:true,frozen:next==='pre',initialScene:'idle',onFrame:frame});
   if(next==='pre'){
     mount.classList.add('nv-mascota-congelada','nv-mascota-bloque');ice=NavidadHielo.create(day(),mount,{idPrefix:prefix});
+    gestosHielo=window.NavidadHieloGestos?.create(mount,actor,{idPrefix:prefix})||null;
     svg.style.filter='url(#'+prefix+'nvice-refraction) saturate(.86) brightness(.98)';
   }else mount.classList.add('nv-mascota-libre');
   ornament=createOrnament(h,svg);

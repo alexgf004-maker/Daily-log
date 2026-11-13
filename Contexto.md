@@ -871,6 +871,21 @@ nombres. En PC (el escenario queda junto al formulario) solo aplica la esfera. V
   lienzo ya escalado por la densidad de pantalla); ahora se prueba en un lienzo sin escala y mide al menos 6 px.
 - Frases nuevas en el globito (tono tranquilo): esfera, trineo, nieve, escondite.
 
+### Mascota: gestos en el hielo de Pre-Navidad (parte 3, 13 nov 2026)
+Cuatro escenas nuevas en `js/green-actor.js` (solo con `frozen`), con su efecto en el hielo en `js/navidad-hielo-gestos.js`
+(`NavidadHieloGestos.create(mount,actor,{idPrefix})`, escucha `greenactor:scenechange` y dibuja dentro del SVG del hielo,
+recortado por `nvice-melt`; un rAF a 30 cps solo mientras dura el gesto):
+- **icedraw**: empaña con el aliento y dibuja con el dedo una carita enojada en el vaho (trazo `GreenActor.trazoHielo`,
+  compartido: la mano lo sigue y el dibujo usa el mismo trazo).
+- **icescrape**: raspa con la uña frente a su ojo derecho; una máscara abre un hueco en la escarcha y el cuerpo del hielo,
+  caen virutas y se asoma por el agujerito.
+- **icepunch**: golpea la pared; el bloque se sacude (`.nv-hielo-sacudon`), cae escarcha y aparece una grieta que se
+  queda el resto del día (`localStorage.innova_nv_grietas`, máximo 4).
+- **icesneeze**: tirita, toma aire y estornuda: nube de vaho, sacudón y copitos dentro del hielo.
+Se intercalan en la vida autónoma de Pre (`navidad-vida.js`) en el login y en el encabezado de adentro. `puede(nombre)`
+evita el gesto si el hielo ya bajó de esa altura (con los días se derrite). Vista previa:
+`__mascotaNavidadHielo('icedraw'|'icescrape'|'icepunch'|'icesneeze')`.
+
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.
 Sin tema la app quieta usa 0 %. Con procesador normal (×1), antes → después de `mejoras/rendimiento`:

@@ -79,8 +79,8 @@ test('no crea una mascota con otro tema ni con tema apagado',()=>{
 test('movimiento reducido: no inicia travesuras automáticas',()=>{
  const f=fixture({date:'2026-12-22',reduced:true});f.ctx.__mascotaNavidadSync();f.advance(120);assert.equal(f.actors[0].scene,'idle');assert.equal(f.actors[0].paused,true);
 });
-test('se conservan las 14 animaciones originales y se agregan 18 poses integradas',()=>{
- const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,32);
+test('se conservan las 14 animaciones originales y se agregan 22 poses integradas',()=>{
+ const scenes=read('js/green-actor.js').match(/const SCENES = Object.freeze\(\{([\s\S]*?)\n\}\);/)[1];assert.equal((scenes.match(/duration:/g)||[]).length,36);
  for(const name of ['idle','sneak','run','climb','steal','caught','drop','tantrum','hide','tap1','tap2','tap3','xmas','nye','thaw','privacy','tug','offer','grump','plot'])assert.match(scenes,new RegExp('\\b'+name+':'));
  for(const id of ['actor','head','body','tail','arm-left','arm-right','leg-left','leg-right','eye-left','eye-right'])assert.ok(read('index.html').includes('id="'+id+'"'));
 });
@@ -467,7 +467,7 @@ test('sin tocarlo el login congelado mira, presiona, resopla y cabecea',()=>{
  const f=fixture({autonomous:true});f.ctx.__mascotaNavidadSync();
  f.advance(2.6);assert.equal(f.actors[0].scene,'icewatch');assert.equal(f.actors[0].paused,false);
  f.advance(4);assert.equal(f.actors[0].scene,'idle');assert.equal(f.actors[0].paused,true);assert.equal(f.timers.size,1);
- f.advance(45);for(const name of ['icewatch','trapped','icehuff','icedoze'])assert.ok(f.actors[0].plays.includes(name),name);
+ f.advance(120);for(const name of ['icewatch','trapped','icehuff','icedoze','icedraw','icesneeze'])assert.ok(f.actors[0].plays.includes(name),name);
  assert.equal(f.ctx.__mascotaNavidadEstado().dia,1);
 });
 test('el login libre tiene variedad automática incluso sin luces ni árbol',()=>{

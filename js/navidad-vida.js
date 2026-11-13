@@ -3,7 +3,7 @@
 (function(){
 'use strict';
 var sequences={
-  pre:['icewatch','trapped','icehuff','icedoze'],
+  pre:['icewatch','icedraw','trapped','icesneeze','icehuff','icescrape','icedoze','icepunch'],   // icedraw, icescrape, icepunch, icesneeze: js/navidad-hielo-gestos.js
   casa:['lookaround','esfera','hat','trineo','doze','plot','nieve','environment','scoff','thaw'],   // esfera, trineo y nieve: escenas con el escenario del login
   ano:['lookaround','plot','doze','thaw']
 };

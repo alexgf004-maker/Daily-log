@@ -101,6 +101,10 @@
   78%{transform:scale(.28);opacity:.7}
   100%{transform:scale(1.5);opacity:0}
 }
+/* Golpe o estornudo desde adentro (js/navidad-hielo-gestos.js): el bloque entero brinca un poco */
+.nv-hielo-fijo.nv-hielo-sacudon{animation:nvHieloSacudon .6s ease-out}
+@keyframes nvHieloSacudon{0%,100%{transform:none}15%{transform:translate(4px,-3px) rotate(1.2deg)}35%{transform:translate(-3px,1px) rotate(-.9deg)}55%{transform:translate(2px,-1px) rotate(.5deg)}75%{transform:translate(-1px,0) rotate(-.2deg)}}
+@media(prefers-reduced-motion:reduce){.nv-hielo-fijo.nv-hielo-sacudon{animation:none}}
 @keyframes nvHieloGolpe{0%,100%{transform:translateX(0)}23%{transform:translateX(-1.8px)}52%{transform:translateX(1.2px)}77%{transform:translateX(-.5px)}}
 /* El ancho incluye el espacio transparente del SVG y la sombra. El personaje
    nunca queda por encima de la tarjeta, ni al abrir el teclado o girar el móvil. */
