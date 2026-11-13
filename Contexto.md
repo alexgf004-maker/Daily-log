@@ -909,6 +909,8 @@ día van en una píldora oscura (antes eran blancos sobre fondo claro) y el avis
 (antes no se leía sobre el dibujo). Pre-Navidad, «luces escarchadas»: aurora en el tablero, guirnalda congelada, focos con
 copete de nieve, vidrio congelado y cable escarchado. Elegido entre 3 (cordón de luces, postal y etiquetas, galleta/hielo).
 Colores por tipo en variables (`--c`, `--cl`, `--cd`, `--cg`), sin `color-mix`.
+El encabezado del perfil del técnico en el admin (`.rg-ph`, Registros y Asistencia) va en una tarjeta oscura con borde
+dorado (plateado en Pre): el nombre salía oscuro sobre la noche.
 
 ### Rendimiento de los temas de Navidad (medido el 10 nov 2026)
 Medición en Chromium con un celular de 390×844 (×2.75), app quieta 5 s; «ocupado» = % del hilo principal en uso.

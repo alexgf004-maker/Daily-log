@@ -989,3 +989,8 @@ html.tema-navidad.nav-pre .hl::before{background:linear-gradient(90deg,#7fa6c2,#
 html.tema-navidad.nav-pre .hl-it::before{background:radial-gradient(60% 24% at 50% 4%,#fff 0 60%,#0000 64%),linear-gradient(#9fb8cc 0 4px,#0000 4px),radial-gradient(circle at 38% 45%,#fffc 0 14%,#0000 32%),radial-gradient(circle at 50% 65%,var(--cl),var(--c) 60%)}
 html.tema-navidad.nav-pre .hl-f{border-color:#cfe6f5}
 html.tema-navidad.nav-pre .rg-emp-n{background:radial-gradient(70% 40% at 30% 0,#3ee0a840,#0000 70%),linear-gradient(160deg,#0d2c4f,#061a33);border-right-color:#cfe6f5}
+/* Encabezado del perfil del técnico (Registros y Asistencia del admin): el nombre se pintaba oscuro sobre la noche */
+html.tema-navidad .rg-ph{background:linear-gradient(160deg,#0f2a4af0,#081a33f0);border:1.5px solid #d9b45a;border-radius:16px;padding:8px 10px;box-shadow:0 8px 20px -14px #000c}
+html.tema-navidad.nav-pre .rg-ph{background:linear-gradient(160deg,#0d2c4ff0,#061a33f0);border-color:#cfe6f5}
+html.tema-navidad .rg-ph-n{color:#fff}
+html.tema-navidad .rg-ph-c{color:#cfe0f2}
