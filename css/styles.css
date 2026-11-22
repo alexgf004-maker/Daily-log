@@ -197,6 +197,7 @@ tbody tr:hover td{background:var(--bluelt)}
 .alert{padding:10px 13px;border-radius:var(--r);font-size:13px;margin-bottom:12px;font-weight:500}
 .ae{background:var(--dangerlt);color:var(--danger);border-left:3px solid var(--danger)}
 .as{background:var(--greenlt);color:var(--green);border-left:3px solid var(--green)}
+.aw{background:var(--warnlt);color:var(--warn);border-left:3px solid var(--warn)}
 
 .empty{text-align:center;padding:44px 20px;color:var(--text2)}
 .ei{font-size:36px;margin-bottom:10px;opacity:.4}.et{font-size:14px}

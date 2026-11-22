@@ -61,7 +61,7 @@
 </script>
 <!-- Si el diseño principal no llega (señal débil), que nunca se vean todas las pantallas encimadas -->
 <style>.screen{display:none;flex-direction:column;min-height:100vh}.screen.active{display:flex}</style>
-<link rel="stylesheet" href="css/styles.css?v=83" id="cssBase">
+<link rel="stylesheet" href="css/styles.css?v=84" id="cssBase">
 <script>
 // ── Diseño principal sin señal ──
 // Si css/styles.css no se descarga (se cortó la conexión), la app salía sin tamaños ni colores: todas las
@@ -85,7 +85,7 @@
     if(intentos>=MAX){ if(document.body) aviso(); else document.addEventListener('DOMContentLoaded',aviso); return; }
     intentos++;
     var viejo=document.getElementById('cssBase'), l=document.createElement('link');
-    l.rel='stylesheet'; l.id='cssBase'; l.href='css/styles.css?v=83&r='+Date.now();
+    l.rel='stylesheet'; l.id='cssBase'; l.href='css/styles.css?v=84&r='+Date.now();
     l.onload=function(){ setTimeout(reintentar,0); }; l.onerror=function(){ setTimeout(reintentar,800); };
     if(viejo&&viejo.parentNode) viejo.parentNode.replaceChild(l,viejo); else document.head.appendChild(l);
   }
@@ -897,7 +897,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref as refFirebase, set, get as getFirebase, update, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref as refFirebase, set, get as getFirebase, update, push, onValue, goOffline, goOnline, query as consultaFB, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
@@ -959,7 +959,7 @@ iniciarMusica({ db, ref: refFirebase, get: getFirebase, onValue, set, update });
 // día). Ahora, para un admin, se abre UNA escucha en vivo por nodo: Firebase baja el nodo
 // una vez y después solo manda lo que cambia. Las lecturas de esos nodos se contestan desde ahí,
 // con el mismo resultado que una lectura normal (y al día, porque la escucha recibe los cambios
-// de todos, incluidos los propios al instante). Si la escucha falla o tarda, se lee normal.
+// de todos, incluidos los propios al instante). Si la escucha falla o tarda más de 30 s, se lee normal.
 const RUTAS=new WeakMap();
 const ref=(d,p)=>{ const r=refFirebase(d,p); RUTAS.set(r,p||''); return r; };
 const ESPEJOS={};
@@ -984,7 +984,10 @@ async function get(r){
     if(espejosActivos&&ks[0]==='marcajes'&&ks.length===2&&!ESPEJOS.marcajes) abrirEspejo('marcajes');
     const e=ks.length&&ESPEJOS[ks[0]];
     if(e&&!e.fallo){
-      if(!e.snap) await Promise.race([e.listo,new Promise(res=>setTimeout(res,8000))]);
+      // Con señal lenta la primera descarga del espejo puede pasar de 8 s; leer aparte a los 8 s
+      // bajaba TODO el nodo por segunda vez, a la par, y lo hacía aún más lento. Se espera al espejo
+      // y solo si no contesta en 30 s se lee normal.
+      if(!e.snap) await Promise.race([e.listo,new Promise(res=>setTimeout(res,30000))]);
       if(e.snap&&!e.fallo&&ESPEJOS[ks[0]]===e) return ks.length>1?e.snap.child(ks.slice(1).join('/')):e.snap;
     }
   }
@@ -1063,6 +1066,7 @@ function renderEmployee(nombre){
         <div id="marcajeCard" style="display:none"></div>
         <div id="progEmpCard" style="display:none"></div>
         <div id="avisosCard" class="av-card" style="display:none"></div>
+        <div id="empPendEnvio"></div>
         <!-- Día -->
         <div class="fx-card">
           <div class="fx-k">Día</div>
@@ -2053,7 +2057,7 @@ window.doLogin = async ()=>{
   if(me.role==='admin'||me.role==='asistente'){
     iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh(); navidadApp();
   } else {
-    renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita(); navidadApp();
+    renderEmployee(me.nombre); screen('employeeScreen'); initForm(); pintarPendEnvio(); reenviarPendientes(); cargarNovedades(true); programarTutoCampanita(); navidadApp();
   }
   trasEntrarAvisos();
 };
@@ -2162,7 +2166,7 @@ if(navigator.storage && navigator.storage.persist){
       if(me.role==='admin'||me.role==='asistente'){
         iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh(); navidadApp();
       } else {
-        renderEmployee(me.nombre); screen('employeeScreen'); initForm(); cargarNovedades(true); programarTutoCampanita(); navidadApp();
+        renderEmployee(me.nombre); screen('employeeScreen'); initForm(); pintarPendEnvio(); reenviarPendientes(); cargarNovedades(true); programarTutoCampanita(); navidadApp();
       }
       trasEntrarAvisos();
     } catch(e) { localStorage.removeItem('innova_session'); screen('loginScreen'); }
@@ -3078,8 +3082,10 @@ window.marcarAsistenciaUI=async function(tipo){
   // Evita doble toque mientras se obtiene la ubicación y se guarda
   const btns=document.querySelectorAll('#marcajeCard .mk3-btn');
   btns.forEach(b=>b.disabled=true);
+  // Si tarda (GPS o señal lentos) se avisa que sigue intentando, para que no cierren la app a medias
+  const lento=setTimeout(()=>{ const t=al&&al.querySelector('.mk-av.espera .mk-av-tx span'); if(t) t.textContent='Tu señal está lenta… seguimos intentando, no cierres la app'; },15000);
   try{
-    const res=await marcarAsistencia(db,{ref,get,set,update},me,tipo,today());
+    const res=await marcarAsistencia(db,{ref,get,set,update},me,tipo,today()).finally(()=>clearTimeout(lento));
     // Sin aviso de texto: el punto recién marcado se anima (la tarjeta ya
     // muestra la hora y si fue a tiempo o tarde)
     try{ navigator.vibrate&&navigator.vibrate(35); }catch(_){}
@@ -3400,13 +3406,90 @@ window.cerrarGuardadoOK=()=>{ const o=$('fxOk'); if(o){ o.classList.remove('on')
     if(o._nvEsc){ const e=o._nvEsc; o._nvEsc=null; setTimeout(()=>{ e.detener(); if(!o.classList.contains('on')) o.querySelector('.fxn')?.remove(); },400); } }
   clearTimeout(_fxOkTimer); };
 
+// ── Conexión y registros que todavía no llegan al servidor ──────────────────
+// En el celular, al volver a la app después de un rato (pantalla apagada, otra app), la conexión con
+// Firebase puede quedar "colgada": parece abierta pero no pasa nada, y Firebase tarda hasta un minuto
+// en darse cuenta. Ahí los guardados se quedaban esperando y la gente cerraba la app pensando que
+// había guardado. Por eso: al volver después de 1 min o al recuperar internet se reabre la conexión.
+// Y cada registro, antes de enviarse, se apunta en este celular (localStorage) con su clave fija: si
+// la app se cierra antes de que llegue, se reenvía solo al volver a abrirla (misma clave = nunca se
+// duplica; las reglas no dejan escribir dos veces la misma).
+function reconectarFirebase(){ try{ goOffline(db); goOnline(db); }catch(_){} }
+let _ocultaDesde=0;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){ _ocultaDesde=Date.now(); return; }
+  const fuera=_ocultaDesde?Date.now()-_ocultaDesde:0; _ocultaDesde=0;
+  if(fuera>=60000) reconectarFirebase(); else reenviarPendientes();
+});
+window.addEventListener('online',reconectarFirebase);
+onValue(refFirebase(db,'.info/connected'),s=>{ if(s.val()===true) reenviarPendientes(); });
+
+const PEND_REG='innova_reg_pend';
+function regsPend(uid){
+  try{ const a=JSON.parse(localStorage.getItem(PEND_REG)||'[]'); return Array.isArray(a)?a.filter(p=>p&&p.uid&&p.key&&p.datos&&(!uid||p.uid===uid)):[]; }
+  catch(_){ return []; }
+}
+function escribirPend(a){ try{ a.length?localStorage.setItem(PEND_REG,JSON.stringify(a)):localStorage.removeItem(PEND_REG); }catch(_){} }
+function apuntarPend(uid,key,datos){ escribirPend([...regsPend().filter(p=>p.key!==key),{uid,key,datos,en:Date.now()}]); }
+function quitarPend(key){ escribirPend(regsPend().filter(p=>p.key!==key)); }
+const _enVuelo=new Set();
+// Envía un registro con su clave. Si las reglas lo rechazan porque YA está (llegó en un intento
+// anterior y se perdió la confirmación), cuenta como guardado.
+async function enviarRegistro(uid,key,datos){
+  _enVuelo.add(key);
+  try{ await set(refFirebase(db,`registros/${uid}/${key}`),datos); }
+  catch(e){
+    let ya=false; try{ ya=(await getFirebase(refFirebase(db,`registros/${uid}/${key}`))).exists(); }catch(_){}
+    if(!ya) throw e;
+  }
+  finally{ _enVuelo.delete(key); }
+  quitarPend(key);
+  invalidarRegsCache();
+}
+let _reenviando=false;
+async function reenviarPendientes(){
+  if(_reenviando||!me) return;
+  const lista=regsPend(me.id).filter(p=>!_enVuelo.has(p.key));
+  if(!lista.length) return;
+  _reenviando=true;
+  const perdidos=[];
+  try{
+    for(const p of lista){
+      try{ await enviarRegistro(p.uid,p.key,p.datos); }
+      catch(e){ if(/permission/i.test(String(e&&(e.code||e.message)))){ quitarPend(p.key); perdidos.push(p.datos); } }
+    }
+  }finally{ _reenviando=false; }
+  pintarPendEnvio(perdidos);
+}
+// Aviso arriba del formulario mientras haya registros esperando señal
+function pintarPendEnvio(perdidos){
+  const box=$('empPendEnvio'); if(!box||!me) return;
+  const pend=regsPend(me.id);
+  const dias=l=>l.map(d=>fechaCortaFx(d.fecha)).join(', ');
+  let h='';
+  if(pend.length) h+=`<div class="alert aw">📶 ${pend.length===1?'Tu registro del <b>'+dias(pend.map(p=>p.datos))+'</b> está':'Tus registros del <b>'+dias(pend.map(p=>p.datos))+'</b> están'} guardado${pend.length===1?'':'s'} en este celular y se enviará${pend.length===1?'':'n'} solo en cuanto haya señal. No cierres sesión.</div>`;
+  if(perdidos&&perdidos.length) h+=`<div class="alert ae">No se pudo enviar tu registro del <b>${dias(perdidos)}</b>. Vuelve a llenarlo, por favor.</div>`;
+  box.innerHTML=h;
+}
+// Rechaza si la promesa tarda más de ms (para no dejar el botón en "Guardando..." para siempre)
+function conTiempo(pr,ms){
+  let t; return Promise.race([pr,new Promise((_,rej)=>{ t=setTimeout(()=>{ const e=new Error('Sin conexión'); e.code='LENTO'; rej(e); },ms); })]).finally(()=>clearTimeout(t));
+}
+const MSG_SIN_SENAL='📶 No hay conexión con el servidor. Revisa tu señal e intenta de nuevo.';
+
 window.guardarReg=async()=>{
   limpiarErrForm();
   const btnGuardar=$('btnGuardarReg');
   if(btnGuardar){ btnGuardar.disabled=true; btnGuardar.textContent='Guardando...'; }
-  const restoreBtn=()=>{ if(btnGuardar){ btnGuardar.disabled=false; btnGuardar.textContent='Guardar registro'; } };
+  // Señal lenta: se avisa en el botón (sigue intentando; nada se pierde)
+  const lentoTimer=setTimeout(()=>{ if(btnGuardar&&btnGuardar.disabled) btnGuardar.textContent='Guardando… (señal lenta)'; },6000);
+  const restoreBtn=()=>{ clearTimeout(lentoTimer); if(btnGuardar){ btnGuardar.disabled=false; btnGuardar.textContent='Guardar registro'; } };
   const fecha=$('empFecha').value;
   if(!fecha){restoreBtn();errForm('Elige el día que vas a registrar.','fecha');return;}
+  // ¿Ya está guardado en este celular esperando señal? (antes de cualquier consulta al servidor)
+  if(regsPend(me.id).some(p=>p.datos.fecha===fecha)){
+    errForm('Este día ya lo guardaste: se enviará en cuanto haya señal.','fecha');restoreBtn();return;
+  }
 
   // Verificar cierre de mes
   if(mesCerrado(fecha)){
@@ -3422,7 +3505,7 @@ window.guardarReg=async()=>{
   // Verificar rango permitido — consultar extensión real desde Firebase
   if(tipoDia==='normal'||tipoDia==='incapacidad'||tipoDia==='permiso'){
     try{
-      const snap=await get(ref(db,`users/${me.id}`));
+      const snap=await conTiempo(get(ref(db,`users/${me.id}`)),10000);
       let diasPermitidos=3;
       if(snap.exists()){
         const u=snap.val();
@@ -3437,14 +3520,15 @@ window.guardarReg=async()=>{
     }catch(e){}
   }
 
-  // Check duplicado
+  // Check duplicado en el servidor: solo los registros de esa fecha, no todo el historial
+  // (con poca señal es mucho más rápido). Lo que espera señal en este celular se revisa arriba.
   try {
-    const snap=await get(ref(db,`registros/${me.id}`));
+    const snap=await conTiempo(getFirebase(consultaFB(refFirebase(db,`registros/${me.id}`),orderByChild('fecha'),equalTo(fecha))),15000);
     if(snap.exists()){
       const dup=Object.values(snap.val()).some(x=>x&&x.fecha===fecha);
       if(dup){errForm('Ya tienes un registro para este día.','fecha');restoreBtn();return;}
     }
-  } catch(e){errForm(`Error: ${e.message}`);restoreBtn();return;}
+  } catch(e){errForm(e.code==='LENTO'?MSG_SIN_SENAL:`Error: ${escHtml(e.message)}`);restoreBtn();return;}
 
   let datos = { fecha, creadoEn:Date.now(), userId:me.id, userName:me.nombre, cargo:me.cargo||'', tipoDia };
 
@@ -3455,7 +3539,9 @@ window.guardarReg=async()=>{
     const viat=$('togV').classList.contains('on');
     if(!entrada||!salida||!acts){errForm(!acts?'Escribe qué hiciste en el día.':'Completa la hora de entrada y de salida.', !acts?'actividades':'horario');restoreBtn();return;}
     if(toMins(salida)<=toMins(entrada)){errForm('La hora de salida debe ser mayor que la de entrada.','horario');restoreBtn();return;}
-    const asuetoDia=await esAsueto(fecha);
+    let asuetoDia;
+    try{ asuetoDia=await conTiempo(esAsueto(fecha),10000); }
+    catch(e){ errForm(MSG_SIN_SENAL); restoreBtn(); return; }
     const r = asuetoDia
       ? { he:true, minHE:toMins(salida)-toMins(entrada), heIni:entrada, heFin:salida }
       : calcularHE(fecha,entrada,salida);
@@ -3485,14 +3571,29 @@ window.guardarReg=async()=>{
     };
   }
 
-const timeoutTimer=setTimeout(()=>{
+  // Clave fija + copia en este celular ANTES de enviar: si la señal se cae o la app se cierra, se
+  // reenvía sola (ver reenviarPendientes). Antes, a los 12 s salía "intenta de nuevo" aunque el
+  // registro seguía en camino; si la persona cerraba la app ahí, se perdía.
+  const uidReg=me.id, key=push(refFirebase(db,`registros/${uidReg}`)).key;
+  apuntarPend(uidReg,key,datos);
+  let enCola=false;
+  const timeoutTimer=setTimeout(()=>{
+    enCola=true;
     restoreBtn();
-    errForm('📶 Tu señal no es buena, intenta de nuevo.');
+    initForm();
+    pintarPendEnvio();
+    window.scrollTo({top:0,behavior:'smooth'});
   }, 12000);
 
   try {
-    await push(ref(db,`registros/${me.id}`), datos);
+    await enviarRegistro(uidReg,key,datos);
     clearTimeout(timeoutTimer);
+    if(enCola){
+      // Ya se había avisado que quedó en el celular: solo se confirma que llegó
+      const box=$('empPendEnvio');
+      if(box&&me&&me.id===uidReg){ pintarPendEnvio(); if(!regsPend(uidReg).length){ box.innerHTML=`<div class="alert as">✓ Tu registro del <b>${fechaCortaFx(datos.fecha)}</b> ya llegó.</div>`; setTimeout(()=>{ if(!regsPend(uidReg).length) box.innerHTML=''; },8000); } }
+      return;
+    }
     restoreBtn();
     const etiquetas={vacaciones:'Vacaciones',incapacidad:'Incapacidad',permiso:'Permiso'};
     const pills = datos.tipoDia==='normal'
@@ -3505,8 +3606,11 @@ const timeoutTimer=setTimeout(()=>{
     mostrarGuardadoOK(pills);
   } catch(e){
     clearTimeout(timeoutTimer);
+    // Las reglas lo rechazaron (no es la señal): no tiene caso reintentarlo solo
+    quitarPend(key);
+    if(enCola){ pintarPendEnvio([datos]); return; }
     restoreBtn();
-    errForm(`Error al guardar: ${e.message}`);
+    errForm(`Error al guardar: ${escHtml(e.message)}`);
   }
 };
 

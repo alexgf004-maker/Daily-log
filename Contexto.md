@@ -331,12 +331,31 @@ Firebase por render). Se resolvió así:
 
 **Regla**: no volver al patrón de leer por-empleado en bucle. Usar los cachés.
 
+**Guardado con mala señal (mantenimiento, nov 2026)**. Quejas: «a veces no guarda», «guardé y no aparece».
+Causas encontradas (reproducidas en el emulador con un proxy que deja la conexión «colgada»):
+- Al volver a la app tras tener el celular bloqueado, la conexión con Firebase puede quedar colgada (parece
+  abierta, no pasa nada). Las lecturas previas al guardado (`users/{uid}`, duplicado) no tenían límite: el botón
+  se quedaba en «Guardando...» para siempre.
+- A los 12 s salía «intenta de nuevo» aunque el registro seguía en camino; si cerraban la app, se perdía.
+Arreglo (en `index.html`, junto a `guardarReg`):
+- `reconectarFirebase()` (goOffline/goOnline) al volver a la app después de ≥ 1 min oculta y al evento `online`.
+- Cada registro se envía con **clave fija** (`push(ref).key` + `set`) y antes se apunta en `localStorage`
+  (`innova_reg_pend`: `[{uid,key,datos,en}]`). `reenviarPendientes()` lo reenvía al entrar, al reconectar
+  (`.info/connected`) y al volver a la app; con la misma clave nunca se duplica (las reglas no dejan escribir dos
+  veces; si el rechazo es porque ya está, cuenta como guardado — `enviarRegistro`).
+- Si a los 12 s no llegó: el formulario se limpia y el aviso `#empPendEnvio` dice que quedó en el celular y se
+  enviará solo; cuando llega, «✓ Tu registro del … ya llegó». Reintentar ese día: «Este día ya lo guardaste».
+- Lecturas previas con límite (`conTiempo`): si no contestan, «No hay conexión con el servidor» en vez de
+  quedarse colgado. El duplicado se busca solo por esa fecha (consulta con `.indexOn` fecha), no todo el historial.
+- Marcaje: si tarda 15 s, el aviso cambia a «Tu señal está lenta… seguimos intentando, no cierres la app».
+
 **Espejo en vivo (admin y asistente)**: `get` y `ref` del módulo principal envuelven a los de
 Firebase. Al entrar un admin se abre una escucha `onValue` sobre `registros` (y sobre `marcajes`
 la primera vez que se pide el historial de alguien, `marcajes/{uid}`). Las lecturas bajo esos nodos
 se contestan con `snap.child(ruta)` del espejo: mismo resultado que un `get`, al día y sin volver a
 descargar. Firebase baja el nodo una vez y luego solo los cambios. Se cierra en `doLogout`. Si la
-escucha falla o tarda más de 8 s, se lee normal. Los técnicos no usan espejo (leen solo lo suyo).
+escucha falla o tarda más de 30 s, se lee normal (antes eran 8 s: con señal lenta eso lanzaba una
+segunda descarga completa a la par y la carga tardaba el doble; medido 29 s → 15 s y 4.5 MB → 2.2 MB a 150 KB/s). Los técnicos no usan espejo (leen solo lo suyo).
 Antes, el Dashboard abierto (refresco cada 30 s) descargaba del orden de 1–2 GB por jornada; con el
 espejo, unos pocos MB. Medición y comparación de pantallas antes/después en las pruebas locales.
 
