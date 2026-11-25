@@ -904,7 +904,7 @@ import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/
 import { getMessaging, getToken, deleteToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 import { today, ago, fmt, fmtLong, mesCerrado, horarioBase, toMins, fromMins, calcularHE, calcSemSanta, primerLunesAgosto, asuetosFijos } from "./js/utils.js";
 import { SEDES, NOMBRE_SEDES, sedeEfectiva, horarioOficial, marcarAsistencia, obtenerMarcajeDia, obtenerMarcajesMes, ESTADO_LABELS, chipEstado, fmtMin, mensajeMarcaje, prefetchUbicacion, alUbicar, ubicarSede, justificarMarcaje } from "./js/marcaje.js?v=3";
-import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js?v=2";
+import { obtenerSabadosLaborales, guardarSabadoLaboral, quitarSabadoLaboral, empleadoTrabajaSabado, resumenMesTodos, resumenMesEmpleado, asistenciaHoy, asistenciaDia, diasHabilesAnteriores, diasHabilesEmpleado } from "./js/asistencia.js?v=3";
 import { calcularDescuentos } from "./js/calculadora.js";
 import { diaNavidad, diasDelCordon, cordonHTML, adventoHTML, abrirPuerta, lineaPersonalAdviento } from "./js/navidad-app.js?v=6";
 import { adornoNV, escenaMarcajeNV, pintarGuirnaldaNV, etiquetaRegaloNV } from "./js/navidad-marcaje.js?v=4";
@@ -2577,12 +2577,13 @@ function incidenciasMes(mes, marcajesPorFecha, items, sabados){
   const lista=[];
   r.detalle.forEach(d=>{
     if(d.tipo==='no_marco'){ lista.push({fecha:d.fecha,tipo:'nm'}); return; }
+    if(d.olvido) lista.push({fecha:d.fecha,tipo:'o',falta:d.olvido,hora:(d.entrada||d.salida)?.horaStr||'',just:!!d.olvidoJust});
     if(d.entrada?.estado==='tarde') lista.push({fecha:d.fecha,tipo:'t',min:d.entrada.minDiff||0,hora:d.entrada.horaStr||'',just:!!d.entrada.justificado});
     if(d.salida?.estado==='salida_temprana') lista.push({fecha:d.fecha,tipo:'s',min:d.salida.minDiff||0,hora:d.salida.horaStr||'',just:!!d.salida.justificado});
   });
   lista.sort((a,b)=>a.fecha.localeCompare(b.fecha));
   const dias=diasHabilesEmpleado(mes, me.id, sabados||{}, hoy);
-  return {...r, lista, dias, total:r.noMarco+r.diasTarde+r.salidasTemp, min:r.minTarde+r.minTemp};
+  return {...r, lista, dias, total:r.noMarco+r.olvidoMarca+r.diasTarde+r.salidasTemp, min:r.minTarde+r.minTemp};
 }
 async function cargarIncidenciasMes(mes){
   const [snap, marcs, sabados]=await Promise.all([
@@ -2597,9 +2598,11 @@ const AI_NOTA='Recursos Humanos toma este conteo para <b>descuentos en planilla<
 const AI_NOTA_CERRADO='Este es el conteo final del mes que toma Recursos Humanos para <b>descuentos en planilla</b> y <b>amonestaciones</b>. Si algo no está bien, habla con Madelyn.';
 const aiMin=m=>m>=60?`${Math.floor(m/60)} h${m%60?' '+(m%60)+' min':''}`:`${m} min`;
 const aiDia=f=>{ const d=new Date(f+'T12:00:00'); return `${['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]} ${d.getDate()}`; };
-const AI_TIPO={nm:'No marcó',t:'Llegó tarde',s:'Salió antes'};
+const AI_TIPO={nm:'No marcó',o:'Marca olvidada',t:'Llegó tarde',s:'Salió antes'};
 function aiLinea(x){
-  const det=x.tipo==='nm'?'Sin entrada ni salida':`${x.tipo==='t'?'Entró':'Salió'} ${hora12(x.hora)} · ${aiMin(x.min)} ${x.tipo==='t'?'tarde':'antes'}`;
+  const det=x.tipo==='nm'?'Sin entrada ni salida'
+    :x.tipo==='o'?(x.falta==='salida'?`Entró ${hora12(x.hora)} · no marcó la salida`:`No marcó la entrada · salió ${hora12(x.hora)}`)
+    :`${x.tipo==='t'?'Entró':'Salió'} ${hora12(x.hora)} · ${aiMin(x.min)} ${x.tipo==='t'?'tarde':'antes'}`;
   return `<div class="ai-li ${x.tipo}${x.just?' just':''}"><span class="ai-li-f">${aiDia(x.fecha)}</span><span class="ai-li-t"><b>${AI_TIPO[x.tipo]}</b><small>${det}</small></span>${x.just?'<span class="ai-li-j">Justificado</span>':''}</div>`;
 }
 // Opción A · Tarjeta con tres números (Mi Historial y aviso de cierre)
@@ -2609,6 +2612,7 @@ function aiTarjetaA(inc, {titulo='Mi asistencia', detalle=true, mes='', cerrado=
     <div class="ai-hd"><span class="ai-k">${titulo}</span><span class="ai-badge">${limpio?'✓ Sin incidencias':inc.total+(inc.total===1?' incidencia':' incidencias')}</span></div>
     <div class="ai-tiles">
       <div class="ai-tile nm${inc.noMarco?' on':''}"><b>${inc.noMarco}</b><span>${inc.noMarco===1?'Día sin marcar':'Días sin marcar'}</span></div>
+      <div class="ai-tile nm${inc.olvidoMarca?' on':''}"><b>${inc.olvidoMarca}</b><span>${inc.olvidoMarca===1?'Marca olvidada':'Marcas olvidadas'}</span><small>${inc.olvidoMarca?'entrada o salida':''}</small></div>
       <div class="ai-tile t${inc.diasTarde?' on':''}"><b>${inc.diasTarde}</b><span>${inc.diasTarde===1?'Llegada tarde':'Llegadas tarde'}</span><small>${inc.minTarde?aiMin(inc.minTarde):''}</small></div>
       <div class="ai-tile s${inc.salidasTemp?' on':''}"><b>${inc.salidasTemp}</b><span>${inc.salidasTemp===1?'Salida antes':'Salidas antes'}</span><small>${inc.minTemp?aiMin(inc.minTemp):''}</small></div>
     </div>
@@ -2626,6 +2630,7 @@ function aiBoletaB(inc, cerrado=false){
     ${inc.lista.length?`<div class="ai-bo-lis">${inc.lista.map(aiLinea).join('')}</div>`:'<div class="ai-bo-ok">✓ Ninguna incidencia este mes</div>'}
     <div class="ai-bo-tot">
       ${fila('Días sin marcar',inc.noMarco)}
+      ${fila('Marcas olvidadas',inc.olvidoMarca)}
       ${fila('Llegadas tarde',inc.diasTarde,inc.minTarde)}
       ${fila('Salidas antes',inc.salidasTemp,inc.minTemp)}
       <div class="ai-bo-row total"><span>Total</span><i></i><b>${inc.total} ${inc.total===1?'incidencia':'incidencias'}${inc.min?` · ${aiMin(inc.min)}`:''}</b></div>
@@ -3820,7 +3825,7 @@ async function loadHist(){
     const diaTxt=f=>{ const d=new Date(f+'T12:00:00'); const w=d.toLocaleDateString('es-SV',{weekday:'long'}); return w.charAt(0).toUpperCase()+w.slice(1)+' '+d.getDate(); };
     // Marcaje con un punto de color: verde a tiempo, rojo tarde/antes, gris sin dato
     const punto=(label,dato)=>{
-      if(!dato) return `<span><i class="hl-dot"></i>${label} <b>—</b></span>`;
+      if(!dato||dato.ts==null) return `<span><i class="hl-dot"></i>${label} <b>—</b>${dato?.justificado?' <em>justificado</em>':''}</span>`;
       const c=chipEstado(dato), cls=c.color==='ba'?'ok':c.color==='br'?'mal':'';
       return `<span><i class="hl-dot ${cls}"></i>${label} <b>${dato.horaStr}</b>${cls==='mal'?` <em>${c.texto}</em>`:''}</span>`;
     };
@@ -6266,23 +6271,24 @@ window.cargarAsistencia=async()=>{
     if(($('asistMes')?.value)!==mes) return; // cambió de mes mientras cargaba
     asistCache={mes, filas, sabados, marcs, regs};
 
-    const tot=filas.reduce((a,f)=>({t:a.t+f.diasTarde,s:a.s+f.salidasTemp,n:a.n+f.noMarco}),{t:0,s:0,n:0});
-    $('asistStats').innerHTML=`<div class="rg-stats" style="margin-top:0">
+    const tot=filas.reduce((a,f)=>({t:a.t+f.diasTarde,s:a.s+f.salidasTemp,n:a.n+f.noMarco,o:a.o+(f.olvidoMarca||0)}),{t:0,s:0,n:0,o:0});
+    $('asistStats').innerHTML=`<div class="rg-stats" style="margin-top:0;grid-template-columns:repeat(2,1fr)">
       <div class="rg-st r"><div class="v">${tot.t}</div><div class="l">Llegadas tarde</div></div>
       <div class="rg-st a"><div class="v">${tot.s}</div><div class="l">Salidas antes</div></div>
       <div class="rg-st b"><div class="v">${tot.n}</div><div class="l">No marcaron</div></div>
+      <div class="rg-st b"><div class="v">${tot.o}</div><div class="l">Marcas olvidadas</div></div>
     </div>`;
     const sabTxt=$('asistSabTxt');
     if(sabTxt){ const fs=Object.keys(sabados||{}).sort(); sabTxt.textContent=fs.length?fs.map(f=>'sáb '+parseInt(f.slice(8))).join(', '):'ninguno'; }
 
     cont.innerHTML=filas.map((f,i)=>{
-      const inc=f.diasTarde+f.salidasTemp+f.noMarco;
+      const inc=f.diasTarde+f.salidasTemp+f.noMarco+(f.olvidoMarca||0);
       const min=f.minTarde+f.minTemp;
       return `<button class="as-emp" onclick="abrirAsistEmp('${f.uid}')">
         <span class="as-emp-n ${inc?'mal':'ok'}"><b>${inc}</b><small>incid.</small></span>
         <span class="as-emp-b">
           <span class="as-emp-nom">${escHtml(f.nombre)}</span>
-          <span class="as-emp-m"><span><b class="r">${f.diasTarde}</b> tarde</span><span><b class="a">${f.salidasTemp}</b> salidas</span><span><b class="n">${f.noMarco}</b> sin marcar</span></span>
+          <span class="as-emp-m"><span><b class="r">${f.diasTarde}</b> tarde</span><span><b class="a">${f.salidasTemp}</b> salidas</span><span><b class="n">${f.noMarco}</b> sin marcar</span><span><b class="n">${f.olvidoMarca||0}</b> olvidó marca</span></span>
           <span class="as-emp-c">${min?hmAsist(min)+' perdidos':'Sin minutos perdidos'}</span>
         </span>
       </button>`;
@@ -6317,7 +6323,7 @@ function aplicarAsistModo(pintar=true){
 // Sale de los marcajes del mes ya cargados (sin lecturas extra). Incluye días no laborales si alguien marcó.
 let asistDiaSel=null;
 function marcaTxt(m, tipo){
-  if(!m) return `<span class="as-h nada">—</span>`;
+  if(!m||m.ts==null) return m?.justificado?`<span class="as-h"><b>—</b>${etiquetaEstado('neutro','Justificado','sm')}</span>`:`<span class="as-h nada">—</span>`;
   const mala=tipo==='entrada'?m.estado==='tarde':m.estado==='salida_temprana';
   const pill=!mala?etiquetaEstado('ok',tipo==='entrada'?'A tiempo':'A su hora','sm')
     :m.justificado?etiquetaEstado('neutro','Justificado','sm')
@@ -6430,7 +6436,7 @@ function agDatos(){
         if(it.cs==='temp'){ const m=d.salida.minDiff||Math.max(0,-dif); k.temp++; temp++; sm.s++; pm.s++; k.minTemp+=m; minS+=m; }
       }
     });
-    return {uid:f.uid, nombre:f.nombre, dias, dl, ds, pl:prom(dl), ps:prom(ds), tarde, temp, minT, minS, noMarco:f.noMarco, sem:psem, cE, cS};
+    return {uid:f.uid, nombre:f.nombre, dias, dl, ds, pl:prom(dl), ps:prom(ds), tarde, temp, minT, minS, noMarco:f.noMarco, olvidoMarca:f.olvidoMarca||0, sem:psem, cE, cS};
   });
   return {fechas:[...fechas].sort(), porDiaE, porDiaS, sem, lleg, k, personas, prom};
 }
@@ -6605,7 +6611,8 @@ function agFrase(p){
     pl===null?'No tiene entradas marcadas este mes.':`Llega en promedio a las <b>${agHora(420+pl)}</b> (${agDifTxt(pl,'antes de la hora','tarde')}).`,
     nE?`Llegó tarde <b>${p.tarde} de ${nE}</b> días${p.minT?` (${hmAsist(p.minT)} en total)`:''}.`:'',
     p.ds.length?(p.temp?`Salió antes de su hora <b>${p.temp}</b> ${p.temp===1?'vez':'veces'}${p.minS?` (${hmAsist(p.minS)})`:''}.`:'Nunca salió antes de su hora.'):'',
-    p.noMarco?`No marcó <b>${p.noMarco}</b> ${p.noMarco===1?'día':'días'}.`:''
+    p.noMarco?`No marcó <b>${p.noMarco}</b> ${p.noMarco===1?'día':'días'}.`:'',
+    p.olvidoMarca?`Olvidó marcar la entrada o la salida <b>${p.olvidoMarca}</b> ${p.olvidoMarca===1?'vez':'veces'}.`:''
   ].filter(Boolean).join(' ');
 }
 function agVistaPersona(D,p){
@@ -6712,6 +6719,8 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
       incid.push(`<div class="rg-it as-it" id="asd-${d.fecha}">${fechaCol(d.fecha)}<div class="rg-it-b"><div class="rg-it-a">No marcó entrada ni salida</div><div class="as-it-tags"><span class="rg-pill n">Sin marcar</span></div></div></div>`);
       return;
     }
+    if(d.olvido){ const j=asistCache.marcs?.[f.uid]?.[d.fecha]?.[d.olvido]?.justificado;
+      incid.push(`<div class="rg-it as-it">${fechaCol(d.fecha)}<div class="rg-it-b"><div class="as-it-row"><div><div class="rg-it-a" style="margin-top:0">${d.olvido==='salida'?`Entrada <b>${d.entrada?.horaStr||'—'}</b> · no marcó la salida`:`No marcó la entrada · salida <b>${d.salida?.horaStr||'—'}</b>`}</div><div class="as-it-tags">${d.olvidoJust?etiquetaEstado('neutro','Justificado','sm'):'<span class="rg-pill n">Marca olvidada</span>'}${j?.nota?`<span class="as-it-nota">${escHtml(j.nota)}</span>`:''}</div></div>${btnJ(d.olvido,d.fecha,!!d.olvidoJust)}</div></div></div>`); }
     const partes=[];
     if(d.entrada?.estado==='tarde') partes.push({tipo:'entrada',m:d.entrada,txt:`Entrada <b>${d.entrada.horaStr}</b>`,pill:d.entrada.justificado?etiquetaEstado('neutro','Justificado','sm'):etiquetaEstado('mal',fmtMin(d.entrada.minDiff||0)+' tarde','sm')});
     if(d.salida?.estado==='salida_temprana') partes.push({tipo:'salida',m:d.salida,txt:`Salida <b>${d.salida.horaStr}</b>`,pill:d.salida.justificado?etiquetaEstado('neutro','Justificado','sm'):etiquetaEstado('mal',fmtMin(d.salida.minDiff||0)+' antes','sm')});
@@ -6722,7 +6731,7 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
   const dias=fechasMes.map(fe=>{
     const x=diaPersona(f,fe);
     const sinMarca=!x.m?.entrada&&!x.m?.salida;
-    const btns=[x.m?.entrada?.estado==='tarde'?btnJ('entrada',fe,!!x.m.entrada.justificado):'', x.m?.salida?.estado==='salida_temprana'?btnJ('salida',fe,!!x.m.salida.justificado):''].filter(Boolean).join('');
+    const btns=[x.m?.entrada?.estado==='tarde'?btnJ('entrada',fe,!!x.m.entrada.justificado):'', x.m?.salida?.estado==='salida_temprana'?btnJ('salida',fe,!!x.m.salida.justificado):'', x.det?.olvido?btnJ(x.det.olvido,fe,!!x.det.olvidoJust):''].filter(Boolean).join('');
     const notas=[x.m?.entrada?.justificado?.nota,x.m?.salida?.justificado?.nota].filter(Boolean).map(n=>`<span class="as-it-nota">${escHtml(n)}</span>`).join('');
     return `<div class="rg-it as-it" id="asd-${fe}">${fechaCol(fe)}<div class="rg-it-b">
       ${sinMarca?`<div class="as-it-tags" style="margin-top:2px">${x.nota}</div>`
@@ -6738,10 +6747,11 @@ window.abrirAsistEmp=(uid,mantenerScroll)=>{
       <div class="rg-av lg">${inicialesDe(f.nombre)}</div>
       <div class="rg-ph-tx"><div class="rg-ph-n">${escHtml(f.nombre)}</div><div class="rg-ph-c">${mesLabel(mes)}</div></div>
     </div>
-    <div class="rg-stats">
+    <div class="rg-stats" style="grid-template-columns:repeat(2,1fr)">
       <div class="rg-st r"><div class="v">${f.diasTarde}</div><div class="l">Días tarde${f.minTarde?' · '+hmAsist(f.minTarde):''}</div></div>
       <div class="rg-st a"><div class="v">${f.salidasTemp}</div><div class="l">Salidas antes${f.minTemp?' · '+hmAsist(f.minTemp):''}</div></div>
       <div class="rg-st b"><div class="v">${f.noMarco}</div><div class="l">Sin marcar</div></div>
+      <div class="rg-st b"><div class="v">${f.olvidoMarca||0}</div><div class="l">Marcas olvidadas</div></div>
     </div>
     <div class="rg-cal">
       <div class="rg-cal-g">${['L','M','M','J','V','S','D'].map(x=>`<span class="rg-cal-h">${x}</span>`).join('')}${celdas}</div>
@@ -6909,15 +6919,15 @@ window.exportarAsistencia=async()=>{
 
     // ── Hoja: Mapa del mes (celdas de colores) ──
     const wsM=wb.addWorksheet('Mapa del mes',{views:[{state:'frozen',xSplit:1,ySplit:4}]});
-    const F=D.fechas, nc=F.length+4;
+    const F=D.fechas, nc=F.length+5;
     xlTitulo(wsM,`Mapa del mes · ${nomMes}`,'T = llegó tarde · S = salió antes · X = sin marcar · J = ausencia justificada · F = asueto · vacío = a tiempo',nc);
     wsM.getColumn(1).width=28;
     F.forEach((_,i)=>{ wsM.getColumn(i+2).width=4.3; });
-    ['Tarde','Salió antes','Sin marcar'].forEach((_,i)=>{ wsM.getColumn(F.length+2+i).width=11; });
+    ['Tarde','Salió antes','Sin marcar','Marca olvidada'].forEach((_,i)=>{ wsM.getColumn(F.length+2+i).width=11; });
     const r3=wsM.getRow(3), r4=wsM.getRow(4);
     r3.getCell(1).value='Colaborador'; r4.getCell(1).value='';
     F.forEach((fe,i)=>{ r3.getCell(i+2).value=parseInt(fe.slice(8)); r4.getCell(i+2).value=['D','L','M','M','J','V','S'][new Date(fe+'T12:00:00').getDay()]; });
-    ['Tarde','Salió antes','Sin marcar'].forEach((t,i)=>{ r3.getCell(F.length+2+i).value=t; });
+    ['Tarde','Salió antes','Sin marcar','Marca olvidada'].forEach((t,i)=>{ r3.getCell(F.length+2+i).value=t; });
     xlCabecera(r3); r3.height=22;
     for(let c=1;c<=nc;c++){ const x=r4.getCell(c); x.font={bold:true,size:9,color:{argb:'FF475569'}}; x.alignment={horizontal:'center'}; x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE9EEF6'}}; }
     const XL_C={ok:['FF10B981',''],tarde:['FFEF4444','T'],temp:['FFF59E0B','S'],aus:['FF8B5CF6','J'],asu:['FF94A3B8','F'],falta:['FFFFFFFF','X']};
@@ -6940,7 +6950,7 @@ window.exportarAsistencia=async()=>{
         if(it.c==='aus'&&d.tipoDia) notas.push(d.tipoDia);
         if(notas.length) cell.note=notas.join('\n');
       });
-      [p.tarde,p.temp,p.noMarco].forEach((v,i)=>{ const c=row.getCell(F.length+2+i); c.value=v; c.alignment={horizontal:'center'}; if(v) c.font={bold:true}; });
+      [p.tarde,p.temp,p.noMarco,p.olvidoMarca].forEach((v,i)=>{ const c=row.getCell(F.length+2+i); c.value=v; c.alignment={horizontal:'center'}; if(v) c.font={bold:true}; });
     });
 
     // ── Hoja: Por persona ──
@@ -6967,13 +6977,13 @@ window.exportarAsistencia=async()=>{
 
     // ── Hoja: Resumen ──
     const wsR=wb.addWorksheet('Resumen',{views:[{state:'frozen',ySplit:1}]});
-    wsR.columns=[{header:'Empleado',width:30},{header:'Días tarde',width:11},{header:'Min. tarde',width:11},{header:'Salidas anticipadas',width:13},{header:'Min. anticipados',width:13},{header:'No marcó',width:10},{header:'% entradas a tiempo',width:13},{header:'Llegada promedio',width:12}];
+    wsR.columns=[{header:'Empleado',width:30},{header:'Días tarde',width:11},{header:'Min. tarde',width:11},{header:'Salidas anticipadas',width:13},{header:'Min. anticipados',width:13},{header:'No marcó',width:10},{header:'Marcas olvidadas',width:12},{header:'% entradas a tiempo',width:13},{header:'Llegada promedio',width:12}];
     filas.forEach(f=>{
       const p=D.personas.find(x=>x.uid===f.uid);
-      wsR.addRow([f.nombre,f.diasTarde,f.minTarde,f.salidasTemp,f.minTemp,f.noMarco,p&&p.dl.length?Math.round((p.dl.length-p.tarde)/p.dl.length*100)/100:null,p&&p.pl!==null?agHora(420+p.pl):'—']);
+      wsR.addRow([f.nombre,f.diasTarde,f.minTarde,f.salidasTemp,f.minTemp,f.noMarco,f.olvidoMarca||0,p&&p.dl.length?Math.round((p.dl.length-p.tarde)/p.dl.length*100)/100:null,p&&p.pl!==null?agHora(420+p.pl):'—']);
     });
-    xlCabecera(wsR.getRow(1)); wsR.getColumn(7).numFmt='0%';
-    wsR.autoFilter={from:'A1',to:'H1'};
+    xlCabecera(wsR.getRow(1)); wsR.getColumn(8).numFmt='0%';
+    wsR.autoFilter={from:'A1',to:'I1'};
 
     // ── Hoja: Detalle día por día ──
     const wsD=wb.addWorksheet('Detalle',{views:[{state:'frozen',ySplit:1}]});
@@ -6985,7 +6995,7 @@ window.exportarAsistencia=async()=>{
         const eTarde=d.entrada?.estado==='tarde'?(d.entrada.minDiff||0):'';
         const sTemp=d.salida?.estado==='salida_temprana'?(d.salida.minDiff||0):'';
         wsD.addRow([f.nombre, d.fecha, d.entrada?.horaStr||'—', d.entrada?(chipEstado(d.entrada).texto):'', eTarde,
-          d.salida?.horaStr||'—', d.salida?(chipEstado(d.salida).texto):'', sTemp, '']);
+          d.salida?.horaStr||'—', d.salida?(chipEstado(d.salida).texto):'', sTemp, d.olvido?`No marcó la ${d.olvido}`:'']);
       });
     });
     xlCabecera(wsD.getRow(1)); wsD.autoFilter={from:'A1',to:'I1'};

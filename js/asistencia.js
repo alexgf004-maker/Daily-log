@@ -86,16 +86,21 @@ function diaJustificado(regsPorFecha, fecha){
 // ── RESUMEN MENSUAL DE UN EMPLEADO ─────────────────────
 // marcajesPorFecha: { 'YYYY-MM-DD': { entrada:{...}, salida:{...} } }
 // regsPorFecha:     { 'YYYY-MM-DD': { tipoDia, ... } }
-// Devuelve { diasTarde, minTarde, salidasTemp, minTemp, noMarco, detalle:[...] }
+// Devuelve { diasTarde, minTarde, salidasTemp, minTemp, noMarco, olvidoMarca, detalle:[...] }
+// olvidoMarca: días con una sola marca (marcó la entrada y no la salida, o al revés). Cuenta como incidencia
+// (lo pidió RR.HH., nov 2026). El día de hoy no cuenta: todavía puede marcar.
 export function resumenMesEmpleado(mes, uid, marcajesPorFecha, regsPorFecha, sabadosLaborales, hoy){
   const dias=diasHabilesEmpleado(mes, uid, sabadosLaborales, hoy);
-  let diasTarde=0, minTarde=0, salidasTemp=0, minTemp=0, noMarco=0;
+  let diasTarde=0, minTarde=0, salidasTemp=0, minTemp=0, noMarco=0, olvidoMarca=0;
   const detalle=[];
 
   for(const fecha of dias){
     const justificado=diaJustificado(regsPorFecha, fecha);
     const marc=marcajesPorFecha[fecha];
-    const entrada=marc?.entrada, salida=marc?.salida;
+    // Marca real = la que hizo la persona (lleva hora del servidor, ts). Si la oficina justificó una marca
+    // olvidada, ese lado queda solo con { justificado } y no es una marca.
+    const real=x=>x&&x.ts!=null?x:null;
+    const entrada=real(marc?.entrada), salida=real(marc?.salida);
 
     // Ausencia: día hábil, no justificado, sin ninguna marca
     if(!entrada && !salida){
@@ -113,10 +118,15 @@ export function resumenMesEmpleado(mes, uid, marcajesPorFecha, regsPorFecha, sab
     // pero se sigue mostrando en el detalle (chipEstado la marca como "Justificado").
     if(entrada?.estado==='tarde' && !entrada.justificado){ diasTarde++; minTarde+=(entrada.minDiff||0); }
     if(salida?.estado==='salida_temprana' && !salida.justificado){ salidasTemp++; minTemp+=(salida.minDiff||0); }
+    // Una sola marca: si ese día tiene permiso/vacaciones/etc. registrado no cuenta
+    if((!entrada||!salida) && fecha<hoy && !justificado){
+      item.olvido=!salida?'salida':'entrada';
+      if(marc?.[item.olvido]?.justificado) item.olvidoJust=true; else olvidoMarca++;
+    }
     detalle.push(item);
   }
 
-  return { uid, diasTarde, minTarde, salidasTemp, minTemp, noMarco, detalle };
+  return { uid, diasTarde, minTarde, salidasTemp, minTemp, noMarco, olvidoMarca, detalle };
 }
 
 // ── RESUMEN DE TODOS LOS EMPLEADOS ─────────────────────
@@ -132,7 +142,8 @@ export async function resumenMesTodos(mes, empleados, getMarcajesEmpleado, getRe
     return { ...r, nombre:u.nombre, sedeFija:u.sede||null, sedeTemp:u.sedeTemporal||null };
   }));
   // Ordenar: primero los que más incidencias tienen
-  filas.sort((a,b)=>(b.diasTarde+b.salidasTemp+b.noMarco)-(a.diasTarde+a.salidasTemp+a.noMarco) || a.nombre.localeCompare(b.nombre));
+  const inc=f=>f.diasTarde+f.salidasTemp+f.noMarco+f.olvidoMarca;
+  filas.sort((a,b)=>inc(b)-inc(a) || a.nombre.localeCompare(b.nombre));
   return filas;
 }
 

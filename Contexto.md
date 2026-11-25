@@ -340,8 +340,14 @@ que termine el día. Dónde:
   cada incidencia y totales.
 - **Aviso de cierre de mes** (últimos 4 días) y **Resumen del mes** (días 1–3): tarjeta de tres números
   (`aiTarjetaA`) con «Ver cada incidencia» → `verMiAsistencia(mes)`.
-- Pendiente de RR.HH.: si «olvidó marcar la salida» debe contar (hoy no cuenta, igual que en la oficina) y si
-  hay una escala de sanciones para mostrar el nivel.
+- **Marca olvidada** (`olvidoMarca`, RR.HH. pidió que cuente): día pasado con una sola marca (entrada sin salida o
+  al revés) y sin permiso/vacaciones registrado. Cuenta igual en la oficina (lista, detalle, frase de
+  Comportamiento, Excel «Mapa del mes», «Resumen» y «Detalle»). Hoy no cuenta: todavía puede marcar.
+- La oficina puede **justificar** una marca olvidada (mismo botón «Justificar»): se guarda
+  `marcajes/{uid}/{fecha}/{lado} = { justificado }` sin `ts`. Por eso una marca **real** es la que tiene `ts`
+  (hora del servidor); `resumenMesEmpleado`, `marcaTxt` y el historial del técnico ignoran el lado sin `ts`.
+- No se muestra ninguna escala de sanciones (RR.HH. no la ha definido).
+- Pruebas: `tests/asistencia.test.mjs` (`node --test tests/*.cjs tests/*.mjs`).
 
 **Guardado con mala señal (mantenimiento, nov 2026)**. Quejas: «a veces no guarda», «guardé y no aparece».
 Causas encontradas (reproducidas en el emulador con un proxy que deja la conexión «colgada»):
