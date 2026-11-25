@@ -1143,7 +1143,8 @@ function renderEmployee(nombre){
         </div>
       </div>
       <div id="empHist" style="display:none">
-        <div class="page-header"><div><div class="ph-title">Mi historial</div><div class="ph-sub">Registros enviados</div></div></div>
+        <div class="page-header"><div><div class="ph-title">Mi historial</div><div class="ph-sub">Tus registros y tu asistencia</div></div></div>
+        <div class="pd-seg hist-seg" id="histSeg"><button data-v="reg" class="on" onclick="histVista('reg')">Registros</button><button data-v="asis" onclick="histVista('asis')">Asistencia</button></div>
         <div id="empResumenMes"></div>
         <div id="empHistList"><div class="spin"></div></div>
       </div>
@@ -2593,6 +2594,7 @@ async function cargarIncidenciasMes(mes){
   return incidenciasMes(mes, Object.fromEntries((marcs||[]).map(m=>[m.fecha,m])), items, sabados);
 }
 const AI_NOTA='Recursos Humanos toma este conteo para <b>descuentos en planilla</b> y <b>amonestaciones</b>. Si alguna tiene justificación, habla con Madelyn antes del cierre del mes.';
+const AI_NOTA_CERRADO='Este es el conteo final del mes que toma Recursos Humanos para <b>descuentos en planilla</b> y <b>amonestaciones</b>. Si algo no está bien, habla con Madelyn.';
 const aiMin=m=>m>=60?`${Math.floor(m/60)} h${m%60?' '+(m%60)+' min':''}`:`${m} min`;
 const aiDia=f=>{ const d=new Date(f+'T12:00:00'); return `${['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]} ${d.getDate()}`; };
 const AI_TIPO={nm:'No marcó',t:'Llegó tarde',s:'Salió antes'};
@@ -2601,7 +2603,7 @@ function aiLinea(x){
   return `<div class="ai-li ${x.tipo}${x.just?' just':''}"><span class="ai-li-f">${aiDia(x.fecha)}</span><span class="ai-li-t"><b>${AI_TIPO[x.tipo]}</b><small>${det}</small></span>${x.just?'<span class="ai-li-j">Justificado</span>':''}</div>`;
 }
 // Opción A · Tarjeta con tres números (Mi Historial y aviso de cierre)
-function aiTarjetaA(inc, {titulo='Mi asistencia', detalle=true}={}){
+function aiTarjetaA(inc, {titulo='Mi asistencia', detalle=true, mes='', cerrado=false}={}){
   const limpio=!inc.total;
   return `<div class="ai-card${limpio?' limpio':''}">
     <div class="ai-hd"><span class="ai-k">${titulo}</span><span class="ai-badge">${limpio?'✓ Sin incidencias':inc.total+(inc.total===1?' incidencia':' incidencias')}</span></div>
@@ -2610,16 +2612,17 @@ function aiTarjetaA(inc, {titulo='Mi asistencia', detalle=true}={}){
       <div class="ai-tile t${inc.diasTarde?' on':''}"><b>${inc.diasTarde}</b><span>${inc.diasTarde===1?'Llegada tarde':'Llegadas tarde'}</span><small>${inc.minTarde?aiMin(inc.minTarde):''}</small></div>
       <div class="ai-tile s${inc.salidasTemp?' on':''}"><b>${inc.salidasTemp}</b><span>${inc.salidasTemp===1?'Salida antes':'Salidas antes'}</span><small>${inc.minTemp?aiMin(inc.minTemp):''}</small></div>
     </div>
-    ${inc.min?`<div class="ai-min">⏱ <b>${aiMin(inc.min)}</b> fuera de tu horario este mes</div>`:''}
+    ${inc.min?`<div class="ai-min">⏱ <b>${aiMin(inc.min)}</b> fuera de tu horario${cerrado?" en el mes":" este mes"}</div>`:''}
     ${detalle&&inc.lista.length?`<details class="ai-det"><summary>Ver cada incidencia</summary>${inc.lista.map(aiLinea).join('')}</details>`:''}
-    ${limpio?'':`<div class="ai-nota">${AI_NOTA}</div>`}
+    ${limpio?'':`<div class="ai-nota">${cerrado?AI_NOTA_CERRADO:AI_NOTA}</div>`}
+    ${!detalle&&inc.lista.length?`<button class="ai-ver" onclick="verMiAsistencia('${mes}')">Ver cada incidencia ›</button>`:''}
   </div>`;
 }
 // Opción B · Boleta: cada incidencia como renglón de un comprobante, con totales
-function aiBoletaB(inc, nomMes){
+function aiBoletaB(inc, cerrado=false){
   const fila=(k,n,min)=>`<div class="ai-bo-row"><span>${k}</span><i></i><b>${n}${min?` · ${aiMin(min)}`:''}</b></div>`;
   return `<div class="ai-bo">
-    <div class="ai-bo-hd"><span class="ai-k">Incidencias de asistencia</span><span class="ai-bo-mes">${nomMes}</span></div>
+    <div class="ai-bo-hd"><span class="ai-k">Incidencias de asistencia</span><span class="ai-badge${inc.total?'':' ok'}">${inc.total?inc.total+(inc.total===1?' incidencia':' incidencias'):'✓ Ninguna'}</span></div>
     ${inc.lista.length?`<div class="ai-bo-lis">${inc.lista.map(aiLinea).join('')}</div>`:'<div class="ai-bo-ok">✓ Ninguna incidencia este mes</div>'}
     <div class="ai-bo-tot">
       ${fila('Días sin marcar',inc.noMarco)}
@@ -2627,42 +2630,26 @@ function aiBoletaB(inc, nomMes){
       ${fila('Salidas antes',inc.salidasTemp,inc.minTemp)}
       <div class="ai-bo-row total"><span>Total</span><i></i><b>${inc.total} ${inc.total===1?'incidencia':'incidencias'}${inc.min?` · ${aiMin(inc.min)}`:''}</b></div>
     </div>
-    ${inc.total?`<div class="ai-nota">${AI_NOTA}</div>`:''}
+    ${inc.total?`<div class="ai-nota">${cerrado?AI_NOTA_CERRADO:AI_NOTA}</div>`:''}
   </div>`;
 }
-// Opción C · Calendario: cada día hábil del mes con su color
-function aiCalendarioC(inc, mes){
-  const por={}; inc.lista.forEach(x=>{ if(!x.just) por[x.fecha]=x.tipo==='nm'?'nm':(por[x.fecha]==='nm'?'nm':'t'); });
-  const just=new Set([...inc.detalle.filter(d=>d.tipo==='justificado').map(d=>d.fecha),...inc.lista.filter(x=>x.just).map(x=>x.fecha)]);
-  const [y,m]=mes.split('-').map(Number), ult=new Date(y,m,0).getDate(), hoy=today();
-  const ini=(new Date(y,m-1,1).getDay()+6)%7;
-  let celdas='<i></i>'.repeat(ini);
-  for(let d=1;d<=ult;d++){
-    const f=`${mes}-${String(d).padStart(2,'0')}`, dow=new Date(f+'T12:00:00').getDay();
-    const habil=inc.dias.includes(f);
-    const c=f>hoy?'fut':!habil?'nol':por[f]==='nm'?'nm':por[f]?'t':just.has(f)?'ju':f===hoy?'hoy':'ok';
-    celdas+=`<span class="ai-cd ${c}">${d}</span>`;
-  }
-  return `<div class="ai-cal">
-    <div class="ai-hd"><span class="ai-k">Mi asistencia</span><span class="ai-badge">${inc.total?inc.total+(inc.total===1?' incidencia':' incidencias'):'✓ Sin incidencias'}</span></div>
-    <div class="ai-cal-w">${['L','M','M','J','V','S','D'].map(x=>`<b>${x}</b>`).join('')}</div>
-    <div class="ai-cal-g">${celdas}</div>
-    <div class="ai-cal-ley"><span><i class="ok"></i>Bien</span><span><i class="t"></i>Tarde o salió antes</span><span><i class="nm"></i>No marcó</span><span><i class="ju"></i>Permiso / justificado</span></div>
-    <div class="ai-cal-num"><span><b>${inc.noMarco}</b> sin marcar</span><span><b>${inc.diasTarde}</b> tarde</span><span><b>${inc.salidasTemp}</b> salidas antes</span>${inc.min?`<span><b>${aiMin(inc.min)}</b> fuera de horario</span>`:''}</div>
-    ${inc.total?`<div class="ai-nota">${AI_NOTA}</div>`:''}
-  </div>`;
+// Mi Historial tiene dos vistas: "Registros" (actividades, viáticos, HE) y "Asistencia" (marcaje: la boleta)
+let histVistaSel='reg';
+function aplicarHistVista(){
+  const asis=histVistaSel==='asis';
+  document.querySelectorAll('#histSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===histVistaSel));
+  const reg=$('histRegBloque'), ai=$('empAsistMia'), l=$('empHistList');
+  if(reg) reg.style.display=asis?'none':'';
+  if(l) l.style.display=asis?'none':'';
+  if(ai) ai.style.display=asis?'':'none';
 }
-function aiOpcion(){ return window.__incOpc||'A'; }
-function pintarAsistenciaMia(cont, inc, mes, nomMes){
-  if(!cont) return;
-  const o=aiOpcion();
-  cont.innerHTML=o==='B'?aiBoletaB(inc,nomMes):o==='C'?aiCalendarioC(inc,mes):aiTarjetaA(inc,{titulo:'Mi asistencia · '+nomMes.split(' ')[0]});
-}
-// Aviso de fin de mes: cómo va la asistencia (en el aviso de "Cierre de mes")
-function aiBloqueCierre(inc, mes, nomMes){
-  const o=aiOpcion();
-  return o==='B'?aiBoletaB(inc,nomMes):o==='C'?aiCalendarioC(inc,mes):aiTarjetaA(inc,{titulo:'Tu asistencia este mes',detalle:false});
-}
+window.histVista=v=>{ histVistaSel=v==='asis'?'asis':'reg'; aplicarHistVista(); };
+// Desde un aviso: abre Mi Historial en la vista de Asistencia (del mes indicado)
+window.verMiAsistencia=mes=>{
+  ['cierreMesCard','cierreMesOverlay','resumenMesCard','resumenMesOverlay'].forEach(id=>document.getElementById(id)?.remove());
+  histVistaSel='asis'; if(mes) window.__histMesInicial=mes;
+  empTab('h',document.querySelectorAll('#employeeScreen .tab')[1]);
+};
 
 async function mostrarResumenMesAnterior(){
   const hoy=new Date();
@@ -2699,7 +2686,7 @@ async function mostrarResumenMesAnterior(){
     try{
       const marcs=await obtenerMarcajesMes(db,{ref,get},me.id,mesStr).catch(()=>[]);
       const inc=incidenciasMes(mesStr, Object.fromEntries(marcs.map(m=>[m.fecha,m])), todos, sabados);
-      asistHtml=`<div class="ai-en-aviso">${aiBloqueCierre(inc, mesStr, nomMesCap.split(' ')[0])}</div>`;
+      asistHtml=`<div class="ai-en-aviso">${aiTarjetaA(inc,{titulo:'Tu asistencia en '+nomMesCap.split(' ')[0].toLowerCase(),detalle:false,mes:mesStr,cerrado:true})}</div>`;
     }catch(_){}
 
     const avisos=[];
@@ -2777,8 +2764,7 @@ async function mostrarCierreMes(diasRestantes){
     try{
       const marcs=await obtenerMarcajesMes(db,{ref,get},me.id,mes).catch(()=>[]);
       const inc=incidenciasMes(mes, Object.fromEntries(marcs.map(m=>[m.fecha,m])), todos, sabados);
-      const nm=new Date(mes+'-15T12:00:00').toLocaleDateString('es-SV',{month:'long'});
-      estado+=`<div class="ai-en-aviso">${aiBloqueCierre(inc, mes, nm.charAt(0).toUpperCase()+nm.slice(1))}</div>`;
+      estado+=`<div class="ai-en-aviso">${aiTarjetaA(inc,{titulo:'Tu asistencia este mes',detalle:false,mes})}</div>`;
     }catch(_){}
   }catch(e){ estado=''; }
 
@@ -3776,6 +3762,7 @@ async function loadHist(){
   async function renderHist(mes){
     mesEnVista=mes;
     const items=allItems.filter(r=>r.fecha&&r.fecha.startsWith(mes));
+    const mesCerradoYa=mes<today().slice(0,7);
     const viaticos=items.filter(r=>r.viatico&&r.estadoViatico!=='rechazado').length;
     const totalMinHE=items.filter(r=>r.he&&r.estadoHE==='aprobado').reduce((acc,r)=>acc+(r.minHEAprobado!==undefined?r.minHEAprobado:(r.minHE||0)),0);
     const hrsHE=Math.floor(totalMinHE/60), minsHE=totalMinHE%60;
@@ -3809,6 +3796,7 @@ async function loadHist(){
           return `<button class="hist-mes-chip ${m===mes?'active':''}" onclick="renderHistMes('${m}')">${abrev}</button>`;
         }).join('')}
       </div>
+      <div id="histRegBloque">
       <div class="rg-stats">
         <div class="rg-st b"><div class="v">${cal.registrados}/${cal.habiles}</div><div class="l">Días registrados</div></div>
         <div class="rg-st g"><div class="v">${viaticos}</div><div class="l">Viáticos</div></div>
@@ -3816,8 +3804,10 @@ async function loadHist(){
       </div>
       ${cal.html}
       ${hayFaltasTocables?'<div class="hist-cal-tip">Toca un día con borde rojo para registrarlo</div>':''}
+      </div>
       <div id="empAsistMia"></div>`;
-    try{ pintarAsistenciaMia($('empAsistMia'), incidenciasMes(mes, marcajesPorFecha, allItems, sabados), mes, nomMes); }catch(e){ console.warn('Mi asistencia:',e); }
+    try{ $('empAsistMia').innerHTML=aiBoletaB(incidenciasMes(mes, marcajesPorFecha, allItems, sabados), mesCerradoYa); }catch(e){ console.warn('Mi asistencia:',e); }
+    aplicarHistVista();
 
     if(!items.length){
       l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros en este mes</div></div>';

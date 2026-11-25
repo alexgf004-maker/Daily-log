@@ -331,6 +331,18 @@ Firebase por render). Se resolvió así:
 
 **Regla**: no volver al patrón de leer por-empleado en bucle. Usar los cachés.
 
+**Mi asistencia (técnico, nov 2026)**. RR.HH. aprobó usar el marcaje para descuentos y amonestaciones, así que
+el técnico ve sus incidencias con **el mismo cálculo que la oficina** (`resumenMesEmpleado`, vía `incidenciasMes`):
+días hábiles sin ninguna marca (sin vacaciones/permiso/incapacidad/asueto/bienestar), llegadas tarde y salidas
+antes, con minutos; lo justificado por la oficina se muestra tachado y no cuenta. Hoy sin marcar no cuenta hasta
+que termine el día. Dónde:
+- **Mi Historial** con selector «Registros | Asistencia» (`histVista`): Asistencia = boleta (`aiBoletaB`) con
+  cada incidencia y totales.
+- **Aviso de cierre de mes** (últimos 4 días) y **Resumen del mes** (días 1–3): tarjeta de tres números
+  (`aiTarjetaA`) con «Ver cada incidencia» → `verMiAsistencia(mes)`.
+- Pendiente de RR.HH.: si «olvidó marcar la salida» debe contar (hoy no cuenta, igual que en la oficina) y si
+  hay una escala de sanciones para mostrar el nivel.
+
 **Guardado con mala señal (mantenimiento, nov 2026)**. Quejas: «a veces no guarda», «guardé y no aparece».
 Causas encontradas (reproducidas en el emulador con un proxy que deja la conexión «colgada»):
 - Al volver a la app tras tener el celular bloqueado, la conexión con Firebase puede quedar colgada (parece
