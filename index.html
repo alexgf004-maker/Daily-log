@@ -2087,7 +2087,6 @@ function quitarCapasFlotantes(){
   window.cerrarNovedades?.();
   try{ clearInterval(tourCuenta); window.removeEventListener('resize',ubicarTour); }catch(_){}
   document.body.classList.remove('tc-quieto');
-  clearInterval(avAnCuenta);
   document.querySelectorAll('#tcCapa,#avAnuncio,.rm-card,.rm-dim,.ag-export').forEach(e=>e.remove());
   document.querySelector('.ag-tip')?.classList.remove('on');
   document.querySelectorAll('.mo.open').forEach(m=>m.classList.remove('open'));
@@ -2255,7 +2254,7 @@ function trasEntrarAvisos(){
   if(/[?&]marcar=1/.test(location.search)){ try{ history.replaceState(null,'',location.pathname); }catch(_){} irAMarcaje(); }
   // Se abrió desde el aviso de cierre de mes: ir a Pendientes
   if(/[?&]pend=1/.test(location.search)){ try{ history.replaceState(null,'',location.pathname); }catch(_){} irAPendientes(); }
-  refrescarAvisos(me.id).finally(()=>{ pintarAvisosInicio(); programarAnuncioAvisos(); });
+  refrescarAvisos(me.id).finally(()=>{ pintarAvisosInicio(); });
 }
 // Lleva a la tarjeta de marcaje (empleado: Nuevo Registro; admin: Dashboard) y la resalta
 function irAMarcaje(){
@@ -2275,83 +2274,10 @@ function irAMarcaje(){
 try{ navigator.serviceWorker?.addEventListener('message',e=>{ if(e.data?.tipo==='ir-marcar') irAMarcaje(); if(e.data?.tipo==='ir-pend') irAPendientes(); }); }catch(_){}
 function irAPendientes(){ if(isAdmin()&&$('tabPend')) adTab('pend',$('tabPend')); }
 
-// ── Anuncio "Ya te pueden llegar avisos" (pantalla completa al entrar) ──
-// Sale a todos (empleados, admin y asistente). Si no tienen los avisos activados en ese celular,
-// "Activar" funciona al instante, "Ahora no" se habilita después de unos segundos y, si lo saltan,
-// no vuelve a salir ese mismo día (al día siguiente sí). Si ya los tienen activados, sale una sola
-// vez para que se enteren (con opción de mandarse un aviso de prueba).
-const AV_ANUNCIO='innova_avisos_anuncio', AV_ANUNCIO_ACTIVO='innova_avisos_anuncio_activo', AV_ANUNCIO_ESPERA=10;
-let avAnCuenta=null;
-// Quien activó los avisos ya se enteró: no hace falta mostrarle el anuncio de "ya los tienes"
+// El anuncio de pantalla completa "Ya te pueden llegar avisos" se quitó (nov 2026): salía muy seguido, aun a
+// quien ya los tenía activados. Los avisos se activan en Mi Perfil → Avisos al celular.
+const AV_ANUNCIO_ACTIVO='innova_avisos_anuncio_activo';
 function avYaSeEntero(){ try{ localStorage.setItem(AV_ANUNCIO_ACTIVO,'1'); }catch(_){} }
-function programarAnuncioAvisos(){
-  if(!me) return;
-  const leer=k=>{ try{ return localStorage.getItem(k); }catch(_){ return null; } };
-  let intentos=0;
-  const probar=async()=>{
-    if(!me||$('avAnuncio')) return;
-    // Esperar a que no haya otra ventana encima (recorrido de novedades, resúmenes, etc.)
-    if(document.querySelector('#tcCapa,#novReg,.rm-card,.rm-dim,.mo.open,.nv-pan,.mus-espera')){ if(++intentos<150) setTimeout(probar,800); return; }
-    const est=await estadoAvisos().catch(()=>'no-soportado');
-    if(est==='activo' ? leer(AV_ANUNCIO_ACTIVO) : leer(AV_ANUNCIO)===today()) return;
-    mostrarAnuncioAvisos(est);
-  };
-  setTimeout(probar,1800);
-}
-function mostrarAnuncioAvisos(est){
-  const emp=me.role==='empleado';
-  const items=[['b','⏰','Recordatorio para marcar','5 minutos antes y después de la hora de entrada y de salida'],
-    ['g','✓',emp?'Tus aprobaciones':'Aprobaciones','Cuando se revisan horas extra, viáticos o permisos'],
-    ['v','📍',emp?'Tu programación':'Programación','Dónde le toca a cada quien, con quién y en qué vehículo']];
-  const AV_NO_SOP='Este celular o navegador no permite avisos. En Android abre la app en <b>Chrome</b>; en iPhone agrégala a la pantalla de inicio desde <b>Safari</b>.';
-  const accion=est==='apagado' ? `<button class="tc-btn av-an-si" onclick="avAnActivar()">Activar avisos</button>`
-    : est==='activo' ? `<div class="av-an-ok">✓ Ya tienes los avisos activados en este celular</div><button class="tc-btn av-an-si av-an-prueba" onclick="avAnProbar()">Mandarme un aviso de prueba</button>`
-    : `<div class="tc-ojo av-an-ayuda${est!=='bloqueado'?' info':''}">${est==='ios-instalar'?AV_IOS:est==='bloqueado'?AV_BLOQ:AV_NO_SOP}</div>`;
-  const capa=document.createElement('div'); capa.id='avAnuncio'; capa.className='av-an'; capa.dataset.est=est;
-  capa.innerHTML=`<div class="av-an-velo"></div>
-    <div class="av-an-card" role="dialog" aria-label="Avisos al celular">
-      <div class="av-an-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg></div>
-      <div class="tc-k">NUEVO</div>
-      <div class="tc-t">Ya te pueden llegar avisos al celular</div>
-      <div class="tc-p">${est==='activo'?'Te llegan al celular aunque tengas la app cerrada:':emp?'Actívalos para que no se te pase nada, aunque tengas la app cerrada:':'Ahora la app manda estos avisos al celular, aunque esté cerrada. Actívalos también en el tuyo:'}</div>
-      <div class="tc-ej">${items.map(([c,ic,t,d])=>`<div><i class="${c}">${ic}</i><span><b>${t}</b><small>${d}</small></span></div>`).join('')}</div>
-      <div id="avAnEstado">${accion}</div>
-      <button class="av-an-no" id="avAnNo" onclick="avAnCerrar(true)" disabled>${est==='apagado'?'Ahora no':'Entendido'} (${AV_ANUNCIO_ESPERA})</button>
-    </div>`;
-  document.body.appendChild(capa);
-  document.body.classList.add('tc-quieto');
-  let falta=AV_ANUNCIO_ESPERA; const etiqueta=est==='apagado'?'Ahora no':'Entendido';
-  clearInterval(avAnCuenta);
-  avAnCuenta=setInterval(()=>{ const b=$('avAnNo'); if(!b){ clearInterval(avAnCuenta); return; }
-    falta--; if(falta>0) b.textContent=`${etiqueta} (${falta})`; else { b.textContent=etiqueta; b.disabled=false; clearInterval(avAnCuenta); } },1000);
-}
-window.avAnCerrar=(salto)=>{
-  clearInterval(avAnCuenta);
-  if(salto){ try{ if($('avAnuncio')?.dataset.est==='activo') localStorage.setItem(AV_ANUNCIO_ACTIVO,'1'); else localStorage.setItem(AV_ANUNCIO,today()); }catch(_){} }
-  $('avAnuncio')?.remove();
-  if(!$('tcCapa')) document.body.classList.remove('tc-quieto');
-};
-window.avAnProbar=async()=>{
-  const b=document.querySelector('#avAnEstado .av-an-prueba'); if(!b) return;
-  b.disabled=true; b.textContent='Enviando…';
-  try{ const r=await probarAviso(); b.textContent=r.telefonos?'Listo: en unos segundos te llega':'No encontré tu celular; actívalos de nuevo en Mi Perfil'; }
-  catch(e){ b.textContent='No se pudo enviar'; }
-};
-window.avAnActivar=async()=>{
-  const box=$('avAnEstado'); if(!box) return;
-  box.innerHTML='<button class="tc-btn av-an-si" disabled>Activando…</button>';
-  let est;
-  try{ est=await activarAvisos(me.id); }catch(e){ est='error'; }
-  if(est==='activo'){
-    avYaSeEntero();
-    box.innerHTML='<div class="av-an-ok">✓ ¡Listo! Ya tienes los avisos activados.</div>';
-    clearInterval(avAnCuenta); const b=$('avAnNo'); if(b) b.remove();
-    pintarAvisosInicio();
-    setTimeout(()=>avAnCerrar(false),2200);
-  } else {
-    box.innerHTML=`<div class="tc-ojo av-an-ayuda">${est==='bloqueado'?AV_BLOQ:'No se pudieron activar. Puedes intentarlo después desde Mi Perfil → Avisos al celular.'}</div>`;
-  }
-};
 
 // ── Novedades en el registro (actividades prellenadas y viático automático) ──
 // Pantalla completa, una sola vez por celular y solo para técnicos; "Entendido" a los 6 s.

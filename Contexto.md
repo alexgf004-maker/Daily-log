@@ -274,11 +274,8 @@ importante — ver sección 7.**
   Para una novedad futura: cambiar el texto y subir el número de la clave.
 
 ### Avisos al celular (notificaciones)
-- Al entrar sale un anuncio a pantalla completa ("Ya te pueden llegar avisos al celular") a todos
-  (empleados, admin y asistente). Si ya los tienen activados sale una sola vez (`innova_avisos_anuncio_activo`)
-  con "Mandarme un aviso de prueba". Si no los tienen activados: "Activar avisos" funciona al instante y "Ahora no"
-  se habilita a los 10 s; si lo saltan no vuelve a salir ese día (`innova_avisos_anuncio`). No se encima
-  con el recorrido de novedades. En iPhone sin instalar explica cómo agregar la app a inicio.
+- *(Quitado, nov 2026)* El anuncio a pantalla completa "Ya te pueden llegar avisos al celular" salía muy seguido,
+  aun a quien ya los tenía activados (la gente se quejó). Ya no sale; no volver a ponerlo.
 - Cada persona los activa en su teléfono: tarjeta "Activa los avisos" en el inicio del empleado
   (se puede posponer 7 días) o fila "Avisos al celular" en Mi Perfil (empleado y admin), con
   "Mandarme un aviso de prueba" y "Apagar". Al cerrar sesión el teléfono deja de recibir los avisos de
