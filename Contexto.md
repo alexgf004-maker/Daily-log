@@ -1056,6 +1056,9 @@ puede tumbar. Por eso:
    empleado.
 7. **Respeta meses cerrados** al escribir en `registros`.
 8. **Verifica que `index.html` no se truncó** tras subirlo (compara número de líneas).
+   Después de fusionar, confirma que GitHub Pages publicó ese commit (Actions → «pages build and
+   deployment» con el mismo SHA). En nov 2026 una fusión no disparó el despliegue y la app siguió con la
+   versión anterior; se resolvió subiendo otro commit a `main`.
 9. Tras cualquier cambio en el tablero de programación, probar en **vista de celular**
    (es el uso principal).
 10. **Propuestas de diseño: siempre 3 opciones, con ejemplos** (video o imágenes de cada una), nunca solo
