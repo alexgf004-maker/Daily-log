@@ -345,6 +345,10 @@ que termine el día. Dónde:
   (hora del servidor); `resumenMesEmpleado`, `marcaTxt` y el historial del técnico ignoran el lado sin `ts`.
 - No se muestra ninguna escala de sanciones (RR.HH. no la ha definido).
 - Pruebas: `tests/asistencia.test.mjs` (`node --test tests/*.cjs tests/*.mjs`).
+- **Recorrido «Ahora ves tu asistencia»** (técnicos, una sola vez por persona: `users/{uid}/tutoAsistenciaV`, con
+  regla propia en `database.rules.json`). Usa el motor del recorrido de la campanita (`TOURS.asistencia`,
+  `TOUR_ASIS`): 1) el selector Registros | Asistencia, 2) cada tipo de incidencia, 3) el total y que cuenta para
+  planilla. Cada paso espera 8–12 s antes de dejar avanzar (que lo lean de verdad). Sale después del de la campanita.
 
 **Guardado con mala señal (mantenimiento, nov 2026)**. Quejas: «a veces no guarda», «guardé y no aparece».
 Causas encontradas (reproducidas en el emulador con un proxy que deja la conexión «colgada»):

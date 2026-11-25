@@ -1729,6 +1729,3 @@ button.ag-mn:hover{color:var(--blue)}
 .hist-seg{margin:0 0 12px}
 .ai-ver{display:block;width:100%;margin-top:10px;padding:9px 10px;border:none;border-radius:10px;background:var(--gray100);color:var(--blue);font:800 13px var(--sans);cursor:pointer}
 #empAsistMia .ai-bo{margin-top:12px}
-/* Novedad: tarjeta de la sección Asistencia arriba del registro */
-.nv-asis-card{position:relative;padding-right:38px}
-.nv-asis-x{position:absolute;top:8px;right:8px;width:28px;height:28px;border:none;border-radius:9px;background:var(--gray100);color:var(--text2);font-size:13px;cursor:pointer}
