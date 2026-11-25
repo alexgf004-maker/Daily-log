@@ -61,7 +61,7 @@
 </script>
 <!-- Si el diseño principal no llega (señal débil), que nunca se vean todas las pantallas encimadas -->
 <style>.screen{display:none;flex-direction:column;min-height:100vh}.screen.active{display:flex}</style>
-<link rel="stylesheet" href="css/styles.css?v=85" id="cssBase">
+<link rel="stylesheet" href="css/styles.css?v=86" id="cssBase">
 <script>
 // ── Diseño principal sin señal ──
 // Si css/styles.css no se descarga (se cortó la conexión), la app salía sin tamaños ni colores: todas las
@@ -85,7 +85,7 @@
     if(intentos>=MAX){ if(document.body) aviso(); else document.addEventListener('DOMContentLoaded',aviso); return; }
     intentos++;
     var viejo=document.getElementById('cssBase'), l=document.createElement('link');
-    l.rel='stylesheet'; l.id='cssBase'; l.href='css/styles.css?v=85&r='+Date.now();
+    l.rel='stylesheet'; l.id='cssBase'; l.href='css/styles.css?v=86&r='+Date.now();
     l.onload=function(){ setTimeout(reintentar,0); }; l.onerror=function(){ setTimeout(reintentar,800); };
     if(viejo&&viejo.parentNode) viejo.parentNode.replaceChild(l,viejo); else document.head.appendChild(l);
   }
@@ -1067,6 +1067,7 @@ function renderEmployee(nombre){
         <div id="progEmpCard" style="display:none"></div>
         <div id="avisosCard" class="av-card" style="display:none"></div>
         <div id="empPendEnvio"></div>
+        <div id="novAsisCard" style="display:none"></div>
         <!-- Día -->
         <div class="fx-card">
           <div class="fx-k">Día</div>
@@ -2058,7 +2059,7 @@ window.doLogin = async ()=>{
   if(me.role==='admin'||me.role==='asistente'){
     iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh(); navidadApp();
   } else {
-    renderEmployee(me.nombre); screen('employeeScreen'); initForm(); pintarPendEnvio(); reenviarPendientes(); cargarNovedades(true); programarTutoCampanita(); navidadApp();
+    renderEmployee(me.nombre); screen('employeeScreen'); initForm(); pintarPendEnvio(); reenviarPendientes(); cargarNovedades(true); programarTutoCampanita(); programarNovedadAsistencia(); navidadApp();
   }
   trasEntrarAvisos();
 };
@@ -2166,7 +2167,7 @@ if(navigator.storage && navigator.storage.persist){
       if(me.role==='admin'||me.role==='asistente'){
         iniciarEspejos(); renderAdmin(); screen('adminScreen'); loadDash(); startDashRefresh(); navidadApp();
       } else {
-        renderEmployee(me.nombre); screen('employeeScreen'); initForm(); pintarPendEnvio(); reenviarPendientes(); cargarNovedades(true); programarTutoCampanita(); navidadApp();
+        renderEmployee(me.nombre); screen('employeeScreen'); initForm(); pintarPendEnvio(); reenviarPendientes(); cargarNovedades(true); programarTutoCampanita(); programarNovedadAsistencia(); navidadApp();
       }
       trasEntrarAvisos();
     } catch(e) { localStorage.removeItem('innova_session'); screen('loginScreen'); }
@@ -5187,7 +5188,7 @@ window.nvAbrir=(key)=>{ cerrarNovedades(); openDet(me.id,key,false); };
 // salir una vez. Desde Mi Perfil se puede repasar cuando quieran (sin esperas).
 const TOUR_V=5;
 const tourVisto=()=>(Number(me?.tutoCampanitaV)||0)>=TOUR_V;
-let tourPaso=0, tourManual=false, tourCuenta=null;
+let tourPaso=0, tourManual=false, tourCuenta=null, TOUR_ACT=null;
 const tabEmp=i=>document.querySelectorAll('#employeeScreen .tab')[i];
 const esperarEl=async(sel,ms=6000)=>{ const t0=Date.now(); while(Date.now()-t0<ms){ const e=document.querySelector(sel); if(e&&e.getBoundingClientRect().height) return e; await new Promise(r=>setTimeout(r,150)); } return null; };
 const TOUR_PASOS=[
@@ -5224,6 +5225,87 @@ const TOUR_PASOS=[
         <div><i class="b">i</i><span><b>El motivo, si Madelyn cambió algo</b><small>Así no tienes que preguntar por qué</small></span></div>
       </div>` }
 ];
+// ── Novedad: la sección Asistencia de Mi Historial (una sola vez por persona: users/{uid}/tutoAsistenciaV) ──
+const ASIS_V=1;
+const asisVisto=()=>(Number(me?.tutoAsistenciaV)||0)>=ASIS_V;
+const irAsistencia=async()=>{ const t=tabEmp(1); if(t&&!t.classList.contains('active')) empTab('h',t); histVista('asis'); await esperarEl('#empAsistMia .ai-bo'); };
+const TOUR_ASIS=[
+  { espera:5,
+    antes:async()=>{ await irAsistencia(); window.scrollTo(0,0); },
+    blanco:()=>$('histSeg'),
+    html:`<div class="tc-k">1 DE 3 · NUEVO EN MI HISTORIAL</div>
+      <div class="tc-t">Ahora ves tu asistencia</div>
+      <div class="tc-p">En <b>Mi Historial</b> hay dos vistas: <b>Registros</b> (lo de siempre) y <b>Asistencia</b>, donde ves cómo vas con tus marcajes de entrada y salida.</div>` },
+  { espera:6,
+    antes:async()=>{ await esperarEl('#empAsistMia .ai-bo'); },
+    blanco:()=>document.querySelector('#empAsistMia .ai-bo-lis')||document.querySelector('#empAsistMia .ai-bo'),
+    html:`<div class="tc-k">2 DE 3 · TUS INCIDENCIAS</div>
+      <div class="tc-t">Cada incidencia, con su día y hora</div>
+      <div class="tc-ej">
+        <div><i class="r">✕</i><span><b>No marcó</b><small>Un día de trabajo sin entrada ni salida</small></span></div>
+        <div><i class="r">!</i><span><b>Marca olvidada</b><small>Marcaste la entrada pero no la salida, o al revés</small></span></div>
+        <div><i class="a">⏱</i><span><b>Llegó tarde · Salió antes</b><small>Con los minutos de diferencia</small></span></div>
+        <div><i class="v">✓</i><span><b>Justificado</b><small>Si Madelyn la justificó, sale tachada y no cuenta</small></span></div>
+      </div>` },
+  { espera:6,
+    antes:async()=>{ await esperarEl('#empAsistMia .ai-bo-tot'); },
+    blanco:()=>document.querySelector('#empAsistMia .ai-bo-tot'),
+    html:`<div class="tc-k">3 DE 3 · CUENTA PARA PLANILLA</div>
+      <div class="tc-t">El total del mes</div>
+      <div class="tc-p">Recursos Humanos toma este conteo para <b>descuentos en planilla</b> y <b>amonestaciones</b>. Al final de cada mes te llega un resumen.</div>
+      <div class="tc-ojo"><b>¿Alguna tiene justificación?</b> Habla con Madelyn antes del cierre del mes.</div>` }
+];
+const TOURS={ campanita:{pasos:TOUR_PASOS, campo:'tutoCampanitaV', v:TOUR_V}, asistencia:{pasos:TOUR_ASIS, campo:'tutoAsistenciaV', v:ASIS_V} };
+const ASIS_TIPOS=[['r','✕','No marcó','Un día de trabajo sin entrada ni salida'],['r','!','Marca olvidada','Marcaste la entrada pero no la salida, o al revés'],
+  ['a','⏱','Llegó tarde o salió antes','Con los minutos de diferencia'],['v','✓','Justificado','Si Madelyn la justificó, no cuenta']];
+// B · Pantalla completa con botón para ir a verla
+function mostrarNovedadAsistencia(){
+  const capa=document.createElement('div'); capa.id='novAsis'; capa.className='av-an';
+  capa.innerHTML=`<div class="av-an-velo"></div>
+    <div class="av-an-card" role="dialog" aria-label="Nuevo: tu asistencia">
+      <div class="av-an-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11a7 7 0 0114 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+      <div class="tc-k">NUEVO EN MI HISTORIAL</div>
+      <div class="tc-t">Ahora ves tu asistencia</div>
+      <div class="tc-p">En <b>Mi Historial → Asistencia</b> ves cada incidencia de tus marcajes del mes:</div>
+      <div class="tc-ej">${ASIS_TIPOS.map(([c,ic,t,d])=>`<div><i class="${c}">${ic}</i><span><b>${t}</b><small>${d}</small></span></div>`).join('')}</div>
+      <div class="tc-ojo">Recursos Humanos toma este conteo para <b>descuentos en planilla</b> y <b>amonestaciones</b>. Si alguna tiene justificación, habla con Madelyn antes del cierre.</div>
+      <button class="tc-btn av-an-si" onclick="cerrarNovedadAsistencia(true)">Ver mi asistencia</button>
+      <button class="av-an-no" onclick="cerrarNovedadAsistencia(false)">Después</button>
+    </div>`;
+  document.body.appendChild(capa);
+  document.body.classList.add('tc-quieto');
+}
+window.cerrarNovedadAsistencia=(ver)=>{
+  $('novAsis')?.remove();
+  if(!$('tcCapa')&&!$('novReg')) document.body.classList.remove('tc-quieto');
+  guardarVisto('tutoAsistenciaV',ASIS_V);
+  if(ver) irAsistencia();
+};
+// C · Tarjeta arriba del registro (se va al tocar "Ver" o la ✕)
+function pintarTarjetaAsistencia(){
+  const c=$('novAsisCard'); if(!c) return;
+  if(!me||me.role!=='empleado'||asisVisto()){ c.style.display='none'; c.innerHTML=''; return; }
+  c.innerHTML=`<div class="av-card nv-asis-card"><div class="av-card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11a7 7 0 0114 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+    <div class="av-card-tx"><b>Nuevo: tu asistencia del mes</b><span>En Mi Historial → Asistencia ves tus días sin marcar, marcas olvidadas, llegadas tarde y salidas antes. Recursos Humanos toma este conteo para planilla.</span>
+    <div class="av-bts"><button class="btn btn-p btn-sm" onclick="verTarjetaAsistencia()">Ver mi asistencia</button></div></div>
+    <button class="nv-asis-x" onclick="cerrarTarjetaAsistencia()" aria-label="Cerrar">✕</button></div>`;
+  c.style.display='';
+}
+window.verTarjetaAsistencia=()=>{ guardarVisto('tutoAsistenciaV',ASIS_V); pintarTarjetaAsistencia(); irAsistencia(); };
+window.cerrarTarjetaAsistencia=()=>{ guardarVisto('tutoAsistenciaV',ASIS_V); pintarTarjetaAsistencia(); };
+function programarNovedadAsistencia(){
+  if(!me||me.role!=='empleado'||asisVisto()) return;
+  const opc=window.__novOpc||'A';
+  if(opc==='C'){ pintarTarjetaAsistencia(); return; }
+  let intentos=0;
+  const probar=()=>{
+    if(!me||me.role!=='empleado'||asisVisto()||$('novAsis')||$('tcCapa')&&TOUR_ACT===TOURS.asistencia) return;
+    // Espera a que no haya otra ventana encima (recorrido de la campanita, novedades, resúmenes…)
+    if(document.querySelector('.rm-card,.rm-dim,.mo.open,.fx-ok.on,.nv-pan,#tcCapa,#novReg,.mus-espera')||!tourVisto()){ if(++intentos<150) setTimeout(probar,800); return; }
+    if(opc==='B') mostrarNovedadAsistencia(); else iniciarTour(false,'asistencia');
+  };
+  setTimeout(probar,2000);
+}
 function programarTutoCampanita(){
   if(!me||me.role!=='empleado'||tourVisto()) return;
   let intentos=0;
@@ -5236,9 +5318,10 @@ function programarTutoCampanita(){
   };
   setTimeout(probar,1500);
 }
-window.iniciarTour=(manual)=>{
+window.iniciarTour=(manual,cual)=>{
   if($('tcCapa')) return;
   tourManual=!!manual; tourPaso=0;
+  TOUR_ACT=TOURS[cual]||TOURS.campanita;
   const capa=document.createElement('div'); capa.id='tcCapa'; capa.className='tc-capa';
   // El fondo se oscurece y desenfoca con 4 paneles alrededor de lo señalado, que queda nítido
   capa.innerHTML=`<div class="tc-velo"></div><div class="tc-velo"></div><div class="tc-velo"></div><div class="tc-velo"></div>
@@ -5246,7 +5329,7 @@ window.iniciarTour=(manual)=>{
     <div class="tc-tip" role="dialog" aria-label="Novedades de la app">
       ${tourManual?'<button class="tc-x" onclick="cerrarTour()" aria-label="Cerrar">✕</button>':''}
       <div id="tcCuerpo"></div>
-      <div class="tc-pie"><div class="tc-dots">${TOUR_PASOS.map(()=>'<i></i>').join('')}</div>
+      <div class="tc-pie"><div class="tc-dots">${TOUR_ACT.pasos.map(()=>'<i></i>').join('')}</div>
         <button class="tc-atras" id="tcAtras" onclick="tourIr(-1)">Atrás</button>
         <button class="tc-btn" id="tcBtn" onclick="tourIr(1)">Siguiente</button></div>
     </div>`;
@@ -5257,7 +5340,7 @@ window.iniciarTour=(manual)=>{
 };
 async function mostrarPasoTour(){
   const capa=$('tcCapa'); if(!capa) return;
-  const paso=TOUR_PASOS[tourPaso], ultimo=tourPaso===TOUR_PASOS.length-1;
+  const paso=TOUR_ACT.pasos[tourPaso], ultimo=tourPaso===TOUR_ACT.pasos.length-1;
   capa.classList.add('cambiando');
   await paso.antes();
   if(!$('tcCapa')) return;
@@ -5285,7 +5368,7 @@ async function mostrarPasoTour(){
 }
 function ubicarTour(){
   const capa=$('tcCapa'); if(!capa) return;
-  const el=TOUR_PASOS[tourPaso].blanco();
+  const el=TOUR_ACT.pasos[tourPaso].blanco();
   const [arr,abj,izq,der]=capa.querySelectorAll('.tc-velo');
   const hoyo=capa.querySelector('.tc-hoyo'), tip=capa.querySelector('.tc-tip');
   const W=window.innerWidth, H=window.innerHeight, px=v=>Math.max(0,v)+'px';
@@ -5316,8 +5399,8 @@ function ubicarTour(){
 }
 window.tourIr=(d)=>{
   const btn=$('tcBtn'); if(d>0&&btn&&btn.disabled) return;
-  if(d>0&&tourPaso===TOUR_PASOS.length-1){ cerrarTour(true); return; }
-  tourPaso=Math.max(0,Math.min(TOUR_PASOS.length-1,tourPaso+d));
+  if(d>0&&tourPaso===TOUR_ACT.pasos.length-1){ cerrarTour(true); return; }
+  tourPaso=Math.max(0,Math.min(TOUR_ACT.pasos.length-1,tourPaso+d));
   mostrarPasoTour();
 };
 window.cerrarTour=(completo)=>{
@@ -5325,15 +5408,21 @@ window.cerrarTour=(completo)=>{
   $('tcCapa')?.remove();
   document.body.classList.remove('tc-quieto');
   window.removeEventListener('resize',ubicarTour);
-  TOUR_PASOS.forEach(p=>delete p.visto);
+  const T=TOUR_ACT||TOURS.campanita;
+  T.pasos.forEach(p=>delete p.visto);
   // De regreso a Nuevo Registro
   const t=tabEmp(tourManual?3:0); if(t) empTab(tourManual?'p':'r',t);
   window.scrollTo(0,0);
   if(!me||tourManual||!completo) return;
-  me.tutoCampanitaV=TOUR_V;
-  try{ localStorage.setItem('innova_session',JSON.stringify(me)); }catch(_){}
-  update(ref(db,`users/${me.id}`),{tutoCampanitaV:TOUR_V}).catch(()=>{});
+  guardarVisto(T.campo,T.v);
 };
+// Guarda en la ficha de la persona que ya vio una novedad (vale para todos sus celulares)
+function guardarVisto(campo,v){
+  if(!me) return;
+  me[campo]=v;
+  try{ localStorage.setItem('innova_session',JSON.stringify(me)); }catch(_){}
+  update(ref(db,`users/${me.id}`),{[campo]:v}).catch(()=>{});
+}
 
 
 // ── Ventanas tipo hoja (mismo estilo que "aprobar horas extra") ──

@@ -17,6 +17,9 @@
         },
         "tutoCampanitaV": {
           ".write": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')"
+        },
+        "tutoAsistenciaV": {
+          ".write": "auth != null && auth.uid === $uid && (root.child('users/'+auth.uid+'/activo').val() === true || root.child('users/'+auth.uid+'/activo').val() === 'true')"
         }
       }
     },
