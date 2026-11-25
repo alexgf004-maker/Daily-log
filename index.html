@@ -61,7 +61,7 @@
 </script>
 <!-- Si el diseño principal no llega (señal débil), que nunca se vean todas las pantallas encimadas -->
 <style>.screen{display:none;flex-direction:column;min-height:100vh}.screen.active{display:flex}</style>
-<link rel="stylesheet" href="css/styles.css?v=84" id="cssBase">
+<link rel="stylesheet" href="css/styles.css?v=85" id="cssBase">
 <script>
 // ── Diseño principal sin señal ──
 // Si css/styles.css no se descarga (se cortó la conexión), la app salía sin tamaños ni colores: todas las
@@ -85,7 +85,7 @@
     if(intentos>=MAX){ if(document.body) aviso(); else document.addEventListener('DOMContentLoaded',aviso); return; }
     intentos++;
     var viejo=document.getElementById('cssBase'), l=document.createElement('link');
-    l.rel='stylesheet'; l.id='cssBase'; l.href='css/styles.css?v=84&r='+Date.now();
+    l.rel='stylesheet'; l.id='cssBase'; l.href='css/styles.css?v=85&r='+Date.now();
     l.onload=function(){ setTimeout(reintentar,0); }; l.onerror=function(){ setTimeout(reintentar,800); };
     if(viejo&&viejo.parentNode) viejo.parentNode.replaceChild(l,viejo); else document.head.appendChild(l);
   }
@@ -2561,6 +2561,109 @@ window.setTipoDia=function(tipo,btn){
   actualizarResumenForm();
 };
 
+// ── Mi asistencia: incidencias del mes del técnico ─────────────────────────────
+// Mismo cálculo que ve la oficina en Asistencia (resumenMesEmpleado de js/asistencia.js): un día hábil
+// sin ninguna marca y sin vacaciones/permiso/incapacidad/asueto = "no marcó"; entrada tarde y salida
+// antes de la hora = incidencia; lo que la oficina justificó no cuenta. Recursos Humanos usa este
+// conteo para descuentos y amonestaciones, por eso el técnico lo ve igual.
+function incidenciasMes(mes, marcajesPorFecha, items, sabados){
+  const regsPorFecha={}; (items||[]).forEach(r=>{ if(r&&r.fecha&&r.fecha.startsWith(mes)) regsPorFecha[r.fecha]=r; });
+  const hoy=today();
+  const r=resumenMesEmpleado(mes, me.id, marcajesPorFecha||{}, regsPorFecha, sabados||{}, hoy);
+  // Hoy sin marcar todavía no es falta: el día no ha terminado
+  const hoyNada=r.detalle.find(d=>d.fecha===hoy&&d.tipo==='no_marco');
+  if(hoyNada){ r.noMarco--; r.detalle=r.detalle.filter(d=>d!==hoyNada); }
+  const lista=[];
+  r.detalle.forEach(d=>{
+    if(d.tipo==='no_marco'){ lista.push({fecha:d.fecha,tipo:'nm'}); return; }
+    if(d.entrada?.estado==='tarde') lista.push({fecha:d.fecha,tipo:'t',min:d.entrada.minDiff||0,hora:d.entrada.horaStr||'',just:!!d.entrada.justificado});
+    if(d.salida?.estado==='salida_temprana') lista.push({fecha:d.fecha,tipo:'s',min:d.salida.minDiff||0,hora:d.salida.horaStr||'',just:!!d.salida.justificado});
+  });
+  lista.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const dias=diasHabilesEmpleado(mes, me.id, sabados||{}, hoy);
+  return {...r, lista, dias, total:r.noMarco+r.diasTarde+r.salidasTemp, min:r.minTarde+r.minTemp};
+}
+async function cargarIncidenciasMes(mes){
+  const [snap, marcs, sabados]=await Promise.all([
+    get(ref(db,`registros/${me.id}`)),
+    obtenerMarcajesMes(db,{ref,get},me.id,mes).catch(()=>[]),
+    obtenerSabadosLaborales(db,{ref,get},mes).catch(()=>({}))
+  ]);
+  const items=snap.exists()?Object.values(snap.val()):[];
+  return incidenciasMes(mes, Object.fromEntries((marcs||[]).map(m=>[m.fecha,m])), items, sabados);
+}
+const AI_NOTA='Recursos Humanos toma este conteo para <b>descuentos en planilla</b> y <b>amonestaciones</b>. Si alguna tiene justificación, habla con Madelyn antes del cierre del mes.';
+const aiMin=m=>m>=60?`${Math.floor(m/60)} h${m%60?' '+(m%60)+' min':''}`:`${m} min`;
+const aiDia=f=>{ const d=new Date(f+'T12:00:00'); return `${['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]} ${d.getDate()}`; };
+const AI_TIPO={nm:'No marcó',t:'Llegó tarde',s:'Salió antes'};
+function aiLinea(x){
+  const det=x.tipo==='nm'?'Sin entrada ni salida':`${x.tipo==='t'?'Entró':'Salió'} ${hora12(x.hora)} · ${aiMin(x.min)} ${x.tipo==='t'?'tarde':'antes'}`;
+  return `<div class="ai-li ${x.tipo}${x.just?' just':''}"><span class="ai-li-f">${aiDia(x.fecha)}</span><span class="ai-li-t"><b>${AI_TIPO[x.tipo]}</b><small>${det}</small></span>${x.just?'<span class="ai-li-j">Justificado</span>':''}</div>`;
+}
+// Opción A · Tarjeta con tres números (Mi Historial y aviso de cierre)
+function aiTarjetaA(inc, {titulo='Mi asistencia', detalle=true}={}){
+  const limpio=!inc.total;
+  return `<div class="ai-card${limpio?' limpio':''}">
+    <div class="ai-hd"><span class="ai-k">${titulo}</span><span class="ai-badge">${limpio?'✓ Sin incidencias':inc.total+(inc.total===1?' incidencia':' incidencias')}</span></div>
+    <div class="ai-tiles">
+      <div class="ai-tile nm${inc.noMarco?' on':''}"><b>${inc.noMarco}</b><span>${inc.noMarco===1?'Día sin marcar':'Días sin marcar'}</span></div>
+      <div class="ai-tile t${inc.diasTarde?' on':''}"><b>${inc.diasTarde}</b><span>${inc.diasTarde===1?'Llegada tarde':'Llegadas tarde'}</span><small>${inc.minTarde?aiMin(inc.minTarde):''}</small></div>
+      <div class="ai-tile s${inc.salidasTemp?' on':''}"><b>${inc.salidasTemp}</b><span>${inc.salidasTemp===1?'Salida antes':'Salidas antes'}</span><small>${inc.minTemp?aiMin(inc.minTemp):''}</small></div>
+    </div>
+    ${inc.min?`<div class="ai-min">⏱ <b>${aiMin(inc.min)}</b> fuera de tu horario este mes</div>`:''}
+    ${detalle&&inc.lista.length?`<details class="ai-det"><summary>Ver cada incidencia</summary>${inc.lista.map(aiLinea).join('')}</details>`:''}
+    ${limpio?'':`<div class="ai-nota">${AI_NOTA}</div>`}
+  </div>`;
+}
+// Opción B · Boleta: cada incidencia como renglón de un comprobante, con totales
+function aiBoletaB(inc, nomMes){
+  const fila=(k,n,min)=>`<div class="ai-bo-row"><span>${k}</span><i></i><b>${n}${min?` · ${aiMin(min)}`:''}</b></div>`;
+  return `<div class="ai-bo">
+    <div class="ai-bo-hd"><span class="ai-k">Incidencias de asistencia</span><span class="ai-bo-mes">${nomMes}</span></div>
+    ${inc.lista.length?`<div class="ai-bo-lis">${inc.lista.map(aiLinea).join('')}</div>`:'<div class="ai-bo-ok">✓ Ninguna incidencia este mes</div>'}
+    <div class="ai-bo-tot">
+      ${fila('Días sin marcar',inc.noMarco)}
+      ${fila('Llegadas tarde',inc.diasTarde,inc.minTarde)}
+      ${fila('Salidas antes',inc.salidasTemp,inc.minTemp)}
+      <div class="ai-bo-row total"><span>Total</span><i></i><b>${inc.total} ${inc.total===1?'incidencia':'incidencias'}${inc.min?` · ${aiMin(inc.min)}`:''}</b></div>
+    </div>
+    ${inc.total?`<div class="ai-nota">${AI_NOTA}</div>`:''}
+  </div>`;
+}
+// Opción C · Calendario: cada día hábil del mes con su color
+function aiCalendarioC(inc, mes){
+  const por={}; inc.lista.forEach(x=>{ if(!x.just) por[x.fecha]=x.tipo==='nm'?'nm':(por[x.fecha]==='nm'?'nm':'t'); });
+  const just=new Set([...inc.detalle.filter(d=>d.tipo==='justificado').map(d=>d.fecha),...inc.lista.filter(x=>x.just).map(x=>x.fecha)]);
+  const [y,m]=mes.split('-').map(Number), ult=new Date(y,m,0).getDate(), hoy=today();
+  const ini=(new Date(y,m-1,1).getDay()+6)%7;
+  let celdas='<i></i>'.repeat(ini);
+  for(let d=1;d<=ult;d++){
+    const f=`${mes}-${String(d).padStart(2,'0')}`, dow=new Date(f+'T12:00:00').getDay();
+    const habil=inc.dias.includes(f);
+    const c=f>hoy?'fut':!habil?'nol':por[f]==='nm'?'nm':por[f]?'t':just.has(f)?'ju':f===hoy?'hoy':'ok';
+    celdas+=`<span class="ai-cd ${c}">${d}</span>`;
+  }
+  return `<div class="ai-cal">
+    <div class="ai-hd"><span class="ai-k">Mi asistencia</span><span class="ai-badge">${inc.total?inc.total+(inc.total===1?' incidencia':' incidencias'):'✓ Sin incidencias'}</span></div>
+    <div class="ai-cal-w">${['L','M','M','J','V','S','D'].map(x=>`<b>${x}</b>`).join('')}</div>
+    <div class="ai-cal-g">${celdas}</div>
+    <div class="ai-cal-ley"><span><i class="ok"></i>Bien</span><span><i class="t"></i>Tarde o salió antes</span><span><i class="nm"></i>No marcó</span><span><i class="ju"></i>Permiso / justificado</span></div>
+    <div class="ai-cal-num"><span><b>${inc.noMarco}</b> sin marcar</span><span><b>${inc.diasTarde}</b> tarde</span><span><b>${inc.salidasTemp}</b> salidas antes</span>${inc.min?`<span><b>${aiMin(inc.min)}</b> fuera de horario</span>`:''}</div>
+    ${inc.total?`<div class="ai-nota">${AI_NOTA}</div>`:''}
+  </div>`;
+}
+function aiOpcion(){ return window.__incOpc||'A'; }
+function pintarAsistenciaMia(cont, inc, mes, nomMes){
+  if(!cont) return;
+  const o=aiOpcion();
+  cont.innerHTML=o==='B'?aiBoletaB(inc,nomMes):o==='C'?aiCalendarioC(inc,mes):aiTarjetaA(inc,{titulo:'Mi asistencia · '+nomMes.split(' ')[0]});
+}
+// Aviso de fin de mes: cómo va la asistencia (en el aviso de "Cierre de mes")
+function aiBloqueCierre(inc, mes, nomMes){
+  const o=aiOpcion();
+  return o==='B'?aiBoletaB(inc,nomMes):o==='C'?aiCalendarioC(inc,mes):aiTarjetaA(inc,{titulo:'Tu asistencia este mes',detalle:false});
+}
+
 async function mostrarResumenMesAnterior(){
   const hoy=new Date();
   if(hoy.getDate()>3) return;
@@ -2592,6 +2695,12 @@ async function mostrarResumenMesAnterior(){
     const todos=Object.values(snap.val());
     const cal=calendarioMes({mes:mesStr, uid:me.id, todos, sabados, asuetos});
     const nomMesCap=nomMes.charAt(0).toUpperCase()+nomMes.slice(1);
+    let asistHtml='';
+    try{
+      const marcs=await obtenerMarcajesMes(db,{ref,get},me.id,mesStr).catch(()=>[]);
+      const inc=incidenciasMes(mesStr, Object.fromEntries(marcs.map(m=>[m.fecha,m])), todos, sabados);
+      asistHtml=`<div class="ai-en-aviso">${aiBloqueCierre(inc, mesStr, nomMesCap.split(' ')[0])}</div>`;
+    }catch(_){}
 
     const avisos=[];
     if(viaticosAnul) avisos.push(`<div class="mk-av mal"><span class="mk-av-ic">!</span><div class="mk-av-tx"><b>${viaticosAnul} ${viaticosAnul>1?'viáticos anulados':'viático anulado'}</b></div></div>`);
@@ -2601,7 +2710,7 @@ async function mostrarResumenMesAnterior(){
     const cerrar="document.getElementById('resumenMesCard').remove();document.getElementById('resumenMesOverlay').remove();";
     const card=document.createElement('div');
     card.id='resumenMesCard';
-    card.className='rm-card';
+    card.className='rm-card rm-largo';
     card.innerHTML=`
       <div class="rm-hd">
         <div class="rm-k">Resumen del mes</div>
@@ -2615,6 +2724,7 @@ async function mostrarResumenMesAnterior(){
           <div class="rg-st a"><div class="v">${heStr}</div><div class="l">HE aprobadas</div></div>
         </div>
         ${avisos.length?`<div class="rm-av">${avisos.join('')}</div>`:''}
+        ${asistHtml}
         <div class="rm-nota">Esto debería reflejarse en tu planilla de este mes.</div>
         <div class="rm-btns">
           <button class="rm-b2" onclick="${cerrar}">Cerrar</button>
@@ -2663,11 +2773,18 @@ async function mostrarCierreMes(diasRestantes){
       </div>
       ${tocables.length?`<div class="cm-faltan"><div class="cm-faltan-k">Todavía puedes registrar:</div><div class="cm-chips">${tocables.map(f=>`<button onclick="cerrarCierreMes();registrarDia('${f}')">${fechaCortaFx(f)}</button>`).join('')}</div></div>`:''}
       ${!pendientes?'<div class="mk-av ok" style="margin-top:10px"><span class="mk-av-ic">✓</span><div class="mk-av-tx"><b>¡Vas al día!</b><span>No te falta ningún día por registrar</span></div></div>':''}`;
+    // Cómo va su asistencia (lo que Recursos Humanos toma para planilla)
+    try{
+      const marcs=await obtenerMarcajesMes(db,{ref,get},me.id,mes).catch(()=>[]);
+      const inc=incidenciasMes(mes, Object.fromEntries(marcs.map(m=>[m.fecha,m])), todos, sabados);
+      const nm=new Date(mes+'-15T12:00:00').toLocaleDateString('es-SV',{month:'long'});
+      estado+=`<div class="ai-en-aviso">${aiBloqueCierre(inc, mes, nm.charAt(0).toUpperCase()+nm.slice(1))}</div>`;
+    }catch(_){}
   }catch(e){ estado=''; }
 
   const card=document.createElement('div');
   card.id='cierreMesCard';
-  card.className='rm-card';
+  card.className='rm-card rm-largo';
   card.innerHTML=`
     <div class="rm-hd cm-hd${urgente?' urgente':''}">
       <div class="cm-hd-row">
@@ -3698,7 +3815,9 @@ async function loadHist(){
         <div class="rg-st a"><div class="v">${totalMinHE>0?(hrsHE>0?hrsHE+'h ':'')+(minsHE?minsHE+'m':''):'0'}</div><div class="l">Horas extra</div></div>
       </div>
       ${cal.html}
-      ${hayFaltasTocables?'<div class="hist-cal-tip">Toca un día con borde rojo para registrarlo</div>':''}`;
+      ${hayFaltasTocables?'<div class="hist-cal-tip">Toca un día con borde rojo para registrarlo</div>':''}
+      <div id="empAsistMia"></div>`;
+    try{ pintarAsistenciaMia($('empAsistMia'), incidenciasMes(mes, marcajesPorFecha, allItems, sabados), mes, nomMes); }catch(e){ console.warn('Mi asistencia:',e); }
 
     if(!items.length){
       l.innerHTML='<div class="empty"><div class="ei"></div><div class="et">Sin registros en este mes</div></div>';
